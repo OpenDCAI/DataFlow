@@ -1,5 +1,5 @@
 import sys
-sys.path.insert(0, '/mnt/petrelfs/chenjingzhou/lz/DataFlow')
+sys.path.insert(0, YOUR DATAFLOW PATH)
 
 from dataflow.utils.utils import calculate_score
 
