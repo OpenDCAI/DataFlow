@@ -1,0 +1,16 @@
+**/__pycache__
+**/__pycache__/
+**/.ipynb_checkpoints/
+**/Kenlm/wikipedia
+**/Kenlm/.cache
+tmp/
+build/
+./models/*
+scores.json
+DataGym.egg-info/
+compute_stats.py
+output.txt
+texttest/*
+test_main.txt
+statss.json
+pure_video_scores.json

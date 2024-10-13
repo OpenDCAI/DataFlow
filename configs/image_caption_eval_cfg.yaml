@@ -1,0 +1,37 @@
+model_cache_path: '../ckpt' # Path to cache models
+num_workers: 2
+
+data:
+  image_caption:
+    meta_data_path: "../data/image_caption_data.json"
+    data_path: "../data/images"
+    image_key: 'image'
+    image_caption_key: 'caption'
+    id_key: 'id'
+    formatter: 'ImageCaptionFormatter'
+
+scorers:
+  ClipScorer:
+      batch_size: 2
+      device: "cuda"
+  LongClipScorer:
+      model_size: B # For larger models, use L
+      batch_size: 2
+      device: "cuda"
+  FleurScorer:
+      batch_size: 2
+      hf_model_path: llava-hf/llava-1.5-7b-hf
+  ClipT5Scorer:
+      model_size: xl # For larger models, use xxl
+      context_len: 2048
+      batch_size: 2
+      device: "cuda"
+  VisualDialogScorer:
+      batch_size: 2
+      hf_model_path: "llava-hf/llava-1.5-7b-hf" # llava-hf/llava-1.5-7b-hf   llava-hf/llava-v1.6-mistral-7b-hf   llava-hf/llava-v1.6-34b-hf
+      prompt_template: "USER: <image>\nYou will see a Q&A dialogue about the image. Please judge whether the answer is correct based on the content of the image. You should first answer 'the answer is correct' or 'the answer is incorrect'. If it is incorrect, please use fewer than two sentences to explain the reason for the error as concisely as possible. Here is the dialogue:\n{} \n Please judge the answer.\nASSISTANT: " # llava-1.5-7b-hf
+      # prompt_template: "[INST] <image>\nYou will see a Q&A dialogue about the image. Please judge whether the answer is correct based on the content of the image. You should first answer 'the answer is correct' or 'the answer is incorrect'. If it is incorrect, please use fewer than two sentences to explain the reason for the error as concisely as possible. Here is the dialogue:\n{} \n Please judge the answer. [/INST]" # llava-v1.6-mistral-7b-hf
+      # prompt_template: "<|im_start|>user\n<image>\nYou will see a Q&A dialogue about the image. Please judge whether the answer is correct based on the content of the image. You should first answer 'the answer is correct' or 'the answer is incorrect'. If it is incorrect, please use fewer than two sentences to explain the reason for the error as concisely as possible. Here is the dialogue:\n{} \n Please judge the answer. <|im_end|>\n<|im_start|>assistant\n" # template for llava-v1.6-34b-hf
+      tensor_parallel_size: 1
+      gpu_memory_utilization: 0.8
+

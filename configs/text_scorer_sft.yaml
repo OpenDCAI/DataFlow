@@ -1,0 +1,21 @@
+# Only some example scorers are listed here. Please refer to all_scorers.yaml for all scorers
+
+model_cache_path: '../ckpt' # Path to cache models
+
+data:
+  text:
+    use_hf: True # Whether to use huggingface_dataset, if used, ignore the local data path below
+    dataset_name: 'yahma/alpaca-cleaned'
+    dataset_split: 'train'  
+    name: 'default' 
+    
+    data_path: 'demos/text_eval/alpaca_5_samples.json'  # Local data path, supports json, jsonl, parquet formats
+    formatter: "TextFormatter" # Data loader type
+
+    keys: ['instruction','input','output'] # Key name to be evaluated, for sft data, it can be specified as ['instruction','input','output']
+    
+scorers: # You can select multiple text scorers from all_scorers.yaml and put their configuration information here
+  DeitaQualityScorer:
+      device: 'cuda:0'
+      model_name: 'hkust-nlp/deita-quality-scorer'
+      max_length: 512

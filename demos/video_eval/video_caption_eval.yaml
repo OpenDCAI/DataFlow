@@ -1,0 +1,15 @@
+model_cache_path: '../ckpt' # Path to cache models
+num_workers: 2
+
+data:
+  video:
+    meta_data_path: './video-caption.json' # Path to meta data (mainly for image or video data)
+    data_path: './' # Path to dataset
+    formatter: 'VideoCaptionFormatter' # formatter for pure video evaluation
+
+scorers:
+  EMScorer:
+    batch_size: 4
+    num_workers: 4
+
+

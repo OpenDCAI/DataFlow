@@ -1,0 +1,21 @@
+model_cache_path: '../ckpt' 
+
+data:
+  text:
+    use_hf: False
+    dataset_name: 'yahma/alpaca-cleaned'
+    dataset_split: 'train'  
+    name: 'default' 
+    
+    data_path: 'fineweb_5_samples.json'  
+    formatter: "TextFormatter"
+
+    keys: 'text'
+    
+scorers:
+  LexicalDiversityScorer:
+      metrics_to_keep:
+        mtld: True
+        hdd: True
+  NgramScorer:
+      ngrams: 5

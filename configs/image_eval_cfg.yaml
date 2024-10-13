@@ -1,0 +1,72 @@
+model_cache_path: '../ckpt' # Path to cache models
+num_workers: 2
+
+data:
+  image:
+    meta_data_path: "../data/image_data.json"
+    data_path: "../data/images"
+    ref_meta_data_path: "../data/data4IS2.jsonl"
+    ref_data_path: "../data/synth_challenge"
+    image_key: 'image'
+    id_key: 'id'
+    formatter: 'PureImageFormatter'
+
+scorers:
+  LiqeScorer:
+      batch_size: 2
+      device: "cuda"
+  ArniqaScorer:
+      batch_size: 2
+      device: "cuda"
+  TopiqScorer:
+      batch_size: 2
+      device: "cuda"
+  ClipiqaScorer:
+      batch_size: 2
+      device: "cuda"
+  QalignScorer:
+      batch_size: 2
+      device: "cuda"
+  ManiqaScorer:
+      batch_size: 2
+      device: "cuda"
+  MusiqScorer:
+      batch_size: 2
+      device: "cuda"
+  DbcnnScorer:
+      batch_size: 2
+      device: "cuda"
+  Pqa2piqScorer:
+      batch_size: 2
+      device: "cuda"
+  HyperiqaScorer:
+      batch_size: 2
+      device: "cuda"
+  NimaScorer:
+      batch_size: 2
+      device: "cuda"
+  WadiqamScoreer:
+      batch_size: 2
+      device: "cuda"
+  CnniqaScorer:
+      batch_size: 2
+      device: "cuda"
+  NrqmScoreer:
+      batch_size: 2
+      device: "cuda"
+  PiScorer:
+      batch_size: 2
+      device: "cuda"
+  BrisqueScorer:
+      batch_size: 2
+      device: "cuda"
+  IlniqeScorer:
+      batch_size: 2
+      device: "cuda"
+  NiqeScorer:
+      batch_size: 2
+      device: "cuda"
+  PiqeScorer:
+      batch_size: 2
+      device: "cuda"
+

@@ -1,0 +1,20 @@
+meta_data_path: '/mnt/petrelfs/mengzimo/videodataset/pure/metadata/KoNViD_1k_attributes.csv' # Path to meta data (mainly for image or video data)
+data_path: '/mnt/hwfile/opendatalab/mengzimo/KoNViD_1k_videos/' # Path to dataset
+formatter: 'PureVideoFormatter' # Specify the data formatter
+
+video:
+  VideoResolutionFilter:
+    min_width: 160
+    max_width: 7680
+    min_height: 120
+    max_height: 4320
+  VideoMotionScoreFilter:                              # Keep samples with video motion scores within a specific range.
+    min_score: 0.25                                         # the minimum motion score to keep samples
+    max_score: 10000.0                                      # the maximum motion score to keep samples
+    scorer_args:
+      sampling_fps: 2                                         # the samplig rate of frames_per_second to compute optical flow
+      size: null                                              # resize frames along the smaller edge before computing optical flow, or a sequence like (h, w)
+      max_size: null                                          # maximum allowed for the longer edge of resized frames
+      relative: false                                         # whether to normalize the optical flow magnitude to [0, 1], relative to the frame's diagonal length
+      any_or_all: any                                         # keep this sample when any/all videos meet the filter condition
+  

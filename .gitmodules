@@ -1,0 +1,6 @@
+[submodule "dataflow/Eval/image/longclip"]
+	path = dataflow/Eval/image/longclip
+	url = https://github.com/beichenzbc/Long-CLIP.git
+[submodule "dataflow/Eval/Text/models/UniEval"]
+	path = dataflow/Eval/Text/models/UniEval
+	url = https://github.com/MOLYHECI/UniEval.git
