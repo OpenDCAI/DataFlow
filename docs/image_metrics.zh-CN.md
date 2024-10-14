@@ -34,7 +34,7 @@ dataflow.list_image_eval_metrics()
 | NIMA |`nima`, `nima-vgg16-ava` |基于神经网络| 使用卷积神经网络预测人类意见得分的**分布**。。得分越高代表图像质量越高。||[paper](https://arxiv.org/abs/1709.05424)|
 | WaDIQaM| `wadiqam_nr` |基于神经网络|基于卷积神经网络。得分越高代表图像质量越高。||[paper](https://ieeexplore.ieee.org/abstract/document/8063957)|
 | CNNIQA |`cnniqa` |基于神经网络|基于卷积神经网络。得分越高代表图像质量越高。||[paper](https://openaccess.thecvf.com/content_cvpr_2014/papers/Kang_Convolutional_Neural_Networks_2014_CVPR_paper.pdf)|
-| NRQM(Ma)<sup>[2](#fn2)</sup> |`nrqm` |超分辨率图像评估|基于图像统计信息||[paper](https://arxiv.org/abs/1612.05890)|
+| NRQM(Ma) |`nrqm` |超分辨率图像评估|基于图像统计信息||[paper](https://arxiv.org/abs/1612.05890)|
 | PI(Perceptual Index) |`pi` |超分辨率图像评估|基于Ma's score和NIQE。得分越低代表图像质量越高。||[paper](https://arxiv.org/abs/1711.06077)|
 | BRISQUE| `brisque`, `brisque_matlab` |基于图像统计信息|在空间域中进进行评估；计算复杂度低。得分越低代表图像质量越高。||[paper](https://ieeexplore.ieee.org/document/6272356)|
 | ILNIQE | `ilniqe` |基于图像统计信息|基于自然图像统计特征。得分越低代表图像质量越高。||[paper](https://ieeexplore.ieee.org/document/7094273)|
