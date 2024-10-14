@@ -191,7 +191,7 @@
       <td class="tg-0pky">UnievalScorer</td>
       <td class="tg-0pky">流畅性与可理解性</td>
       <td class="tg-0pky">文本</td>
-      <td class="tg-0pky">UniEval 是一个多维度文本质量评估模型，得分越高表示质量越好。</td>
+      <td class="tg-0pky">UniEval多维度文本质量评估模型，得分越高表示质量越好。</td>
       <td class="tg-0pky">[0, 1]</td>
       <td class="tg-0pky"><a href="https://arxiv.org/abs/2210.07197">paper</a><br><a href="https://github.com/maszhongming/UniEval">code</a></td>
     </tr>
