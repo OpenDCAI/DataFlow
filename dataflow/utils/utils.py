@@ -171,17 +171,5 @@ def calculate_score(save_path=None):
         else:
             datasets = dataset_dict[scorer.data_type]
         _, score = scorer(datasets)
-        # print(score)
-        # if isinstance(dataset, tuple):
-        #     print(dataset[0].scores_list)
-        #     print(dataset[0].meta_score)
-        # else:
-        #     # print(calculate_statistics(dataset.scores_list, scorer.score_name))
-        #     print(dataset.scores_list)
-        #     if len(dataset.meta_score.items()) > 0:
-        #         print(dataset.meta_score)
-    # with open('sta.json', 'w') as f:
-    #     json.dump(score_record.calculate_statistics('DeitaComplexityScore'), f, indent=4)
+
     score_record.dump_scores(save_path)
-    # for _, dataset in dataset_dict.items():
-    #     dataset.dump_scores(save_path)

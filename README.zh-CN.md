@@ -1,4 +1,4 @@
-[English Readme](./README_Eval.md)
+[English Readme](./README.md)
 
 # DataGym-Eval
 

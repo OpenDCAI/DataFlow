@@ -37,11 +37,6 @@ class FleurScorer(ImageTextScorer):
         self.data_type = "image_caption"
         self.scorer_name = "FleurScorer"
         
-    # def get_image_preprocessor(self):
-    #     return None
-    
-    # def get_text_preprocessor(self):
-    #     return None
 
     def evaluate_batch(self, sample):
         inputs = [
@@ -78,10 +73,8 @@ class FleurScorer(ImageTextScorer):
                             num_index_in_token = num_index_in_token[1]
                         else:
                             num_index_in_token = num_index_in_token[0]
-                    # probs = output_dict.scores[num_index_in_token]
-                    # probs = torch.nn.functional.softmax(probs, dim=-1)[0]
+
                     probs = output_logprobs[num_index_in_token]
-                    # probs = torch.exp(probs)
                     
                     score = 0.
                     for rate, token in self.rate2token.items(): # score smoothing
