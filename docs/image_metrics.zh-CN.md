@@ -405,6 +405,42 @@ dataflow.list_image_eval_metrics()
 | FID | `fid_score` | 生成图像与真实图像间的统计差异 | 使用Inception网络计算特征，进而计算两个数据集的统计距离，评估生成模型的质量。 | 最佳值为0，较低的值表明较小的差异和更高的图像质量，无上限 |[paper](https://arxiv.org/pdf/1706.08500)|
 | KID | `kid_score` | 生成图像的无偏质量估计 | Kernel Inception Distance，使用Inception网络特征计算MMD，提供对生成图像质量的无偏估计。 | 最佳值为0，较低的值表示更低的偏差和更好的图像质量，无上限 |[paper](https://arxiv.org/abs/1801.01401) |
 | IS | `is_score` | 生成图像的多样性和清晰度 | 通过计算生成图像的Inception网络输出的信息熵，评估图像多样性及清晰度。 | 值越高表示图像质量越好，通常分数在1到10之间，但无具体上限 | [paper](https://arxiv.org/pdf/1606.03498) |
+#### 参考值
+为更好的提供数据质量参考，我们使用了四种模型：flux-dev, flux-schnell, stable-diffusion-3-medium 和 sdxl，对在 LLaVA Pretrain 数据集上随机选取的500个 image-caption 对进行测试。每个模型根据给定的 caption 生成相应的图片，并通过上述三个指标对生成图片的质量进行全面评估。结果如下：
+<table class="tg"><thead>
+  <tr>
+    <th class="tg-0pky">模型名称</th>
+    <th class="tg-0pky">Inception Score (IS)</th>
+    <th class="tg-0pky">Fréchet Inception Distance (FID)</th>
+    <th class="tg-0pky">Kernel Inception Distance (KID)</th>
+  </tr></thead>
+<tbody>
+  <tr>
+    <td class="tg-0pky">flux-dev</td>
+    <td class="tg-0pky">7.195 ± 0.809</td>
+    <td class="tg-0pky">101.572</td>
+    <td class="tg-0pky">0.00903 ± 0.00069</td>
+  </tr>
+  <tr>
+    <td class="tg-0pky">flux-schnell</td>
+    <td class="tg-0pky">6.193 ± 0.546</td>
+    <td class="tg-0pky">102.739</td>
+    <td class="tg-0pky">0.00667 ± 0.00055</td>
+  </tr>
+  <tr>
+    <td class="tg-0pky">stable-diffusion-3-medium</td>
+    <td class="tg-0pky">6.740 ± 0.582</td>
+    <td class="tg-0pky">100.235</td>
+    <td class="tg-0pky">0.00609 ± 0.00056</td>
+  </tr>
+  <tr>
+    <td class="tg-0pky">sdxl</td>
+    <td class="tg-0pky">6.809 ± 0.994</td>
+    <td class="tg-0pky">112.807</td>
+    <td class="tg-0pky">0.01051 ± 0.00065</td>
+  </tr>
+</tbody></table>
+stable-diffusion-3-medium在FID指标上表现最佳，表明其生成的图像与真实图像在统计特征上最为接近。而在IS评分中，flux-dev表现最优，显示了较高的图像多样性和清晰度。KID结果中，stable-diffusion-3-medium同样表现较好，表示其图像质量的偏差较小。
 
 ## 图像-文本评估指标
 ### 图文对齐指标
