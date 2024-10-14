@@ -14,6 +14,7 @@
 <a href="https://github.com/GAIR-NLP/ProX/issues" target="_blank">
     <img alt="Open Issues" src="https://img.shields.io/github/issues-raw/Open-DataFlow/Open-DataFlow-Eval" />
 </a>
+
 DataGym-Eval 是一个数据质量评估系统，可以从多个维度评估数据质量。我们主要支持具有强大理论支持的学术论文中的最新算法。
 
 我们目前支持文本、图像、视频和多模态数据类型。
@@ -47,9 +48,9 @@ DataGym-Eval 是一个数据质量评估系统，可以从多个维度评估数�
 
 ## 🔥新闻
 
-- [2024-10-15] 我们在 [Awesome Data Evaluation](./Awesome_Data_Evaluation.md)总结了数据评估相关论文
+- [2024-10-14] 我们在 [Awesome Data Evaluation](./Awesome_Data_Evaluation.md)总结了数据评估相关论文
 
-- [2024-10-15] 我们的数据评估系统开源了
+- [2024-10-14] 我们的数据评估系统开源了
 
 ## 安装
 
