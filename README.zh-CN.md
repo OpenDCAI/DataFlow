@@ -37,7 +37,7 @@ DataGym-Eval 是一个数据质量评估系统，可以从多个维度评估数�
     - [文本算法](#文本算法)
     - [图像算法](#图像算法)
     - [视频算法](#视频算法)
-  - [数据评估论文总结(综述)](#数据评估论文总结综述)
+  - [👋 数据评估论文总结(综述)](#数据评估论文总结综述)
 
 ## 模块和模态支持
 
@@ -48,9 +48,9 @@ DataGym-Eval 是一个数据质量评估系统，可以从多个维度评估数�
 
 ## 🔥新闻
 
-- [2024-10-14] 我们在 [Awesome Data Evaluation](./Awesome_Data_Evaluation.md)总结了数据评估相关论文
+- [2024-10-14] 🎉 我们在 [👋 Awesome Data Evaluation](./Awesome_Data_Evaluation.md)总结了数据评估相关论文
 
-- [2024-10-14] 我们的数据评估系统开源了
+- [2024-10-14] 🎉 我们的数据评估系统开源了
 
 ## 安装
 
@@ -66,7 +66,7 @@ pip install -e .
 ```
 
   
-如果您想评估单个模态的数据，可以使用下面的安装代码：
+如果您想评估单个模态的数据，可以使用下面的安装代码👇
 
 <details><summary><b>文本数据评估</b></summary>
 
@@ -188,9 +188,7 @@ python test.py --config [your config file]
 
 ## 数据评估文档
 
-请参照下面的文档了解不同模态的数据评估：
-
-  
+请参照下面的文档了解不同模态的数据评估👇
 
 ### 文本文档
 
@@ -228,4 +226,4 @@ python test.py --config [your config file]
 
 ## 数据评估论文总结(综述)
 
-- [Awesome Data Evaluation](./Awesome_Data_Evaluation.md)
+- [👋 Awesome Data Evaluation](./Awesome_Data_Evaluation.md)
