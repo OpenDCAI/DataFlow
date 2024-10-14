@@ -5,7 +5,15 @@
 <p align="center">
   <img src="./static/images/Face.png">
 </p>
-
+<a href="https://opensource.org/license/apache-2-0" target="_blank">
+    <img alt="License: apache-2-0" src="https://img.shields.io/github/license/saltstack/salt" />
+</a>
+<a href="https://github.com/GAIR-NLP/ProX" target="_blank">
+    <img alt="GitHub Stars" src="https://img.shields.io/github/stars/Open-DataFlow/Open-DataFlow-Eval?style=social" />
+</a>
+<a href="https://github.com/GAIR-NLP/ProX/issues" target="_blank">
+    <img alt="Open Issues" src="https://img.shields.io/github/issues-raw/Open-DataFlow/Open-DataFlow-Eval" />
+</a>
 DataGym-Eval 是一个数据质量评估系统，可以从多个维度评估数据质量。我们主要支持具有强大理论支持的学术论文中的最新算法。
 
 我们目前支持文本、图像、视频和多模态数据类型。
@@ -14,7 +22,7 @@ DataGym-Eval 是一个数据质量评估系统，可以从多个维度评估数�
 - [DataGym-Eval](#datagym-eval)
   - [Table of Contents](#table-of-contents)
   - [模块和模态支持](#模块和模态支持)
-  - [新闻](#新闻)
+  - [🔥新闻](#新闻)
   - [安装](#安装)
   - [快速开始](#快速开始)
     - [文本示例](#文本示例)
@@ -37,7 +45,7 @@ DataGym-Eval 是一个数据质量评估系统，可以从多个维度评估数�
 | **数据评估** | ✅   | ✅   | ✅   | ✅      | ✅      |
 
 
-## 新闻
+## 🔥新闻
 
 - [2024-10-15] 我们在 [Awesome Data Evaluation](./Awesome_Data_Evaluation.md)总结了数据评估相关论文
 
@@ -162,7 +170,7 @@ python test.py --config [your config file]
   <img src="./static/images/example_1.png">
 </p>
   
-## 快速开始
+## 🚀快速开始
 
 ### 文本示例
 
