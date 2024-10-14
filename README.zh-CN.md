@@ -23,7 +23,7 @@ DataGym-Eval 是一个数据质量评估系统，可以从多个维度评估数�
 - [DataGym-Eval](#datagym-eval)
   - [Table of Contents](#table-of-contents)
   - [模块和模态支持](#模块和模态支持)
-  - [🔥新闻](#新闻)
+  - [🔥 新闻](#新闻)
   - [安装](#安装)
   - [快速开始](#快速开始)
     - [文本示例](#文本示例)
