@@ -37,7 +37,7 @@ We now support text, image, video and multimodality data types.
     - [Text Algorithms](#text-algorithms)
     - [Image Algorithms](#image-algorithms)
     - [Video Algorithms](#video-algorithms)
-  - [Awesome Data Evaluation](#awesome-data-evaluation)
+  - [👋 Awesome Data Evaluation](#awesome-data-evaluation)
 
 ## Module and Modality Support
 
@@ -47,13 +47,13 @@ We now support text, image, video and multimodality data types.
 
 ## 🔥 News
 
-- [2024-10-14] We summarize data evaluation papers and codes in [Awesome Data Evaluation](./Awesome_Data_Evaluation.md)
-- [2024-10-14] Our first data-centric evaluation system is now open source.
+- [2024-10-14] 🎉 We summarize data evaluation papers and codes in [👋 Awesome Data Evaluation](./Awesome_Data_Evaluation.md)
+- [2024-10-14] 🎉 Our first data-centric evaluation system is now open source.
 
 ## Installation
 
 
-For environment setup, please using the following commands:
+For environment setup, please using the following commands👇
 
 ```
 conda create -n datagym python=3.9
@@ -149,7 +149,7 @@ python main.py --config [your config file]
 
 ## Data Evaluation Documentation
 
-For the usage of evaluation, please refer to the following documents.
+For the usage of evaluation, please refer to the following documents👇
 
 ### Text Documentation
 - [Text Data Evaluation User Documentation (English)](./dataflow/Eval/Text/README.md)
@@ -179,4 +179,4 @@ We summarize the SOTA algorithms from academic papers for data evaluation.
 - [视频数据评估使用文档 (中文)](./docs/video_metrics.zh-CN.md)
 
 ## Awesome Data Evaluation
-- [Awesome Data Evaluation](./Awesome_Data_Evaluation.md)
+- [👋 Awesome Data Evaluation](./Awesome_Data_Evaluation.md)
