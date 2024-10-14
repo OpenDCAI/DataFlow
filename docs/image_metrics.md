@@ -400,6 +400,42 @@ To better provide data quality references, we have evaluated the MSCOCO 2017 tra
 | FID    | `fid_score`                     | Statistical difference between generated and real images | Uses Inception network to calculate features and then the statistical distance between two datasets to evaluate the quality of generative models. | Best value is 0, lower values indicate smaller differences and higher image quality, no upper limit | [paper](https://arxiv.org/pdf/1706.08500) |
 | KID    | `kid_score`                     | Unbiased quality estimation of generated images | Kernel Inception Distance, uses Inception network features to calculate MMD, providing an unbiased estimation of the quality of generated images. | Best value is 0, lower values indicate lower bias and better image quality, no upper limit | [paper](https://arxiv.org/abs/1801.01401) |
 | IS     | `is_score`                     | Diversity and clarity of generated images | Evaluates the diversity and clarity of images by calculating the entropy of the Inception network's output. | Higher values indicate better image quality, typically scores range from 1 to 10, but no specific upper limit | [paper](https://arxiv.org/pdf/1606.03498) |
+#### Reference Values
+To better provide data quality references, we used four models: flux-dev, flux-schnell, stable-diffusion-3-medium, and sdxl, to test 500 randomly selected image-caption pairs from the LLaVA Pretrain dataset. Each model generated images based on the given captions, and their quality was comprehensively assessed using the following three indicators. Here are the results:
+<table class="tg"><thead>
+  <tr>
+    <th class="tg-0pky">Model Name</th>
+    <th class="tg-0pky">Inception Score (IS)</th>
+    <th class="tg-0pky">Fréchet Inception Distance (FID)</th>
+    <th class="tg-0pky">Kernel Inception Distance (KID)</th>
+  </tr></thead>
+<tbody>
+  <tr>
+    <td class="tg-0pky">flux-dev</td>
+    <td class="tg-0pky">7.195 ± 0.809</td>
+    <td class="tg-0pky">101.572</td>
+    <td class="tg-0pky">0.00903 ± 0.00069</td>
+  </tr>
+  <tr>
+    <td class="tg-0pky">flux-schnell</td>
+    <td class="tg-0pky">6.193 ± 0.546</td>
+    <td class="tg-0pky">102.739</td>
+    <td class="tg-0pky">0.00667 ± 0.00055</td>
+  </tr>
+  <tr>
+    <td class="tg-0pky">stable-diffusion-3-medium</td>
+    <td class="tg-0pky">6.740 ± 0.582</td>
+    <td class="tg-0pky">100.235</td>
+    <td class="tg-0pky">0.00609 ± 0.00056</td>
+  </tr>
+  <tr>
+    <td class="tg-0pky">sdxl</td>
+    <td class="tg-0pky">6.809 ± 0.994</td>
+    <td class="tg-0pky">112.807</td>
+    <td class="tg-0pky">0.01051 ± 0.00065</td>
+  </tr>
+</tbody></table>
+Stable-diffusion-3-medium performed the best in terms of FID, indicating that its generated images are statistically closest to real images. Flux-dev showed the best results in the IS score, reflecting higher diversity and clarity in images. Similarly, stable-diffusion-3-medium also exhibited superior performance in KID results, indicating a smaller deviation in image quality.
 
 ### Image-Text Evaluation Metrics
 
