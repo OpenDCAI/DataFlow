@@ -17,12 +17,6 @@ class ClipScorer(ImageTextScorer):
         self.device = args_dict["device"]
         self.data_type = "image_caption"
         self.scorer_name = "ClipScorer"
-
-    # def get_image_preprocessor(self):
-    #     return self.image_preprocessor
-    
-    # def get_text_preprocessor(self):
-    #     return self.text_preprocessor
     
     def evaluate_batch(self, sample):
         image_features = self.model.encode_image(sample[0].to(self.device)) # [batch_size, dim]

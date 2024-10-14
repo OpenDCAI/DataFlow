@@ -17,12 +17,6 @@ class LongClipScorer(ImageTextScorer):
         try:
             model, preprocess = longclip.load(name=model_cache_path, device=args_dict["device"])
         except:
-            # model_download_source="BeichenZhang/LongCLIP-" + args_dict["model_size"]
-            # command = ['huggingface-cli', 'download', '--resume-download', model_download_source, '--local-dir', model_cache_dir]
-            # result = subprocess.run(command, capture_output=True, text=True)
-            # if result.returncode != 0:
-            #     print("Failed to download LongCLIP model.")
-            #     print(result.stderr)
             download_model_from_hf("BeichenZhang/LongCLIP-" + args_dict["model_size"], model_cache_dir)
             model, preprocess = longclip.load(name=model_cache_path, device=args_dict["device"])
 
@@ -33,11 +27,6 @@ class LongClipScorer(ImageTextScorer):
         self.data_type = "image_caption"
         self.scorer_name = "LongClipScorer"
 
-    # def get_image_preprocessor(self):
-    #     return self.image_preprocessor
-    
-    # def get_text_preprocessor(self):
-    #     return self.text_preprocessor
 
     def evaluate_batch(self, sample):
         image_features = self.model.encode_image(sample[0].to(self.device)) # [batch_size, dim]

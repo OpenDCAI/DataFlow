@@ -1,4 +1,3 @@
-# from torch.utils.data import Dataset
 from .dataflow_dataset import DataFlowDataset
 from ..utils.json_utils import read_json_file
 from PIL import Image

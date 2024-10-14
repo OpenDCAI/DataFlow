@@ -35,12 +35,6 @@ def format_question(question, conversation_style='plain'):
 def format_answer(answer, conversation_style='plain'):
     return answer
 
-# def image_loader(image_path):
-#     if image_path.split('.')[-1] == 'npy':
-#         return Image.fromarray(np.load(image_path)[:, :, [2, 1, 0]], 'RGB')
-#     else:
-#         return Image.open(image_path).convert("RGB")
-
 @MODEL_REGISTRY.register()
 class ClipT5Scorer(ImageTextScorer):
     """A wrapper for the CLIP-FlanT5 or CLIP-T5 models"""
@@ -95,30 +89,10 @@ class ClipT5Scorer(ImageTextScorer):
             download_model_from_hf(self.model_path, self.cache_dir)
             load_model()
 
-
-    # def load_images(self,
-    #                 image: List[str]) -> torch.Tensor:
-    #     """Load the image(s), and return a tensor (after preprocessing) put on self.device
-    #     """
-    #     # image = [self.image_loader(x) for x in image]
-    #     image = [Image.open(x).convert("RGB") for x in image]
-    #     if self.image_aspect_ratio == 'pad':
-    #         image = [expand2square(image, tuple(int(x*255) for x in self.image_processor.image_mean)) for image in image]
-    #     image = [self.image_processor.preprocess(image, return_tensors='pt')['pixel_values'][0] for image in image]
-    #     assert all(x.shape == image[0].shape for x in image)
-    #     image = torch.stack(image, dim=0).to(self.device)
-    #     return image
-
     def total_image_preprocessor(self, image) -> torch.Tensor:
         image = expand2square(image, tuple(int(x*255) for x in self.image_processor.image_mean))
         image = self.image_processor.preprocess(image, return_tensors='pt')['pixel_values'][0]
         return image
-
-    # def get_image_preprocessor(self):
-    #     return self.total_image_preprocessor
-    
-    # def get_text_preprocessor(self):
-    #     return None
 
     @torch.no_grad()
     @torch.autocast(device_type='cuda', dtype=torch.bfloat16)
