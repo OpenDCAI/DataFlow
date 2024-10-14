@@ -23,7 +23,7 @@ We now support text, image, video and multimodality data types.
 - [DataFlow-Eval](#dataflow-eval)
   - [Table of Contents](#table-of-contents)
   - [Module and Modality Support](#module-and-modality-support)
-  - [🔥News](#news)
+  - [🔥 News](#news)
   - [Installation](#installation)
   - [Quick Start](#quick-start)
     - [Text](#text)
@@ -45,7 +45,7 @@ We now support text, image, video and multimodality data types.
 | ------------------- | ---- | ----- | ----- | --------------- | --------------- |
 | **Data Evaluation** | ✅    | ✅     | ✅     | ✅               | ✅               |
 
-## 🔥News
+## 🔥 News
 
 - [2024-10-14] We summarize data evaluation papers and codes in [Awesome Data Evaluation](./Awesome_Data_Evaluation.md)
 - [2024-10-14] Our first data-centric evaluation system is now open source.
@@ -136,7 +136,7 @@ python main.py --config [your config file]
   <img src="./static/images/example_1.png">
 </p>
 
-## 🚀Quick Start
+## 🚀 Quick Start
 ### Text
 - [Text Evaluation Demo](./demos/text_eval/text_eval_example.ipynb)
 - [文本评估示例](./demos/text_eval/text_eval_example.zh-CN.ipynb)
