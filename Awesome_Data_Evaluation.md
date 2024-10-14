@@ -13,6 +13,8 @@
 - [Data Diversity Evaluation](#Data-Diversity-Evaluation)
 
 # News
+- [2024-10-14] 🎉 We summarize data evaluation papers and codes in [👋 Awesome Data Evaluation](./Awesome_Data_Evaluation.md)
+- [2024-10-14] 🎉 We open-sourced awesome data evaluation and summarized state-of-the-art(SOTA) papers in text, image and video evaluation.
 
 # Pure Text Evaluation
 ### Text Evaluation Taxonomy:
