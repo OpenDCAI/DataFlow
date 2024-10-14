@@ -47,8 +47,8 @@ We now support text, image, video and multimodality data types.
 
 ## 🔥News
 
-- [2024-10-15] We summarize data evaluation papers and codes in [Awesome Data Evaluation](./Awesome_Data_Evaluation.md)
-- [2024-10-15] Our first data-centric evaluation system is now open source.
+- [2024-10-14] We summarize data evaluation papers and codes in [Awesome Data Evaluation](./Awesome_Data_Evaluation.md)
+- [2024-10-14] Our first data-centric evaluation system is now open source.
 
 ## Installation
 
@@ -136,7 +136,7 @@ python main.py --config [your config file]
   <img src="./static/images/example_1.png">
 </p>
 
-## Quick Start
+## 🚀Quick Start
 ### Text
 - [Text Evaluation Demo](./demos/text_eval/text_eval_example.ipynb)
 - [文本评估示例](./demos/text_eval/text_eval_example.zh-CN.ipynb)
