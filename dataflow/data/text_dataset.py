@@ -3,6 +3,9 @@ import pandas as pd
 from dataflow.data.dataflow_dataset import DataFlowDataset
 import pandas as pd
 import hashlib
+import json
+import os
+import numpy as np
 
 _MAX_ROWS_FOR_DIGEST_COMPUTATION = 10000
 
@@ -15,13 +18,8 @@ class TextDataset(DataFlowDataset):
 
     def __getitem__(self, index):
         if isinstance(index, slice):
-            start = index.start if index.start is not None else 0
-            stop = index.stop if index.stop is not None else len(self.dataset)
-            step = index.step if index.step is not None else 1
-            indices = list(range(start, stop, step))
-            sliced_dataset = self.dataset.select(indices)
-            
-            return TextDataset(sliced_dataset, keys=self.keys) 
+            sliced_dataset = self.dataset[index]  
+            return TextDataset(sliced_dataset, keys=self.keys)
         else:
             sample = self.dataset[index]
             return sample
@@ -29,6 +27,10 @@ class TextDataset(DataFlowDataset):
 
     def __len__(self):
         return len(self.dataset)
+    
+    def filter(self, labels):
+        indices = np.where(labels == 1)[0]
+        return TextSubset(self, list(indices))    
     
     def compute_pandas_digest(self, df: pd.DataFrame) -> str:
         df_str = df.to_string(index=False, header=False)
@@ -67,8 +69,45 @@ class TextDataset(DataFlowDataset):
         """
         return [self[i] for i in range(len(self))]
     
+    def to_dict(self) -> List[Dict]:
+        data_as_dicts = []
+        for i in range(len(self)):
+            sample = self[i]
+            if isinstance(sample, dict):
+                data_as_dicts.append(sample)
+            else:
+                data_as_dicts.append({"data": sample})
+        return data_as_dicts
+
+    
     def update_metadata(self, new_metadata: dict):
         self.metadata.update(new_metadata)
 
     def get_metadata(self):
         return self.metadata
+    
+    def dump(self, save_path):
+        os.makedirs(os.path.dirname(save_path), exist_ok=True)
+        with open(save_path, 'w', encoding='utf-8') as f:
+            json.dump(self.to_dict(), f, indent=4, ensure_ascii=False)
+        print(f"Dataset saved to {save_path}")
+
+
+class TextSubset(TextDataset):
+    def __init__(self, dataset: TextDataset, indices: list[int]) -> None:
+        super().__init__(dataset=dataset.dataset, keys=dataset.keys, metadata=dataset.metadata)
+        self.indices = indices 
+
+    def __getitem__(self, idx: Union[int, list[int]]):
+        if isinstance(idx, slice):
+            start, stop, step = idx.start, idx.stop, idx.step
+            sliced_indices = self.indices[start:stop:step]
+            return TextSubset(self, sliced_indices)
+        elif isinstance(idx, list):
+            subset_indices = [self.indices[i] for i in idx]
+            return TextSubset(self, subset_indices)
+        else:
+            return self.dataset[self.indices[idx]]
+
+    def __len__(self):
+        return len(self.indices)
