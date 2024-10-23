@@ -68,44 +68,22 @@ pip install -e .
   
 如果您想评估单个模态的数据，可以使用下面的安装代码👇
 
-<details><summary><b>文本数据评估</b></summary>
-
+<details>
+<summary>
+<b>All dependencies</b>
+</summary>
 <p>
 
 ```bash
-
-pip install -e .[text]
-
-pip install flash-attn==2.6.3
-
-python -m spacy download en_core_web_sm
-
-
-全部的环境依赖可以如下安装：
-
-<details><summary><b>全部环境依赖</b></summary>
-
-<p>
-
-  
-
-```bash
-
 pip install -e .[all]
-
 pip install flash-attn==2.6.3
-
 pip install pyiqa==0.1.12
-
 pip install transformers==4.44.2
-
 ```
 
-  
-
 </p>
-
 </details>
+
 
   
 请参考[数据评估文档](#数据评估文档)查看参数的使用规则. 仅使用yaml参数便可以完成数据评估：
