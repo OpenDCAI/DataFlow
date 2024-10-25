@@ -1,6 +1,6 @@
 [English Readme](./README.md)
 
-# DataGym-Eval
+# DataFlow-Eval
 
 <p align="center">
   <img src="./static/images/Face.png">
@@ -15,12 +15,12 @@
     <img alt="Open Issues" src="https://img.shields.io/github/issues-raw/Open-DataFlow/Open-DataFlow-Eval" />
 </a>
 
-DataGym-Eval 是一个数据质量评估系统，可以从多个维度评估数据质量。我们主要支持具有强大理论支持的学术论文中的最新算法。
+DataFlow-Eval 是一个数据质量评估系统，可以从多个维度评估数据质量。我们主要支持具有强大理论支持的学术论文中的最新算法。
 
 我们目前支持文本、图像、视频和多模态数据类型。
 
 ## Table of Contents
-- [DataGym-Eval](#datagym-eval)
+- [DataFlow-Eval](#dataflow-eval)
   - [Table of Contents](#table-of-contents)
   - [模块和模态支持](#模块和模态支持)
   - [🔥 新闻](#新闻)
