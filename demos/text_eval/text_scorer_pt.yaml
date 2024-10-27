@@ -14,8 +14,8 @@ data:
     
 scorers:
   LexicalDiversityScorer:
-      metrics_to_keep:
-        mtld: True
-        hdd: True
+    metrics_to_keep:
+      mtld: True
+      hdd: True
   NgramScorer:
-      ngrams: 5
+    ngrams: 5
