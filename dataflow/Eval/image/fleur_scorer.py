@@ -9,7 +9,8 @@ import os
 
 from dataflow.core.scorer import ImageTextScorer
 from dataflow.utils.registry import MODEL_REGISTRY
-from ...utils.image_utils import fleur_collate 
+from ...utils.image_utils import fleur_collate_fn 
+from ...utils.utils import download_model_from_hf
 
 
 @MODEL_REGISTRY.register()
@@ -21,7 +22,7 @@ class FleurScorer(ImageTextScorer):
         try:
             self.model = LLM(model=model_cache_path)
         except:
-            download_hf_model(model_cache_path, args_dict["hf_model_path"])
+            download_model_from_hf(args_dict["hf_model_path"], model_cache_path)
             self.model = LLM(model=model_cache_path)
 
         tokenizer = self.model.get_tokenizer()
@@ -33,10 +34,9 @@ class FleurScorer(ImageTextScorer):
                                             )
 
         self.prompt_template = 'USER: <image>\nYour task is to evaluate and rate the caption on a scale of 0.0 to 1.0 based on the given Grading Criteria. (Print Real Number Score ONLY)\n\nGrading Criteria:\n\n0.0: The caption does not describe the image at all.\n1.0: The caption accurately and clearly describes the image.\n\nCaption: {}\n\nScore(Choose a rating from 0.0 to 1.0):\nASSISTANT:'
-        self.collate_fn = fleur_collate
+        self.collate_fn = fleur_collate_fn
         self.data_type = "image_caption"
         self.scorer_name = "FleurScorer"
-        
 
     def evaluate_batch(self, sample):
         inputs = [
@@ -73,7 +73,6 @@ class FleurScorer(ImageTextScorer):
                             num_index_in_token = num_index_in_token[1]
                         else:
                             num_index_in_token = num_index_in_token[0]
-
                     probs = output_logprobs[num_index_in_token]
                     
                     score = 0.

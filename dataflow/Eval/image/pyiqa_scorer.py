@@ -5,7 +5,7 @@ from ...utils.image_utils import pyiqa_image_preprocess
 
 TYPE_KEY = "type"
 
-@MODEL_REGISTRY.register()
+# @MODEL_REGISTRY.register()
 class PyiqaScorer(ImageScorer):
     def __init__(self, args_dict: dict, metric_name):
         super().__init__(args_dict)
