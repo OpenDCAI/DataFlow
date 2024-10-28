@@ -2,7 +2,7 @@ import numpy as np
 import os
 import torch
 import subprocess
-from .longclip.model import longclip
+from dataflow.Eval.image.longclip.model import longclip
 from dataflow.core.scorer import ImageTextScorer
 from dataflow.utils.registry import MODEL_REGISTRY
 from ...utils.utils import download_model_from_hf
