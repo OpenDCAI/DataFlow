@@ -5,7 +5,7 @@ from presidio_analyzer.nlp_engine import TransformersNlpEngine
 from transformers import AutoModelForTokenClassification, AutoTokenizer
 import warnings
 
-# Presidio PII detection Scorer with device support
+# Presidio PII detection Scorer
 @MODEL_REGISTRY.register()
 class PresidioScorer(TextScorer):
     def __init__(self, args_dict):
