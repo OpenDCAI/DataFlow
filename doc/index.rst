@@ -16,4 +16,5 @@ documentation for details.
    :caption: Contents:
 
    some-feature.md
+   ../docs/image_metrics.md
 
