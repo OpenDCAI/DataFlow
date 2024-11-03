@@ -15,6 +15,7 @@ documentation for details.
    :maxdepth: 2
    :caption: Contents:
 
-   some-feature.md
-   ../docs/image_metrics.md
+   text_metrics.md
+   image_metrics.md
+   video_metrics.md
 

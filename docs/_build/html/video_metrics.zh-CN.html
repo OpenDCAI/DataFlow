@@ -1,0 +1,334 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="zh-CN" >
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>视频数据评估指标 &mdash; Open-DataFlow-Eval 0.1 文档</title>
+      <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script src="_static/jquery.js?v=5d32c60e"></script>
+        <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+        <script src="_static/documentation_options.js?v=7c91f8fd"></script>
+        <script src="_static/doctools.js?v=9a2dae69"></script>
+        <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
+        <script src="_static/translations.js?v=beaddf03"></script>
+    <script src="_static/js/theme.js"></script>
+    <link rel="index" title="索引" href="genindex.html" />
+    <link rel="search" title="搜索" href="search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="index.html" class="icon icon-home">
+            Open-DataFlow-Eval
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="搜索文档" aria-label="搜索文档" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="导航菜单">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="text_metrics.html">Text Data Evaluation Metrics</a></li>
+<li class="toctree-l1"><a class="reference internal" href="image_metrics.html">Image Data Evaluation Metrics</a></li>
+<li class="toctree-l1"><a class="reference internal" href="video_metrics.html">Video Data Evaluation Metrics</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="移动版导航菜单" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">Open-DataFlow-Eval</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="页面导航">
+  <ul class="wy-breadcrumbs">
+      <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">视频数据评估指标</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="_sources/video_metrics.zh-CN.md.txt" rel="nofollow"> 查看页面源码</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="id1">
+<h1>视频数据评估指标<a class="headerlink" href="#id1" title="Link to this heading"></a></h1>
+<section id="id2">
+<h2>纯视频评估指标<a class="headerlink" href="#id2" title="Link to this heading"></a></h2>
+<section id="id3">
+<h3>指标分类<a class="headerlink" href="#id3" title="Link to this heading"></a></h3>
+<table class="docutils align-default">
+<thead>
+<tr class="row-odd"><th class="head"><p>类别描述</p></th>
+<th class="head"><p>指标列表</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>基于视频统计信息</p></td>
+<td><p>Motion Score</p></td>
+</tr>
+<tr class="row-odd"><td><p>基于预训练模型</p></td>
+<td><p>FastVQAScorer, FasterVQAScorer, DOVERScorer</p></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="id4">
+<h3>指标介绍<a class="headerlink" href="#id4" title="Link to this heading"></a></h3>
+<table class="docutils align-default">
+<thead>
+<tr class="row-odd"><th class="head"><p>名称</p></th>
+<th class="head"><p>评估指标</p></th>
+<th class="head"><p>评估维度</p></th>
+<th class="head"><p>简介</p></th>
+<th class="head"><p>取值范围</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>VideoMotionScorer</p></td>
+<td><p>Motion Score</p></td>
+<td><p>统计</p></td>
+<td><p>计算帧之间的光流向量的幅度作为评分</p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference external" href="https://arxiv.org/abs/2207.02595v1">FastVQAScorer</a></p></td>
+<td><p>预训练模型打分</p></td>
+<td><p>模型</p></td>
+<td><p>基于Video Swin Transformer的打分器，加入了Fragment Sampling模块，获得了准确性和速度的提升</p></td>
+<td><p>[0,1]</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference external" href="https://arxiv.org/abs/2210.05357">FasterVQAScorer</a></p></td>
+<td><p>预训练模型打分</p></td>
+<td><p>模型</p></td>
+<td><p>基于Video Swin Transformer的打分器，在FastVQAScorer的基础上对Fragment Sampling模块进行优化，得到了显著的速度提升</p></td>
+<td><p>[0,1]</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference external" href="https://arxiv.org/abs/2211.04894">DOVERScorer</a></p></td>
+<td><p>预训练模型打分</p></td>
+<td><p>模型</p></td>
+<td><p>基于FastVQAScorer的打分器，同时给出了从技术和美学两个角度的评分</p></td>
+<td><p></p></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="id5">
+<h3>参考值<a class="headerlink" href="#id5" title="Link to this heading"></a></h3>
+<p>为更好的提供数据质量参考，我们使用以上指标对KoNViD-1k数据集进行评估，得到的指标数值分布如下:</p>
+<table class="tg"><thead>
+  <tr>
+    <th class="tg-0pky">指标</th>
+    <th class="tg-0pky">名称</th>
+    <th class="tg-0pky">简介</th>
+    <th class="tg-0pky">均值</th>
+    <th class="tg-0pky">方差</th>
+    <th class="tg-0pky">最大值</th>
+    <th class="tg-0pky">最小值</th>
+  </tr></thead>
+<tbody>
+  <tr>
+    <td class="tg-0pky">Motion Score</td>
+    <td class="tg-0pky"></td>
+    <td class="tg-0pky">计算视频帧之间的光流向量的幅度作为评分，视频中的运动越强烈，帧之间的变化越大，分数越高</td>
+    <td class="tg-0pky">6.2745</td>
+    <td class="tg-0pky">19.28</td>
+    <td class="tg-0pky">25.23</td>
+    <td class="tg-0pky">0.001623</td>
+  </tr>
+  <tr>
+    <td class="tg-0pky" >FastVQA</td>
+    <td class="tg-0pky"></td>
+    <td class="tg-0pky">使用FastVQAScorer模块得到的评分，视频质量越好，分数越高</td>
+    <td class="tg-0pky">0.4987</td>
+    <td class="tg-0pky">0.04554</td>
+    <td class="tg-0pky">0.9258</td>
+    <td class="tg-0pky">0.007619</td>
+  </tr>
+  <tr>
+    <td class="tg-0pky">FasterVQA</td>
+    <td class="tg-0pky"></td>
+    <td class="tg-0pky">使用FasterVQAScorer模块得到的评分，视频质量越好，分数越高</td>
+    <td class="tg-0pky">0.5134</td>
+    <td class="tg-0pky">0.04558</td>
+    <td class="tg-0pky">0.9066</td>
+    <td class="tg-0pky">0.03686</td>
+  </tr>
+  <tr>
+    <td class="tg-0pky" rowspan="2">DOVER</td>
+    <td class="tg-0pky">technical</td>
+    <td class="tg-0pky">使用DOVERScorer模块得到的评分之一，视频在技术方面的质量越好，分数越高</td>
+    <td class="tg-0pky">-0.1107</td>
+    <td class="tg-0pky">0.001755</td>
+    <td class="tg-0pky">-0.006550</td>
+    <td class="tg-0pky">-0.3175</td>
+  </tr>
+  <tr>
+    <td class="tg-0pky">aesthetic</td>
+    <td class="tg-0pky">使用DOVERScorer模块得到的评分之一，视频在美学方面的质量越好，分数越高</td>
+    <td class="tg-0pky">-0.008419</td>
+    <td class="tg-0pky">0.004569</td>
+    <td class="tg-0pky">0.1869</td>
+    <td class="tg-0pky">-0.2629</td>
+  </tr>
+</tbody></table>
+<!-- - VideoMotionScorer: 计算视频的Motion Score作为评分
+- FastVQAScorer: ECCV 2022 论文 [FAST-VQA: Efficient End-to-end Video Quality Assessment with Fragment Sampling](https://arxiv.org/abs/2207.02595v1)所提出的基于Video Swin Transformer的打分器。
+- FasterVQAScorer: TPAMI 2023 论文 [Neighbourhood Representative Sampling for Efficient End-to-end Video Quality Assessment](https://arxiv.org/abs/2210.05357) 所提出的在FastVQAScorer扩展的打分器。
+- DOVERScorer: ICCV 2023 论文 [Exploring Video Quality Assessment on User Generated Contents from Aesthetic and Technical Perspectives](https://arxiv.org/abs/2211.04894) 提出的基于FastVQAScorer的打分器，同时给出了从技术和美学两个角度的评分 -->
+</section>
+</section>
+<section id="id6">
+<h2>视频-文本评估指标<a class="headerlink" href="#id6" title="Link to this heading"></a></h2>
+<table class="docutils align-default">
+<thead>
+<tr class="row-odd"><th class="head"><p>类别描述</p></th>
+<th class="head"><p>指标列表</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>基于预训练图文模型</p></td>
+<td><p>EMScore, PAC-S</p></td>
+</tr>
+</tbody>
+</table>
+<table class="docutils align-default">
+<thead>
+<tr class="row-odd"><th class="head"><p>名称</p></th>
+<th class="head"><p>评估指标</p></th>
+<th class="head"><p>评估维度</p></th>
+<th class="head"><p>简介</p></th>
+<th class="head"><p>取值范围</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><a class="reference external" href="https://arxiv.org/abs/2111.08919">EMScorer</a></p></td>
+<td><p>基于视频-文本相似度的打分</p></td>
+<td><p>模型</p></td>
+<td><p>基于CLIP的视频-文本打分器，同时支持with-reference和no-reference的打分功能</p></td>
+<td><p>[0,1]</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference external" href="https://arxiv.org/abs/2303.12112">PACScorer</a></p></td>
+<td><p>基于视频-文本相似度的打分</p></td>
+<td><p>模型</p></td>
+<td><p>基于CLIP的视频-文本打分器，在EMScore的基础上对CLIP Encoder进行了调优</p></td>
+<td><p>[0,1]</p></td>
+</tr>
+</tbody>
+</table>
+<section id="id7">
+<h3>参考值<a class="headerlink" href="#id7" title="Link to this heading"></a></h3>
+<p>为更好的提供数据质量参考，我们使用以上指标对VATEX数据集(<a class="reference external" href="https://huggingface.co/datasets/lmms-lab/VATEX">链接</a>)进行评估，得到的指标数值分布如下:</p>
+<table class="tg"><thead>
+  <tr>
+    <th class="tg-0pky">指标</th>
+    <th class="tg-0pky">名称</th>
+    <th class="tg-0pky">简介</th>
+    <th class="tg-0pky">均值</th>
+    <th class="tg-0pky">方差</th>
+    <th class="tg-0pky">最大值</th>
+    <th class="tg-0pky">最小值</th>
+  </tr></thead>
+<tbody>
+  <tr>
+    <td class="tg-0pky" rowspan="3">EMScorer</td>
+    <td class="tg-0pky">figr_F</td>
+    <td class="tg-0pky">使用EMScorer模块得到的评分，视频和文本在细粒度层面的相似度越高，分数越高</td>
+    <td class="tg-0pky">0.2712</td>
+    <td class="tg-0pky">0.0003667</td>
+    <td class="tg-0pky">0.3461</td>
+    <td class="tg-0pky">0.1987</td>
+  </tr>
+  <tr>
+    <td class="tg-0pky">cogr</td>
+    <td class="tg-0pky">使用EMScorer模块得到的评分，视频和文本在粗粒度层面的相似度越高，分数越高</td>
+    <td class="tg-0pky">0.3106</td>
+    <td class="tg-0pky">0.0009184</td>
+    <td class="tg-0pky">0.4144</td>
+    <td class="tg-0pky">0.18</td>
+  </tr>
+    <tr>
+    <td class="tg-0pky">full_F</td>
+    <td class="tg-0pky">使用EMScorer模块得到的评分，取以上两种评分的算术平均数</td>
+    <td class="tg-0pky">0.2909</td>
+    <td class="tg-0pky">0.0005776</td>
+    <td class="tg-0pky">0.3712</td>
+    <td class="tg-0pky">0.3807</td>
+  </tr>
+  <tr>
+    <td class="tg-0pky" rowspan="3">PACScorer</td>
+    <td class="tg-0pky">figr_F</td>
+    <td class="tg-0pky">使用PACScorer模块得到的评分，视频和文本在细粒度层面的相似度越高，分数越高</td>
+    <td class="tg-0pky">0.36553</td>
+    <td class="tg-0pky">0.0004902</td>
+    <td class="tg-0pky">0.4456</td>
+    <td class="tg-0pky">0.2778</td>
+  </tr>
+  <tr>
+    <td class="tg-0pky">cogr</td>
+    <td class="tg-0pky">使用PACScorer模块得到的评分，视频和文本在粗粒度层面的相似度越高，分数越高</td>
+    <td class="tg-0pky">0.4160</td>
+    <td class="tg-0pky">0.001021</td>
+    <td class="tg-0pky">0.5222</td>
+    <td class="tg-0pky">0.2510</td>
+  </tr>
+    <tr>
+    <td class="tg-0pky">full_F</td>
+    <td class="tg-0pky">使用PACScorer模块得到的评分，取以上两种评分的算术平均数</td>
+    <td class="tg-0pky">0.3908</td>
+    <td class="tg-0pky">0.0006854</td>
+    <td class="tg-0pky">0.4761</td>
+    <td class="tg-0pky">0.2681</td>
+  </tr></section>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; 版权所有 2024, Open-DataFlow。</p>
+  </div>
+
+  利用 <a href="https://www.sphinx-doc.org/">Sphinx</a> 构建，使用的 
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">主题</a>
+    由 <a href="https://readthedocs.org">Read the Docs</a> 开发.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>
