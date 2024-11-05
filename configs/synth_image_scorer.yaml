@@ -1,5 +1,6 @@
 model_cache_path: '../ckpt' # Path to cache models
 num_workers: 2
+dependencies: [image]
 
 data:
   image:

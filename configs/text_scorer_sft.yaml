@@ -1,6 +1,7 @@
 # Only some example scorers are listed here. Please refer to all_scorers.yaml for all scorers
 
 model_cache_path: '../ckpt' # Path to cache models
+dependencies: [text]
 
 data:
   text:
