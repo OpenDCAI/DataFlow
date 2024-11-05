@@ -65,6 +65,19 @@ pip install -e .
 
   
 如果您想评估单个模态的数据，可以使用下面的安装代码👇
+
+<details>
+<summary>
+<b>text data eval</b>
+</summary>
+<p>
+
+```bash
+pip install -e .[text]
+pip install flash-attn==2.6.3
+python -m spacy download en_core_web_sm
+```
+
 </p>
 </details>
 
