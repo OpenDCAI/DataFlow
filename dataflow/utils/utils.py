@@ -146,13 +146,23 @@ def new_get_scorer(scorer_name, model_args):
     assert scorer is not None, f"Scorer for {scorer_name} is not found."
     return scorer
 
-
 def calculate_score(save_path=None):
     from ..config import new_init_config
     from dataflow.utils.registry import FORMATTER_REGISTRY
     from dataflow.core import ScoreRecord
 
     cfg = new_init_config()
+    
+    for x in cfg['dependencies']:
+        if x == 'text':
+            import dataflow.Eval.Text
+        elif x == 'image':
+            import dataflow.Eval.image
+        elif x == 'video':
+            import dataflow.Eval.video
+        else:
+            raise ValueError('Please Choose Dependencies in text, image, video!')
+        
 
     dataset_dict = {}
     score_record = ScoreRecord()
@@ -171,5 +181,5 @@ def calculate_score(save_path=None):
         else:
             datasets = dataset_dict[scorer.data_type]
         _, score = scorer(datasets)
-
     score_record.dump_scores(save_path)
+

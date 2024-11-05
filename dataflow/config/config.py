@@ -13,6 +13,7 @@ def new_init_config(args=None):
     # parser.add_argument('--device', type=str, default='cpu', help='Device to use for computation')
     parser.add_argument('--model_cache_path', type=str, default='~/.cache', help='Path to model cache directory')
     parser.add_argument('--num_workers', type=PositiveInt, default=1, help='Number of worker threads')
+    parser.add_argument('--dependencies', type=list[str], default='', help='dependencies for task, please choose some in text, image, video')
 
     try:
         cfg = parser.parse_args(args=args)

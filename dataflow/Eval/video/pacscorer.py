@@ -2,7 +2,6 @@ import torch
 import os
 import clip
 import time
-import gdown
 import numpy as np
 from dataflow.core import VideoTextScorer
 from dataflow.utils.registry import MODEL_REGISTRY
