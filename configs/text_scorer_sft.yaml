@@ -5,7 +5,7 @@ dependencies: [text]
 
 data:
   text:
-    use_hf: True # Whether to use onlined Huggingface dataset, if used, ignore the local data path below
+    use_hf: False # Whether to use onlined Huggingface dataset, if used, ignore the local data path below
     dataset_name: 'yahma/alpaca-cleaned' # Huggingface dataset: dataset name
     dataset_split: 'train' # Huggingface dataset: dataset split
     name: 'default' # Huggingface dataset: subset name
