@@ -98,7 +98,7 @@ pip install transformers==4.44.2
 <b>video data eval</b>
 </summary>
 <p>
-For video data evaluation,
+
 ```bash
 pip install -e .[video]
 ```
