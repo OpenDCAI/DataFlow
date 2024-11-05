@@ -109,7 +109,7 @@ pip install git+https://github.com/MOLYHECI/CLIP.git
 
 </p>
 </details>
-All dependencies can be installed by:
+
 <details>
 <summary>
 <b>All dependencies</b>
