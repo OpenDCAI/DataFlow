@@ -67,6 +67,41 @@ pip install -e .
 
   
 如果您想评估单个模态的数据，可以使用下面的安装代码👇
+</p>
+</details>
+
+<details>
+<summary>
+<b>image data eval</b>
+</summary>
+<p>
+
+```bash
+pip install -e .[image]
+pip install pyiqa==0.1.12
+pip install transformers==4.44.2
+```
+
+</p>
+</details>
+
+
+<details>
+<summary>
+<b>video data eval</b>
+</summary>
+<p>
+
+```bash
+pip install -e .[video]
+```
+When evaluating video-caption data, please run the following command to install modified CLIP for EMScore:
+```
+pip install git+https://github.com/MOLYHECI/CLIP.git
+```
+
+</p>
+</details>
 
 <details>
 <summary>
@@ -84,14 +119,10 @@ pip install transformers==4.44.2
 </p>
 </details>
 
-
-  
 请参考[数据评估文档](#数据评估文档)查看参数的使用规则. 仅使用yaml参数便可以完成数据评估：
 
 ```
-
 python test.py --config [your config file]
-
 ```
 <p align="center">
   <img src="./static/images/example_1.png">
