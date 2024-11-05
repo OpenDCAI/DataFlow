@@ -1,4 +1,4 @@
-from datasets import load_dataset
+import datasets
 import json
 import pyarrow.parquet as pq
 from dataflow.utils.registry import FORMATTER_REGISTRY
@@ -38,7 +38,7 @@ class TextFormatter:
             "name": name                  
         }
         
-        dataset = load_dataset(**{k: v for k, v in load_kwargs.items() if v is not None})
+        dataset = datasets.load_dataset(**{k: v for k, v in load_kwargs.items() if v is not None})
 
         metadata = {
             "description": dataset.info.description if hasattr(dataset, "info") else None,
