@@ -5,10 +5,10 @@ dependencies: [text]
 
 data:
   text:
-    use_hf: True # Whether to use huggingface_dataset, if used, ignore the local data path below
-    dataset_name: 'yahma/alpaca-cleaned'
-    dataset_split: 'train'  
-    name: 'default' 
+    use_hf: False # Whether to use onlined Huggingface dataset, if used, ignore the local data path below
+    dataset_name: 'yahma/alpaca-cleaned' # Huggingface dataset: dataset name
+    dataset_split: 'train' # Huggingface dataset: dataset split
+    name: 'default' # Huggingface dataset: subset name
     
     data_path: 'demos/text_eval/alpaca_5_samples.json'  # Local data path, supports json, jsonl, parquet formats
     formatter: "TextFormatter" # Data loader type

@@ -69,6 +69,8 @@ def recursive_len(scores: dict):
             return recursive_len(v)
         elif isinstance(v, np.ndarray):
             return v.shape[0]
+        elif isinstance(v, list):
+            return len(v)
         else:
             raise ValueError(f"Invalid scores type {type(v)} returned")
         

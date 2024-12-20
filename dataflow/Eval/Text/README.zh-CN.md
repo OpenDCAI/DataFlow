@@ -13,10 +13,10 @@ model_cache_path: '../ckpt' # 模型默认缓存路径
 
 data:
   text:
-    use_hf: False # 是否使用huggingface_dataset，如果使用则忽略下方本地数据地址
-    dataset_name: 'yahma/alpaca-cleaned'
-    dataset_split: 'train'  
-    name: 'default' 
+    use_hf: False # 是否使用在线的Huggingface数据集，如果使用则忽略下方本地数据地址
+    dataset_name: 'yahma/alpaca-cleaned' # Huggingface数据集：数据集名称
+    dataset_split: 'train'  # Huggingface数据集：数据集分区名
+    name: 'default' # Huggingface数据集：数据集子集名
     
     data_path: 'demos/text_eval/fineweb_5_samples.json'  # 本地数据地址，支持json、jsonl、parquet格式
     formatter: "TextFormatter" # 数据加载器类型

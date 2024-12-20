@@ -56,17 +56,63 @@ DataFlow-Eval 是一个数据质量评估系统，可以从多个维度评估数
 
 您可以用如下命令配置conda环境
 ```
-
 conda create -n dataflow python=3.9
 
 conda activate dataflow
 
 pip install -e .
-
 ```
 
   
 如果您想评估单个模态的数据，可以使用下面的安装代码👇
+
+<details>
+<summary>
+<b>text data eval</b>
+</summary>
+<p>
+
+```bash
+pip install -e .[text]
+pip install flash-attn==2.6.3
+python -m spacy download en_core_web_sm
+```
+
+</p>
+</details>
+
+<details>
+<summary>
+<b>image data eval</b>
+</summary>
+<p>
+
+```bash
+pip install -e .[image]
+pip install pyiqa==0.1.12
+pip install transformers==4.44.2
+```
+
+</p>
+</details>
+
+
+<details>
+<summary>
+<b>video data eval</b>
+</summary>
+<p>
+
+```bash
+pip install -e .[video]
+```
+When evaluating video-caption data, please run the following command to install modified CLIP for EMScore:
+```
+pip install git+https://github.com/MOLYHECI/CLIP.git
+```
+
+</p>
+</details>
 
 <details>
 <summary>
@@ -84,14 +130,10 @@ pip install transformers==4.44.2
 </p>
 </details>
 
-
-  
 请参考[数据评估文档](#数据评估文档)查看参数的使用规则. 仅使用yaml参数便可以完成数据评估：
 
 ```
-
 python test.py --config [your config file]
-
 ```
 <p align="center">
   <img src="./static/images/example_1.png">
