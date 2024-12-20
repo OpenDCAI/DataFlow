@@ -6,17 +6,14 @@
 Open-DataFlow-Eval documentation
 ================================
 
-Add your content using ``reStructuredText`` syntax. See the
-`reStructuredText <https://www.sphinx-doc.org/en/master/usage/restructuredtext/index.html>`_
-documentation for details.
+Welcome to Open-DataFlow-Eval's documentation!
 
+This documentation is intended to provide a comprehensive guide to the metrics, APIs, and dataflow used in the Open-DataFlow-Eval project.
 
 .. toctree::
    :maxdepth: 2
-   :caption: Contents:
+   :caption: Open-DataFlow-Eval:
 
-   text_metrics.md
-   image_metrics.md
-   video_metrics.md
-   some-feature.md
+   src/getting_started/index
+   src/metrics/index
 
