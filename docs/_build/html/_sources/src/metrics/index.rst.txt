@@ -4,7 +4,7 @@ Metrics
 Please see docs below for information on the Metrics we provided.
 
 .. toctree::
-   :maxdepth: 2
+   :maxdepth: 1
    :caption: Metrics Documentation:
 
    image_metrics.md
@@ -13,4 +13,4 @@ Please see docs below for information on the Metrics we provided.
    text_metrics.zh-CN.md
    video_metrics.md
    video_metrics.zh-CN.md
-   
+   synth_metrics.md
