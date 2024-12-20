@@ -4,7 +4,7 @@ Metrics
 Please see docs below for information on the Metrics we provided.
 
 .. toctree::
-   :maxdepth: 2
+   :maxdepth: 1
    :caption: Metrics Documentation:
 
    image_metrics.md
