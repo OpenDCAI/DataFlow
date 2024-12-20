@@ -18,4 +18,5 @@ documentation for details.
    text_metrics.md
    image_metrics.md
    video_metrics.md
+   some-feature.md
 
