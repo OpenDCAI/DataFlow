@@ -132,15 +132,6 @@ pip install transformers==4.44.2
 
 </p>
 </details>
-
-请参考[数据评估文档](#数据评估文档)查看参数的使用规则. 仅使用yaml参数便可以完成数据评估：
-
-```
-python test.py --config [your config file]
-```
-<p align="center">
-  <img src="./static/images/example_1.png">
-</p>
   
 ## 快速开始
 ### 快速评估:
@@ -177,6 +168,11 @@ config中的yaml都可以直接跑
 - [视频评估示例](./demos/video_eval/video_eval_example.zh-CN.ipynb)
 - [Video Process Demo](./demos/video_process/video_process_example.ipynb)
 - [视频处理示例](./demos/video_process/video_process_example.zh-CN.ipynb)
+
+评估示例:
+<p align="center">
+  <img src="./static/images/example_1.png">
+</p>
 
 ## 数据评估&处理文档
 
