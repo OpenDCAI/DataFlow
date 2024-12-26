@@ -9,7 +9,7 @@
     <img alt="License: apache-2-0" src="https://img.shields.io/github/license/saltstack/salt" />
 </a>
 <a href="https://github.com/Open-DataFlow/Open-DataFlow-Eval" target="_blank">
-    <img alt="GitHub Stars" src="https://img.shields.io/github/stars/Open-DataFlow/Open-DataFlow-Eval?style=social" />
+    <img alt="GitHub Stars" src="https://img.shields.io/github/stars/Open-DataFlow/DataFlow-Eval-Process?style=social" />
 </a>
 <a href="https://github.com/Open-DataFlow/Open-DataFlow-Eval/issues" target="_blank">
     <img alt="Open Issues" src="https://img.shields.io/github/issues-raw/Open-DataFlow/Open-DataFlow-Eval" />
