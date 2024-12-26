@@ -8,16 +8,16 @@
 <a href="https://opensource.org/license/apache-2-0" target="_blank">
     <img alt="License: apache-2-0" src="https://img.shields.io/github/license/saltstack/salt" />
 </a>
-<a href="https://github.com/GAIR-NLP/ProX" target="_blank">
+<a href="https://github.com/Open-DataFlow/Open-DataFlow-Eval" target="_blank">
     <img alt="GitHub Stars" src="https://img.shields.io/github/stars/Open-DataFlow/Open-DataFlow-Eval?style=social" />
 </a>
-<a href="https://github.com/GAIR-NLP/ProX/issues" target="_blank">
+<a href="https://github.com/Open-DataFlow/Open-DataFlow-Eval/issues" target="_blank">
     <img alt="Open Issues" src="https://img.shields.io/github/issues-raw/Open-DataFlow/Open-DataFlow-Eval" />
 </a>
 
-DataFlow-Eval is a data evaluation system to evaluate data quality from multiple dimensions. We mainly support SOTA algorithms within academic papers with strong theoretical support.
+DataFlow-Eval-Process is a data evaluation and processing system designed to evaluate data quality from multiple dimensions and filter out high-quality data. We mainly support SOTA algorithms within academic papers with strong theoretical support.
 
-We now support text, image, video and multimodality data types.
+We now support text, image, video, and multimodality data types.
 
 ## Table of Contents
 - [DataFlow-Eval](#dataflow-eval)
