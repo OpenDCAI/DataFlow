@@ -97,18 +97,19 @@ def encode_video(video_file, preprocess, model, batch_size, device):
 
     # 提取文件名中的时间区间，例如 "0qOFqf_eRk_000016_000026.mp4"
     match = re.search(r'_(\d{6})_(\d{6})', video_file)
+    cap = cv2.VideoCapture(video_file)
+    fps = cap.get(cv2.CAP_PROP_FPS)  # 获取视频帧率
     if match:
         start_time = int(match.group(1))  # 起始时间（秒）
         end_time = int(match.group(2))    # 结束时间（秒）
+
+        # 将时间转换为帧数
+        start_frame = int(start_time * fps)
+        end_frame = int(end_time * fps)
     else:
-        raise ValueError("无法从视频文件名中提取时间区间")
+        start_frame = 0
+        end_frame = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
 
-    cap = cv2.VideoCapture(video_file)
-    fps = cap.get(cv2.CAP_PROP_FPS)  # 获取视频帧率
-
-    # 将时间转换为帧数
-    start_frame = int(start_time * fps)
-    end_frame = int(end_time * fps)
 
     # 跳转到起始帧
     cap.set(cv2.CAP_PROP_POS_FRAMES, start_frame)

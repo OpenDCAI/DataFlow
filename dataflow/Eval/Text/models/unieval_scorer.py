@@ -1,6 +1,6 @@
 from dataflow.core import TextScorer
-from .UniEval.utils import convert_to_json
-from .UniEval.metric.evaluator import get_evaluator
+from dataflow.Eval.Text.models.UniEval.utils import convert_to_json
+from dataflow.Eval.Text.models.UniEval.metric.evaluator import get_evaluator
 from dataflow.utils.registry import MODEL_REGISTRY
 import torch
 # Unieval multi-dimension quality evaluation

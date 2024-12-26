@@ -27,6 +27,7 @@ import os
 
 import torch
 from transformers import AutoTokenizer
+# from .image_constants import HF_CACHE_DIR, IMAGE_TOKEN_INDEX
 
 def t5_tokenizer_image_token(prompt, tokenizer, image_token_index=-200, return_tensors=None):
     prompt_chunks = [tokenizer(chunk).input_ids for chunk in prompt.split('<image>')]
@@ -63,6 +64,7 @@ def load_pretrained_model(model_cls,
     if padding_side:
         tokenizer_dict['padding_side'] = padding_side
     tokenizer = AutoTokenizer.from_pretrained(tokenizer_path, use_fast=False, **tokenizer_dict)
+    # tokenizer.pad_token = tokenizer.unk_token # could be redundant
 
     model = model_cls.from_pretrained(model_path, cache_dir=cache_dir)
     
@@ -109,7 +111,7 @@ def load_pretrained_model(model_cls,
 
 # --------- fleur ---------
 
-def fleur_collate(batch):
+def fleur_collate_fn(batch):
     id = [item[0] for item in batch]
     images = [item[1] for item in batch]
     captions = [item[2] for item in batch]
@@ -127,3 +129,12 @@ def download_hf_model(model_cache_path, hf_model_path):
         print(result.stderr)
     else:
         print(f"Downloaded {hf_model_path} to {model_cache_path}")
+
+
+# --------- image process ---------
+def image_collate_fn(batch):
+    # id = [item[0] for item in batch]
+    images = [item for item in batch]
+
+    # return id, images
+    return images

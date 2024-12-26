@@ -1,10 +1,7 @@
-import json
 import os
-import cv2
-import torch
+import tempfile
 import numpy as np
-from decord import VideoReader
-from .dataflow_dataset import DataFlowDataset, DataFlowSubset
+from .dataflow_dataset import DataFlowDataset
 
 class PureVideoDataset(DataFlowDataset):
 
@@ -27,3 +24,15 @@ class PureVideoDataset(DataFlowDataset):
 
     def __len__(self):
         return len(self.meta_data)
+    
+    def get_dump_data(self):
+        return self.meta_data    
+    
+    def dump(self, save_path):
+        import json
+        import uuid
+        if os.path.exists(save_path):
+            save_file = save_path if os.path.isfile(save_path) else save_path + uuid.uuid4().hex + '.json'
+            with open(save_file, 'w+') as f:
+                json.dump(self.meta_data)
+                

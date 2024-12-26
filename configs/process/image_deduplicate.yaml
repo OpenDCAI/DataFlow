@@ -1,0 +1,22 @@
+model_cache_path: '../ckpt' # Path to cache models
+num_workers: 2
+dependencies: [image]
+save_path: "./processed.jsonl"
+
+
+data:
+  image:
+    meta_data_path: "demos/image_process/image.json"
+    data_path: "demos/image_process/images"
+    image_key: 'image'
+    formatter: 'PureImageFormatter'
+
+processors:
+  ImagePHashDeduplicator:
+    threshold: 13 # hamming distance between two images below which retrieved duplicates are valid. (must be an int between 0 and 64). 
+  ImageDHashDeduplicator:
+    threshold: 13 # hamming distance between two images below which retrieved duplicates are valid. (must be an int between 0 and 64). 
+  ImageWHashDeduplicator:
+    threshold: 13 # hamming distance between two images below which retrieved duplicates are valid. (must be an int between 0 and 64). 
+  ImageAHashDeduplicator:
+    threshold: 13 # hamming distance between two images below which retrieved duplicates are valid. (must be an int between 0 and 64). 

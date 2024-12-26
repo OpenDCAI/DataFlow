@@ -1,8 +1,8 @@
 from dataflow.core import TextScorer
 from datasets import Dataset
 from dataflow.utils.registry import MODEL_REGISTRY
-from .Qurating.qurater_annotate import ModelAnnotator
-from .Qurating.qurater_annotate import TokenizeAndChunk
+from dataflow.Eval.Text.models.Qurating.qurater_annotate import ModelAnnotator
+from dataflow.Eval.Text.models.Qurating.qurater_annotate import TokenizeAndChunk
 import torch
 
 # Qurating text quality evaluation
@@ -17,6 +17,7 @@ class QuratingScorer(TextScorer):
         self.map_batch_size = args_dict.get('map_batch_size')
         self.batch_size = -1 
         self.num_workers = args_dict.get('num_workers', 1)
+        self.model_cache_dir = args_dict.get('model_cache_dir') 
         self.labels = args_dict.get('labels', [])
         self.device_batch_size = args_dict.get('device_batch_size')
         self.device = args_dict.get('device', 'cuda' if torch.cuda.is_available() else 'cpu')
@@ -29,14 +30,14 @@ class QuratingScorer(TextScorer):
         batch_dict = {'text': input_texts}
         dataset = Dataset.from_dict(batch_dict)
         dataset = dataset.map(
-            TokenizeAndChunk(self.model, 'text', self.tokens_field, self.tokens),
+            TokenizeAndChunk(self.model, 'text', self.tokens_field, self.tokens, self.model_cache_dir),
             batched=True,
             batch_size=self.map_batch_size,
             num_proc=self.num_workers,
             remove_columns=dataset.column_names
         )
         dataset = dataset.map(
-            ModelAnnotator(self.model, self.labels, self.device_batch_size, self.device),
+            ModelAnnotator(self.model, self.labels, self.device_batch_size, self.device, self.model_cache_dir),
             batched=True,
             with_indices=True,
             batch_size=self.map_batch_size,

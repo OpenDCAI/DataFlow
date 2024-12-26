@@ -1,7 +1,7 @@
 import pyiqa
 from dataflow.core.scorer import ImageScorer
 from dataflow.utils.registry import MODEL_REGISTRY
-from ...utils.image_utils import pyiqa_image_preprocess
+from dataflow.utils.image_utils import pyiqa_image_preprocess
 
 TYPE_KEY = "type"
 

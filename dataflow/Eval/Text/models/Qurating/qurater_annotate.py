@@ -6,13 +6,13 @@ import argparse
 import numpy as np
 
 class TokenizeAndChunk:
-    def __init__(self, tokenizer_name, text_field, tokens_field, tokens):
+    def __init__(self, tokenizer_name, text_field, tokens_field, tokens, model_cache_dir):
         self.tokens = tokens
         self.tokenizer_name = tokenizer_name
         self.text_field = text_field
         self.tokens_field = tokens_field
 
-        self.tokenizer = AutoTokenizer.from_pretrained(tokenizer_name, use_fast=True)
+        self.tokenizer = AutoTokenizer.from_pretrained(tokenizer_name, use_fast=True, cache_dir = model_cache_dir)
         self.tokenizer.pad_token_id = 0
 
     def __getstate__(self):
@@ -55,7 +55,7 @@ class TokenizeAndChunk:
 
 
 class ModelAnnotator:
-    def __init__(self, model_name, labels, device_batch_size, device):
+    def __init__(self, model_name, labels, device_batch_size, device, model_cache_dir):
 
         self.model_name = model_name
         self.labels = labels
@@ -63,7 +63,8 @@ class ModelAnnotator:
 
         self.model = LlamaForSequenceClassification.from_pretrained(
             self.model_name,
-            torch_dtype=torch.bfloat16)
+            torch_dtype=torch.bfloat16,
+            cache_dir=model_cache_dir)
         self.model.config.pad_token_id = 0
         self.model.eval()
 

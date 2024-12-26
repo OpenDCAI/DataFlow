@@ -1,6 +1,6 @@
 from typing import Optional, Union, Generator, List, Dict
 import pandas as pd
-from dataflow.data.dataflow_dataset import DataFlowDataset
+from dataflow.data.dataflow_dataset import DataFlowDataset, DataFlowSubset
 import pandas as pd
 import hashlib
 import json
@@ -28,9 +28,9 @@ class TextDataset(DataFlowDataset):
     def __len__(self):
         return len(self.dataset)
     
-    def filter(self, labels):
-        indices = np.where(labels == 1)[0]
-        return TextSubset(self, list(indices))    
+    # def filter(self, labels):
+    #     indices = np.where(labels == 1)[0]
+    #     return TextSubset(self, list(indices))    
     
     def compute_pandas_digest(self, df: pd.DataFrame) -> str:
         df_str = df.to_string(index=False, header=False)
@@ -86,28 +86,28 @@ class TextDataset(DataFlowDataset):
     def get_metadata(self):
         return self.metadata
     
-    def dump(self, save_path):
-        os.makedirs(os.path.dirname(save_path), exist_ok=True)
-        with open(save_path, 'w', encoding='utf-8') as f:
-            json.dump(self.to_dict(), f, indent=4, ensure_ascii=False)
-        print(f"Dataset saved to {save_path}")
+    def get_dump_data(self):
+        return self.dataset
 
 
-class TextSubset(TextDataset):
-    def __init__(self, dataset: TextDataset, indices: list[int]) -> None:
-        super().__init__(dataset=dataset.dataset, keys=dataset.keys, metadata=dataset.metadata)
-        self.indices = indices 
+# class TextSubset(TextDataset):
+#     def __init__(self, dataset: TextDataset, indices: list[int]) -> None:
+#         super().__init__(dataset=dataset.dataset, keys=dataset.keys, metadata=dataset.metadata)
+#         self.indices = indices 
 
-    def __getitem__(self, idx: Union[int, list[int]]):
-        if isinstance(idx, slice):
-            start, stop, step = idx.start, idx.stop, idx.step
-            sliced_indices = self.indices[start:stop:step]
-            return TextSubset(self, sliced_indices)
-        elif isinstance(idx, list):
-            subset_indices = [self.indices[i] for i in idx]
-            return TextSubset(self, subset_indices)
-        else:
-            return self.dataset[self.indices[idx]]
+#     def __getitem__(self, idx: Union[int, list[int]]):
+#         if isinstance(idx, slice):
+#             start, stop, step = idx.start, idx.stop, idx.step
+#             sliced_indices = self.indices[start:stop:step]
+#             return TextSubset(self, sliced_indices)
+#         elif isinstance(idx, list):
+#             subset_indices = [self.indices[i] for i in idx]
+#             return TextSubset(self, subset_indices)
+#         else:
+#             return self.dataset[int(self.indices[idx])]
 
-    def __len__(self):
-        return len(self.indices)
+#     def __len__(self):
+#         return len(self.indices)
+    
+#     def get_indices(self):
+#         return self.indices

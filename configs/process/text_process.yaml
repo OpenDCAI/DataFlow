@@ -1,0 +1,302 @@
+model_cache_path: '../ckpt' # Path to cache models
+dependencies: [text]
+save_path: "./processed.jsonl"
+
+data:
+  text:
+    use_hf: False # Whether to use huggingface_dataset, if used, ignore the local data path below
+    dataset_name: 'yahma/alpaca-cleaned'
+    dataset_split: 'train'  
+    name: 'default' 
+    revision: null
+    data_path: 'demos/text_eval/fineweb_5_samples.json'  # Local data path, supports json, jsonl, parquet formats
+    formatter: "TextFormatter" # Data loader type
+
+    keys: 'text' # Key name to be processed, for sft data, it can be specified as ['instruction','input','output']
+
+processors:
+  LowercaseRefiner: {}
+  RemovePunctuationRefiner: {}
+  RemoveNumberRefiner: {}
+  RemoveExtraSpacesRefiner: {}
+  RemoveRepetitionsPunctuationRefiner: {}
+  RemoveEmojiRefiner: {} 
+  RemoveEmoticonsRefiner: {}
+  RemoveContractionsRefiner: {} 
+  HtmlUrlRemoverRefiner: {}  
+  TextNormalizationRefiner: {}  
+  NERRefiner: {}
+  RemoveStopwordsRefiner: {}
+  TokenizerRefiner: {}
+  SpellingCorrectionRefiner:
+    max_edit_distance: 2        
+    prefix_length: 7    
+  StemmingLemmatizationRefiner:
+    method: "stemming"   #"stemming" or "lemmatization"
+  HashDeduplicator: 
+    hash_func: 'md5'
+  SemDeduplicator: 
+    model_path: 'sentence-transformers/all-MiniLM-L6-v2'
+    eps: 0.05
+    device: 'cuda:0'
+  SimHashDeduplicator: 
+    fingerprint_size: 64
+    bound: 0.1
+  CCNetDeduplicator: 
+    bit_length: 64 # should be a multiple of 8
+  NgramHashDeduplicator: 
+    ngrams: 5
+    hash_func: 'md5'
+    diff_size: 4 # diff data points by the number of diff_size hash values 
+  MinHashDeduplicator:
+    num_perm: 128
+    threshold: 0.9
+    use_n_gram: True
+    n_gram: 5
+  BlocklistFilter:
+    language: 'en' # Please refer to https://github.com/LDNOOBW/List-of-Dirty-Naughty-Obscene-and-Otherwise-Bad-Words?tab=readme-ov-file and download the blocklist file
+    threshold: 1
+  WordNumberFilter:
+    min_words: 20
+    max_words: 100000
+  ColonEndFilter: {}
+  SentenceNumberFilter: 
+    min_sentences: 3
+    max_sentences: 7500
+  LineEndWithEllipsisFilter:
+    threshold: 0.3
+  LineEndWithTerminalFilter:
+    threshold: 0.6
+  ContentNullFilter: {}
+  MeanWordLengthFilter: 
+    min_length: 3
+    max_length: 10
+  SymbolWordRatioFilter:
+    threshold: 0.4
+  AlphaWordsFilter: 
+    threshold: 0.6
+  HtmlEntityFilter: {}
+  IDCardFilter: {}
+  NoPuncFilter: 
+    threshold: 112
+  SpecialCharacterFilter: {}
+  WatermarkFilter:
+    watermarks:
+      - "Copyright"
+      - "Watermark"
+      - "Confidential"
+  StopWordFilter:
+    threshold: 0.06
+  CurlyBracketFilter:
+    threshold: 0.025
+  CapitalWordsFilter: 
+    threshold: 0.2
+  LoremIpsumFilter:
+    threshold: 3e-08
+  UniqueWordsFilter:
+    threshold: 0.1
+  CharNumberFilter: 
+    threshold: 100
+  LineStartWithBulletpointFilter:
+    threshold: 0.9
+  LineWithJavascriptFilter:
+    threshold: 3
+  PIIAnonymizeRefiner:
+    language: 'en'
+    device: 'cuda:0'
+  LanguageFilter: # Please refer to https://github.com/facebookresearch/flores/tree/main/flores200#languages-in-flores-200 for language labels
+    allowed_languages:
+      - '__label__eng_Latn' # English
+      - '__label__zho_Hans' # Chinese(Simplified)
+  QuratingFilter:
+    min_scores:
+      writing_style: -9
+      required_expertise: -9
+      facts_and_trivia: -9
+      educational_value: -9
+    max_scores:
+      writing_style: 9
+      required_expertise: 9
+      facts_and_trivia: 9
+      educational_value: 9
+    scorer_args:
+      model: 'princeton-nlp/QuRater-1.3B'
+      tokens_field: 'input_ids'
+      tokens: 512
+      map_batch_size: 512
+      num_workers: 1
+      device_batch_size: 16
+      device: 'cuda:0'
+      labels:
+        - writing_style
+        - required_expertise
+        - facts_and_trivia
+        - educational_value
+  PresidioFilter:
+    min_score: 0
+    max_score: 5
+    scorer_args:
+      language: 'en'
+      device: 'cuda:0'
+  RMFilter:
+    min_score: 0.2
+    max_score: 0.8
+    scorer_args:
+      model_name: 'OpenAssistant/reward-model-deberta-v3-large-v2'
+      device: 'cuda:0'
+      batch_size: 64
+  PerplexityFilter:
+      min_score: 10.0
+      max_score: 100.0
+      scorer_args:
+        model_path: 'dataflow/Eval/Text/models/Kenlm/wikipedia'
+        language: 'en'
+  FineWebEduFilter:
+    min_score: 0.4
+    max_score: 0.9
+    scorer_args:
+      model_name: 'HuggingFaceTB/fineweb-edu-classifier'
+      device: 'cuda:0'
+  DebertaV3Filter:
+    allowed_scores:
+      - Medium
+      - High
+    scorer_args:
+      model_name: 'nvidia/quality-classifier-deberta'
+      device: 'cuda:0'
+      batch_size: 16
+  InstagFilter:
+    min_score: 3
+    max_score: 10
+    scorer_args:
+      model_path: 'OFA-Sys/InsTagger'
+      temperature: 0
+      do_sample: False
+      max_new_tokens: 2048
+      num_return_sequences: 1
+      return_dict_in_generate: True
+      device: 'cuda:0'
+  TextbookFilter:
+    min_score: 1
+    max_score: 2
+    scorer_args:
+      model_repo: 'kenhktsui/llm-data-textbook-quality-fasttext-classifer-v2'
+      model_file: 'model.bin'
+      low_score: 0
+      mid_score: 1
+      high_score: 2
+      batch_size: 8
+  AlpagasusFilter:
+    min_score: 4
+    max_score: 5
+    scorer_args:
+      api_key: 'Your Key'
+      model: 'gpt-3.5-turbo'
+      dimension: 'quality'
+  PerspectiveFilter:
+    min_score: 0
+    max_score: 0.1
+    scorer_args:
+      api_key: 'Your Key'
+      api_name: 'commentanalyzer'
+      api_version: 'v1alpha1'
+      discovery_service_url: 'https://commentanalyzer.googleapis.com/$discovery/rest?version=v1alpha1'
+      static_discovery: False
+  TreeinstructFilter:
+    min_score: 7
+    max_score: 100
+    scorer_args:
+      api_key: 'Your Key'
+      model: 'gpt-3.5-turbo'
+  SuperfilteringFilter:                             
+    min_score: 0.7                                         
+    max_score: 10000.0                                      
+    scorer_args:
+      device: 'cuda:0'
+      model_name: 'gpt2'
+      prompt: 'none'
+      max_length: 1024
+  NgramFilter:
+    min_score: 0.99
+    max_score: 1.0
+    scorer_args:
+      ngrams: 5
+  LexicalDiversityFilter:
+    min_scores:
+      mtld: 0.7
+      hdd: 0.5
+    max_scores:
+      mtld: 1.0
+      hdd: 1.0
+    scorer_args:
+      metrics_to_keep:
+        mtld: True
+        hdd: True
+  LangkitFilter:
+    min_scores:
+      flesch_reading_ease: 0
+      automated_readability_index: 0
+      aggregate_reading_level: 1.0
+      syllable_count: 100
+      lexicon_count: 200
+      sentence_count: 5
+      character_count: 500
+      letter_count: 400
+      polysyllable_count: 50
+      monosyllable_count: 150
+      difficult_words: 10
+    max_scores:
+      flesch_reading_ease: 10.0
+      automated_readability_index: 15.0
+      aggregate_reading_level: 12.0
+      syllable_count: 200
+      lexicon_count: 400
+      sentence_count: 50
+      character_count: 2000
+      letter_count: 1500
+      polysyllable_count: 100
+      monosyllable_count: 300
+      difficult_words: 50
+    scorer_args:
+      metrics_to_keep:
+        flesch_reading_ease: True
+        automated_readability_index: True
+        aggregate_reading_level: True
+        syllable_count: True
+        lexicon_count: True
+        sentence_count: True
+        character_count: True
+        letter_count: True
+        polysyllable_count: True
+        monosyllable_count: True
+        difficult_words: True
+  UnievalFilter:
+    min_scores:
+      fluency: 0.6
+      naturalness: 0.5
+      understandability: 0.7
+    max_scores:
+      fluency: 1.0
+      naturalness: 1.0
+      understandability: 1.0
+    scorer_args:
+      device: 'cuda:0'
+      metrics_to_keep:
+        fluency: True
+        naturalness: True
+        understandability: True
+  DeitaComplexityFilter:
+    min_score: 1                                        
+    max_score: 5                                      
+    scorer_args:
+      device: 'cuda:0' 
+      model_name: 'hkust-nlp/deita-complexity-scorer' 
+      max_length: 512
+  DeitaQualityFilter:
+    min_score: 1                                         
+    max_score: 5                                     
+    scorer_args:
+      device: 'cuda:0'
+      model_name: 'hkust-nlp/deita-quality-scorer'
+      max_length: 512
+  

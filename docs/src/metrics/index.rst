@@ -13,4 +13,5 @@ Please see docs below for information on the Metrics we provided.
    text_metrics.zh-CN.md
    video_metrics.md
    video_metrics.zh-CN.md
-   synth_metrics.md
+   gen_text_metrics.md
+   gen_text_metrics.zh-CN.md

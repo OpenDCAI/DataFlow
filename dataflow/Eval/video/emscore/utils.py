@@ -53,18 +53,18 @@ def encode_video(video_file, preprocess, model, batch_size, device):
 
     # 提取文件名中的时间区间，例如 "0qOFqf_eRk_000016_000026.mp4"
     match = re.search(r'_(\d{6})_(\d{6})', video_file)
+    cap = cv2.VideoCapture(video_file)
+    fps = cap.get(cv2.CAP_PROP_FPS)  # 获取视频帧率
     if match:
         start_time = int(match.group(1))  # 起始时间（秒）
         end_time = int(match.group(2))    # 结束时间（秒）
+
+        # 将时间转换为帧数
+        start_frame = int(start_time * fps)
+        end_frame = int(end_time * fps)
     else:
-        raise ValueError("无法从视频文件名中提取时间区间")
-
-    cap = cv2.VideoCapture(video_file)
-    fps = cap.get(cv2.CAP_PROP_FPS)  # 获取视频帧率
-
-    # 将时间转换为帧数
-    start_frame = int(start_time * fps)
-    end_frame = int(end_time * fps)
+        start_frame = 0
+        end_frame = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
 
     # 跳转到起始帧
     cap.set(cv2.CAP_PROP_POS_FRAMES, start_frame)
@@ -114,55 +114,8 @@ def encode_video(video_file, preprocess, model, batch_size, device):
     time_diff = image_embed_end_time - image_embed_start_time
     print(f"Image embedding done in {time_diff:.2f} seconds")
 
-    # 保存特征到 .pt 文件
- #   save_dir = '/cpfs/29f69eb5e2e60f26/user/sft_intern/czr/emscore-main/new_VATEX_EVAL_FEAT'
- #   video_name = os.path.basename(video_file).split('.')[0]  # 提取视频文件名
- #   save_path = os.path.join(save_dir, f"{video_name}.pt")   # 创建保存路径
- #   torch.save(image_features, save_path)  # 保存特征到 .pt 文件
 
     return image_features, vid_feature
-# def encode_video(video_file, preprocess, model, batch_size, device):
-
-#     cv_start_time = time.perf_counter()
-#     cap = cv2.VideoCapture(video_file)
-#     frameCount = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
-#     images = []
-#     count = 0
-#     ret = True
-    
-#     while (count < frameCount and ret):
-#         ret, frame = cap.read()
-#         if not ret:  # if file is empty break loop
-#             break
-#         frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-#         images.append(preprocess(Image.fromarray(frame_rgb).convert("RGB")))
-#         count += 1
-    
-#     cv_end_time = time.perf_counter()
-#     time_diff = cv_end_time-cv_start_time
-#     # print(f"cv done in {time_diff:.2f} seconds")
-
-
-#     image_embed_start_time = time.perf_counter()
-#     image_input = torch.tensor(np.stack(images)).to(device)
-#     image_features_list = []
-#     # bs = 256
-#     with torch.no_grad():
-#         n_inter = math.ceil(len(image_input)/batch_size)
-#         for i in range(n_inter):
-#             image_features = model.encode_image(image_input[i*batch_size: (i+1)*batch_size]).float()
-#             image_features_list.append(image_features)
-#     image_features = torch.cat(image_features_list, dim=0)
-#     image_features /= image_features.norm(dim=-1, keepdim=True)
-#     cap.release()
-
-#     vid_feature = normalize_matrix(torch.mean(image_features, dim=0, keepdim=True)).squeeze()
-
-#     image_embed_end_time = time.perf_counter()
-#     time_diff = image_embed_end_time - image_embed_start_time
-#     print(f"image embed done in {time_diff:.2f} seconds")
-
-#     return image_features, vid_feature
 
 def encode_text(vid_caps, model, tokenizer, idf_dict, device):
     text_input = tokenizer(vid_caps).to(device=device)

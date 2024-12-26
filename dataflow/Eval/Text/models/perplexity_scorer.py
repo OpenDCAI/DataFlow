@@ -1,6 +1,6 @@
 from dataflow.core import TextScorer
 from dataflow.utils.registry import MODEL_REGISTRY
-from .Kenlm.model import KenlmModel
+from dataflow.Eval.Text.models.Kenlm.model import KenlmModel
 
 # Kenlm models perplexity evaluation
 @MODEL_REGISTRY.register()

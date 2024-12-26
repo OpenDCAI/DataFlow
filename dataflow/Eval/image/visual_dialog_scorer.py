@@ -7,7 +7,7 @@ import os
 from dataflow.core.scorer import ImageTextScorer
 from dataflow.utils.registry import MODEL_REGISTRY
 from dataflow.utils.image_utils import download_hf_model
-from ...utils.image_utils import fleur_collate_fn 
+from dataflow.utils.image_utils import fleur_collate_fn 
 
 @MODEL_REGISTRY.register()
 class VisualDialogScorer(ImageTextScorer):

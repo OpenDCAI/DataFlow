@@ -7,7 +7,7 @@ import torch
 from tqdm import tqdm
 from scipy import linalg
 from torch.nn.functional import adaptive_avg_pool2d
-from .fid.inception import InceptionV3
+from dataflow.Eval.image.fid.inception import InceptionV3
 from dataflow.core.scorer import GenImageScorer
 from dataflow.utils.registry import MODEL_REGISTRY
 

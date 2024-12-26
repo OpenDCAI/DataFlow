@@ -9,8 +9,8 @@ import os
 
 from dataflow.core.scorer import ImageTextScorer
 from dataflow.utils.registry import MODEL_REGISTRY
-from ...utils.image_utils import fleur_collate
-from ...utils.utils import download_model_from_hf
+from dataflow.utils.image_utils import fleur_collate_fn 
+from dataflow.utils.utils import download_model_from_hf
 
 
 @MODEL_REGISTRY.register()

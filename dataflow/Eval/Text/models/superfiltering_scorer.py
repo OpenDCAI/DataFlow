@@ -1,6 +1,6 @@
 from dataflow.core import TextScorer
 from dataflow.utils.registry import MODEL_REGISTRY
-from .Superfiltering.data_analysis import get_perplexity_and_embedding_whole_text, get_perplexity_and_embedding_part_text
+from dataflow.Eval.Text.models.Superfiltering.data_analysis import get_perplexity_and_embedding_whole_text, get_perplexity_and_embedding_part_text
 from transformers import AutoTokenizer, AutoModelForCausalLM
 from tqdm import tqdm
 import torch

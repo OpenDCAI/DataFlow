@@ -1,0 +1,21 @@
+model_cache_path: '../ckpt' # Path to cache models
+num_workers: 2
+dependencies: [image]
+
+data:
+  image_caption:
+    meta_data_path: "demos/image_eval/image_text.json"
+    data_path: "demos/image_eval/images"
+    image_key: 'image'
+    image_caption_key: 'caption'
+    id_key: 'id'
+    formatter: 'ImageCaptionFormatter'
+
+scorers:
+  ClipScorer:
+      batch_size: 2
+      device: "cuda"
+  LongClipScorer:
+      model_size: B
+      batch_size: 2
+      device: "cuda"

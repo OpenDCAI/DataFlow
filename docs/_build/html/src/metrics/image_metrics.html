@@ -1,22 +1,22 @@
-
-
 <!DOCTYPE html>
-<html class="writer-html5" lang="zh-CN">
+<html class="writer-html5" lang="zh-CN" >
 <head>
   <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Image Data Evaluation Metrics &mdash; Open-DataFlow-Eval 0.1 文档</title>
-      <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=92fd9be5" />
-      <link rel="stylesheet" type="text/css" href="../../_static/css/theme.css?v=e59714d7" />
-
+      <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../../_static/css/theme.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
   
-      <script src="../../_static/jquery.js?v=5d32c60e"></script>
-      <script src="../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
-      <script data-url_root="../../" id="documentation_options" src="../../_static/documentation_options.js?v=04b44b89"></script>
-      <script src="../../_static/doctools.js?v=888ff710"></script>
-      <script src="../../_static/sphinx_highlight.js?v=4825356b"></script>
-      <script src="../../_static/translations.js?v=beaddf03"></script>
+        <script src="../../_static/jquery.js?v=5d32c60e"></script>
+        <script src="../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+        <script src="../../_static/documentation_options.js?v=7c91f8fd"></script>
+        <script src="../../_static/doctools.js?v=9a2dae69"></script>
+        <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
+        <script src="../../_static/translations.js?v=beaddf03"></script>
     <script src="../../_static/js/theme.js"></script>
     <link rel="index" title="索引" href="../../genindex.html" />
     <link rel="search" title="搜索" href="../../search.html" />
@@ -62,6 +62,8 @@
 <li class="toctree-l2"><a class="reference internal" href="text_metrics.zh-CN.html">文本数据评估指标</a></li>
 <li class="toctree-l2"><a class="reference internal" href="video_metrics.html">Video Data Evaluation Metrics</a></li>
 <li class="toctree-l2"><a class="reference internal" href="video_metrics.zh-CN.html">视频数据评估指标</a></li>
+<li class="toctree-l2"><a class="reference internal" href="gen_text_metrics.html">Evaluation Metrics for Generated Text</a></li>
+<li class="toctree-l2"><a class="reference internal" href="gen_text_metrics.zh-CN.html">生成文本评估指标</a></li>
 </ul>
 </li>
 </ul>
@@ -92,16 +94,16 @@
            <div itemprop="articleBody">
              
   <section id="image-data-evaluation-metrics">
-<h1>Image Data Evaluation Metrics<a class="headerlink" href="#image-data-evaluation-metrics" title="此标题的永久链接"></a></h1>
+<h1>Image Data Evaluation Metrics<a class="headerlink" href="#image-data-evaluation-metrics" title="Link to this heading"></a></h1>
 <!-- Use `dataflow.list_image_eval_metrics()` to print all available image evaluation metrics.
 ```python
 import dataflow
 dataflow.list_image_eval_metrics()
 ``` -->
 <section id="pure-image-evaluation-metrics">
-<h2>Pure Image Evaluation Metrics<a class="headerlink" href="#pure-image-evaluation-metrics" title="此标题的永久链接"></a></h2>
+<h2>Pure Image Evaluation Metrics<a class="headerlink" href="#pure-image-evaluation-metrics" title="Link to this heading"></a></h2>
 <section id="metric-classification">
-<h3>Metric Classification<a class="headerlink" href="#metric-classification" title="此标题的永久链接"></a></h3>
+<h3>Metric Classification<a class="headerlink" href="#metric-classification" title="Link to this heading"></a></h3>
 <table class="docutils align-default">
 <thead>
 <tr class="row-odd"><th class="head"><p>Category Description</p></th>
@@ -122,9 +124,9 @@ dataflow.list_image_eval_metrics()
 </table>
 </section>
 <section id="evaluation-metrics-for-real-images">
-<h3>Evaluation Metrics for Real Images<a class="headerlink" href="#evaluation-metrics-for-real-images" title="此标题的永久链接"></a></h3>
+<h3>Evaluation Metrics for Real Images<a class="headerlink" href="#evaluation-metrics-for-real-images" title="Link to this heading"></a></h3>
 <section id="metric-introduction">
-<h4>Metric Introduction<a class="headerlink" href="#metric-introduction" title="此标题的永久链接"></a></h4>
+<h4>Metric Introduction<a class="headerlink" href="#metric-introduction" title="Link to this heading"></a></h4>
 <p>This repository uses non-reference (NR) algorithms from the <a class="reference external" href="https://github.com/chaofengc/IQA-PyTorch">pyiqa</a> package for pure image data quality assessment. Introductions to each evaluation metric can be found in the <a class="reference external" href="https://github.com/chaofengc/IQA-PyTorch/blob/main/docs/ModelCard.md">Py-IQA Model Card</a>.</p>
 <p>Note: When the same metric uses different training datasets, we distinguish them using <code class="docutils literal notranslate"><span class="pre">Metric</span> <span class="pre">Name-Dataset</span> <span class="pre">Name</span></code>. For example, <code class="docutils literal notranslate"><span class="pre">arniqa-csiq</span></code> uses <code class="docutils literal notranslate"><span class="pre">csiq</span></code> as the dataset name. When the dataset name is not specified, it defaults to <code class="docutils literal notranslate"><span class="pre">koniq</span></code>, such as <code class="docutils literal notranslate"><span class="pre">arniqa</span></code> which corresponds to the <code class="docutils literal notranslate"><span class="pre">koniq</span></code> dataset.</p>
 <table class="docutils align-default">
@@ -282,7 +284,7 @@ dataflow.list_image_eval_metrics()
 </table>
 </section>
 <section id="reference-values">
-<h4>Reference Values<a class="headerlink" href="#reference-values" title="此标题的永久链接"></a></h4>
+<h4>Reference Values<a class="headerlink" href="#reference-values" title="Link to this heading"></a></h4>
 <p>To better provide data quality references, we have evaluated the MSCOCO 2017 train using the above metrics, and the distribution of metric values obtained is as follows:</p>
 <table class="tg"><thead>
   <tr>
@@ -632,7 +634,7 @@ dataflow.list_image_eval_metrics()
 </section>
 </section>
 <section id="evaluation-metrics-for-generated-images">
-<h3>Evaluation Metrics for Generated Images<a class="headerlink" href="#evaluation-metrics-for-generated-images" title="此标题的永久链接"></a></h3>
+<h3>Evaluation Metrics for Generated Images<a class="headerlink" href="#evaluation-metrics-for-generated-images" title="Link to this heading"></a></h3>
 <table class="docutils align-default">
 <thead>
 <tr class="row-odd"><th class="head"><p>Metric</p></th>
@@ -667,49 +669,11 @@ dataflow.list_image_eval_metrics()
 </tr>
 </tbody>
 </table>
-<section id="id1">
-<h4>Reference Values<a class="headerlink" href="#id1" title="此标题的永久链接"></a></h4>
-<p>To better provide data quality references, we used four models: flux-dev, flux-schnell, stable-diffusion-3-medium, and sdxl, to test 500 randomly selected image-caption pairs from the LLaVA Pretrain dataset. Each model generated images based on the given captions, and their quality was comprehensively assessed using the following three indicators. Here are the results:</p>
-<table class="tg"><thead>
-  <tr>
-    <th class="tg-0pky">Model Name</th>
-    <th class="tg-0pky">Inception Score (IS)</th>
-    <th class="tg-0pky">Fréchet Inception Distance (FID)</th>
-    <th class="tg-0pky">Kernel Inception Distance (KID)</th>
-  </tr></thead>
-<tbody>
-  <tr>
-    <td class="tg-0pky">flux-dev</td>
-    <td class="tg-0pky">7.195 ± 0.809</td>
-    <td class="tg-0pky">101.572</td>
-    <td class="tg-0pky">0.00903 ± 0.00069</td>
-  </tr>
-  <tr>
-    <td class="tg-0pky">flux-schnell</td>
-    <td class="tg-0pky">6.193 ± 0.546</td>
-    <td class="tg-0pky">102.739</td>
-    <td class="tg-0pky">0.00667 ± 0.00055</td>
-  </tr>
-  <tr>
-    <td class="tg-0pky">stable-diffusion-3-medium</td>
-    <td class="tg-0pky">6.740 ± 0.582</td>
-    <td class="tg-0pky">100.235</td>
-    <td class="tg-0pky">0.00609 ± 0.00056</td>
-  </tr>
-  <tr>
-    <td class="tg-0pky">sdxl</td>
-    <td class="tg-0pky">6.809 ± 0.994</td>
-    <td class="tg-0pky">112.807</td>
-    <td class="tg-0pky">0.01051 ± 0.00065</td>
-  </tr>
-</tbody></table>
-Stable-diffusion-3-medium performed the best in terms of FID, indicating that its generated images are statistically closest to real images. Flux-dev showed the best results in the IS score, reflecting higher diversity and clarity in images. Similarly, stable-diffusion-3-medium also exhibited superior performance in KID results, indicating a smaller deviation in image quality.
-</section>
 </section>
 <section id="image-text-evaluation-metrics">
-<h3>Image-Text Evaluation Metrics<a class="headerlink" href="#image-text-evaluation-metrics" title="此标题的永久链接"></a></h3>
+<h3>Image-Text Evaluation Metrics<a class="headerlink" href="#image-text-evaluation-metrics" title="Link to this heading"></a></h3>
 <section id="image-text-alignment-metrics">
-<h4>Image-Text Alignment Metrics<a class="headerlink" href="#image-text-alignment-metrics" title="此标题的永久链接"></a></h4>
+<h4>Image-Text Alignment Metrics<a class="headerlink" href="#image-text-alignment-metrics" title="Link to this heading"></a></h4>
 <p>Higher metric values indicate better alignment between images and captions.</p>
 <table class="docutils align-default">
 <thead>
@@ -754,7 +718,7 @@ Stable-diffusion-3-medium performed the best in terms of FID, indicating that it
 </table>
 </section>
 <section id="sft-data-evaluation-metrics-for-image-text">
-<h4>SFT Data Evaluation Metrics for Image-Text<a class="headerlink" href="#sft-data-evaluation-metrics-for-image-text" title="此标题的永久链接"></a></h4>
+<h4>SFT Data Evaluation Metrics for Image-Text<a class="headerlink" href="#sft-data-evaluation-metrics-for-image-text" title="Link to this heading"></a></h4>
 <table class="docutils align-default">
 <thead>
 <tr class="row-odd"><th class="head"><p>Metric Name</p></th>

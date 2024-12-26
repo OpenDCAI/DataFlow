@@ -1,0 +1,143 @@
+model_cache_path: '../ckpt' # Path to cache models
+num_workers: 2
+dependencies: [video]
+save_path: './example.jsonl'
+data:
+  video:
+    meta_data_path: 'configs/process/video5data.json' # Path to meta data (mainly for image or video data)
+    data_path: '/mnt/hwfile/opendatalab/mengzimo/KoNViD_1k_videos/' # Path to dataset
+    formatter: 'PureVideoFormatter' # Specify the data formatter
+  video_caption:
+    meta_data_path: 'configs/process/videocap5data.json' # Path to meta data (mainly for image or video data)
+    data_path: '/mnt/petrelfs/mengzimo/videodataset/vatex/videos/'
+    formatter: 'VideoCaptionFormatter'  # formatter for video-caption evaluation
+
+processors:
+  VideoResolutionFilter:
+    min_width: 160
+    max_width: 7680
+    min_height: 120
+    max_height: 4320
+    scorer_args:
+      num_workers: 4
+      batch_size: 1
+  VideoMotionFilter:                              # Keep samples with video motion scores within a specific range.
+    min_score: 0.25                                         # the minimum motion score to keep samples
+    max_score: 10                                     # the maximum motion score to keep samples
+    scorer_args:
+      batch_size: 1
+      num_workers: 4
+      min_score: 0.25                                         # the minimum motion score to keep samples
+      max_score: 10000.0                                      # the maximum motion score to keep samples
+      sampling_fps: 2                                         # the samplig rate of frames_per_second to compute optical flow
+      size: null                                              # resize frames along the smaller edge before computing optical flow, or a sequence like (h, w)
+      max_size: null                                          # maximum allowed for the longer edge of resized frames
+      relative: false                                         # whether to normalize the optical flow magnitude to [0, 1], relative to the frame's diagonal length
+      any_or_all: any                                         # keep this sample when any/all videos meet the filter condition
+  FastVQAFilter:
+    min_score: 0.1
+    max_score: 1
+    scorer_args:
+      model_path: /mnt/hwfile/opendatalab/mengzimo/models/FAST_VQA_B_1_4.pth
+      batch_size: 4
+      num_workers: 4
+      model_args:
+        backbone:
+          fragments:
+            checkpoint: false
+            pretrained: 
+        backbone_size: swin_tiny_grpb
+        backbone_preserve_keys: fragments
+        divide_head: false
+        vqa_head:
+          in_channels: 768
+          hidden_channels: 64
+      fragments:
+        fragments_h: 7
+        fragments_w: 7
+        fsize_h: 32
+        fsize_w: 32
+        aligned: 32
+        clip_len: 32
+        frame_interval: 2
+        num_clips: 4
+  FasterVQAFilter:
+    min_score: 0.1
+    max_score: 1
+    scorer_args:
+      model_path: ./models/FAST_VQA_3D_1_1.pth
+      batch_size: 4
+      num_workers: 4
+      model_args:
+        backbone:
+            fragments:
+                checkpoint: false
+                pretrained: 
+        backbone_size: swin_tiny_grpb
+        backbone_preserve_keys: fragments
+        divide_head: false
+        vqa_head:
+            in_channels: 768
+            hidden_channels: 64
+      fragments:
+        fragments_h: 7 #7
+        fragments_w: 7 #7
+        fsize_h: 32
+        fsize_w: 32
+        aligned: 8
+        clip_len: 32 #32
+        frame_interval: 2
+        t_frag: 8 #8
+        num_clips: 1
+  DOVERFilter:
+    min_tech_score: 0.1
+    max_tech_score: 1
+    min_aes_score: 0.1
+    max_aes_score: 1
+    scorer_args:
+      model_path: ./models/DOVER.pth
+      batch_size: 4
+      num_workers: 4
+      model_args:
+        backbone:
+          technical:
+            type: swin_tiny_grpb
+            checkpoint: true
+            pretrained:
+          aesthetic:
+            type: conv_tiny
+        backbone_preserve_keys: technical,aesthetic
+        divide_head: true
+        vqa_head:
+          in_channels: 768
+          hidden_channels: 64
+      sample_types:
+        technical:
+          fragments_h: 7
+          fragments_w: 7
+          fsize_h: 32
+          fsize_w: 32
+          aligned: 32
+          clip_len: 32
+          frame_interval: 2
+          num_clips: 3
+        aesthetic:
+          size_h: 224
+          size_w: 224
+          clip_len: 32
+          frame_interval: 2
+          t_frag: 32
+          num_clips: 1      
+  EMScoreFilter:
+    min_score: 0.3
+    max_score: 1.0
+    scorer_args:
+      batch_size: 16
+      num_workers: 4
+  PACScoreFilter:
+    min_score: 0.3
+    max_score: 1.0
+    scorer_args:
+      batch_size: 16
+      num_workers: 4
+      model_path: ./models/clip_ViT-B-32.pth

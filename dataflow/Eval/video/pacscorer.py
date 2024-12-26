@@ -6,7 +6,7 @@ import numpy as np
 from dataflow.core import VideoTextScorer
 from dataflow.utils.registry import MODEL_REGISTRY
 from collections import defaultdict
-from .pacscore.utils import em_cos_score, get_idf_dict
+from dataflow.Eval.video.pacscore.utils import em_cos_score, get_idf_dict
 from dataflow.utils import gdown_model
 
 @MODEL_REGISTRY.register()

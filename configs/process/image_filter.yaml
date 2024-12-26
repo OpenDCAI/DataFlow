@@ -1,0 +1,33 @@
+model_cache_path: '../ckpt' # Path to cache models
+num_workers: 2
+dependencies: [image]
+save_path: "./processed.jsonl"
+
+data:
+  image:
+    meta_data_path: "demos/image_eval/image.json"
+    data_path: "demos/image_eval/images"
+    image_key: 'image'
+    formatter: 'PureImageFormatter'
+
+processors:
+  ImageResolutionFilter:
+    min_width: 160
+    max_width: 7680
+    min_height: 120
+    max_height: 4320
+    batch_size: 2
+  LiqeFilter:
+    batch_size: 2
+    device: "cuda"
+    min_score: 3
+    max_score: 5
+  QalignFilter:
+    batch_size: 2
+    device: "cuda"
+    min_score: 3
+    max_score: 5
+  ImageAspectRatioFilter:
+    min_ratio: 0.2
+    max_ratio: 5.0
+    batch_size: 2

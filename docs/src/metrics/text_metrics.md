@@ -196,7 +196,7 @@ Regarding data types: **[Text]** indicates accepting single-field string input, 
       <td class="tg-0pky">UnievalScorer</td>
       <td class="tg-0pky">Fluency & Understandability</td>
       <td class="tg-0pky">Text</td>
-      <td class="tg-0pky">UniEval multi-dimensional text quality evaluation model; higher scores indicate better quality.</td>
+      <td class="tg-0pky">UniEval is a multi-dimensional text quality evaluation model; higher scores indicate better quality.</td>
       <td class="tg-0pky">[0, 1]</td>
       <td class="tg-0pky"><a href="https://arxiv.org/abs/2210.07197">paper</a><br><a href="https://github.com/maszhongming/UniEval">code</a></td>
     </tr>

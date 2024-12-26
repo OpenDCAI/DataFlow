@@ -1,0 +1,353 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="zh-CN" >
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Evaluation Metrics for Generated Text &mdash; Open-DataFlow-Eval 0.1 文档</title>
+      <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../../_static/css/theme.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script src="../../_static/jquery.js?v=5d32c60e"></script>
+        <script src="../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+        <script src="../../_static/documentation_options.js?v=7c91f8fd"></script>
+        <script src="../../_static/doctools.js?v=9a2dae69"></script>
+        <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
+        <script src="../../_static/translations.js?v=beaddf03"></script>
+    <script src="../../_static/js/theme.js"></script>
+    <link rel="index" title="索引" href="../../genindex.html" />
+    <link rel="search" title="搜索" href="../../search.html" />
+    <link rel="next" title="生成文本评估指标" href="gen_text_metrics.zh-CN.html" />
+    <link rel="prev" title="视频数据评估指标" href="video_metrics.zh-CN.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../index.html" class="icon icon-home">
+            Open-DataFlow-Eval
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="搜索文档" aria-label="搜索文档" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="导航菜单">
+              <p class="caption" role="heading"><span class="caption-text">Open-DataFlow-Eval:</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../getting_started/index.html">Getting Started</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="index.html">Metrics</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="image_metrics.html">Image Data Evaluation Metrics</a></li>
+<li class="toctree-l2"><a class="reference internal" href="image_metrics.zh-CN.html">图像数据评估指标</a></li>
+<li class="toctree-l2"><a class="reference internal" href="text_metrics.html">Text Data Evaluation Metrics</a></li>
+<li class="toctree-l2"><a class="reference internal" href="text_metrics.zh-CN.html">文本数据评估指标</a></li>
+<li class="toctree-l2"><a class="reference internal" href="video_metrics.html">Video Data Evaluation Metrics</a></li>
+<li class="toctree-l2"><a class="reference internal" href="video_metrics.zh-CN.html">视频数据评估指标</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="#">Evaluation Metrics for Generated Text</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#overview">Overview</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#word-overlap-based">Word Overlap Based</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#word-embeddings-based">Word Embeddings Based</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#language-models-based">Language Models Based</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#others">Others</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="gen_text_metrics.zh-CN.html">生成文本评估指标</a></li>
+</ul>
+</li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="移动版导航菜单" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">Open-DataFlow-Eval</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="页面导航">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="index.html">Metrics</a></li>
+      <li class="breadcrumb-item active">Evaluation Metrics for Generated Text</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../../_sources/src/metrics/gen_text_metrics.md.txt" rel="nofollow"> 查看页面源码</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="evaluation-metrics-for-generated-text">
+<h1>Evaluation Metrics for Generated Text<a class="headerlink" href="#evaluation-metrics-for-generated-text" title="Link to this heading"></a></h1>
+<section id="overview">
+<h2>Overview<a class="headerlink" href="#overview" title="Link to this heading"></a></h2>
+<table class="docutils align-default">
+<thead>
+<tr class="row-odd"><th class="head"><p>Category</p></th>
+<th class="head"><p>Number of Scorers</p></th>
+<th class="head"><p>Description</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>Word Overlap Based</p></td>
+<td><p>5</p></td>
+<td><p>Evaluates the n-gram overlap between generated and reference texts</p></td>
+</tr>
+<tr class="row-odd"><td><p>Word Embeddings Based</p></td>
+<td><p>2</p></td>
+<td><p>Uses word embeddings to calculate similarity between generated and reference texts</p></td>
+</tr>
+<tr class="row-even"><td><p>Language Models Based</p></td>
+<td><p>4</p></td>
+<td><p>Utilizes pre-trained language models to evaluate semantics and fluency</p></td>
+</tr>
+<tr class="row-odd"><td><p>Others</p></td>
+<td><p>2</p></td>
+<td><p>-</p></td>
+</tr>
+</tbody>
+</table>
+</section>
+<hr class="docutils" />
+<section id="word-overlap-based">
+<h2>Word Overlap Based<a class="headerlink" href="#word-overlap-based" title="Link to this heading"></a></h2>
+<table class="docutils align-default">
+<thead>
+<tr class="row-odd"><th class="head"><p>Scorer Name</p></th>
+<th class="head"><p>Evaluation Dimension</p></th>
+<th class="head"><p>Application Scenario</p></th>
+<th class="head"><p>Implementation</p></th>
+<th class="head"><p>Value Range</p></th>
+<th class="head"><p>Interpretation</p></th>
+<th class="head"><p>Advantages</p></th>
+<th class="head"><p>Limitations</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>BLEU Scorer</p></td>
+<td><p>Fluency and Lexical Match</p></td>
+<td><p>Machine Translation, Text Generation</p></td>
+<td><p>Calculates precision based on n-gram matching by comparing n-grams in generated and reference texts</p></td>
+<td><p>[0, 1]</p></td>
+<td><p>Higher values indicate greater match between generated and reference texts</p></td>
+<td><p>Suitable for large datasets, simple and efficient</p></td>
+<td><p>Performs poorly at sentence level, insensitive to synonyms and word order</p></td>
+</tr>
+<tr class="row-odd"><td><p>ROUGE Scorer</p></td>
+<td><p>Content Overlap</p></td>
+<td><p>Text Summarization</p></td>
+<td><p>Calculates overlap between generated and reference summaries using n-gram and longest common subsequence matching</p></td>
+<td><p>[0, 1]</p></td>
+<td><p>Higher values indicate more content overlap between generated and reference texts</p></td>
+<td><p>Easy to use, applicable to various text generation tasks</p></td>
+<td><p>Limited semantic understanding</p></td>
+</tr>
+<tr class="row-even"><td><p>METEOR Scorer</p></td>
+<td><p>Semantic Matching</p></td>
+<td><p>Machine Translation</p></td>
+<td><p>Calculates alignment scores between generated and reference texts based on stemming, synonym matching, and semantic relevance</p></td>
+<td><p>[0, 1]</p></td>
+<td><p>Higher values indicate stronger semantic consistency between generated and reference texts</p></td>
+<td><p>More sensitive to semantic similarity than BLEU, closer to human evaluation</p></td>
+<td><p>High computational complexity</p></td>
+</tr>
+<tr class="row-odd"><td><p>CIDEr Scorer</p></td>
+<td><p>Content Relevance</p></td>
+<td><p>Image Caption Generation</p></td>
+<td><p>Uses TF-IDF weighted n-gram statistics to compare similarity between generated and reference descriptions</p></td>
+<td><p>[0, 1]</p></td>
+<td><p>Higher values indicate stronger content consistency between generated and reference texts</p></td>
+<td><p>Considers the weight of words in the reference text, suitable for image-to-text tasks</p></td>
+<td><p>Strong influence of low-frequency words</p></td>
+</tr>
+<tr class="row-even"><td><p>CHRF Scorer</p></td>
+<td><p>Lexical Matching</p></td>
+<td><p>Machine Translation</p></td>
+<td><p>Calculates the chrF score based on character-level n-gram precision and recall between the reference text and the evaluated text</p></td>
+<td><p>[0, 1]</p></td>
+<td><p>The higher the value, the stronger the semantic similarity</p></td>
+<td><p>Allows for more fine-grained understanding</p></td>
+<td><p>Ignores semantic information</p></td>
+</tr>
+</tbody>
+</table>
+<hr class="docutils" />
+<section id="word-embeddings-based">
+<h3>Word Embeddings Based<a class="headerlink" href="#word-embeddings-based" title="Link to this heading"></a></h3>
+<table class="docutils align-default">
+<thead>
+<tr class="row-odd"><th class="head"><p>Scorer Name</p></th>
+<th class="head"><p>Evaluation Dimension</p></th>
+<th class="head"><p>Application Scenario</p></th>
+<th class="head"><p>Implementation</p></th>
+<th class="head"><p>Value Range</p></th>
+<th class="head"><p>Interpretation</p></th>
+<th class="head"><p>Advantages</p></th>
+<th class="head"><p>Limitations</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>Embedding Average Score</p></td>
+<td><p>Semantic Similarity</p></td>
+<td><p>Text Generation</p></td>
+<td><p>Computes cosine similarity of the average word embeddings of generated and reference texts</p></td>
+<td><p>[0, 1]</p></td>
+<td><p>Higher values indicate stronger semantic similarity</p></td>
+<td><p>Simple and efficient, suitable for quick computations</p></td>
+<td><p>Cannot capture complex semantic structures</p></td>
+</tr>
+<tr class="row-odd"><td><p>Greedy Matching Score</p></td>
+<td><p>Semantic Relevance</p></td>
+<td><p>Text Generation</p></td>
+<td><p>Matches semantically similar words between generated and reference texts, computes similarity</p></td>
+<td><p>[0, 1]</p></td>
+<td><p>Higher values indicate stronger semantic relevance</p></td>
+<td><p>Captures local similarity</p></td>
+<td><p>Ignores global semantic structure</p></td>
+</tr>
+</tbody>
+</table>
+</section>
+<hr class="docutils" />
+<section id="language-models-based">
+<h3>Language Models Based<a class="headerlink" href="#language-models-based" title="Link to this heading"></a></h3>
+<table class="docutils align-default">
+<thead>
+<tr class="row-odd"><th class="head"><p>Scorer Name</p></th>
+<th class="head"><p>Evaluation Dimension</p></th>
+<th class="head"><p>Application Scenario</p></th>
+<th class="head"><p>Implementation</p></th>
+<th class="head"><p>Value Range</p></th>
+<th class="head"><p>Interpretation</p></th>
+<th class="head"><p>Advantages</p></th>
+<th class="head"><p>Limitations</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>WSD Scorer</p></td>
+<td><p>Semantic Similarity</p></td>
+<td><p>Text Generation, Semantic Similarity Analysis</p></td>
+<td><p>Uses word2vec to calculate Word Mover’s Distance (WMD) between generated and reference texts</p></td>
+<td><p>[0, +∞)</p></td>
+<td><p>Lower values indicate closer semantic distance between generated and reference texts</p></td>
+<td><p>Captures deep semantic differences, applicable to various languages</p></td>
+<td><p>Sensitive to text length and stopwords, high computational complexity</p></td>
+</tr>
+<tr class="row-odd"><td><p>BertScore</p></td>
+<td><p>Semantic Similarity</p></td>
+<td><p>Text Generation</p></td>
+<td><p>Computes similarity of word embeddings between generated and reference texts using BERT</p></td>
+<td><p>[0, 1]</p></td>
+<td><p>Higher values indicate stronger semantic similarity between generated and reference texts</p></td>
+<td><p>Captures deep semantic information, supports multiple languages</p></td>
+<td><p>Depends on pre-trained models, time-consuming computations</p></td>
+</tr>
+<tr class="row-even"><td><p>BARTScore</p></td>
+<td><p>Fluency and Informativeness</p></td>
+<td><p>Text Generation</p></td>
+<td><p>Uses BART model to treat the generated text as the target and computes the likelihood score</p></td>
+<td><p>(-∞, +∞)</p></td>
+<td><p>Higher values indicate better quality of generated text</p></td>
+<td><p>Provides a multi-dimensional evaluation of text quality</p></td>
+<td><p>Strong dependency on models</p></td>
+</tr>
+<tr class="row-odd"><td><p>BELURT Scorer</p></td>
+<td><p>Semantic Similarity</p></td>
+<td><p>Text Generation, Machine Translation</p></td>
+<td><p>Fine-tunes pre-trained language models (e.g., BERT) for semantic similarity tasks, computes similarity scores between generated and reference texts</p></td>
+<td><p>[0, 1]</p></td>
+<td><p>Higher values indicate stronger semantic consistency between generated and reference texts</p></td>
+<td><p>Combines semantic understanding of pre-trained models, captures deep semantic information</p></td>
+<td><p>Model training depends on high-quality data, sensitive to domain changes, and computationally expensive</p></td>
+</tr>
+</tbody>
+</table>
+</section>
+<hr class="docutils" />
+<section id="others">
+<h3>Others<a class="headerlink" href="#others" title="Link to this heading"></a></h3>
+<table class="docutils align-default">
+<thead>
+<tr class="row-odd"><th class="head"><p>Scorer Name</p></th>
+<th class="head"><p>Evaluation Dimension</p></th>
+<th class="head"><p>Application Scenario</p></th>
+<th class="head"><p>Implementation</p></th>
+<th class="head"><p>Value Range</p></th>
+<th class="head"><p>Interpretation</p></th>
+<th class="head"><p>Advantages</p></th>
+<th class="head"><p>Limitations</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>TER Scorer</p></td>
+<td><p>Edit Distance</p></td>
+<td><p>Machine Translation</p></td>
+<td><p>Calculates the minimum edit operations (insertions, deletions, and substitutions) needed to transform generated text into reference text</p></td>
+<td><p>[0, 1]</p></td>
+<td><p>Lower values indicate closer match between generated and reference texts</p></td>
+<td><p>Simple and intuitive, suitable for analyzing errors in machine translation</p></td>
+<td><p>Insensitive to semantic information</p></td>
+</tr>
+<tr class="row-odd"><td><p>HLEPOR Scorer</p></td>
+<td><p>Multi-Dimensional Matching</p></td>
+<td><p>Machine Translation</p></td>
+<td><p>Calculates multi-dimensional matching scores between generated and reference texts considering multiple weighted parameters (e.g., position, proportion)</p></td>
+<td><p>[0, 1]</p></td>
+<td><p>Higher values indicate stronger match between generated and reference texts</p></td>
+<td><p>Highly flexible, adjustable weight parameters to fit different tasks</p></td>
+<td><p>Parameter selection significantly affects evaluation results</p></td>
+</tr>
+</tbody>
+</table>
+</section>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="页脚">
+        <a href="video_metrics.zh-CN.html" class="btn btn-neutral float-left" title="视频数据评估指标" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> 上一页</a>
+        <a href="gen_text_metrics.zh-CN.html" class="btn btn-neutral float-right" title="生成文本评估指标" accesskey="n" rel="next">下一页 <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; 版权所有 2024, Open-DataFlow。</p>
+  </div>
+
+  利用 <a href="https://www.sphinx-doc.org/">Sphinx</a> 构建，使用的 
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">主题</a>
+    由 <a href="https://readthedocs.org">Read the Docs</a> 开发.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

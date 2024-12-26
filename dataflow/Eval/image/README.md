@@ -1,7 +1,7 @@
 # Image Data Quality Assessment
 
 ## 1. Pure Image Data Quality Assessment
-### 1.1 Prepare Dataset (meta data)
+### 👀 1.1 Prepare Dataset
 Users can store the image id and file name in the following standard JSON format:
 ```json
 [
@@ -21,42 +21,50 @@ Users can store the image id and file name in the following standard JSON format
 {"id": "000810", "image": "000810.jpg"}
 ``` -->
 
-### 1.2 Write YAML Configuration File
+### 🌟 1.2 Write YAML Configuration File
 For the dataset in section 1.1, write a YAML file in the following format, where the configuration under data specifies the path and related information of the dataset, and the configuration under scorers specifies the assessment metrics you want to use.
 ```yaml
 model_cache_path: '../ckpt' # Path to cache models
 num_workers: 2
+dependencies: [image]
 
-data: # Specify the path and related information of the dataset
-  image: # To assess image data, write dataset configuration information under image
-    meta_data_path: "../data/image_data.json" # Location of metadata
-    data_path: "../data/images" # Location of image data
-    image_key: 'image' # The key corresponding to the image path (or image name) in the metadata
-    id_key: 'id' # The key corresponding to the id in the metadata
-    formatter: 'PureImageFormatter' # image data always uses PureImageFormatter
+data:
+  image:
+    meta_data_path: "demos/image_eval/image.json"
+    data_path: "demos/image_eval/images"
+    image_key: 'image'
+    id_key: 'id'
+    formatter: 'PureImageFormatter'
 
-scorers: # List the assessment metrics you want to use in order
-  NiqeScorer:
+scorers:
+  LiqeScorer:
       batch_size: 2
-      device: "cpu"
+      device: "cuda"
+  ArniqaScorer:
+      batch_size: 2
+      device: "cuda"
 ```
 
-### 1.3 Assess the Dataset
-After writing the YAML configuration file, call `calculate_score()` to assess the data.
-```python
-from dataflow.utils.utils import calculate_score
-calculate_score()
+### 💪 1.3 Get Started 
+You can assess the dataset with a single line of command
+```bash
+cd path/to/DataFlow
+python eval.py --config configs/eval/image_eval_example.yaml
 ```
-Output:
-```json
+Output is default stored in:
+```
+./scores.json
+```
+It should look like the following format:
+```
 {
     'meta_scores': {}, 
     'item_scores': 
-        {'0': 
+    {'0': 
             {
                 'NiqeScorer': {'Default': 3.362590964504238} 
             }, 
-        '1': 
+     '1': 
             {
                 'NiqeScorer': {'Default': 7.192364414148597}
             }
@@ -65,7 +73,7 @@ Output:
 ```
 ## 2. Image-Text Data Assessment
 Currently, it is mainly image-caption data assessment. After slightly modifying the prompt of LLM, it can be used for the assessment of image SFT data.
-### 2.1 Prepare Dataset
+### 👀 2.1 Prepare Dataset
 Users can store the image id, file name, and the corresponding caption of the image in the following standard JSON format:
 
 ```json
@@ -88,39 +96,44 @@ Users can store the image id, file name, and the corresponding caption of the im
 {"id": "000810", "image": "000810.jpg", "caption": "blue sky"}
 ``` -->
 
-### 2.2 Write YAML Configuration File
+### 🌟 2.2 Write YAML Configuration File
 For the dataset in section 2.1, write a YAML file in the following format, where the configuration under data specifies the path and related information of the dataset, and the configuration under scorers specifies the assessment metrics you want to use.
 ```yaml
 model_cache_path: '../ckpt' # Path to cache models
 num_workers: 2
+dependencies: [image]
 
-data: # Specify the path and related information of the dataset
-  image_caption: # To assess image-caption data, write dataset configuration information under image_caption
-    meta_data_path: "../data/image_caption_data.json" # Location of metadata
-    data_path: "../data/images" # Location of image data
-    image_key: 'image' # The key corresponding to the image path (or image name) in the metadata
-    image_caption_key: 'caption' # The key corresponding to the caption in the metadata
-    id_key: 'id' # The key corresponding to the id in the metadata
-    formatter: 'ImageCaptionFormatter' # image data always uses ImageCaptionFormatter
+data:
+  image_caption:
+    meta_data_path: "demos/image_eval/image_text.json"
+    data_path: "demos/image_eval/images"
+    image_key: 'image'
+    image_caption_key: 'caption'
+    id_key: 'id'
+    formatter: 'ImageCaptionFormatter'
 
-scorers: # List the assessment metrics you want to use in order
+scorers:
   ClipScorer:
       batch_size: 2
       device: "cuda"
   LongClipScorer:
-      model_size: B # For larger models, use L
+      model_size: B
       batch_size: 2
       device: "cuda"
 ```
 
-### 2.3 Assess the Dataset
+### 💪 2.3 Assess the Dataset
 After writing the YAML configuration file, call `calculate_score()` to assess the data.
-```python
-from dataflow.utils.utils import calculate_score
-calculate_score()
+```bash
+cd path/to/DataFlow
+python eval.py --config configs/eval/image_text_eval_example.yaml
 ```
-Output:
-```json
+Output is default stored in:
+```
+./scores.json
+```
+It should look like the following format:
+```
 {
     'meta_scores': {}, 
     'item_scores': 

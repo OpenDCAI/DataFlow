@@ -35,11 +35,13 @@ class ImageCaptionFormatter():
         print(f"cfg: {cfg}")
         self.image_key = cfg["image_key"]
         self.caption_key = cfg["image_caption_key"]
+        # self.image_folder_path = cfg.image_folder_path
         self.image_folder_path = cfg["data_path"]
         if hasattr(cfg, 'id_key'):
             self.id_key = cfg["id_key"]
         else:
             self.id_key = None
+        # self.meta_path = cfg.image_caption_meta_data_path
         self.meta_path = cfg["meta_data_path"]
 
     def load_dataset(self):

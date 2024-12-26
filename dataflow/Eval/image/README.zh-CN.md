@@ -1,7 +1,7 @@
 # 图像数据质量评估
 
 ## 1. 纯图像数据质量评估
-### 1.1 准备数据集（meta data）
+### 👀 1.1 准备数据集
 用户可以将图像的id和文件名存储为如下标准json格式：
 ```json
 [
@@ -21,33 +21,41 @@
 {"id": "000810", "image": "000810.jpg"}
 ``` -->
 
-### 1.2 编写yaml配置文件
+### 🌟 1.2 编写yaml配置文件
 为1.1节的数据集编写如下格式的yaml文件，其中data下的配置用于指定数据集的路径和相关信息，scorers下的配置用于指定您想使用的评估指标。
 ```yaml
 model_cache_path: '../ckpt' # Path to cache models
 num_workers: 2
+dependencies: [image]
 
-data: # 指定数据集的路径和相关信息
-  image: # 要评估图像数据，因此在image下编写数据集配置信息
-    meta_data_path: "../data/image_data.json" # 元数据的存放位置
-    data_path: "../data/images" # 图像数据的存放位置
-    image_key: 'image' # 元数据中图像路径（或图像名）对应的键
-    id_key: 'id' # 元数据中id对应的键
-    formatter: 'PureImageFormatter' # image数据固定使用PureImageFormatter
+data:
+  image:
+    meta_data_path: "demos/image_eval/image.json"
+    data_path: "demos/image_eval/images"
+    image_key: 'image'
+    id_key: 'id'
+    formatter: 'PureImageFormatter'
 
-scorers: # 依次列出想使用的评估指标
-  NiqeScorer:
+scorers:
+  LiqeScorer:
       batch_size: 2
-      device: "cpu"
+      device: "cuda"
+  ArniqaScorer:
+      batch_size: 2
+      device: "cuda"
 ```
 
-### 1.3 评估数据集
-编写好yaml配置文件后，调用 `calculate_score()` 即可对数据进行评估。
-```python
-from dataflow.utils.utils import calculate_score
-calculate_score()
+### 💪 1.3 评估数据集
+可以用一行代码完成评估:
+```bash
+cd path/to/DataFlow
+python eval.py --config configs/eval/image_eval_example.yaml
 ```
-输出：
+输出被保存在:
+```
+./scores.json
+```
+输出格式如下:
 ```
 {
     'meta_scores': {}, 
@@ -65,7 +73,7 @@ calculate_score()
 ```
 ## 2. 图像-文本数据评估
 目前主要是图像-caption数据评估。对LLM的prompt稍作修改后即可用于图像SFT数据的评估。
-### 2.1 准备数据集
+### 👀 2.1 准备数据集
 用户可以将图像的id、文件名、图像对应的caption存储为如下标准json格式：
 
 ```json
@@ -88,38 +96,43 @@ calculate_score()
 {"id": "000810", "image": "000810.jpg", "caption": "blue sky"}
 ``` -->
 
-### 2.2 编写yaml配置文件
+### 🌟 2.2 编写yaml配置文件
 为2.1节的数据集编写如下格式的yaml文件，其中data下的配置用于指定数据集的路径和相关信息，scorers下的配置用于指定您想使用的评估指标。
 ```yaml
 model_cache_path: '../ckpt' # Path to cache models
 num_workers: 2
+dependencies: [image]
 
-data: # 指定数据集的路径和相关信息
-  image_caption: # 要评估图像-caption数据，因此在image_caption下编写数据集配置信息
-    meta_data_path: "../data/image_caption_data.json" # 元数据的存放位置
-    data_path: "../data/images" # 图像数据的存放位置
-    image_key: 'image' # 元数据中图像路径（或图像名）对应的键
-    image_caption_key: 'caption' # 元数据中caption对应的键
-    id_key: 'id' # 元数据中id对应的键
-    formatter: 'ImageCaptionFormatter' # image数据固定使用ImageCaptionFormatter
+data:
+  image_caption:
+    meta_data_path: "demos/image_eval/image_text.json"
+    data_path: "demos/image_eval/images"
+    image_key: 'image'
+    image_caption_key: 'caption'
+    id_key: 'id'
+    formatter: 'ImageCaptionFormatter'
 
-scorers: # 依次列出想使用的评估指标
+scorers:
   ClipScorer:
       batch_size: 2
       device: "cuda"
   LongClipScorer:
-      model_size: B # For larger models, use L
+      model_size: B
       batch_size: 2
       device: "cuda"
 ```
 
-### 2.3 评估数据集
-编写好yaml配置文件后，调用 `calculate_score()` 即可对数据进行评估。
-```python
-from dataflow.utils.utils import calculate_score
-calculate_score()
+### 💪 2.3 评估数据集
+可以用一行代码完成评估:
+```bash
+cd path/to/DataFlow
+python eval.py --config configs/eval/image_text_eval_example.yaml
 ```
-输出：
+输出被保存在:
+```
+./scores.json
+```
+输出格式如下:
 ```
 {
     'meta_scores': {}, 

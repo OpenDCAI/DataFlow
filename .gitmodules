@@ -4,3 +4,4 @@
 [submodule "dataflow/Eval/Text/models/UniEval"]
 	path = dataflow/Eval/Text/models/UniEval
 	url = https://github.com/MOLYHECI/UniEval.git
+	branch = main

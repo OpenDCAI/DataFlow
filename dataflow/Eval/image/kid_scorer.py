@@ -12,8 +12,8 @@ from PIL import Image
 from tqdm import tqdm
 from torch.nn.functional import adaptive_avg_pool2d
 import torchvision.transforms as transforms
-from .kid.inception import InceptionV3
-from .kid.lenet import LeNet5
+from dataflow.Eval.image.kid.inception import InceptionV3
+from dataflow.Eval.image..kid.lenet import LeNet5
 from PIL import Image
 import sys
 

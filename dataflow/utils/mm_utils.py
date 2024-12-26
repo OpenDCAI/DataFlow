@@ -18,8 +18,15 @@ def extract_key_frames(input_video: av.container.InputContainer):
     :param input_video: input video path or container.
     :return: a list of key frames.
     """
-
+    # # load the input video
+    # if isinstance(input_video, str):
+    #     container = load_video(input_video)
+    # elif isinstance(input_video, av.container.InputContainer):
     container = input_video
+    # else:
+    #     raise ValueError(f'Unsupported type of input_video. Should be one of '
+    #                      f'[str, av.container.InputContainer], but given '
+    #                      f'[{type(input_video)}].')
 
     key_frames = []
     input_video_stream = container.streams.video[0]

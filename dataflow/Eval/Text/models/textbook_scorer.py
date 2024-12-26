@@ -11,7 +11,12 @@ from dataflow.utils.registry import MODEL_REGISTRY
 class TextbookScorer(TextScorer):
     def __init__(self, args_dict):
         super().__init__(args_dict)
-        model_path = hf_hub_download(args_dict.get('model_repo'), args_dict.get('model_file'))
+        model_path = hf_hub_download(
+            repo_id=args_dict.get('model_repo'),
+            filename=args_dict.get('model_file'),
+            cache_dir=args_dict.get('model_cache_dir')  # 设置自定义缓存路径
+        )
+
         self.model = fasttext.load_model(model_path)
         self.batch_size = args_dict.get('batch_size') 
         self.score_type = float

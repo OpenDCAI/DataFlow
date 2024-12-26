@@ -1,7 +1,6 @@
 import numpy as np
-import json
 import subprocess
-import numpy as np
+import torch
 
 def download_model_from_hf(model_name, model_cache_dir):
     print(f"Downloading {model_name} to {model_cache_dir}.")
@@ -25,13 +24,13 @@ def round_to_sigfigs(num, sigfigs):
 
 
 def recursive_insert(ds_scores_dict, scores: dict, idx_list):
-    import torch
-    import numpy as np
     for k, v in scores.items():
         if isinstance(v, dict):
             recursive_insert(ds_scores_dict[k], v, idx_list)
         elif isinstance(v, torch.Tensor):
             ds_scores_dict[k][idx_list] = v.cpu().detach().numpy()
+        elif isinstance(v, np.ndarray):
+            ds_scores_dict[k][idx_list] = v
         elif isinstance(v, list):
             ds_scores_dict[k][idx_list] = np.array(v)
         elif isinstance(v, float):
@@ -40,8 +39,6 @@ def recursive_insert(ds_scores_dict, scores: dict, idx_list):
             raise ValueError(f"Invalid scores type {type(v)} returned")
 
 def recursive_func(scores: dict, func, output: dict):
-    import numpy as np
-    
     for k, v in scores.items():
         if isinstance(v, dict):
             if k not in output.keys():
@@ -148,22 +145,23 @@ def new_get_scorer(scorer_name, model_args):
     assert scorer is not None, f"Scorer for {scorer_name} is not found."
     return scorer
 
-def calculate_score(save_path=None):
+
+def calculate_score():
     from ..config import new_init_config
     from dataflow.utils.registry import FORMATTER_REGISTRY
     from dataflow.core import ScoreRecord
 
     cfg = new_init_config()
     
-    for x in cfg['dependencies']:
-        if x == 'text':
-            import dataflow.Eval.Text
-        elif x == 'image':
-            import dataflow.Eval.image
-        elif x == 'video':
-            import dataflow.Eval.video
-        else:
-            raise ValueError('Please Choose Dependencies in text, image, video!')
+    # for x in cfg['dependencies']:
+    #     if x == 'text':
+    #         import dataflow.Eval.Text
+    #     elif x == 'image':
+    #         import dataflow.Eval.image
+    #     elif x == 'video':
+    #         import dataflow.Eval.video
+    #     else:
+    #         raise ValueError('Please Choose Dependencies in text, image, video!')
         
 
     dataset_dict = {}
@@ -183,5 +181,46 @@ def calculate_score(save_path=None):
         else:
             datasets = dataset_dict[scorer.data_type]
         _, score = scorer(datasets)
+    save_path = cfg['save_path']
     score_record.dump_scores(save_path)
 
+def get_processor(processor_name, args):
+    from dataflow.utils.registry import PROCESSOR_REGISTRY
+    print(processor_name, args, flush=True)
+    processor = PROCESSOR_REGISTRY.get(processor_name)(args_dict=args)
+    
+    assert processor is not None, f"Processor for {processor} is not found."
+    return processor
+
+def process():
+    from ..config import new_init_config
+    from dataflow.data import DataFlowDSDict
+    from dataflow.utils.registry import FORMATTER_REGISTRY
+    from dataflow.core import ScoreRecord
+    cfg = new_init_config()
+    dataset_dict = DataFlowDSDict()
+    for scorer_name, args in cfg.processors.items():
+        if scorer_name == 'Checkpoint':
+            save_path = args['save_path']
+            data_type = args['data_type']
+            dataset = dataset_dict[data_type]
+            dataset.dump(save_path)
+            continue
+        if "num_workers" in cfg:
+            args["num_workers"] = cfg.num_workers
+        if "model_cache_path" in cfg:
+            args["model_cache_dir"] = cfg.model_cache_path
+        processor = get_processor(scorer_name, args)
+        if processor.data_type not in dataset_dict.keys():
+            formatter = FORMATTER_REGISTRY.get(cfg['data'][processor.data_type]['formatter'])(cfg['data'][processor.data_type])
+            datasets = formatter.load_dataset()
+            dataset_dict[processor.data_type] = datasets
+            dataset = datasets[0] if type(datasets) == tuple else datasets
+        else:
+            datasets = dataset_dict[processor.data_type]
+        processed_dataset = processor(datasets)
+        dataset_dict[processor.data_type] = processed_dataset
+    save_path = cfg['save_path']
+    for dataset in dataset_dict.values():
+        dataset.dump(save_path)
+    

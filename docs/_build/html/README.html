@@ -1,22 +1,22 @@
-
-
 <!DOCTYPE html>
-<html class="writer-html5" lang="zh-CN">
+<html class="writer-html5" lang="zh-CN" >
 <head>
   <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>DataFlow-Eval &mdash; Open-DataFlow-Eval 0.1 文档</title>
-      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=92fd9be5" />
-      <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=e59714d7" />
-
+      <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="_static/js/html5shiv.min.js"></script>
+  <![endif]-->
   
-      <script src="_static/jquery.js?v=5d32c60e"></script>
-      <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
-      <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js?v=04b44b89"></script>
-      <script src="_static/doctools.js?v=888ff710"></script>
-      <script src="_static/sphinx_highlight.js?v=4825356b"></script>
-      <script src="_static/translations.js?v=beaddf03"></script>
+        <script src="_static/jquery.js?v=5d32c60e"></script>
+        <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+        <script src="_static/documentation_options.js?v=7c91f8fd"></script>
+        <script src="_static/doctools.js?v=9a2dae69"></script>
+        <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
+        <script src="_static/translations.js?v=beaddf03"></script>
     <script src="_static/js/theme.js"></script>
     <link rel="index" title="索引" href="genindex.html" />
     <link rel="search" title="搜索" href="search.html" /> 
@@ -71,9 +71,9 @@
           <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
            <div itemprop="articleBody">
              
-  <p><a class="reference internal" href="#./README.zh-CN.md"><span class="xref myst">中文主页</span></a></p>
+  <p><span class="xref myst">中文主页</span></p>
 <section id="dataflow-eval">
-<h1>DataFlow-Eval<a class="headerlink" href="#dataflow-eval" title="此标题的永久链接"></a></h1>
+<h1>DataFlow-Eval<a class="headerlink" href="#dataflow-eval" title="Link to this heading"></a></h1>
 <p align="center">
   <img src="./static/images/Face.png">
 </p>
@@ -89,42 +89,42 @@
 <p>DataFlow-Eval is a data evaluation system to evaluate data quality from multiple dimensions. We mainly support SOTA algorithms within academic papers with strong theoretical support.</p>
 <p>We now support text, image, video and multimodality data types.</p>
 <section id="table-of-contents">
-<h2>Table of Contents<a class="headerlink" href="#table-of-contents" title="此标题的永久链接"></a></h2>
+<h2>Table of Contents<a class="headerlink" href="#table-of-contents" title="Link to this heading"></a></h2>
 <ul class="simple">
-<li><p><a class="reference internal" href="#dataflow-eval"><span class="xref myst">DataFlow-Eval</span></a></p>
+<li><p><span class="xref myst">DataFlow-Eval</span></p>
 <ul>
-<li><p><a class="reference internal" href="#table-of-contents"><span class="xref myst">Table of Contents</span></a></p></li>
-<li><p><a class="reference internal" href="#module-and-modality-support"><span class="xref myst">Module and Modality Support</span></a></p></li>
-<li><p><a class="reference internal" href="#news"><span class="xref myst">🔥 News</span></a></p></li>
-<li><p><a class="reference internal" href="#installation"><span class="xref myst">Installation</span></a></p></li>
-<li><p><a class="reference internal" href="#quick-start"><span class="xref myst">Quick Start</span></a></p>
+<li><p><span class="xref myst">Table of Contents</span></p></li>
+<li><p><span class="xref myst">Module and Modality Support</span></p></li>
+<li><p><span class="xref myst">🔥 News</span></p></li>
+<li><p><span class="xref myst">Installation</span></p></li>
+<li><p><span class="xref myst">Quick Start</span></p>
 <ul>
-<li><p><a class="reference internal" href="#text"><span class="xref myst">Text</span></a></p></li>
-<li><p><a class="reference internal" href="#image"><span class="xref myst">Image</span></a></p></li>
-<li><p><a class="reference internal" href="#video"><span class="xref myst">Video</span></a></p></li>
+<li><p><span class="xref myst">Text</span></p></li>
+<li><p><span class="xref myst">Image</span></p></li>
+<li><p><span class="xref myst">Video</span></p></li>
 </ul>
 </li>
-<li><p><a class="reference internal" href="#data-evaluation-documentation"><span class="xref myst">Data Evaluation Documentation</span></a></p>
+<li><p><span class="xref myst">Data Evaluation Documentation</span></p>
 <ul>
-<li><p><a class="reference internal" href="#text-documentation"><span class="xref myst">Text Documentation</span></a></p></li>
-<li><p><a class="reference internal" href="#image-documentation"><span class="xref myst">Image Documentation</span></a></p></li>
-<li><p><a class="reference internal" href="#video-documentation"><span class="xref myst">Video Documentation</span></a></p></li>
+<li><p><span class="xref myst">Text Documentation</span></p></li>
+<li><p><span class="xref myst">Image Documentation</span></p></li>
+<li><p><span class="xref myst">Video Documentation</span></p></li>
 </ul>
 </li>
-<li><p><a class="reference internal" href="#data-evaluation-algorithms"><span class="xref myst">Data Evaluation Algorithms</span></a></p>
+<li><p><span class="xref myst">Data Evaluation Algorithms</span></p>
 <ul>
-<li><p><a class="reference internal" href="#text-algorithms"><span class="xref myst">Text Algorithms</span></a></p></li>
-<li><p><a class="reference internal" href="#image-algorithms"><span class="xref myst">Image Algorithms</span></a></p></li>
-<li><p><a class="reference internal" href="#video-algorithms"><span class="xref myst">Video Algorithms</span></a></p></li>
+<li><p><span class="xref myst">Text Algorithms</span></p></li>
+<li><p><span class="xref myst">Image Algorithms</span></p></li>
+<li><p><span class="xref myst">Video Algorithms</span></p></li>
 </ul>
 </li>
-<li><p><a class="reference internal" href="#awesome-data-evaluation"><span class="xref myst">👋 Awesome Data Evaluation</span></a></p></li>
+<li><p><span class="xref myst">👋 Awesome Data Evaluation</span></p></li>
 </ul>
 </li>
 </ul>
 </section>
 <section id="module-and-modality-support">
-<h2>Module and Modality Support<a class="headerlink" href="#module-and-modality-support" title="此标题的永久链接"></a></h2>
+<h2>Module and Modality Support<a class="headerlink" href="#module-and-modality-support" title="Link to this heading"></a></h2>
 <table class="docutils align-default">
 <thead>
 <tr class="row-odd"><th class="head"><p>Module\Modality</p></th>
@@ -147,14 +147,14 @@
 </table>
 </section>
 <section id="news">
-<h2>🔥 News<a class="headerlink" href="#news" title="此标题的永久链接"></a></h2>
+<h2>🔥 News<a class="headerlink" href="#news" title="Link to this heading"></a></h2>
 <ul class="simple">
-<li><p>[2024-10-14] 🎉 We summarize data evaluation papers and codes in <a class="reference internal" href="#./Awesome_Data_Evaluation.md"><span class="xref myst">👋 Awesome Data Evaluation</span></a></p></li>
+<li><p>[2024-10-14] 🎉 We summarize data evaluation papers and codes in <span class="xref myst">👋 Awesome Data Evaluation</span></p></li>
 <li><p>[2024-10-14] 🎉 Our first data-centric evaluation system is now open source.</p></li>
 </ul>
 </section>
 <section id="installation">
-<h2>Installation<a class="headerlink" href="#installation" title="此标题的永久链接"></a></h2>
+<h2>Installation<a class="headerlink" href="#installation" title="Link to this heading"></a></h2>
 <p>For environment setup, please using the following commands👇</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">conda</span> <span class="n">create</span> <span class="o">-</span><span class="n">n</span> <span class="n">dataflow</span> <span class="n">python</span><span class="o">=</span><span class="mf">3.9</span>
 <span class="n">conda</span> <span class="n">activate</span> <span class="n">dataflow</span>
@@ -222,83 +222,83 @@ pip<span class="w"> </span>install<span class="w"> </span><span class="nv">trans
 </p>
 </section>
 <section id="quick-start">
-<h2>🚀 Quick Start<a class="headerlink" href="#quick-start" title="此标题的永久链接"></a></h2>
+<h2>🚀 Quick Start<a class="headerlink" href="#quick-start" title="Link to this heading"></a></h2>
 <section id="text">
-<h3>Text<a class="headerlink" href="#text" title="此标题的永久链接"></a></h3>
+<h3>Text<a class="headerlink" href="#text" title="Link to this heading"></a></h3>
 <ul class="simple">
-<li><p><a class="reference internal" href="#./demos/text_eval/text_eval_example.ipynb"><span class="xref myst">Text Evaluation Demo</span></a></p></li>
-<li><p><a class="reference internal" href="#./demos/text_eval/text_eval_example.zh-CN.ipynb"><span class="xref myst">文本评估示例</span></a></p></li>
+<li><p><span class="xref myst">Text Evaluation Demo</span></p></li>
+<li><p><span class="xref myst">文本评估示例</span></p></li>
 </ul>
 </section>
 <section id="image">
-<h3>Image<a class="headerlink" href="#image" title="此标题的永久链接"></a></h3>
+<h3>Image<a class="headerlink" href="#image" title="Link to this heading"></a></h3>
 <ul class="simple">
-<li><p><a class="reference internal" href="#./demos/image_eval/image_eval_example.ipynb"><span class="xref myst">Image Evaluation Demo</span></a></p></li>
-<li><p><a class="reference internal" href="#./demos/image_eval/image_eval_example.zh-CN.ipynb"><span class="xref myst">图片评估示例</span></a></p></li>
+<li><p><span class="xref myst">Image Evaluation Demo</span></p></li>
+<li><p><span class="xref myst">图片评估示例</span></p></li>
 </ul>
 </section>
 <section id="video">
-<h3>Video<a class="headerlink" href="#video" title="此标题的永久链接"></a></h3>
+<h3>Video<a class="headerlink" href="#video" title="Link to this heading"></a></h3>
 <ul class="simple">
-<li><p><a class="reference internal" href="#./demos/video_eval/video_eval_example.ipynb"><span class="xref myst">Video Evaluation Demo</span></a></p></li>
-<li><p><a class="reference internal" href="#./demos/video_eval/video_eval_example.zh-CN.ipynb"><span class="xref myst">视频评估示例</span></a></p></li>
+<li><p><span class="xref myst">Video Evaluation Demo</span></p></li>
+<li><p><span class="xref myst">视频评估示例</span></p></li>
 </ul>
 </section>
 </section>
 <section id="data-evaluation-documentation">
-<h2>Data Evaluation Documentation<a class="headerlink" href="#data-evaluation-documentation" title="此标题的永久链接"></a></h2>
+<h2>Data Evaluation Documentation<a class="headerlink" href="#data-evaluation-documentation" title="Link to this heading"></a></h2>
 <p>For the usage of evaluation, please refer to the following documents👇</p>
 <section id="text-documentation">
-<h3>Text Documentation<a class="headerlink" href="#text-documentation" title="此标题的永久链接"></a></h3>
+<h3>Text Documentation<a class="headerlink" href="#text-documentation" title="Link to this heading"></a></h3>
 <ul class="simple">
-<li><p><a class="reference internal" href="#./dataflow/Eval/Text/README.md"><span class="xref myst">Text Data Evaluation User Documentation (English)</span></a></p></li>
-<li><p><a class="reference internal" href="#./dataflow/Eval/Text/README.zh-CN.md"><span class="xref myst">文本数据评估使用文档 (中文)</span></a></p></li>
+<li><p><span class="xref myst">Text Data Evaluation User Documentation (English)</span></p></li>
+<li><p><span class="xref myst">文本数据评估使用文档 (中文)</span></p></li>
 </ul>
 </section>
 <section id="image-documentation">
-<h3>Image Documentation<a class="headerlink" href="#image-documentation" title="此标题的永久链接"></a></h3>
+<h3>Image Documentation<a class="headerlink" href="#image-documentation" title="Link to this heading"></a></h3>
 <ul class="simple">
-<li><p><a class="reference internal" href="#./dataflow/Eval/image/README.md"><span class="xref myst">Image Data Evaluation User Documentation (English)</span></a></p></li>
-<li><p><a class="reference internal" href="#./dataflow/Eval/image/README.zh-CN.md"><span class="xref myst">图像数据评估使用文档 (中文)</span></a></p></li>
+<li><p><span class="xref myst">Image Data Evaluation User Documentation (English)</span></p></li>
+<li><p><span class="xref myst">图像数据评估使用文档 (中文)</span></p></li>
 </ul>
 </section>
 <section id="video-documentation">
-<h3>Video Documentation<a class="headerlink" href="#video-documentation" title="此标题的永久链接"></a></h3>
+<h3>Video Documentation<a class="headerlink" href="#video-documentation" title="Link to this heading"></a></h3>
 <ul class="simple">
-<li><p><a class="reference internal" href="#./dataflow/Eval/video/README.md"><span class="xref myst">Video Data Evaluation User Documentation (English)</span></a></p></li>
-<li><p><a class="reference internal" href="#./dataflow/Eval/video/README.zh-CN.md"><span class="xref myst">视频数据评估使用文档 (中文)</span></a></p></li>
+<li><p><span class="xref myst">Video Data Evaluation User Documentation (English)</span></p></li>
+<li><p><span class="xref myst">视频数据评估使用文档 (中文)</span></p></li>
 </ul>
 </section>
 </section>
 <section id="data-evaluation-algorithms">
-<h2>Data Evaluation Algorithms<a class="headerlink" href="#data-evaluation-algorithms" title="此标题的永久链接"></a></h2>
+<h2>Data Evaluation Algorithms<a class="headerlink" href="#data-evaluation-algorithms" title="Link to this heading"></a></h2>
 <p>We summarize the SOTA algorithms from academic papers for data evaluation.</p>
 <section id="text-algorithms">
-<h3>Text Algorithms<a class="headerlink" href="#text-algorithms" title="此标题的永久链接"></a></h3>
+<h3>Text Algorithms<a class="headerlink" href="#text-algorithms" title="Link to this heading"></a></h3>
 <ul class="simple">
-<li><p><a class="reference internal" href="#./docs/text_metrics.md"><span class="xref myst">Text Evaluation Algorithm Document (English)</span></a></p></li>
-<li><p><a class="reference internal" href="#./docs/text_metrics.zh-CN.md"><span class="xref myst">文本算法介绍文档 (中文)</span></a></p></li>
+<li><p><span class="xref myst">Text Evaluation Algorithm Document (English)</span></p></li>
+<li><p><span class="xref myst">文本算法介绍文档 (中文)</span></p></li>
 </ul>
 </section>
 <section id="image-algorithms">
-<h3>Image Algorithms<a class="headerlink" href="#image-algorithms" title="此标题的永久链接"></a></h3>
+<h3>Image Algorithms<a class="headerlink" href="#image-algorithms" title="Link to this heading"></a></h3>
 <ul class="simple">
-<li><p><a class="reference internal" href="#./docs/image_metrics.md"><span class="xref myst">Image Evaluation Algorithm Document (English)</span></a></p></li>
-<li><p><a class="reference internal" href="#./docs/image_metrics.zh-CN.md"><span class="xref myst">图像数据评估使用文档 (中文)</span></a></p></li>
+<li><p><span class="xref myst">Image Evaluation Algorithm Document (English)</span></p></li>
+<li><p><span class="xref myst">图像数据评估使用文档 (中文)</span></p></li>
 </ul>
 </section>
 <section id="video-algorithms">
-<h3>Video Algorithms<a class="headerlink" href="#video-algorithms" title="此标题的永久链接"></a></h3>
+<h3>Video Algorithms<a class="headerlink" href="#video-algorithms" title="Link to this heading"></a></h3>
 <ul class="simple">
-<li><p><a class="reference internal" href="#./docs/video_metrics.md"><span class="xref myst">Video Evaluation Algorithm Document (English)</span></a></p></li>
-<li><p><a class="reference internal" href="#./docs/video_metrics.zh-CN.md"><span class="xref myst">视频数据评估使用文档 (中文)</span></a></p></li>
+<li><p><span class="xref myst">Video Evaluation Algorithm Document (English)</span></p></li>
+<li><p><span class="xref myst">视频数据评估使用文档 (中文)</span></p></li>
 </ul>
 </section>
 </section>
 <section id="awesome-data-evaluation">
-<h2>Awesome Data Evaluation<a class="headerlink" href="#awesome-data-evaluation" title="此标题的永久链接"></a></h2>
+<h2>Awesome Data Evaluation<a class="headerlink" href="#awesome-data-evaluation" title="Link to this heading"></a></h2>
 <ul class="simple">
-<li><p><a class="reference internal" href="#./Awesome_Data_Evaluation.md"><span class="xref myst">👋 Awesome Data Evaluation</span></a></p></li>
+<li><p><span class="xref myst">👋 Awesome Data Evaluation</span></p></li>
 </ul>
 </section>
 </section>

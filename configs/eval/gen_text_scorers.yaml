@@ -1,0 +1,76 @@
+dependencies: [text]
+save_path: "./scores.json"
+data:
+  text:
+    eval_data_path: "demos/text_eval/fineweb_5_samples.json"
+    ref_data_path: "demos/text_eval/alpaca_5_samples.json"
+    ref_key: 'instruction'
+    eval_key: 'text'
+    formatter: 'GenTextFormatter'
+
+scorers:
+  BleuScorer:
+    n: 4 # Maximum value of N-gram
+    eff: "average"  # Reference length selection method: "shortest", "average", "closest"
+    special_reflen: null  # Set this value if a special reference sentence length is required
+
+  CiderScorer:
+      n: 4  # Maximum n-gram length (default: 4)
+      sigma: 1  # Gaussian penalty parameter (default: 6.0)
+      df_mode: "corpus"  # Specifies the mode for document frequency calculation. If idf is set to "corpus", the model will use a global corpus-based frequency calculation (no IDF file is needed). If set to "coco-val-df", it will use the MSCOCO dataset's IDF values, which are stored in a pickle file (coco-val-df.p). For other corpora, you can generate the document frequencies in a similar format (as a dictionary with df and ref_len keys), save them as a pickle file, and specify the file name (without .p) for df_mode.
+      # if use 'coco-val-df' :
+      # The threshold for the number of test samples required to compute CIDEr scores. 
+      # If the number of test samples is less than this value, the following error will be raised:
+      # "Insufficient test data: {len(self.ctest)} samples, but at least {min_required_data} are required."
+
+      idf_path: "dataflow/Eval/Text/gen/ciderscorer/coco-val-df.p"  # Path to IDF file (only used if df_mode is not "corpus"). For coco-val-df,please see https://github.com/ramavedantam/coco-caption/tree/master
+
+
+  MeteorScorer:   #To use MeteorScorer,Please download 'paraphrase-en.gz' and put it on dataflow/Eval/Text/gen/meteorscorer/data/paraphrase-en.gz. Please download 'meteor-1.5.jar' and put it on dataflow/Eval/Text/gen/meteorscorer/meteor-1.5.jar.Link: https://github.com/Maluuba/nlg-eval/tree/master/nlgeval/pycocoevalcap/meteor. This scorer needs java-8 environment.
+    language: en
+
+
+  RougeScorer:
+    beta: 1.2 
+  SpiceScorer: {}
+  WsdScorer: {}
+
+  HLEPORScorer:
+    alpha: 1.0             # Weight for recall (default: 1.0)
+    beta: 1.0              # Weight for precision (default: 1.0)
+    n: 2                   # Size of the n-gram (default: 1)
+    weight_elp: 1.0        # Weight for enhanced length penalty (default: 1.0)
+    weight_pos: 1.0        # Weight for N-gram position difference penalty (default: 1.0)
+    weight_pr: 1.0         # Weight for the harmonic mean of precision and recall (default: 1.0)
+    preprocess: 'str.lower'  # Preprocessing function (default: str.lower)
+    separate_punctuation: false # Whether to separate punctuation (default: false)
+
+
+  TERScorer:
+    metric: "ter" 
+    normalized: true  
+    case_sensitive: true  
+
+  CHRFScorer:
+    char_order: 6  
+    word_order: 0  
+    beta: 3      
+
+  BERTScoreScorer:
+    lang: "en"  # Language (default: English)
+    model_type: "distilbert-base-uncased"  # Pretrained model for BERTScore
+    idf: False  # Use IDF weighting
+    rescale_with_baseline: False  # Rescale scores with baseline
+
+  BARTScorer:
+    device: "cpu"  # Specify the device (default is cuda:0)
+    batch_size: 4     # Batch size for scoring
+    max_length: 1024  # Maximum sequence length forBART input
+
+  BleurtScorer: {}
+  EmbeddingAverageScorer: {}
+  GreedyMatchingScorer: {}
+
+
+# s python main.py --config /mnt/petrelfs/zhaozhengyang/zzy/DataGym/configs/eval/gen_text_example.yaml
+# s python main.py --config /mnt/petrelfs/liumengjie/mydatagym/configs/eval/gen_text_example.yaml

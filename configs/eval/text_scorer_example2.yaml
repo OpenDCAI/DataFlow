@@ -1,0 +1,35 @@
+# Only some example scorers are listed here. Please refer to all_scorers.yaml for all scorers
+
+model_cache_path: '../ckpt' # cache path for models
+dependencies: [text]
+save_path: './scores.json'
+
+data:
+  text:
+    use_hf: False # Whether to use huggingface_dataset, if used, ignore the local data path below
+    dataset_name: 'yahma/alpaca-cleaned'
+    dataset_split: 'train'  
+    name: 'default' 
+    revision: null
+    data_path: 'demos/text_eval/fineweb_5_samples.json'  # Local data path, supports json, jsonl, parquet formats
+    formatter: "TextFormatter" # Data loader type
+
+    keys: 'text' # Key name to be evaluated, for sft data, it can be specified as ['instruction','input','output']
+    
+scorers: # You can select multiple text scorers from all_scorers.yaml and put their configuration information here
+  QuratingScorer:
+    model: 'princeton-nlp/QuRater-1.3B'
+    tokens_field: 'input_ids'
+    tokens: 512
+    map_batch_size: 512
+    num_workers: 1
+    device_batch_size: 16
+    device: 'cuda:0'
+    labels:
+      - writing_style
+      - required_expertise
+      - facts_and_trivia
+      - educational_value
+  PresidioScorer:
+    language: 'en'
+    device: 'cuda:0'

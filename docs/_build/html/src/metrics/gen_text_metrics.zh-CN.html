@@ -1,0 +1,351 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="zh-CN" >
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>生成文本评估指标 &mdash; Open-DataFlow-Eval 0.1 文档</title>
+      <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../../_static/css/theme.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script src="../../_static/jquery.js?v=5d32c60e"></script>
+        <script src="../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+        <script src="../../_static/documentation_options.js?v=7c91f8fd"></script>
+        <script src="../../_static/doctools.js?v=9a2dae69"></script>
+        <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
+        <script src="../../_static/translations.js?v=beaddf03"></script>
+    <script src="../../_static/js/theme.js"></script>
+    <link rel="index" title="索引" href="../../genindex.html" />
+    <link rel="search" title="搜索" href="../../search.html" />
+    <link rel="prev" title="Evaluation Metrics for Generated Text" href="gen_text_metrics.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../index.html" class="icon icon-home">
+            Open-DataFlow-Eval
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="搜索文档" aria-label="搜索文档" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="导航菜单">
+              <p class="caption" role="heading"><span class="caption-text">Open-DataFlow-Eval:</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../getting_started/index.html">Getting Started</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="index.html">Metrics</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="image_metrics.html">Image Data Evaluation Metrics</a></li>
+<li class="toctree-l2"><a class="reference internal" href="image_metrics.zh-CN.html">图像数据评估指标</a></li>
+<li class="toctree-l2"><a class="reference internal" href="text_metrics.html">Text Data Evaluation Metrics</a></li>
+<li class="toctree-l2"><a class="reference internal" href="text_metrics.zh-CN.html">文本数据评估指标</a></li>
+<li class="toctree-l2"><a class="reference internal" href="video_metrics.html">Video Data Evaluation Metrics</a></li>
+<li class="toctree-l2"><a class="reference internal" href="video_metrics.zh-CN.html">视频数据评估指标</a></li>
+<li class="toctree-l2"><a class="reference internal" href="gen_text_metrics.html">Evaluation Metrics for Generated Text</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="#">生成文本评估指标</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#id2">概览</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#id3">基于词重叠</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#id4">基于词向量</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#id5">基于语言模型</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#id6">其他</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="移动版导航菜单" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">Open-DataFlow-Eval</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="页面导航">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="index.html">Metrics</a></li>
+      <li class="breadcrumb-item active">生成文本评估指标</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../../_sources/src/metrics/gen_text_metrics.zh-CN.md.txt" rel="nofollow"> 查看页面源码</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="id1">
+<h1>生成文本评估指标<a class="headerlink" href="#id1" title="Link to this heading"></a></h1>
+<section id="id2">
+<h2>概览<a class="headerlink" href="#id2" title="Link to this heading"></a></h2>
+<table class="docutils align-default">
+<thead>
+<tr class="row-odd"><th class="head"><p>类别</p></th>
+<th class="head"><p>打分器数量</p></th>
+<th class="head"><p>描述</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>基于词重叠</p></td>
+<td><p>5</p></td>
+<td><p>评估生成文本与参考文本的 n-gram 重叠程度</p></td>
+</tr>
+<tr class="row-odd"><td><p>基于词向量</p></td>
+<td><p>2</p></td>
+<td><p>使用词向量计算生成文本与参考文本的相似性</p></td>
+</tr>
+<tr class="row-even"><td><p>基于语言模型</p></td>
+<td><p>4</p></td>
+<td><p>利用预训练语言模型评估文本的语义和流畅性</p></td>
+</tr>
+<tr class="row-odd"><td><p>其他</p></td>
+<td><p>2</p></td>
+<td><p>-</p></td>
+</tr>
+</tbody>
+</table>
+</section>
+<hr class="docutils" />
+<section id="id3">
+<h2>基于词重叠<a class="headerlink" href="#id3" title="Link to this heading"></a></h2>
+<table class="docutils align-default">
+<thead>
+<tr class="row-odd"><th class="head"><p>打分器名称</p></th>
+<th class="head"><p>评估维度</p></th>
+<th class="head"><p>使用场景</p></th>
+<th class="head"><p>实现方法</p></th>
+<th class="head"><p>取值范围</p></th>
+<th class="head"><p>值解释</p></th>
+<th class="head"><p>优点</p></th>
+<th class="head"><p>局限性</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>BLEU Scorer</p></td>
+<td><p>词汇匹配</p></td>
+<td><p>机器翻译、文本生成</p></td>
+<td><p>基于 n-gram 匹配的精确度计算，将生成文本中的 n-gram 与参考文本中的 n-gram 进行匹配并计算精确度</p></td>
+<td><p>[0, 1]</p></td>
+<td><p>值越大，表示生成文本与参考文本的匹配程度越高</p></td>
+<td><p>适用于大规模数据集，简单高效</p></td>
+<td><p>在单句级别表现较差，对同义词及词序不敏感</p></td>
+</tr>
+<tr class="row-odd"><td><p>ROUGE Scorer</p></td>
+<td><p>词汇匹配</p></td>
+<td><p>文本摘要</p></td>
+<td><p>基于 n-gram 和最长公共子序列匹配，计算生成摘要与参考摘要之间的重叠程度</p></td>
+<td><p>[0, 1]</p></td>
+<td><p>值越大，表示生成文本与参考文本的内容重叠越多</p></td>
+<td><p>简单易用，适用于评估多种文本生成任务</p></td>
+<td><p>对文本内容的语义理解能力有限</p></td>
+</tr>
+<tr class="row-even"><td><p>METEOR Scorer</p></td>
+<td><p>词汇匹配</p></td>
+<td><p>机器翻译</p></td>
+<td><p>基于词形变化、同义词匹配以及语义相关性，综合计算生成文本与参考文本的对齐分数</p></td>
+<td><p>[0, 1]</p></td>
+<td><p>值越大，表示生成文本与参考文本在语义上越一致</p></td>
+<td><p>对语义相似性更加敏感，比 BLEU 更接近人工评估</p></td>
+<td><p>计算复杂度较高</p></td>
+</tr>
+<tr class="row-odd"><td><p>CIDEr Scorer</p></td>
+<td><p>内容相关性</p></td>
+<td><p>图像描述生成</p></td>
+<td><p>利用 TF-IDF 加权的 n-gram 统计，将生成文本的描述与参考描述进行相似性比较</p></td>
+<td><p>[0, 1]</p></td>
+<td><p>值越大，表示生成文本与参考文本在内容上越一致</p></td>
+<td><p>考虑了参考文本中词汇的权重，适合图像到文本任务</p></td>
+<td><p>对低频词的影响较大</p></td>
+</tr>
+<tr class="row-even"><td><p>CHRF Scorer</p></td>
+<td><p>词汇匹配</p></td>
+<td><p>机器翻译</p></td>
+<td><p>基于参考文本和评估文本的字符级n-gram匹配精确度和召回率计算chrF分数</p></td>
+<td><p>[0, 1]</p></td>
+<td><p>值越大，表示语义相似性越强</p></td>
+<td><p>可以更加细粒度理解</p></td>
+<td><p>忽略语义信息</p></td>
+</tr>
+</tbody>
+</table>
+<hr class="docutils" />
+<section id="id4">
+<h3>基于词向量<a class="headerlink" href="#id4" title="Link to this heading"></a></h3>
+<table class="docutils align-default">
+<thead>
+<tr class="row-odd"><th class="head"><p>打分器名称</p></th>
+<th class="head"><p>评估维度</p></th>
+<th class="head"><p>使用场景</p></th>
+<th class="head"><p>实现方法</p></th>
+<th class="head"><p>取值范围</p></th>
+<th class="head"><p>值解释</p></th>
+<th class="head"><p>优点</p></th>
+<th class="head"><p>局限性</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>EmbeddingAverageScorer</p></td>
+<td><p>语义相似性</p></td>
+<td><p>文本生成</p></td>
+<td><p>对生成文本和参考文本的词向量取平均值，计算余弦相似度</p></td>
+<td><p>[0, 1]</p></td>
+<td><p>值越大，表示语义相似性越强</p></td>
+<td><p>简单高效，适合快速计算</p></td>
+<td><p>无法捕捉复杂的语义结构</p></td>
+</tr>
+<tr class="row-odd"><td><p>GreedyMatchingScorer</p></td>
+<td><p>语义相关性</p></td>
+<td><p>文本生成</p></td>
+<td><p>匹配生成文本和参考文本中语义最相似的词，计算相似度</p></td>
+<td><p>[0, 1]</p></td>
+<td><p>值越大，表示语义相关性越强</p></td>
+<td><p>捕捉局部相似性</p></td>
+<td><p>忽略全局语义结构</p></td>
+</tr>
+</tbody>
+</table>
+</section>
+<hr class="docutils" />
+<section id="id5">
+<h3>基于语言模型<a class="headerlink" href="#id5" title="Link to this heading"></a></h3>
+<table class="docutils align-default">
+<thead>
+<tr class="row-odd"><th class="head"><p>打分器名称</p></th>
+<th class="head"><p>评估维度</p></th>
+<th class="head"><p>使用场景</p></th>
+<th class="head"><p>实现方法</p></th>
+<th class="head"><p>取值范围</p></th>
+<th class="head"><p>值解释</p></th>
+<th class="head"><p>优点</p></th>
+<th class="head"><p>局限性</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>WSD Scorer</p></td>
+<td><p>语义相似性</p></td>
+<td><p>文本生成、语义相似性分析</p></td>
+<td><p>使用 word2vec 模型计算生成文本与参考文本的词向量之间的 Word Mover’s Distance (WMD)</p></td>
+<td><p>[0, +∞)</p></td>
+<td><p>值越小，表示生成文本与参考文本的语义距离越近</p></td>
+<td><p>能捕捉深层次的语义差异，适用于多种语言</p></td>
+<td><p>对文本长度和停用词较敏感，计算复杂度较高</p></td>
+</tr>
+<tr class="row-odd"><td><p>BertScorer</p></td>
+<td><p>语义相似性</p></td>
+<td><p>文本生成</p></td>
+<td><p>使用 Bert 模型计算生成文本与参考文本的词向量相似性，输出精确度、召回率和 F1 分数</p></td>
+<td><p>[0, 1]</p></td>
+<td><p>值越大，表示生成文本与参考文本在语义上越相似</p></td>
+<td><p>能捕捉深层语义信息，适应多种语言</p></td>
+<td><p>依赖预训练模型，计算时间较长</p></td>
+</tr>
+<tr class="row-even"><td><p>BARTScorer</p></td>
+<td><p>流畅性与信息性</p></td>
+<td><p>文本生成</p></td>
+<td><p>利用 BART 模型将生成文本视为目标，计算生成的可能性分数</p></td>
+<td><p>[-∞, +∞]</p></td>
+<td><p>值越高，表示生成文本的质量越高</p></td>
+<td><p>能综合评估生成文本的多维质量</p></td>
+<td><p>模型依赖性强</p></td>
+</tr>
+<tr class="row-odd"><td><p>BELURT Scorer</p></td>
+<td><p>语义相似性</p></td>
+<td><p>文本生成、机器翻译</p></td>
+<td><p>使用预训练语言模型（如 BERT）进行微调，以语义相似性任务为目标，计算生成文本与参考文本的相似性得分</p></td>
+<td><p>[0, 1]</p></td>
+<td><p>值越高，表示生成文本与参考文本在语义上越一致</p></td>
+<td><p>结合预训练语言模型的语义理解能力，能够捕捉深层语义信息</p></td>
+<td><p>模型训练依赖于高质量数据，对领域变化敏感，且计算成本较高</p></td>
+</tr>
+</tbody>
+</table>
+</section>
+<hr class="docutils" />
+<section id="id6">
+<h3>其他<a class="headerlink" href="#id6" title="Link to this heading"></a></h3>
+<table class="docutils align-default">
+<thead>
+<tr class="row-odd"><th class="head"><p>打分器名称</p></th>
+<th class="head"><p>评估维度</p></th>
+<th class="head"><p>使用场景</p></th>
+<th class="head"><p>实现方法</p></th>
+<th class="head"><p>取值范围</p></th>
+<th class="head"><p>值解释</p></th>
+<th class="head"><p>优点</p></th>
+<th class="head"><p>局限性</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>TER Scorer</p></td>
+<td><p>编辑距离</p></td>
+<td><p>机器翻译</p></td>
+<td><p>计算生成文本转化为参考文本所需的最小编辑操作次数，包括插入、删除和替换</p></td>
+<td><p>[0, 1]</p></td>
+<td><p>值越小，表示生成文本与参考文本越接近</p></td>
+<td><p>简单直观，适合机器翻译的误差分析</p></td>
+<td><p>对语义信息缺乏敏感度</p></td>
+</tr>
+<tr class="row-odd"><td><p>HLEPOR Scorer</p></td>
+<td><p>多维度匹配</p></td>
+<td><p>机器翻译</p></td>
+<td><p>综合考虑多个权重参数（如位置、比例等），计算生成文本与参考文本在多个维度的匹配程度</p></td>
+<td><p>[0, 1]</p></td>
+<td><p>值越高，表示生成文本与参考文本的匹配程度越高</p></td>
+<td><p>灵活性高，可调整权重参数以适应不同任务</p></td>
+<td><p>参数选择对评估结果影响较大</p></td>
+</tr>
+</tbody>
+</table>
+</section>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="页脚">
+        <a href="gen_text_metrics.html" class="btn btn-neutral float-left" title="Evaluation Metrics for Generated Text" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> 上一页</a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; 版权所有 2024, Open-DataFlow。</p>
+  </div>
+
+  利用 <a href="https://www.sphinx-doc.org/">Sphinx</a> 构建，使用的 
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">主题</a>
+    由 <a href="https://readthedocs.org">Read the Docs</a> 开发.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

@@ -1,25 +1,27 @@
 
 # 文本数据质量评估
 
-本数据评估系统目前已整合了20种不同类型的前沿文本数据评估方法。详见[评估算法文档](../../../docs/text_metrics.zh-CN.md)。在进行数据评估时，可通过`yaml`配置文件指定数据源、数据格式、打分器以及打分器配置信息。用户可通过更改配置文件的方式对不同的文本数据进行评估。
+本数据评估系统目前已整合了**20种不同类型的前沿文本数据评估方法**以及十余种生成文本评估方法。详见[评估算法文档](../../../docs/text_metrics.zh-CN.md)、[生成文本评估算法文档](../../../docs/gen_text_metrics.zh-CN.md)。在进行数据评估时，可通过`yaml`配置文件指定数据源、数据格式、打分器以及打分器配置信息。用户可通过更改配置文件的方式对不同的文本数据进行评估。
 
 
-## 配置文件
+## 👀 配置文件
 
-配置文件存放在DataFlow/configs中，例如
+配置文件存放在`DataFlow/configs/eval`中，例如
 
 ```yaml
 model_cache_path: '../ckpt' # 模型默认缓存路径
+dependencies: [text] # 选择要加载的环境依赖
+save_path: "./scores" # 输出分数存储路径
 
 data:
   text:
-    use_hf: False # 是否使用在线的Huggingface数据集，如果使用则忽略下方本地数据地址
-    dataset_name: 'yahma/alpaca-cleaned' # Huggingface数据集：数据集名称
-    dataset_split: 'train'  # Huggingface数据集：数据集分区名
-    name: 'default' # Huggingface数据集：数据集子集名
-    
+    use_hf: False # 是否使用huggingface_dataset，如果使用则忽略下方本地数据地址，以下为Huggingface数据集参数设置；如果不使用则忽略。
+    dataset_name: 'MBZUAI-LLM/SlimPajama-627B-DC'
+    dataset_split: 'test'
+    revision: 'refs/convert/parquet'
+    name: 'default'
     data_path: 'demos/text_eval/fineweb_5_samples.json'  # 本地数据地址，支持json、jsonl、parquet格式
-    formatter: "TextFormatter" # 数据加载器类型
+    formatter: "TextFormatter" # 数据加载器类型，使用TextFormatter即可
 
     keys: 'text' # 待评估的键名，对于sft数据，可指定为['instruction','input','output']
     
@@ -42,7 +44,29 @@ scorers: # 可从all_scorers.yaml中选择多个text打分器，将其配置信�
         - educational_value
 ```
 
-## 数据集示例
+对于生成文本，配置文件需要指定待评估数据集和参考数据集文件以及键名。
+```yaml
+dependencies: [text] # 选择要加载的环境依赖
+save_path: "./scores.json" # 输出分数存储路径
+data:
+  text:
+    eval_data_path: "demos/text_eval/fineweb_5_samples.json" # 待评估数据路径
+    ref_data_path: "demos/text_eval/alpaca_5_samples.json" # 参考数据路径
+    ref_key: 'output' # 参考数据键名
+    eval_key: 'text' # 待评估数据键名
+    formatter: 'GenTextFormatter' # 数据加载器类型，使用GenTextFormatter即可
+
+scorers:
+  BleuScorer:
+    n: 4 # Maximum value of N-gram
+    eff: "average"  # Reference length selection method: "shortest", "average", "closest"
+    special_reflen: null  # Set this value if a special reference sentence length is required
+
+```
+
+全部打分器配置保存在`DataFlow/configs/eval/all_scorers.yaml`中，生成文本评估打分器配置保存在`DataFlow/configs/eval/gen_text_scorers.yaml`中。使用时可以直接复制粘贴具体打分器配置信息。
+
+## 🌟 数据集示例
 
 本文本数据评估系统同时支持预训练数据和SFT数据格式。
 
@@ -59,7 +83,7 @@ scorers: # 可从all_scorers.yaml中选择多个text打分器，将其配置信�
     }
 ]
 ```
-若要对上述数据格式进行评估，可指定`keys: Text`
+若要对上述数据格式进行评估，可指定`keys: text`
 
 ### SFT数据集示例（摘自`alpaca-cleaned`）
 ```json
@@ -78,21 +102,19 @@ scorers: # 可从all_scorers.yaml中选择多个text打分器，将其配置信�
 ```
 若要对上述数据格式进行评估，可指定`keys: ['instruction','input','output']`
 
-## 运行打分器
-
+## 💪 运行打分器
+只需要一行代码便可运行：
 ```bash
 cd path/to/DataFlow
-python main.py --config /path/to/configfile
+python eval.py --config configs/eval/text_scorer_example2.yaml
 ```
-main.py文件如下，打分结果保存路径可以通过'save_path'参数设置。
-
-```python
-from dataflow.utils.utils import calculate_score
-
-calculate_score(save_path='./scores.json')
+输出打分默认路径在
 ```
+./scores.json
+```
+也可以自行在yaml的save_path指定
 
-## 输出示例
+## 📌 输出示例
 其中，`meta_scores`中保存对整个数据集层面的打分器得分，比如`VendiScore`。`item_scores`则保存数据集中每一条数据的单独得分。
 ```json
 {

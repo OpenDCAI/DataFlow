@@ -1,22 +1,22 @@
-
-
 <!DOCTYPE html>
-<html class="writer-html5" lang="zh-CN">
+<html class="writer-html5" lang="zh-CN" >
 <head>
   <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Text Data Evaluation Metrics &mdash; Open-DataFlow-Eval 0.1 文档</title>
-      <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=92fd9be5" />
-      <link rel="stylesheet" type="text/css" href="../../_static/css/theme.css?v=e59714d7" />
-
+      <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../../_static/css/theme.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
   
-      <script src="../../_static/jquery.js?v=5d32c60e"></script>
-      <script src="../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
-      <script data-url_root="../../" id="documentation_options" src="../../_static/documentation_options.js?v=04b44b89"></script>
-      <script src="../../_static/doctools.js?v=888ff710"></script>
-      <script src="../../_static/sphinx_highlight.js?v=4825356b"></script>
-      <script src="../../_static/translations.js?v=beaddf03"></script>
+        <script src="../../_static/jquery.js?v=5d32c60e"></script>
+        <script src="../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+        <script src="../../_static/documentation_options.js?v=7c91f8fd"></script>
+        <script src="../../_static/doctools.js?v=9a2dae69"></script>
+        <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
+        <script src="../../_static/translations.js?v=beaddf03"></script>
     <script src="../../_static/js/theme.js"></script>
     <link rel="index" title="索引" href="../../genindex.html" />
     <link rel="search" title="搜索" href="../../search.html" />
@@ -73,6 +73,8 @@
 <li class="toctree-l2"><a class="reference internal" href="text_metrics.zh-CN.html">文本数据评估指标</a></li>
 <li class="toctree-l2"><a class="reference internal" href="video_metrics.html">Video Data Evaluation Metrics</a></li>
 <li class="toctree-l2"><a class="reference internal" href="video_metrics.zh-CN.html">视频数据评估指标</a></li>
+<li class="toctree-l2"><a class="reference internal" href="gen_text_metrics.html">Evaluation Metrics for Generated Text</a></li>
+<li class="toctree-l2"><a class="reference internal" href="gen_text_metrics.zh-CN.html">生成文本评估指标</a></li>
 </ul>
 </li>
 </ul>
@@ -103,9 +105,9 @@
            <div itemprop="articleBody">
              
   <section id="text-data-evaluation-metrics">
-<h1>Text Data Evaluation Metrics<a class="headerlink" href="#text-data-evaluation-metrics" title="此标题的永久链接"></a></h1>
+<h1>Text Data Evaluation Metrics<a class="headerlink" href="#text-data-evaluation-metrics" title="Link to this heading"></a></h1>
 <section id="overview">
-<h2>Overview<a class="headerlink" href="#overview" title="此标题的永久链接"></a></h2>
+<h2>Overview<a class="headerlink" href="#overview" title="Link to this heading"></a></h2>
 <p>Scorers are divided into the following four types, each scorer provides one or more scores.</p>
 <table class="tg">
   <thead>
@@ -141,9 +143,9 @@
 <p>Regarding data types: <strong>[Text]</strong> indicates accepting single-field string input, suitable for pre-training or fine-tuning data. <strong>[Instruction]</strong> indicates only suitable for fine-tuning data with multi-field format input.</p>
 </section>
 <section id="list-of-scorers">
-<h2>List of Scorers<a class="headerlink" href="#list-of-scorers" title="此标题的永久链接"></a></h2>
+<h2>List of Scorers<a class="headerlink" href="#list-of-scorers" title="Link to this heading"></a></h2>
 <section id="apicaller">
-<h3>APIcaller<a class="headerlink" href="#apicaller" title="此标题的永久链接"></a></h3>
+<h3>APIcaller<a class="headerlink" href="#apicaller" title="Link to this heading"></a></h3>
 <table class="tg">
   <thead>
     <tr>
@@ -184,7 +186,7 @@
 </table>
 </section>
 <section id="diversity">
-<h3>Diversity<a class="headerlink" href="#diversity" title="此标题的永久链接"></a></h3>
+<h3>Diversity<a class="headerlink" href="#diversity" title="Link to this heading"></a></h3>
 <table class="tg">
   <thead>
     <tr>
@@ -217,7 +219,7 @@
 </table>
 </section>
 <section id="models">
-<h3>Models<a class="headerlink" href="#models" title="此标题的永久链接"></a></h3>
+<h3>Models<a class="headerlink" href="#models" title="Link to this heading"></a></h3>
 <table class="tg">
   <thead>
     <tr>
@@ -298,7 +300,7 @@
       <td class="tg-0pky">UnievalScorer</td>
       <td class="tg-0pky">Fluency & Understandability</td>
       <td class="tg-0pky">Text</td>
-      <td class="tg-0pky">UniEval multi-dimensional text quality evaluation model; higher scores indicate better quality.</td>
+      <td class="tg-0pky">UniEval is a multi-dimensional text quality evaluation model; higher scores indicate better quality.</td>
       <td class="tg-0pky">[0, 1]</td>
       <td class="tg-0pky"><a href="https://arxiv.org/abs/2210.07197">paper</a><br><a href="https://github.com/maszhongming/UniEval">code</a></td>
     </tr>
@@ -330,7 +332,7 @@
 </table>
 </section>
 <section id="statistics">
-<h3>Statistics<a class="headerlink" href="#statistics" title="此标题的永久链接"></a></h3>
+<h3>Statistics<a class="headerlink" href="#statistics" title="Link to this heading"></a></h3>
 <table class="tg">
   <thead>
     <tr>
@@ -372,16 +374,16 @@
 </section>
 </section>
 <section id="quality-evaluation-system">
-<h2>Quality Evaluation System<a class="headerlink" href="#quality-evaluation-system" title="此标题的永久链接"></a></h2>
+<h2>Quality Evaluation System<a class="headerlink" href="#quality-evaluation-system" title="Link to this heading"></a></h2>
 <p>To provide more precise data quality evaluation, we have constructed a quality evaluation system based on existing classifiers. Specifically, the output score metrics of each scorer include the following six dimensions.</p>
 <section id="text-structure">
-<h3>1. Text Structure<a class="headerlink" href="#text-structure" title="此标题的永久链接"></a></h3>
+<h3>1. Text Structure<a class="headerlink" href="#text-structure" title="Link to this heading"></a></h3>
 <ul class="simple">
 <li><p><strong>LangkitScorer</strong>: LangkitSentenceCountScore, LangkitCharacterCountScore, LangkitLetterCountScore, LangkitSyllableCountScore, LangkitPolysyllableCountScore, LangkitMonosyllableCountScore, LangkitLexiconCountScore, LangkitDifficultWordsScore</p></li>
 </ul>
 </section>
 <section id="diversity-complexity">
-<h3>2. Diversity &amp; Complexity<a class="headerlink" href="#diversity-complexity" title="此标题的永久链接"></a></h3>
+<h3>2. Diversity &amp; Complexity<a class="headerlink" href="#diversity-complexity" title="Link to this heading"></a></h3>
 <ul class="simple">
 <li><p><strong>LexicalDiversityScorer</strong>: LexicalDiversityMTLDScore, LexicalDiversityHD-DScore</p></li>
 <li><p><strong>NgramScorer</strong>: NgramScore</p></li>
@@ -393,7 +395,7 @@
 </ul>
 </section>
 <section id="fluency-understandability">
-<h3>3. Fluency &amp; Understandability<a class="headerlink" href="#fluency-understandability" title="此标题的永久链接"></a></h3>
+<h3>3. Fluency &amp; Understandability<a class="headerlink" href="#fluency-understandability" title="Link to this heading"></a></h3>
 <ul class="simple">
 <li><p><strong>UniEvalScorer</strong>: UniEvalFluencyScore, UniEvalUnderstandabilityScore, UniEvalNaturalnessScore</p></li>
 <li><p><strong>LangkitScorer</strong>: LangkitFleschReadingEaseScore, LangkitAutomatedReadabilityIndexScore, LangkitAggregateReadingLevelScore</p></li>
@@ -404,14 +406,14 @@
 </ul>
 </section>
 <section id="safety">
-<h3>4. Safety<a class="headerlink" href="#safety" title="此标题的永久链接"></a></h3>
+<h3>4. Safety<a class="headerlink" href="#safety" title="Link to this heading"></a></h3>
 <ul class="simple">
 <li><p><strong>PerspectiveScorer</strong>: PerspectiveScore</p></li>
 <li><p><strong>PresidioScorer</strong>: PresidioScore</p></li>
 </ul>
 </section>
 <section id="educational-value">
-<h3>5. Educational Value<a class="headerlink" href="#educational-value" title="此标题的永久链接"></a></h3>
+<h3>5. Educational Value<a class="headerlink" href="#educational-value" title="Link to this heading"></a></h3>
 <ul class="simple">
 <li><p><strong>TextbookScorer</strong>: TextbookScore</p></li>
 <li><p><strong>FineWebEduScorer</strong>: FineWebEduScore</p></li>
@@ -419,7 +421,7 @@
 </ul>
 </section>
 <section id="content-accuracy-effectiveness">
-<h3>6. Content Accuracy &amp; Effectiveness<a class="headerlink" href="#content-accuracy-effectiveness" title="此标题的永久链接"></a></h3>
+<h3>6. Content Accuracy &amp; Effectiveness<a class="headerlink" href="#content-accuracy-effectiveness" title="Link to this heading"></a></h3>
 <ul class="simple">
 <li><p><strong>QuratingScorer</strong>: QuratingRequiredExpertiseScore, QuratingFactsAndTriviaScore</p></li>
 <li><p><strong>DebertaV3Scorer</strong>: DebertaV3Score</p></li>
@@ -429,7 +431,7 @@
 </section>
 </section>
 <section id="benchmark-values">
-<h2>Benchmark Values<a class="headerlink" href="#benchmark-values" title="此标题的永久链接"></a></h2>
+<h2>Benchmark Values<a class="headerlink" href="#benchmark-values" title="Link to this heading"></a></h2>
 <p>To better provide data quality references, we randomly selected 5k data samples from the currently considered high-quality datasets <a class="reference external" href="https://huggingface.co/datasets/HuggingFaceFW/fineweb">Fineweb</a> and <a class="reference external" href="https://huggingface.co/datasets/yahma/alpaca-cleaned">alpaca-cleaned</a> based on data types, and tested the benchmark values of some scorers.</p>
 <table class="tg"><thead>
   <tr>

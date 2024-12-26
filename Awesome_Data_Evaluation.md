@@ -1,20 +1,15 @@
 # Awesome Data Evaluation
 ## Table of Contents
 - [Awesome Data Evaluation](#Awesome-Data-Evaluation)
-- [News](#news)
-- [Pure Text Evaluation](#Pure-Text-Evaluation)
-- [Image Data Quality Evaluation](#Image-Data-Quality-Evaluation)
-  - [Synthetic Image Evaluation](#Synthetic-Image-Evaluation)
-  - [Pure Image Evaluation](#Pure-Image-Evaluation)
-  - [Image-Caption Evaluation](#Image-Caption-Evaluation)
-- [Video Data Quality Evaluation](#Video-Data-Quality-Evaluation)
-  - [Pure Video Evaluation](#Pure-Video-Evaluation)
-  - [Video-Caption Evaluation](#Video-Caption-Evaluation)
-- [Data Diversity Evaluation](#Data-Diversity-Evaluation)
-
-# News
-- [2024-10-14] 🎉 We open-sourced awesome data evaluation and summarized state-of-the-art(SOTA) papers in text, image and video evaluation.
-
+  - [Pure Text Evaluation](#Pure-Text-Evaluation)
+  - [Image Data Quality Evaluation](#Image-Data-Quality-Evaluation)
+    - [Synthetic Image Evaluation](#Synthetic-Image-Evaluation)
+    - [Pure Image Evaluation](#Pure-Image-Evaluation)
+    - [Image-Caption Evaluation](#Image-Caption-Evaluation)
+  - [Video Data Quality Evaluation](#Video-Data-Quality-Evaluation)
+    - [Pure Video Evaluation](#Pure-Video-Evaluation)
+    - [Video-Caption Evaluation](#Video-Caption-Evaluation)
+  - [Data Diversity Evaluation](#Data-Diversity-Evaluation)
 # Pure Text Evaluation
 ### Text Evaluation Taxonomy:
 1. Text Structure

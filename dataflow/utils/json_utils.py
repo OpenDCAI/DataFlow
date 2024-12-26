@@ -28,3 +28,13 @@ def read_json_file(filepath):
     elif format_type == 'standard':
         with open(filepath, 'r', encoding='utf-8') as file:
             return json.load(file)
+
+def check_serializable_fields(data):
+    serializable_fields = []
+    for key, value in data.items():
+        try:
+            json.dumps(value)
+            serializable_fields.append(key)
+        except (TypeError, ValueError):
+            pass
+    return serializable_fields

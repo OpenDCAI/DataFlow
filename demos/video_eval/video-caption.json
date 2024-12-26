@@ -1,7 +1,7 @@
 [
     {
         "video": "test_video.avi",
-        "captions": [
+        "enCap": [
             "A man is clipping paper.", 
             "A man is cutting paper."
         ]

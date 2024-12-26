@@ -1,22 +1,22 @@
-
-
 <!DOCTYPE html>
-<html class="writer-html5" lang="zh-CN">
+<html class="writer-html5" lang="zh-CN" >
 <head>
   <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Video Data Evaluation Metrics &mdash; Open-DataFlow-Eval 0.1 文档</title>
-      <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=92fd9be5" />
-      <link rel="stylesheet" type="text/css" href="../../_static/css/theme.css?v=e59714d7" />
-
+      <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../../_static/css/theme.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
   
-      <script src="../../_static/jquery.js?v=5d32c60e"></script>
-      <script src="../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
-      <script data-url_root="../../" id="documentation_options" src="../../_static/documentation_options.js?v=04b44b89"></script>
-      <script src="../../_static/doctools.js?v=888ff710"></script>
-      <script src="../../_static/sphinx_highlight.js?v=4825356b"></script>
-      <script src="../../_static/translations.js?v=beaddf03"></script>
+        <script src="../../_static/jquery.js?v=5d32c60e"></script>
+        <script src="../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+        <script src="../../_static/documentation_options.js?v=7c91f8fd"></script>
+        <script src="../../_static/doctools.js?v=9a2dae69"></script>
+        <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
+        <script src="../../_static/translations.js?v=beaddf03"></script>
     <script src="../../_static/js/theme.js"></script>
     <link rel="index" title="索引" href="../../genindex.html" />
     <link rel="search" title="搜索" href="../../search.html" />
@@ -65,6 +65,8 @@
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="video_metrics.zh-CN.html">视频数据评估指标</a></li>
+<li class="toctree-l2"><a class="reference internal" href="gen_text_metrics.html">Evaluation Metrics for Generated Text</a></li>
+<li class="toctree-l2"><a class="reference internal" href="gen_text_metrics.zh-CN.html">生成文本评估指标</a></li>
 </ul>
 </li>
 </ul>
@@ -95,11 +97,11 @@
            <div itemprop="articleBody">
              
   <section id="video-data-evaluation-metrics">
-<h1>Video Data Evaluation Metrics<a class="headerlink" href="#video-data-evaluation-metrics" title="此标题的永久链接"></a></h1>
+<h1>Video Data Evaluation Metrics<a class="headerlink" href="#video-data-evaluation-metrics" title="Link to this heading"></a></h1>
 <section id="pure-video-evaluation-metrics">
-<h2>Pure Video Evaluation Metrics<a class="headerlink" href="#pure-video-evaluation-metrics" title="此标题的永久链接"></a></h2>
+<h2>Pure Video Evaluation Metrics<a class="headerlink" href="#pure-video-evaluation-metrics" title="Link to this heading"></a></h2>
 <section id="metric-categories">
-<h3>Metric Categories<a class="headerlink" href="#metric-categories" title="此标题的永久链接"></a></h3>
+<h3>Metric Categories<a class="headerlink" href="#metric-categories" title="Link to this heading"></a></h3>
 <table class="docutils align-default">
 <thead>
 <tr class="row-odd"><th class="head"><p>Category Description</p></th>
@@ -117,7 +119,7 @@
 </table>
 </section>
 <section id="metric-descriptions">
-<h3>Metric Descriptions<a class="headerlink" href="#metric-descriptions" title="此标题的永久链接"></a></h3>
+<h3>Metric Descriptions<a class="headerlink" href="#metric-descriptions" title="Link to this heading"></a></h3>
 <table class="docutils align-default">
 <thead>
 <tr class="row-odd"><th class="head"><p>Name</p></th>
@@ -156,7 +158,7 @@
 </table>
 </section>
 <section id="reference-values">
-<h3>Reference Values<a class="headerlink" href="#reference-values" title="此标题的永久链接"></a></h3>
+<h3>Reference Values<a class="headerlink" href="#reference-values" title="Link to this heading"></a></h3>
 <p>To better provide data quality references, we evaluated the KoNViD-1k dataset using the above metrics, and the distribution of the evaluation values is as follows:</p>
 <table class="tg"><thead>
   <tr>
@@ -216,7 +218,7 @@
 </section>
 </section>
 <section id="video-text-evaluation-metrics">
-<h2>Video-Text Evaluation Metrics<a class="headerlink" href="#video-text-evaluation-metrics" title="此标题的永久链接"></a></h2>
+<h2>Video-Text Evaluation Metrics<a class="headerlink" href="#video-text-evaluation-metrics" title="Link to this heading"></a></h2>
 <table class="docutils align-default">
 <thead>
 <tr class="row-odd"><th class="head"><p>Category Description</p></th>
@@ -254,7 +256,7 @@
 </tbody>
 </table>
 <section id="id1">
-<h3>Reference Values<a class="headerlink" href="#id1" title="此标题的永久链接"></a></h3>
+<h3>Reference Values<a class="headerlink" href="#id1" title="Link to this heading"></a></h3>
 <p>To provide better data quality reference, we evaluated the VATEX dataset (<a class="reference external" href="https://huggingface.co/datasets/lmms-lab/VATEX">link</a>) using the above metrics, and the distribution of the metric values is as follows:</p>
 <table class="tg"><thead>
   <tr>
@@ -315,8 +317,7 @@
     <td class="tg-0pky">0.0006854</td>
     <td class="tg-0pky">0.4761</td>
     <td class="tg-0pky">0.2681</td>
-  </tr>
-</section>
+  </tr></section>
 </section>
 </section>
 

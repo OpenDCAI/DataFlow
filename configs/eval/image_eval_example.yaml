@@ -1,0 +1,19 @@
+model_cache_path: '../ckpt' # Path to cache models
+num_workers: 2
+dependencies: [image]
+
+data:
+  image:
+    meta_data_path: "demos/image_eval/image.json"
+    data_path: "demos/image_eval/images"
+    image_key: 'image'
+    id_key: 'id'
+    formatter: 'PureImageFormatter'
+
+scorers:
+  LiqeScorer:
+      batch_size: 2
+      device: "cuda"
+  ArniqaScorer:
+      batch_size: 2
+      device: "cuda"

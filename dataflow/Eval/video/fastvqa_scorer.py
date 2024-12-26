@@ -91,6 +91,7 @@ class FastVQAScorer(VideoScorer):
         np.random.seed(42)
         vsamples = {}
         frag_list = None
+        num_video = len(sample_list['video'])
         for sample in sample_list['video']:
             video_reader = decord.VideoReader(sample)
             num_clips = self.sample_args.get("num_clips",1)
@@ -115,7 +116,7 @@ class FastVQAScorer(VideoScorer):
         vsamples['fragments'] = frag_list.to('cuda')
         print(vsamples['fragments'].shape)
         result = self.evaluator(vsamples)
-        reshaped_result = result.view(self.batch_size, result.shape[0] // self.batch_size, *result.shape[1:])
+        reshaped_result = result.view(min(self.batch_size, num_video), result.shape[0] // min(self.batch_size, num_video), *result.shape[1:])
         print(result.shape, reshaped_result.shape)
         score = sigmoid_rescale(reshaped_result.mean(dim=(1,2,3,4,5)).cpu(), model='FAST-VQA')
         print(f"The quality score of the video (range [0,1]) is {score.numpy()}.")
@@ -185,6 +186,7 @@ class FasterVQAScorer(VideoScorer):
         
         vsamples = {}
         frag_list = None
+        num_video = len(sample_list['video'])
         for sample in sample_list['video']:
             video_reader = decord.VideoReader(sample)
             num_clips = self.sample_args.get("num_clips",1)
@@ -208,8 +210,9 @@ class FasterVQAScorer(VideoScorer):
         vsamples['fragments'] = frag_list.to('cuda')
         print(vsamples['fragments'].shape)
         result = self.evaluator(vsamples)
-        reshaped_result = result.view(self.batch_size, result.shape[0] // self.batch_size, *result.shape[1:])
-        print(result.shape, reshaped_result.shape)
+        print(result.shape)
+        reshaped_result = result.view(min(self.batch_size, num_video), result.shape[0] // min(self.batch_size, num_video), *result.shape[1:])
+        print(reshaped_result.shape)
         score = sigmoid_rescale(reshaped_result.mean(dim=(1,2,3,4,5)).cpu().detach(), model='FasterVQA')
         # print(f"The quality score of the video (range [0,1]) is {score:.5f}.")
         

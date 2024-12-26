@@ -1,8 +1,8 @@
-## Video Data Evaluation
+# Video Data Evaluation
 
-### 1. Pure Video Data Evaluation
+## 1. Pure Video Data Evaluation
 
-#### 1.1 Dataset Preparation
+### 👀 1.1 Dataset Preparation
 Users can store the metadata of their dataset in the following JSON format:
 ```json
 [
@@ -15,7 +15,7 @@ Users can store the metadata of their dataset in the following JSON format:
 ]
 ```
 
-#### 1.2 Writing the YAML Configuration File
+### 🌟 1.2 Writing the YAML Configuration File
 
 For the dataset from section 1.1, write a YAML file in the following format. The `data` section specifies the dataset path and related information, while the `scorers` section defines the evaluation metrics to be used.
 ```yaml
@@ -24,8 +24,8 @@ num_workers: 2
 
 data:
   video:
-    meta_data_path: './video.json' # Path to meta data (mainly for image or video data)
-    data_path: './' # Path to dataset
+    meta_data_path: 'demos/video_eval/video.json' # Path to meta data (mainly for image or video data)
+    data_path: 'demos/video_eval/' # Path to dataset
     formatter: 'PureVideoFormatter' # Formatter for pure video evaluation
 
 scorers:
@@ -41,14 +41,17 @@ scorers:
       any_or_all: any                             # Keep this sample when any/all videos meet the filter condition
 ```
 
-#### 1.3 Evaluating the Dataset
-Once the YAML configuration file is ready, call the function `calculate_score()` to evaluate the data.
-
-```python
-from dataflow.utils.utils import calculate_score
-calculate_score()
+### 💪 1.3 Get Started
+You can assess the dataset with a single line of command
+```bash
+cd path/to/DataFlow
+python eval.py --config configs/eval/video_scorer.yaml
 ```
-output:
+Output is default stored in:
+```
+./scores.json
+```
+It should look like the following format:
 ```
 {
     'meta_scores': {}, 
@@ -67,9 +70,9 @@ output:
 ```
 
 
-### 2. Video-Text Data Evaluation
+## 2. Video-Text Data Evaluation
 
-#### 2.1 Dataset Preparation
+### 👀 2.1 Dataset Preparation
 
 Users can store the metadata of their dataset in the following JSON format:
 
@@ -77,7 +80,7 @@ Users can store the metadata of their dataset in the following JSON format:
 [
     {
         "video": "test_video.avi",
-        "captions": [
+        "enCap": [
             "A man is clipping paper.", 
             "A man is cutting paper."
         ]
@@ -85,7 +88,7 @@ Users can store the metadata of their dataset in the following JSON format:
 ]
 ```
 
-#### 2.2 Writing the YAML Configuration File
+### 🌟 2.2 Writing the YAML Configuration File
 
 For the dataset from section 2.1, write a YAML file in the following format. The `data` section specifies the dataset path and related information, while the `scorers` section defines the evaluation metrics to be used.
 
@@ -95,8 +98,8 @@ num_workers: 2
 
 data:
   video:
-    meta_data_path: './video-caption.json' # Path to meta data (mainly for image or video data)
-    data_path: './' # Path to dataset
+    meta_data_path: 'demos/video_eval/video-caption.json' # Path to meta data (mainly for image or video data)
+    data_path: 'demos/video_eval/' # Path to dataset
     formatter: 'VideoCaptionFormatter' # Formatter for video-text evaluation
 
 scorers:
@@ -105,10 +108,52 @@ scorers:
     num_workers: 4
 ```
 
-#### 2.3 Evaluating the Dataset
-Once the YAML configuration file is ready, call the function `calculate_score()` to evaluate the data.
-
-```python
-from dataflow.utils.utils import calculate_score
-calculate_score()
+### 💪 2.3 Evaluating the Dataset
+You can assess the dataset with a single line of command
+```bash
+cd path/to/DataFlow
+python eval.py --config configs/eval/video_text_scorer.yaml
+```
+Output is default stored in:
+```
+./scores.json
+```
+It should look like the following format:
+```
+{
+    "meta_scores": {},
+    "item_scores": {
+        "0": {
+            "EMScorer": {
+                "EMScore(X,X*)": {
+                    "figr_P": 0.9121,
+                    "figr_R": 0.9121,
+                    "figr_F": 0.9121,
+                    "cogr": 0.934,
+                    "full_P": 0.9231,
+                    "full_R": 0.9231,
+                    "full_F": 0.9231
+                },
+                "EMScore(X,V)": {
+                    "figr_P": 0.228,
+                    "figr_R": 0.2537,
+                    "figr_F": 0.2402,
+                    "cogr": 0.2598,
+                    "full_P": 0.2439,
+                    "full_R": 0.2568,
+                    "full_F": 0.25
+                },
+                "EMScore(X,V,X*)": {
+                    "figr_P": 0.5701,
+                    "figr_R": 0.5829,
+                    "figr_F": 0.5762,
+                    "cogr": 0.5969,
+                    "full_P": 0.5835,
+                    "full_R": 0.5899,
+                    "full_F": 0.5866
+                }
+            }
+        }
+    }
+}
 ```

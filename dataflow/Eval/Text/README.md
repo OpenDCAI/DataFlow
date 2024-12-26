@@ -1,28 +1,29 @@
-# Text Data Quality Assessment
+# Text Data Quality Evaluation
 
-The current data evaluation system has integrated 20 different types of advanced text data evaluation methods. For details, see [Evaluation Algorithm Documentation](../../../docs/text_metrics_EN.md). During the data evaluation process, you can specify the data source, data format, scorer, and scorer configuration information through a `yaml` configuration file. Users can evaluate different text data by modifying the configuration file.
+This data evaluation system has integrated **20 different types of advanced text data evaluation methods** and over ten methods for evaluating generated text. For details, refer to the [Evaluation Algorithm Documentation](../../../docs/text_metrics.md) and [Generated Text Evaluation Algorithm Documentation](../../../docs/gen_text_metrics.md). When conducting data evaluation, you can specify the data source, data format, scorers, and scorer configuration information through the `yaml` configuration file. Users can evaluate different text data by modifying the configuration file.
 
+## 👀 Configuration File
 
-## Configuration File
-
-The configuration file is located in `DataFlow/configs`, for example:
+The configuration files are stored in `DataFlow/configs/eval`, for example:
 
 ```yaml
-model_cache_path: '../ckpt' # cache path for models
+model_cache_path: '../ckpt' # Default model cache path
+dependencies: [text] # Select environment dependencies to load
+save_path: "./scores" # Output score storage path
 
 data:
   text:
-    use_hf: False # Whether to use onlined Huggingface dataset, if used, ignore the local data path below
-    dataset_name: 'yahma/alpaca-cleaned' # Huggingface dataset: dataset name
-    dataset_split: 'train' # Huggingface dataset: dataset split
-    name: 'default' # Huggingface dataset: subset name
-    
-    data_path: 'demos/text_eval/fineweb_5_samples.json'  # Local data path, supports json, jsonl, parquet formats
-    formatter: "TextFormatter" # Data loader type
+    use_hf: False # Whether to use huggingface_dataset. If used, the local data path below is ignored; parameters for Huggingface datasets are set below. If not used, ignore this setting.
+    dataset_name: 'MBZUAI-LLM/SlimPajama-627B-DC'
+    dataset_split: 'test'
+    revision: 'refs/convert/parquet'
+    name: 'default'
+    data_path: 'demos/text_eval/fineweb_5_samples.json'  # Local data path, supports json, jsonl, and parquet formats
+    formatter: "TextFormatter" # Data loader type, use TextFormatter
 
-    keys: 'text' # Key name to be evaluated, for sft data, it can be specified as ['instruction','input','output']
+    keys: 'text' # Key name to be evaluated. For SFT data, it can be specified as ['instruction','input','output']
     
-scorers: # You can select multiple text scorers from all_scorers.yaml and put their configuration information here
+scorers: # Select multiple text scorers from all_scorers.yaml and include their configuration information
   PresidioScorer:
       language: 'en'
       device: 'cuda:0'
@@ -41,7 +42,29 @@ scorers: # You can select multiple text scorers from all_scorers.yaml and put th
         - educational_value
 ```
 
-## Dataset Example
+For generated text, the configuration file needs to specify the dataset to be evaluated, the reference dataset file, and the key names.
+
+```yaml
+dependencies: [text] # Select environment dependencies to load
+save_path: "./scores.json" # Output score storage path
+data:
+  text:
+    eval_data_path: "demos/text_eval/fineweb_5_samples.json" # Path to the dataset to be evaluated
+    ref_data_path: "demos/text_eval/alpaca_5_samples.json" # Path to the reference dataset
+    ref_key: 'output' # Key name for the reference data
+    eval_key: 'text' # Key name for the data to be evaluated
+    formatter: 'GenTextFormatter' # Data loader type, use GenTextFormatter
+
+scorers:
+  BleuScorer:
+    n: 4 # Maximum value of N-gram
+    eff: "average"  # Reference length selection method: "shortest", "average", "closest"
+    special_reflen: null  # Set this value if a special reference sentence length is required
+
+```
+All scorer configurations are saved in `DataFlow/configs/eval/all_scorers.yaml`, and configurations for generated text evaluation scorers are saved in `DataFlow/configs/eval/gen_text_scorers.yaml`. You can directly copy and paste specific scorer configuration information for use.
+
+## 🌟 Dataset Example
 This text data evaluation system supports both pre-training data and SFT data formats.
 
 ### Pre-training Dataset Example (excerpt from `Fineweb`):
@@ -57,7 +80,7 @@ This text data evaluation system supports both pre-training data and SFT data fo
     }
 ]
 ```
-To evaluate the above data format, you can specify `keys: Text`.
+To evaluate the above data format, you can specify `keys: text`.
 
 ### SFT Dataset Example (excerpt from `alpaca-cleaned`):
 ```json
@@ -76,20 +99,19 @@ To evaluate the above data format, you can specify `keys: Text`.
 ```
 To evaluate the above data format, you can specify `keys: ['instruction','input','output']`.
 
-## Run scorers
-
+## 💪 Run scorers
+We can run evaluation with a single line of command:
 ```bash
 cd path/to/DataFlow
-python main.py --config /path/to/configfile
+python eval.py --config configs/eval/text_scorer_example2.yaml
 ```
-The `main.py` file is as follows. The path for saving the scoring results can be set through the `save_path` parameter.
-
-```python
-from dataflow.utils.utils import calculate_score
-calculate_score(save_path='./scores.json')
+The score is saved in the default 
 ```
+./scores.json
+```
+you can also change the save_path in the yaml file.
 
-## Output Sample
+## 📌 Output Sample
 `meta_scores` stores the scores of the entire dataset level, such as `VendiScore`. `item_scores` stores the scores for each individual data in the dataset.
 ```json
 {
