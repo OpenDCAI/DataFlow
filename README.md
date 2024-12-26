@@ -129,15 +129,6 @@ pip install transformers==4.44.2
 </p>
 </details>
 
-Please refer to Data Evaluation Documentation for config file usage. Use the following command to run with the config file
-
-```
-python main.py --config [your config file]
-```
-<p align="center">
-  <img src="./static/images/example_1.png">
-</p>
-
 ## Quick Start
 ### Quick Evaluation:
 ```
@@ -176,6 +167,11 @@ python process.py --config configs/process/video_process.yaml
 - [视频评估示例](./demos/video_eval/video_eval_example.zh-CN.ipynb)
 - [Video Process Demo](./demos/video_process/video_process_example.ipynb)
 - [视频处理示例](./demos/video_process/video_process_example.zh-CN.ipynb)
+
+Data Evaluation Example is shown as follow:
+<p align="center">
+  <img src="./static/images/example_1.png">
+</p>
 
 ## Data Evaluation & Process Documentation
 
