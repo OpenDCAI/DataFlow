@@ -9,10 +9,10 @@
     <img alt="License: apache-2-0" src="https://img.shields.io/github/license/saltstack/salt" />
 </a>
 <a href="https://github.com/GAIR-NLP/ProX" target="_blank">
-    <img alt="GitHub Stars" src="https://img.shields.io/github/stars/Open-DataFlow/Open-DataFlow-Eval?style=social" />
+    <img alt="GitHub Stars" src="https://img.shields.io/github/stars/Open-DataFlow/DataFlow-Eval-Process?style=social" />
 </a>
 <a href="https://github.com/GAIR-NLP/ProX/issues" target="_blank">
-    <img alt="Open Issues" src="https://img.shields.io/github/issues-raw/Open-DataFlow/Open-DataFlow-Eval" />
+    <img alt="Open Issues" src="https://img.shields.io/github/issues-raw/Open-DataFlow/DataFlow-Eval-Process" />
 </a>
 
 DataFlow-Eval is a data evaluation system to evaluate data quality from multiple dimensions. We mainly support SOTA algorithms within academic papers with strong theoretical support.
