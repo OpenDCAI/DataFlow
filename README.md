@@ -12,7 +12,7 @@
     <img alt="GitHub Stars" src="https://img.shields.io/github/stars/Open-DataFlow/DataFlow-Eval-Process?style=social" />
 </a>
 <a href="https://github.com/Open-DataFlow/Open-DataFlow-Eval/issues" target="_blank">
-    <img alt="Open Issues" src="https://img.shields.io/github/issues-raw/Open-DataFlow/Open-DataFlow-Eval" />
+    <img alt="Open Issues" src="https://img.shields.io/github/issues-raw/Open-DataFlow/DataFlow-Eval-Process" />
 </a>
 
 DataFlow-Eval-Process is a data evaluation and processing system designed to evaluate data quality from multiple dimensions and filter out high-quality data. We mainly support SOTA algorithms within academic papers with strong theoretical support.
