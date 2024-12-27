@@ -32,11 +32,11 @@ We now support text, image, video, and multimodality data types.
     - [Text](#text)
     - [Image](#image)
     - [Video](#video)
-  - [📌 Data Evaluation Documentation](#data-evaluation-documentation)
+  - [📌 Data Evaluation & Process Documentation](#data-evaluation-documentation)
     - [Text Documentation](#text-documentation)
     - [Image Documentation](#image-documentation)
     - [Video Documentation](#video-documentation)
-  - [🧠 Data Evaluation Algorithms](#data-evaluation-algorithms)
+  - [🧠 Data Evaluation & Process Algorithms](#data-evaluation-algorithms)
     - [Text Algorithms](#text-algorithms)
     - [Image Algorithms](#image-algorithms)
     - [Video Algorithms](#video-algorithms)
@@ -50,6 +50,7 @@ We now support text, image, video, and multimodality data types.
 
 ## News
 
+- [2024-12-26] 🎉 Our first data evaluation and processing system is now open source.
 - [2024-10-14] 🎉 We summarize data evaluation papers and codes in [👋 Awesome Data Evaluation](./Awesome_Data_Evaluation.md)
 - [2024-10-14] 🎉 Our first data-centric evaluation system is now open source.
 
