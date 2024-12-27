@@ -32,11 +32,11 @@ DataFlow-Eval 是一个数据质量和处理的评估系统，可以从多个维
     - [文本示例](#文本示例)
     - [图像示例](#图像示例)
     - [视频示例](#视频示例)
-  - [📌 数据评估文档](#数据评估文档)
+  - [📌 数据评估&处理文档](#数据评估文档)
     - [文本文档](#文本文档)
     - [图像文档](#图像文档)
     - [视频文档](#视频文档)
-  - [🧠 数据评估算法](#数据评估算法)
+  - [🧠 数据评估&处理算法](#数据评估算法)
     - [文本算法](#文本算法)
     - [图像算法](#图像算法)
     - [视频算法](#视频算法)
@@ -51,7 +51,7 @@ DataFlow-Eval 是一个数据质量和处理的评估系统，可以从多个维
 
 ## 新闻
 
-- [2024-10-14] 🎉 我们的评估与数据处理系统开源了
+- [2024-12-26] 🎉 我们的评估与数据处理系统开源了
 - [2024-10-14] 🎉 我们在 [👋 Awesome Data Evaluation](./Awesome_Data_Evaluation.md)总结了数据评估相关论文
 - [2024-10-14] 🎉 我们的数据评估系统开源了
 
@@ -169,7 +169,7 @@ config中的yaml都可以直接跑
 - [Video Process Demo](./demos/video_process/video_process_example.ipynb)
 - [视频处理示例](./demos/video_process/video_process_example.zh-CN.ipynb)
 
-评估示例:
+使用CLIPScore打分器的评估示例:
 <p align="center">
   <img src="./static/images/example_1.png">
 </p>
@@ -182,8 +182,8 @@ config中的yaml都可以直接跑
 
 - [Text Data Evaluation User Documentation (English)](./dataflow/Eval/Text/README.md)
 - [文本数据评估使用文档 (中文)](./dataflow/Eval/Text/README.zh-CN.md)
-- [Text Data Evaluation User Documentation (English)](./dataflow/process/text/README.md)
-- [文本数据评估使用文档 (中文)](./dataflow/process/text/README.zh-CN.md)
+- [Text Data Process User Documentation (English)](./dataflow/process/text/README.md)
+- [文本数据处理使用文档 (中文)](./dataflow/process/text/README.zh-CN.md)
 
 ### 图像文档
 
