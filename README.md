@@ -182,8 +182,8 @@ For the usage of evaluation, please refer to the following documents👇
 
 - [Text Data Evaluation User Documentation (English)](./dataflow/Eval/Text/README.md)
 - [文本数据评估使用文档 (中文)](./dataflow/Eval/Text/README.zh-CN.md)
-- [Text Data Evaluation User Documentation (English)](./dataflow/process/text/README.md)
-- [文本数据评估使用文档 (中文)](./dataflow/process/text/README.zh-CN.md)
+- [Text Data Process User Documentation (English)](./dataflow/process/text/README.md)
+- [文本数据处理使用文档 (中文)](./dataflow/process/text/README.zh-CN.md)
 
 ### Image Documentation
 
