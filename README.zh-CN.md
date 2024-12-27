@@ -15,7 +15,7 @@
     <img alt="Open Issues" src="https://img.shields.io/github/issues-raw/Open-DataFlow/DataFlow-Eval-Process" />
 </a>
 
-DataFlow-Eval 是一个数据质量评估系统，可以从多个维度评估数据质量。我们主要支持具有强大理论支持的学术论文中的最新算法。
+DataFlow-Eval 是一个数据质量和处理的评估系统，可以从多个维度评估数据质量并筛选高质量数据。我们主要支持具有强大理论支持的学术论文中的最新算法。
 
 我们目前支持文本、图像、视频和多模态数据类型。
 
@@ -51,8 +51,8 @@ DataFlow-Eval 是一个数据质量评估系统，可以从多个维度评估数
 
 ## 新闻
 
+- [2024-10-14] 🎉 我们的评估与数据处理系统开源了
 - [2024-10-14] 🎉 我们在 [👋 Awesome Data Evaluation](./Awesome_Data_Evaluation.md)总结了数据评估相关论文
-
 - [2024-10-14] 🎉 我们的数据评估系统开源了
 
 ## 安装
@@ -109,7 +109,7 @@ pip install transformers==4.44.2
 ```bash
 pip install -e .[video]
 ```
-When evaluating video-caption data, please run the following command to install modified CLIP for EMScore:
+当评估video-caption数据时, 请运行下列代码下载EMScore定制的CLIP:
 ```
 pip install git+https://github.com/MOLYHECI/CLIP.git
 ```
