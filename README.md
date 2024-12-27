@@ -169,7 +169,7 @@ python process.py --config configs/process/video_process.yaml
 - [Video Process Demo](./demos/video_process/video_process_example.ipynb)
 - [视频处理示例](./demos/video_process/video_process_example.zh-CN.ipynb)
 
-Data Evaluation Example is shown as follow:
+Data Evaluation Example using CLIPScore is shown as follow:
 <p align="center">
   <img src="./static/images/example_1.png">
 </p>
