@@ -225,6 +225,6 @@ DeitaQualityFilter:
 
 支持的打分器，详见[评估算法文档](text_metrics.zh-CN.md)（除Diversity部分）。
 
-此外，启发式规则过滤在预训练数据的筛选方面占有很大的比重，在这一方面，Dingo数据质量评估工具对我们的开发带来了很大的启发。我们在`dataflow/process/text/filters/heuristics.py`中整合了部分Dingo中使用的规则过滤算法，共22种。详见某个链接（Dingo还没有开源，先空在这里）。
+此外，启发式规则过滤在预训练数据的筛选方面占有很大的比重，在这一方面，[Dingo数据质量评估工具](https://github.com/DataEval/dingo)对我们的开发带来了很大的启发。我们在`dataflow/process/text/filters/heuristics.py`中整合了部分Dingo中使用的规则过滤算法，共22种。详见[规则文档](https://github.com/DataEval/dingo/blob/dev/docs/rules.md)，过滤器名称可参考`dataflow/process/text/filters/heuristics.py`文件。
 
 需要说明的是，以上提到的42种数据过滤器具有相同的`Yaml`调用方式。

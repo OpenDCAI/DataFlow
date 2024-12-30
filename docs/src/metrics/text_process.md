@@ -227,6 +227,7 @@ DeitaQualityFilter:
 ```
 You can set min/max scores and scorer parameters in `scorer_args` for filtering. For more information on supported scorers, refer to the [evaluation algorithm documentation](text_metrics.md) (excluding the Diversity part).
 
-Heuristic rule-based filtering plays a significant role in pre-training data selection. Inspired by the Dingo data quality assessment tool, we have integrated 22 rule-based filtering algorithms into `dataflow/process/text/filters/heuristics.py`. More details will follow once Dingo is open-sourced.
+In addition, heuristic rule filtering plays a significant role in the screening of pre-training data. In this regard, the [Dingo Data Quality Evaluation Tool](https://github.com/DataEval/dingo) has greatly inspired our development. We have integrated some of the rule filtering algorithms used in Dingo, a total of 22 types, into `dataflow/process/text/filters/heuristics.py`. For details, please refer to the [Rules Documentation](https://github.com/DataEval/dingo/blob/dev/docs/rules.md). The names of the filters can be found in the `dataflow/process/text/filters/heuristics.py` file.
+
 
 All 42 data filters mentioned above share the same `yaml` invocation method.
