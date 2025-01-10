@@ -94,7 +94,12 @@ def load_pretrained_model(model_cls,
     if not model.get_vision_tower().is_loaded:
         model.get_vision_tower().load_model()
     model.to(device=device, dtype=torch.bfloat16)
-    image_processor = model.get_vision_tower().image_processor
+    original_image_processor = model.get_vision_tower().image_processor
+
+    def image_processor(image) -> torch.Tensor:
+        image = expand2square(image, tuple(int(x*255) for x in original_image_processor.image_mean))
+        image = original_image_processor.preprocess(image, return_tensors='pt')['pixel_values'][0]
+        return image
 
     model.requires_grad_(False)
     
@@ -112,11 +117,12 @@ def load_pretrained_model(model_cls,
 # --------- fleur ---------
 
 def fleur_collate_fn(batch):
-    id = [item[0] for item in batch]
-    images = [item[1] for item in batch]
-    captions = [item[2] for item in batch]
+    # id = [item[0] for item in batch]
+    images = [item[0] for item in batch]
+    captions = [item[1] for item in batch]
 
-    return id, images, captions
+    # return id, images, captions
+    return images, captions
 
 import subprocess
 
