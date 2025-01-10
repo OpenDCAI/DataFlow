@@ -74,7 +74,7 @@ class ClipT5Scorer(ImageTextScorer):
         self.conversational_style = 't5_chat'
         
         def load_model():
-            self.tokenizer, self.model, self.image_processor = load_pretrained_model(
+            self.tokenizer, self.model, self.image_preprocessor = load_pretrained_model(
                 CLIPT5ForConditionalGeneration,
                 model_args,
                 # model_path=self.model_path,
@@ -91,7 +91,8 @@ class ClipT5Scorer(ImageTextScorer):
 
         try:
             load_model()
-        except:
+        except Exception as e:
+            print(e)
             download_model_from_hf(self.model_path, self.cache_dir)
             load_model()
 
@@ -109,10 +110,10 @@ class ClipT5Scorer(ImageTextScorer):
     #     image = torch.stack(image, dim=0).to(self.device)
     #     return image
 
-    def total_image_preprocessor(self, image) -> torch.Tensor:
-        image = expand2square(image, tuple(int(x*255) for x in self.image_processor.image_mean))
-        image = self.image_processor.preprocess(image, return_tensors='pt')['pixel_values'][0]
-        return image
+    # def image_preprocessor(self, image) -> torch.Tensor:
+    #     image = expand2square(image, tuple(int(x*255) for x in self.original_image_processor.image_mean))
+    #     image = self.original_image_processor.preprocess(image, return_tensors='pt')['pixel_values'][0]
+    #     return image
 
     # def get_image_preprocessor(self):
     #     return self.total_image_preprocessor

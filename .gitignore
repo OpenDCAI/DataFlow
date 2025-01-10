@@ -21,3 +21,4 @@ configs/process/experiments/
 **/ciderscorer/coco-val-df.p
 **/data
 **/ckpt
+tmp.*
