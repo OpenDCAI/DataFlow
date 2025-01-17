@@ -13,7 +13,7 @@ from tqdm import tqdm
 from torch.nn.functional import adaptive_avg_pool2d
 import torchvision.transforms as transforms
 from dataflow.Eval.image.kid.inception import InceptionV3
-from dataflow.Eval.image..kid.lenet import LeNet5
+from dataflow.Eval.image.kid.lenet import LeNet5
 from PIL import Image
 import sys
 
@@ -125,7 +125,6 @@ class KIDScorer(GenImageScorer):
             model.load_state_dict(torch.load('./kid/lenet.pth'))
         if cuda:
             model.cuda()
-
         act_true = self._compute_activations(ref_sample, model, batch_size, dims, cuda, model_type)
         results = []
         actj = self._compute_activations(sample, model, batch_size, dims, cuda, model_type)
