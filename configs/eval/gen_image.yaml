@@ -1,0 +1,35 @@
+model_cache_path: '../ckpt' # Path to cache models
+num_workers: 2
+dependencies: [image]
+
+# data:
+#   image:
+#     meta_data_path: "demos/image_eval/image.json"
+#     data_path: "demos/image_eval/images"
+#     ref_meta_data_path: "demos/image_eval/image_copy.json"
+#     ref_data_path: "demos/image_eval/images"
+#     image_key: 'image'
+#     formatter: 'GenImageFormatter'
+
+data:
+  image:
+    meta_data_path: "demos/image_eval/gen_image.json"
+    data_path: "demos/image_eval/gen_images"
+    ref_meta_data_path: "demos/image_eval/ref_image.json"
+    ref_data_path: "demos/image_eval/images"
+    image_key: 'image'
+    formatter: 'GenImageFormatter'
+
+scorers:
+  ISScorer:
+    batch_size: 32
+    device: cpu
+    dims: 2048
+    resize: True
+    splits: 10
+  KIDScorer:
+    batch_size: 50
+    num_workers: 8
+    dims: 2048
+    device: cpu
+    model: inception

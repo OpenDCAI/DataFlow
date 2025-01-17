@@ -333,10 +333,6 @@ class ImageTextScorer(Scorer):
         idx_list = list(range(len(dataset)))
         dataset.score_record.item_score[self.__class__.__name__]['Default'][idx_list] = score_list
 
-        # assert len(score_list) == len(id_list), "The number of scores and ids should be the same."
-        # id_score_dict = dict(zip(id_list, score_list))
-        # return id_score_dict
-        # dataset.scores_list[self.__class__.__name__] = score_list
         return self.__class__.__name__, dataset.score_record.item_score[self.__class__.__name__]
     
     def __call__(self, dataset):
@@ -387,14 +383,13 @@ class GenImageScorer(Scorer):
             else:
                 ref_dataloader = DataLoader(ref_dataset, batch_size=len(ref_dataset), shuffle=False, num_workers=self.num_workers)
             for data, ref_data in zip(dataloader, ref_dataloader):
-                scores = self.evaluate_batch(data[1], ref_data[1])
+                scores = self.evaluate_batch(data, ref_data)
                 if isinstance(scores, torch.Tensor):
                     scores = scores.cpu().detach().numpy
                 score_list.append(scores) # list
                 
-        dataset.score_record.meta_score[self.scorer_name]['Default'] = score_list[0]
-        # if ref_dataset is not None:
-        #     ref_dataset.meta_score[self.scorer_name] = score_list[0]
+        dataset.score_record.meta_score[self.scorer_name] = score_list[0][0]
+
         return self.scorer_name, dataset.score_record.meta_score[self.scorer_name]
         
 class VideoScorer(Scorer):

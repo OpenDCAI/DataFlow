@@ -56,7 +56,7 @@ class ISScorer(GenImageScorer):
 
         # Load inception model
         inception_model = inception_v3(pretrained=True, transform_input=False).type(dtype)
-        inception_model.eval();
+        inception_model.eval()
         up = nn.Upsample(size=(299, 299), mode='bilinear').type(dtype)
 
         def get_pred(x):
