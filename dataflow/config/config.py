@@ -49,3 +49,20 @@ def new_init_config(args=None):
         return cfg
     except ArgumentError:
         print('Configuration initialization failed')
+
+def api_init_config(args=None):
+    """Initialize new configuration with updated settings."""
+    parser = ArgumentParser(default_env=True, default_config_files=None)
+    parser.add_argument('--data', type=str, default=None, help='Data path')
+    parser.add_argument('--yaml', default=None, help='Yaml config file path')
+    parser.add_argument('--key', type=str, default='text', help='Key for pretraining data')
+    parser.add_argument('--sft_single_round', type=str, default=None, help='Key for sft single round data')
+    parser.add_argument('--sft_multi_round', type=str, default=None, help='Key for sft multi round data')
+    parser.add_argument('--RLHF', type=str, default=None, help='Partial ordering relationship')
+    parser.add_argument('--model_cache_path', type=str, default='./ckpt', help='Path to model cache directory')
+    parser.add_argument('--num_workers', type=PositiveInt, default=1, help='Number of worker threads')
+    try:
+        cfg = parser.parse_args(args=args)
+        return cfg
+    except ArgumentError:
+        print('Configuration initialization failed')

@@ -7,14 +7,14 @@ import os
 
 @FORMATTER_REGISTRY.register()
 class TextFormatter:
-    def __init__(self, cfg):
-        self.dataset_name = cfg.get('dataset_name', None) 
-        self.dataset_split = cfg.get('dataset_split', None) 
-        self.name = cfg.get('name', None) 
-        self.revision = cfg.get('revision', None)
-        self.data_dir = cfg.get('data_path', None) 
-        self.keys = cfg.get('keys', None)  
-        self.use_hf = cfg.get('use_hf')
+    def __init__(self, data_dir, key, sft_single_round, sft_multi_round, RLHF):
+        self.use_hf = False
+        self.data_dir = data_dir
+        self.keys = key
+        # 以下留空
+        self.sft_single_round = sft_single_round
+        self.sft_multi_round = sft_multi_round
+        self.RLHF = RLHF
 
     def load_dataset(self) -> TextDataset:
         if self.use_hf:

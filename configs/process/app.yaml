@@ -1,0 +1,11 @@
+NgramFilter:
+  min_score: 0.99
+  max_score: 1.0
+  scorer_args:
+    ngrams: 5
+FineWebEduFilter:
+  min_score: 0
+  max_score: 100
+  scorer_args:
+    model_name: 'HuggingFaceTB/fineweb-edu-classifier'
+    device: 'cuda:4'

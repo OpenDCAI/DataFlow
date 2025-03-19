@@ -22,3 +22,5 @@ configs/process/experiments/
 **/data
 **/ckpt
 tmp.*
+processed.jsonl
+test.sh

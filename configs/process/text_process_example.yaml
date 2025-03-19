@@ -1,6 +1,3 @@
-model_cache_path: '../ckpt' # Path to cache models
-dependencies: [text]
-save_path: "./processed.jsonl"
 
 data:
   text:

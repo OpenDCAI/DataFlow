@@ -1,6 +1,9 @@
 import numpy as np
 import subprocess
 import torch
+import json
+import yaml
+
 
 def download_model_from_hf(model_name, model_cache_dir):
     print(f"Downloading {model_name} to {model_cache_dir}.")
@@ -193,34 +196,36 @@ def get_processor(processor_name, args):
     return processor
 
 def process():
-    from ..config import new_init_config
+    from ..config import api_init_config
     from dataflow.data import DataFlowDSDict
     from dataflow.utils.registry import FORMATTER_REGISTRY
     from dataflow.core import ScoreRecord
-    cfg = new_init_config()
+    cfg = api_init_config()
     dataset_dict = DataFlowDSDict()
-    for scorer_name, args in cfg.processors.items():
-        if scorer_name == 'Checkpoint':
-            save_path = args['save_path']
-            data_type = args['data_type']
-            dataset = dataset_dict[data_type]
-            dataset.dump(save_path)
-            continue
+
+    if isinstance(cfg.yaml, str):
+        with open(cfg.yaml, 'r') as f:
+            cfg.yaml = yaml.safe_load(f)  # 解析成字典
+    
+    for scorer_name, args in cfg.yaml.items():
         if "num_workers" in cfg:
             args["num_workers"] = cfg.num_workers
         if "model_cache_path" in cfg:
             args["model_cache_dir"] = cfg.model_cache_path
         processor = get_processor(scorer_name, args)
         if processor.data_type not in dataset_dict.keys():
-            formatter = FORMATTER_REGISTRY.get(cfg['data'][processor.data_type]['formatter'])(cfg['data'][processor.data_type])
+            formatter = FORMATTER_REGISTRY.get('TextFormatter')(cfg['data'], cfg['key'], cfg['sft_single_round'], cfg['sft_multi_round'], cfg['RLHF'])
             datasets = formatter.load_dataset()
             dataset_dict[processor.data_type] = datasets
-            dataset = datasets[0] if type(datasets) == tuple else datasets
+            recorder = range(len(datasets))
+            result = np.zeros(len(datasets), dtype=bool)
         else:
             datasets = dataset_dict[processor.data_type]
-        processed_dataset = processor(datasets)
+        processed_dataset, recorder = processor(datasets, recorder)
         dataset_dict[processor.data_type] = processed_dataset
-    save_path = cfg['save_path']
-    for dataset in dataset_dict.values():
-        dataset.dump(save_path)
-    
+    # save_path = cfg['save_path']
+    # for dataset in dataset_dict.values():
+    #     dataset.dump(save_path)
+    result[recorder] = True
+    result = result.tolist()
+    print(json.dumps({"bool": result}))
