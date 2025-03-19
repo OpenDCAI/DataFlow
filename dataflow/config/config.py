@@ -61,6 +61,7 @@ def api_init_config(args=None):
     parser.add_argument('--RLHF', type=str, default=None, help='Partial ordering relationship')
     parser.add_argument('--model_cache_path', type=str, default='./ckpt', help='Path to model cache directory')
     parser.add_argument('--num_workers', type=PositiveInt, default=1, help='Number of worker threads')
+    parser.add_argument('--save_path', default=None, help='Refiner save path')
     try:
         cfg = parser.parse_args(args=args)
         return cfg

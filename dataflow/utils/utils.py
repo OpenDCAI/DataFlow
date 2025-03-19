@@ -195,7 +195,7 @@ def get_processor(processor_name, args):
     assert processor is not None, f"Processor for {processor} is not found."
     return processor
 
-def process():
+def filter():
     from ..config import api_init_config
     from dataflow.data import DataFlowDSDict
     from dataflow.utils.registry import FORMATTER_REGISTRY
@@ -229,3 +229,33 @@ def process():
     result[recorder] = True
     result = result.tolist()
     print(json.dumps({"bool": result}))
+
+def refine():
+    from ..config import api_init_config
+    from dataflow.data import DataFlowDSDict
+    from dataflow.utils.registry import FORMATTER_REGISTRY
+    from dataflow.core import ScoreRecord
+    cfg = api_init_config()
+    dataset_dict = DataFlowDSDict()
+
+    if isinstance(cfg.yaml, str):
+        with open(cfg.yaml, 'r') as f:
+            cfg.yaml = yaml.safe_load(f)  # 解析成字典
+    
+    for scorer_name, args in cfg.yaml.items():
+        if "num_workers" in cfg:
+            args["num_workers"] = cfg.num_workers
+        if "model_cache_path" in cfg:
+            args["model_cache_dir"] = cfg.model_cache_path
+        processor = get_processor(scorer_name, args)
+        if processor.data_type not in dataset_dict.keys():
+            formatter = FORMATTER_REGISTRY.get('TextFormatter')(cfg['data'], cfg['key'], cfg['sft_single_round'], cfg['sft_multi_round'], cfg['RLHF'])
+            datasets = formatter.load_dataset()
+            dataset_dict[processor.data_type] = datasets
+        else:
+            datasets = dataset_dict[processor.data_type]
+        processed_dataset = processor(datasets)
+        dataset_dict[processor.data_type] = processed_dataset
+    save_path = cfg['save_path']
+    for dataset in dataset_dict.values():
+        dataset.dump(save_path)
