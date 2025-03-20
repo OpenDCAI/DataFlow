@@ -3,7 +3,7 @@ from dataflow.utils.registry import PROCESSOR_REGISTRY
 import torch
 from transformers import BertModel, BertTokenizer
 from torch.nn.functional import normalize
-
+import json
 
 def load_model(device, model_path):
     """
@@ -87,17 +87,5 @@ class SemDeduplicator(TextDeduplicator):
         # Compute embeddings for the dataset texts
         embeddings = get_text_embedding(texts, self.tokenizer, self.model, self.device)
         embeddings = normalize(torch.tensor(embeddings), dim=1)
-
-        # Compute cosine similarity matrix
-        cos_sim_matrix = compute_cos_sim_matrix(embeddings)
-        cos_sim_matrix.fill_diagonal_(0)  # Set diagonal to 0 to avoid self-comparison
-        cos_sim_matrix = torch.triu(cos_sim_matrix, diagonal=1)
-
-        # Find pairs with similarity greater than or equal to the threshold
-        similar_pairs = torch.where(cos_sim_matrix >= (1 - self.eps))
-
-        labels = [1] * len(dataset) 
-        for idx in similar_pairs[1].tolist():
-            labels[idx] = 0
-
-        return labels
+        print(json.dumps({"embeddings": embeddings.tolist()}))
+        return json.dumps({"embeddings": embeddings.tolist()})

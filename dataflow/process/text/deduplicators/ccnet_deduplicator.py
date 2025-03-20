@@ -3,6 +3,7 @@ from dataflow.core import TextDeduplicator
 from dataflow.utils.registry import PROCESSOR_REGISTRY
 from dataflow.utils.text_utils import sha1_hash
 from tqdm import tqdm
+import json
 
 @PROCESSOR_REGISTRY.register()
 class CCNetDeduplicator(TextDeduplicator):
@@ -15,8 +16,7 @@ class CCNetDeduplicator(TextDeduplicator):
         return sha1_hash(text, self.bit_length)
 
     def dedup_func(self, dataset):
-        seen_hashes = set()
-        labels = [0] * len(dataset)
+        hash_values = []
         for idx, sample in tqdm(enumerate(dataset), desc=f"Implementing {self.dedupliactor_name}", total=len(dataset)):
             if isinstance(dataset.keys, list):
                 text = " ".join([str(sample[key]) for key in dataset.keys])
@@ -24,8 +24,8 @@ class CCNetDeduplicator(TextDeduplicator):
             else:
                 text = str(sample[dataset.keys]).encode('utf-8')
             hash_value = self._compute_hash(text)
-            if hash_value not in seen_hashes:
-                labels[idx] = 1
-                seen_hashes.add(hash_value)
-        return labels
+            hash_values.append(hash_value)
+        print(json.dumps({"hash_values": hash_values}))
+        return hash_values
+
     

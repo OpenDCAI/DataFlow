@@ -1,4 +1,5 @@
 from dataflow.core import TextDeduplicator
+import json
 import hashlib
 from dataflow.utils.registry import PROCESSOR_REGISTRY
 from dataflow.utils.text_utils import md5, sha256, xxh3_128
@@ -20,8 +21,7 @@ class HashDeduplicator(TextDeduplicator):
         return self.hash_func_dict[self.hash_func](text.encode('utf-8')).hexdigest()
 
     def dedup_func(self, dataset):
-        seen_hashes = set()
-        labels = [0] * len(dataset)
+        hash_values = []
         for idx, sample in tqdm(enumerate(dataset), desc=f"Implementing {self.dedupliactor_name}", total=len(dataset)):
             if isinstance(dataset.keys, list):
                 text = " ".join([str(sample[key]) for key in dataset.keys])
@@ -29,9 +29,6 @@ class HashDeduplicator(TextDeduplicator):
                 text = str(sample[dataset.keys])
 
             hash_value = self._compute_hash(text)
-
-            if hash_value not in seen_hashes:
-                seen_hashes.add(hash_value)
-                labels[idx] = 1
-
-        return labels
+            hash_values.append(hash_value)
+        print(json.dumps({"hash_values": hash_values}))
+        return json.dumps({"hash_values": hash_values})

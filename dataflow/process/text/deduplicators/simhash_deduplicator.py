@@ -5,6 +5,7 @@ from typing import List
 from dataflow.utils.text_utils import md5_digest, sha256_digest, xxh3_128_digest
 from simhash import Simhash
 from tqdm import tqdm
+import json
 
 @PROCESSOR_REGISTRY.register()
 class SimHashDeduplicator(TextDeduplicator):
@@ -29,9 +30,8 @@ class SimHashDeduplicator(TextDeduplicator):
             else:
                 text = str(sample[dataset.keys]) 
             simhash = Simhash(text, f=self.fingerprint_size)
-            if all(get_similarity(simhash, another_simhash) < 1 - self.bound for another_simhash in simhashes):
-                labels[idx]=1
-                simhashes.append(simhash)
-        return labels
+            simhashes.append(simhash)
+        print(json.dumps({"hash_values": [simhash.value for simhash in simhashes]}))
+        return json.dumps({"hash_values": [simhash.value for simhash in simhashes]})
         
 

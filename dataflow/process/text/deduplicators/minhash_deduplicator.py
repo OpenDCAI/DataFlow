@@ -2,6 +2,7 @@ from dataflow.core import TextDeduplicator
 from dataflow.utils.registry import PROCESSOR_REGISTRY
 from datasketch import MinHash, MinHashLSH  # use datasketch-1.6.5
 from tqdm import tqdm
+import json
 from collections.abc import Sequence
 
 
@@ -27,20 +28,16 @@ class MinHashDeduplicator(TextDeduplicator):
 
     def dedup_func(self, dataset):
         lsh = MinHashLSH(threshold=self.threshold, num_perm=self.num_perm)
-
-        labels = [0] * len(dataset)
+        hash_values = []
         with lsh.insertion_session() as session:  
             for idx, sample in tqdm(enumerate(dataset), desc=f"Implementing {self.dedupliactor_name}", total=len(dataset)):
                 text = str(sample[dataset.keys])
                 minhash = self.create_minhash(text)
                 result = lsh.query(minhash)
-                if len(result) == 0:
-                    labels[idx] = 1
-                    session.insert(idx, minhash)  
+                hash_values.append(result)
+        print(json.dumps({"hash_values": hash_values}))
+        return json.dumps({"hash_values": hash_values})
 
-        return labels
-
-        
         
 
         
