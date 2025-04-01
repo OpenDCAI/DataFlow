@@ -201,27 +201,7 @@ For the usage of evaluation, please refer to the following documents👇
 
 ## Data Evaluation & Process Algorithms
 
-We summarize the SOTA algorithms from academic papers for data evaluation.
-### Text Algorithms
-
-- [Text Evaluation Algorithm Document (English)](./docs/text_metrics.md)
-- [文本算法介绍文档 (中文)](./docs/text_metrics.zh-CN.md)
-- [Text Evaluation Algorithm Document (English)](./docs/text_process.md)
-- [文本算法介绍文档 (中文)](./docs/text_process.zh-CN.md)
-
-### Image Algorithms
-
-- [Image Evaluation Algorithm Document (English)](./docs/image_metrics.md)
-- [图像数据评估使用文档 (中文)](./docs/image_metrics.zh-CN.md)
-- [Image Evaluation Algorithm Document (English)](./docs/image_process.md)
-- [图像数据评估使用文档 (中文)](./docs/image_process.zh-CN.md)
-
-### Video Algorithms
-
-- [Video Evaluation Algorithm Document (English)](./docs/video_metrics.md)
-- [视频数据评估使用文档 (中文)](./docs/video_metrics.zh-CN.md)
-- [Video Evaluation Algorithm Document (English)](./docs/video_process.md)
-- [视频数据评估使用文档 (中文)](./docs/video_process.zh-CN.md)
+[Dataflow Documentation](https://open-dataflow.github.io/DataFlow-Eval-Process/)
 
 ## Awesome Data Evaluation
 - [👋 Awesome Data Evaluation](./Awesome_Data_Evaluation.md)
