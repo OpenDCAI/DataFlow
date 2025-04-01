@@ -201,27 +201,7 @@ config中的yaml都可以直接跑
 
 ## 数据评估&处理算法
 
-我们在这里总结了目前领先的数据评估算法
-
-### 文本算法
-
-- [Text Evaluation Algorithm Document (English)](./docs/text_metrics.md)
-- [文本算法介绍文档 (中文)](./docs/text_metrics.zh-CN.md)
-- [Text Evaluation Algorithm Document (English)](./docs/text_process.md)
-- [文本算法介绍文档 (中文)](./docs/text_process.zh-CN.md)
-
-### 图像算法
-
-- [Image Evaluation Algorithm Document (English)](./docs/image_metrics.md)
-- [图像数据评估使用文档 (中文)](./docs/image_metrics.zh-CN.md)
-- [Image Evaluation Algorithm Document (English)](./docs/image_process.md)
-- [图像数据评估使用文档 (中文)](./docs/image_process.zh-CN.md)
-
-### 视频算法
-- [Video Evaluation Algorithm Document (English)](./docs/video_metrics.md)
-- [视频数据评估使用文档 (中文)](./docs/video_metrics.zh-CN.md)
-- [Video Evaluation Algorithm Document (English)](./docs/video_process.md)
-- [视频数据评估使用文档 (中文)](./docs/video_process.zh-CN.md)
+[Dataflow 文档](https://open-dataflow.github.io/DataFlow-Eval-Process/)
 
 ## 数据评估论文总结(综述)
 
