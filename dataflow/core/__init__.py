@@ -2,6 +2,7 @@ from .scorer import Scorer, VideoScorer, VideoTextScorer, TextScorer, GenTextSco
 from .process.filter import Filter, ImageFilter, ImageTextFilter, VideoFilter, TextFilter, VideoTextFilter
 from .process.refiner import Refiner, TextRefiner
 from .process.deduplicator import Deduplicator, TextDeduplicator, ImageDeduplicator
+from .process.reasoner import ReasonerFilter
 
 __all__  = [
     'Scorer',
@@ -20,5 +21,6 @@ __all__  = [
     'Refiner',
     'TextRefiner',
     'Deduplicator',
-    'TextDeduplicator'
+    'TextDeduplicator',
+    'ReasonerFilter'
 ]

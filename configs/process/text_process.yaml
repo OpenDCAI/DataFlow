@@ -299,4 +299,12 @@ processors:
       device: 'cuda:0'
       model_name: 'hkust-nlp/deita-quality-scorer'
       max_length: 512
-  
+  MathProblemFilter:
+    min_score: 0
+    max_score: 1
+    api_args:
+      api_url: 'The URL of api, default using general method'
+      api_key: 'Your Key'
+      model_name: 'gpt-4o'
+      mode_test: True
+

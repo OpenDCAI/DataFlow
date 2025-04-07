@@ -9,7 +9,7 @@ data:
     dataset_split: 'train'  
     name: 'default' 
     revision: null
-    data_path: 'demos/reasoning_process/math_5_samples.json'  # Local data path, supports json, jsonl, parquet formats
+    data_path: 'demos/text_process/reasoners/math_5_samples.json'  # Local data path, supports json, jsonl, parquet formats
     formatter: "TextFormatter" # Data loader type
     keys: 'answer' # Key name to be processed, for sft data, it can be specified as ['instruction','input','output']
 
