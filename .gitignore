@@ -22,3 +22,4 @@ configs/process/experiments/
 **/data
 **/ckpt
 tmp.*
+configs/process/text_process_reasoner.yaml
