@@ -74,7 +74,7 @@ class Registry():
                         raise e
                 raise KeyError(f"No object named '{name}' found in '{self._name}' registry!")
             elif self._name == "processor":
-                for x in ['text.refiners', 'text.filters', 'text.deduplicators', 'text.reasoning','image.filters', 'image.deduplicators', 'video.filters']:
+                for x in ['text.refiners', 'text.filters', 'text.deduplicators', 'text.reasoners', 'image.filters', 'image.deduplicators', 'video.filters']:
                 # for x in ['image.filters', 'image.refiners']:
                     module_path = "dataflow.process." + x
                     try:
