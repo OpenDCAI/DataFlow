@@ -8,5 +8,4 @@ Please see docs below for information on how to get started with Open-DataFlow-E
    :caption: Getting Started:
 
    Installation.md
-   Dev.md
    customized_scorer.md
