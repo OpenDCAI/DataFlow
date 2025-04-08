@@ -1,11 +1,11 @@
-from dataflow.core import TextFilter
+from dataflow.core import ReasonerFilter
 import numpy as np
 import re
 from dataflow.utils.registry import PROCESSOR_REGISTRY
 from dataflow.Eval.Text import NgramScorer
 
 @PROCESSOR_REGISTRY.register()
-class AnswerNgramFilter(TextFilter):
+class AnswerNgramFilter(ReasonerFilter):
     def __init__(self, args_dict: dict):
         super().__init__(args_dict)
         self.filter_name = 'AnswerNgramFilter'

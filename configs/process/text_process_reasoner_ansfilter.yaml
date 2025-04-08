@@ -1,6 +1,6 @@
 model_cache_path: '../ckpt' # Path to cache models
 dependencies: [text]
-save_path: "./processed.jsonl"
+save_path: "../dataflow-develop/processed.jsonl"
 
 data:
   text:
@@ -9,21 +9,20 @@ data:
     dataset_split: 'train'  
     name: 'default' 
     revision: null
-    data_path: 'demos/text_process/reasoners/math_5_samples.json'  # Local data path, supports json, jsonl, parquet formats
+    data_path: './demos/text_process/reasoners/math_5_samples.json'  # Local data path, supports json, jsonl, parquet formats
     formatter: "TextFormatter" # Data loader type
     keys: 'answer' # Key name to be processed, for sft data, it can be specified as ['instruction','input','output']
 
 processors:
-  AnswerFormatterFilter:
-    type: "default"
+  AnswerFormatterFilter: {}
   AnswerNgramFilter:
-    min_score: 0.5
+    min_score: 0.1
     max_score: 1.0
     ngrams: 5
   AnswerGroundTruthFilter: 
-    compare_method: exact # exact/math_verify/xverify
+    compare_method: math_verify # exact or math_verify
   AnswerTokenLengthFilter:
-    max_answer_token_length: 1024
+    max_answer_token_length: 512
     tokenizer_dir: '../Qwen2.5-0.5B-Instruct'
 
   
