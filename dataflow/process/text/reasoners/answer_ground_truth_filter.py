@@ -1,4 +1,5 @@
-from dataflow.core import TextFilter
+from dataflow.core import ReasonerFilter
+from math_verify import parse, verify, LatexExtractionConfig
 import numpy as np
 from dataflow.utils.registry import PROCESSOR_REGISTRY
 #from math_verify import parse, verify, LatexExtractionConfig
@@ -214,7 +215,7 @@ class AnswerExtractor:
 
 
 @PROCESSOR_REGISTRY.register()
-class AnswerGroundTruthFilter(TextFilter):
+class AnswerGroundTruthFilter(ReasonerFilter):
     def __init__(self, args_dict: dict):
         super().__init__(args_dict)
         self.filter_name = 'AnswerGroundTruthFilter'
@@ -222,10 +223,27 @@ class AnswerGroundTruthFilter(TextFilter):
         string_cleaner = StringCleaner(unit_manager)
         self.answer_extractor = AnswerExtractor(string_cleaner)
 
+        name2compare = {
+            'exact': self.exact_compare,
+            'math_verify': self.math_verify_compare
+        }
+
+        self.compare = name2compare[args_dict.get('compare_method', 'exact')]
+
+    def exact_compare(self, answer, ground_truth):
+        return answer == ground_truth
+    
+    def math_verify_compare(self, answer, ground_truth):
+        try:
+            return verify(parse(ground_truth), parse(answer))
+        except:
+            return False
+
     def filter_func(self, dataset):
         indexes = np.zeros(len(dataset)).astype(int)
         for i in range(len(dataset)):
             final_answer =  self.answer_extractor.extract_answer(dataset[i]['answer'], dataset[i].get('data_name', None))
-            if 'ground_truth_answer'in dataset[i] and final_answer == dataset[i]['ground_truth_answer']:
-                indexes[i] = 1
+            if 'ground_truth_answer' in dataset[i]:
+                if self.compare(final_answer, dataset[i]['ground_truth_answer']):
+                    indexes[i] = 1
         return indexes
