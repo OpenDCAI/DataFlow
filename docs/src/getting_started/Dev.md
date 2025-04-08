@@ -51,7 +51,7 @@ python process.py --config configs/process/text_process_example.yaml
 
 ## 记录开发过程
 
-如果遇到新的开发内容，请将开发过程记录到以下文档中：
+如果遇到新的开发内容，请将开发过程记录到以下文档中(如果和本文方式类似不用记录）：
 
 ```
 /data/scy/DataFlow-Eval-Process/docs/src/getting_started/Dev.md
