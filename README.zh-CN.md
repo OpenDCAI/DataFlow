@@ -59,7 +59,7 @@ DataFlow-Eval 是一个数据质量和处理的评估系统，可以从多个维
 
 您可以用如下命令配置conda环境
 ```
-conda create -n dataflow python=3.9
+conda create -n dataflow python=3.10
 
 conda activate dataflow
 

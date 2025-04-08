@@ -60,7 +60,7 @@ We now support text, image, video, and multimodality data types.
 For environment setup, please using the following commands👇
 
 ```
-conda create -n dataflow python=3.9
+conda create -n dataflow python=3.10
 conda activate dataflow
 pip install -e .
 ```
