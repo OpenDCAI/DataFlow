@@ -1,6 +1,6 @@
 [English Readme](./README.md)
 
-# DataFlow-数据评估与选择
+# DataFlow
 
 <p align="center">
   <img src="./static/images/Face.png">
