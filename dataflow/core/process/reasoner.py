@@ -19,10 +19,11 @@ class ReasonerFilter(Reasoner):
         self.filter_name = "ReasonerFilter"
         self.args = args
         
-        api_args = args['api_args']
-        self.model_name = api_args['model_name']
-        self.api_url = api_args['api_url']
-        self.mode_test = api_args['mode_test']
+        api_args = args.get('api_args', None)
+        if api_args is not None:
+            self.model_name = api_args['model_name']
+            self.api_url = api_args['api_url']
+            self.mode_test = api_args['mode_test']
     def filter_func(self, dataset):
         pass
 
