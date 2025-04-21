@@ -21,6 +21,14 @@ configs/process/experiments/
 **/ciderscorer/coco-val-df.p
 **/data
 **/ckpt
+**/ckpr
 tmp.*
 configs/process/text_process_reasoner.yaml
 docs/src/getting_started/Dev.md
+configs/process/test_process_math.yaml
+Text2SqlPipeline/bird_example/
+
+*.jsonl
+*.pt
+*.pth
+./.git/*
