@@ -1,0 +1,11 @@
+accelerate>=0.26.0
+torch==2.6.0
+transformers==4.50.0
+huggingface-hub
+datasets
+pandas
+loguru
+openai
+tenacity
+tqdm
+ipywidgets

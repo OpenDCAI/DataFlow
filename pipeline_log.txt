@@ -1,0 +1,10 @@
+INFO:root:DB path: /root/workspace/culfjk4p420c73amv510/herunming/DataFlow/dataflow/generator/examples/db/text_db.json
+INFO:root:Original data volume: 1534
+INFO:root:===== SQL 难度统计结果 =====
+INFO:root:Easy: 531
+INFO:root:Medium: 508
+INFO:root:Hard: 223
+INFO:root:Extra: 82
+INFO:root:============================
+INFO:root:Model will be loaded from /root/workspace/culfjk4p420c73amv510/herunming/DataFlow/ckpr/models/Qwen/Qwen2.5-0.5B-Instruct
+INFO:root:Original data volume: 1534

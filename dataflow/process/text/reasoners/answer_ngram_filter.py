@@ -16,7 +16,8 @@ class AnswerNgramFilter(ReasonerFilter):
     def filter_func(self, dataset):
         scores = []
         for sample in dataset:
-            answer = sample['answer']
+            answer = sample[self.question_key]
+            answer += sample[self.answer_key]
             content = answer.lower()
             content = re.sub(r'[^\w\s]', '', content)
             words = content.split()

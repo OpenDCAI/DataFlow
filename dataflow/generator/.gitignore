@@ -1,0 +1,6 @@
+*.pyc
+__pycache__
+examples/db/
+examples/outputs/
+.env
+test.py

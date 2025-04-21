@@ -525,7 +525,10 @@ class LlamaModel(LlamaPreTrainedModel):
             ((attention_mask is not None) and (not attention_mask.all().item()))
             and not use_cache
         ):
-            hidden_states, unpad_indices, cu_seqlens, max_seqlen = unpad_input(hidden_states, attention_mask)
+            try: # for flash-attn latest version
+                hidden_states, unpad_indices, cu_seqlens, max_seqlen, _ = unpad_input(hidden_states, attention_mask)
+            except: # for flash-attn 2.3.3 verstion
+                hidden_states, unpad_indices, cu_seqlens, max_seqlen = unpad_input(hidden_states, attention_mask)
             unpadded_lengths = (cu_seqlens, max_seqlen)
         else:
             unpadded_lengths = None

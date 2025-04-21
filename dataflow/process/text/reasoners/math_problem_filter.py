@@ -90,14 +90,14 @@ Here is the problem to evaluate:
     def filter_func(self, dataset):
         """Main filtering function that processes the entire dataset and returns a list of 0s and 1s"""
         results = []
-        max_workers = 1  # Adjust based on your needs
+        max_workers = self.max_worker  # Adjust based on your needs
 
         dataset = dataset.to_list()
         with ThreadPoolExecutor(max_workers=max_workers) as executor:
             futures = []
             for record in dataset:
                 try:
-                    problem = record.get("problem", "")
+                    problem = record.get(self.input_question_key, "")
                     if problem:
                         futures.append(executor.submit(self.process_problem, problem))
                 except json.JSONDecodeError:

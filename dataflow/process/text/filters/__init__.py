@@ -44,6 +44,7 @@ _import_structure = {
     "LineStartWithBulletpointFilter": ("dataflow/process/text/filters/heuristics.py", "LineStartWithBulletpointFilter"),
     "LineWithJavascriptFilter": ("dataflow/process/text/filters/heuristics.py", "LineWithJavascriptFilter"),
     "BlocklistFilter": ("dataflow/process/text/filters/heuristics.py", "BlocklistFilter"),
+    "PairQualFilter": ("dataflow/process/text/filters/pair_qual_filter.py", "PairQualFilter"),
 }
 
 sys.modules[__name__] = LazyLoader(__name__, "dataflow/process/text/filters", _import_structure)

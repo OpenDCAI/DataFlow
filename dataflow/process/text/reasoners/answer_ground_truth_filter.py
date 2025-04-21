@@ -231,19 +231,24 @@ class AnswerGroundTruthFilter(ReasonerFilter):
         self.compare = name2compare[args_dict.get('compare_method', 'exact')]
 
     def exact_compare(self, answer, ground_truth):
-        return answer == ground_truth
+        return str(answer) == str(ground_truth)
     
     def math_verify_compare(self, answer, ground_truth):
         try:
-            return verify(parse(ground_truth), parse(answer))
+            return verify(parse(str(ground_truth)), parse(str(answer)))
         except:
-            return False
+            try:
+                return verify(parse(ground_truth), parse(answer))
+            except:
+                return False
 
     def filter_func(self, dataset):
         indexes = np.zeros(len(dataset)).astype(int)
         for i in range(len(dataset)):
-            final_answer =  self.answer_extractor.extract_answer(dataset[i]['answer'], dataset[i].get('data_name', None))
-            if 'ground_truth_answer' in dataset[i]:
-                if self.compare(final_answer, dataset[i]['ground_truth_answer']):
+            final_answer =  self.answer_extractor.extract_answer(dataset[i][self.test_answer_key], dataset[i].get('data_name', None))
+            if self.gt_answer_key in dataset[i]:
+                # print("-------------------------------")
+                # print(final_answer, dataset[i][self.gt_answer_key])
+                if self.compare(final_answer, dataset[i][self.gt_answer_key]):
                     indexes[i] = 1
         return indexes

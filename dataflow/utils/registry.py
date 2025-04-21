@@ -88,6 +88,25 @@ class Registry():
                     except Exception as e:
                         raise e
                 raise KeyError(f"No object named '{name}' found in '{self._name}' registry!")
+            elif self._name == "generator":
+                module_path = "dataflow.generator.algorithms"
+                # all text generators in text_generator_list 
+                # text_generator_list = [
+                #     "QuestionGenerator",
+                # ]
+                # for x in text_generator_list:
+                try:
+                    module_lib = importlib.import_module(module_path)
+                    clss = getattr(module_lib, name)
+                    self._obj_map[name] = clss
+                    return clss
+                except AttributeError as e:
+                    print(e)
+                except Exception as e:
+                    raise e
+                    
+                raise KeyError(f"No object named '{name}' found in '{self._name}' registry!")
+
         
         assert ret is not None, f"No object named '{name}' found in '{self._name}' registry!"
         
@@ -106,6 +125,7 @@ class Registry():
 MODEL_REGISTRY = Registry('model')
 FORMATTER_REGISTRY = Registry('formatter')
 PROCESSOR_REGISTRY = Registry('processor')
+GENERATOR_REGISTRY = Registry('generator')
 
 import importlib.util
 import types
@@ -137,10 +157,17 @@ class LazyLoader(types.ModuleType):
             raise FileNotFoundError(f"File {file_path} does not exist")
         
         # 动态加载模块
-        spec = importlib.util.spec_from_file_location(class_name, file_path)
-        module = importlib.util.module_from_spec(spec)
-        spec.loader.exec_module(module)
-        
+        try:
+            spec = importlib.util.spec_from_file_location(class_name, file_path)
+            print(spec)
+            module = importlib.util.module_from_spec(spec)
+            print(module)
+            print(spec.loader)
+            spec.loader.exec_module(module)
+        except Exception as e:
+            print(e)
+            raise e
+
         # 提取类
         if not hasattr(module, class_name):
             raise AttributeError(f"Class {class_name} not found in {file_path}")
@@ -158,7 +185,9 @@ class LazyLoader(types.ModuleType):
         # 从映射结构中获取文件路径和类名
         if item in self._import_structure:
             file_path, class_name = self._import_structure[item]
+            print(file_path, class_name)
             cls = self._load_class_from_file(file_path, class_name)
+            print(cls)
             self._loaded_classes[item] = cls
             return cls
         raise AttributeError(f"Module {self.__name__} has no attribute {item}")

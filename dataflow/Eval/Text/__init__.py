@@ -110,6 +110,7 @@ _import_structure = {
     'DeitaComplexityScorer': ('dataflow/Eval/Text/models/deita_complexity_scorer.py', 'DeitaComplexityScorer'),  
     'PresidioScorer': ('dataflow/Eval/Text/models/presidio_scorer.py', 'PresidioScorer'),  
     'RMScorer': ('dataflow/Eval/Text/models/rm_scorer.py', 'RMScorer'),  
+    'PairQualScorer': ('dataflow/Eval/Text/models/pair_qual_scorer.py','PairQualScorer'),
     'VendiScorer': ('dataflow/Eval/Text/diversity/vendi_scorer.py', 'VendiScorer'),  
     'Task2VecScorer': ('dataflow/Eval/Text/diversity/task2vec_scorer.py', 'Task2VecScorer'),  
     'LangkitScorer': ('dataflow/Eval/Text/statistics/langkit_scorer.py', 'LangkitScorer'),  

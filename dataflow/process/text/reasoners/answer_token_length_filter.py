@@ -16,4 +16,4 @@ class AnswerTokenLengthFilter(ReasonerFilter):
             tokens = self.tokenizer.encode(input_string, add_special_tokens=False)
             return len(tokens)
 
-        return np.array([get_token_count(item['answer']) <= self.max_answer_token_length for item in dataset]).astype(int)
+        return np.array([get_token_count(item[self.keys]) <= self.max_answer_token_length for item in dataset]).astype(int)

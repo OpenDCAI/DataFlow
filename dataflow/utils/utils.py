@@ -192,6 +192,14 @@ def get_processor(processor_name, args):
     assert processor is not None, f"Processor for {processor} is not found."
     return processor
 
+def get_generator(generator_name, args):
+    from dataflow.utils.registry import GENERATOR_REGISTRY
+    print(generator_name, args)
+    generator = GENERATOR_REGISTRY.get(generator_name)(args)
+    
+    assert generator is not None, f'Generator {generator_name} is not found.'
+    return generator
+
 def process():
     from ..config import new_init_config
     from dataflow.data import DataFlowDSDict
@@ -223,4 +231,13 @@ def process():
     save_path = cfg['save_path']
     for dataset in dataset_dict.values():
         dataset.dump(save_path)
-    
+
+def merge_yaml(config):
+    if not config.get("vllm_used"):
+        return config
+    else:
+        vllm_args_list = config.get("vllm_args", [])
+        if isinstance(vllm_args_list, list) and len(vllm_args_list) > 0 and isinstance(vllm_args_list[0], dict):
+            vllm_args = vllm_args_list[0]
+            config.update(vllm_args)  # 合并进顶层
+        return config
