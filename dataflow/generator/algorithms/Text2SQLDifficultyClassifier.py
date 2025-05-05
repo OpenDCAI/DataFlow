@@ -1,6 +1,6 @@
-from ..utils.APIGenerator_request import APIGenerator_request
-from ..utils.LocalModelGenerator import LocalModelGenerator
-from ..utils.APIGenerator_aisuite import APIGenerator_aisuite
+from dataflow.generator.utils.APIGenerator_request import APIGenerator_request
+from dataflow.generator.utils.LocalModelGenerator import LocalModelGenerator
+from dataflow.generator.utils.APIGenerator_aisuite import APIGenerator_aisuite
 import pandas as pd
 import logging
 import os
@@ -8,6 +8,7 @@ import re
 import sqlite3
 import sys
 from func_timeout import func_timeout, FunctionTimedOut
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from tqdm import tqdm
 import multiprocessing as mp
 from dataflow.utils.registry import GENERATOR_REGISTRY
@@ -138,26 +139,56 @@ class Text2SQLDifficultyClassifier:
         # logging.info(f"idx:{idx}, cnt_true:{cnt_true}", flush=True)
         return {"idx": idx, "cnt_true": cnt_true}
 
+    # def run_sqls_parallel(self, datas, db_root_path, num_cpus=1, meta_time_out=30.0):
+    #     pbar = tqdm(total=len(datas))
+    #     pbar.set_description("Executing SQLs")
+
+    #     pool = mp.Pool(processes=num_cpus)
+    #     exec_result = []
+    #     def result_callback(result):
+    #         pbar.update()
+    #         exec_result.append(result)
+
+    #     for i,data_pair in enumerate(datas):
+    #         predicted_sqls = data_pair[self.output_predicted_sqls_key]
+    #         ground_truth = data_pair[self.input_sql_key]
+    #         db_id = data_pair[self.input_dbid_key].replace('\n', '')
+    #         db_id = re.sub(r'[^A-Za-z0-9_]', '', db_id)
+    #         db_place = os.path.join(db_root_path.rstrip('/'), db_id, f"{db_id}.sqlite")
+    #         idx = i
+    #         pool.apply_async(Text2SQLDifficultyClassifier.execute_model, args=(predicted_sqls, ground_truth, db_place, idx, meta_time_out), callback=result_callback)
+    #     pool.close()
+    #     pool.join()
+    #     pbar.close()
+    #     return exec_result
+    
     def run_sqls_parallel(self, datas, db_root_path, num_cpus=1, meta_time_out=30.0):
-        pbar = tqdm(total=len(datas))
-        pbar.set_description("Executing SQLs")
-
-        pool = mp.Pool(processes=num_cpus)
+        pbar = tqdm(total=len(datas), desc="Executing SQLs")
         exec_result = []
-        def result_callback(result):
-            pbar.update()
-            exec_result.append(result)
 
-        for i,data_pair in enumerate(datas):
+        def wrap_task(data_pair, idx):
             predicted_sqls = data_pair[self.output_predicted_sqls_key]
             ground_truth = data_pair[self.input_sql_key]
             db_id = data_pair[self.input_dbid_key].replace('\n', '')
             db_id = re.sub(r'[^A-Za-z0-9_]', '', db_id)
             db_place = os.path.join(db_root_path.rstrip('/'), db_id, f"{db_id}.sqlite")
-            idx = i
-            pool.apply_async(self.execute_model, args=(predicted_sqls, ground_truth, db_place, idx, meta_time_out), callback=result_callback)
-        pool.close()
-        pool.join()
+            return Text2SQLDifficultyClassifier.execute_model(predicted_sqls, ground_truth, db_place, idx, meta_time_out)
+
+        with ThreadPoolExecutor(max_workers=num_cpus) as executor:
+            futures = [
+                executor.submit(wrap_task, data_pair, i)
+                for i, data_pair in enumerate(datas)
+            ]
+
+            for future in as_completed(futures):
+                try:
+                    result = future.result()
+                    exec_result.append(result)  # 顺序不保证
+                except Exception as e:
+                    logging.error(f"Error in SQL execution: {e}")
+                    exec_result.append(None)
+                pbar.update()
+
         pbar.close()
         return exec_result
 
@@ -185,6 +216,15 @@ class Text2SQLDifficultyClassifier:
         for difficulty in ['easy', 'medium', 'hard', 'extra']:
             logging.info(f"{difficulty.title()}: {counts.get(difficulty, 0)}")
         logging.info("============================")
+
+    def process_single_question(self, question):
+        try:
+            # 注意：这里传入的是单个元素的列表，因为 generate_text_from_input 是 batch 接口
+            result = self.model_generator.generate_text_from_input([question])
+            return result[0] if result else ""
+        except Exception as e:
+            logging.error(f"Error processing question: {e}")
+            return ""
         
     def run(self):
         '''
@@ -201,7 +241,26 @@ class Text2SQLDifficultyClassifier:
         repeated_questions = [q for q in input_prompts for _ in range(10)]
 
         # Generate model responses in batch
-        responses = self.model_generator.generate_text_from_input(repeated_questions)
+        responses = []
+        # responses = self.model_generator.generate_text_from_input(repeated_questions)
+        with ThreadPoolExecutor(max_workers=self.num_cpus) as executor:
+            futures = {
+                executor.submit(self.process_single_question, question): idx
+                for idx, question in enumerate(tqdm(repeated_questions, desc="Submitting tasks"))
+            }
+
+            results_buffer = [None] * len(repeated_questions)
+
+            for future in tqdm(as_completed(futures), total=len(repeated_questions), desc="Collecting responses"):
+                idx = futures[future]
+                try:
+                    result = future.result()
+                    results_buffer[idx] = result
+                except Exception as e:
+                    logging.error(f"Error retrieving future result: {e}")
+                    results_buffer[idx] = ""
+
+        responses = results_buffer
         
         # Group responses for each original input (10 responses per input)
         num_data = len(input_prompts)

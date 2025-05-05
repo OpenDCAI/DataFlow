@@ -11,11 +11,11 @@ from dataflow.utils.registry import GENERATOR_REGISTRY
 
 @GENERATOR_REGISTRY.register()
 class QuestionGenerator():
-    def __init__(self, config):
+    def __init__(self, args):
         """
         Initialize the QuestionGenerator with the provided configuration.
         """
-        self.config = config
+        self.config = args
         self.prompts = QuestionSynthesisPrompt()
 
         # Ensure the necessary configuration keys are provided

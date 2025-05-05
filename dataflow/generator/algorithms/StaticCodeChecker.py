@@ -151,7 +151,7 @@ class StaticCodeChecker:
             future_to_item = {}
             for item in tqdm(data):
                 code = item.get(self.input_key, "")
-                lang = item.get("language", "python")
+                lang = item.get("lang", "python")
                 if code:
                     future = executor.submit(self.static_check_code_with_semgrep, lang, code)
                     future_to_item[future] = item
@@ -171,6 +171,7 @@ class StaticCodeChecker:
         # 将更新后的数据保存到输出文件
         with open(self.output_file, 'w', encoding='utf-8') as f:
             for item in data:
+                print("item", item)
                 json.dump(item, f, ensure_ascii=False)
                 f.write('\n')
         

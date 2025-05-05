@@ -26,11 +26,15 @@ class LocalModelGenerator:
         output_file = config.get("output_file", None)
         input_prompt_key = config.get("input_key", "prompt")
         output_text_key = config.get("output_key", "response")
-
-        self.real_model_path = snapshot_download(
-            repo_id=model_name_or_path,
-            local_dir=f"{download_dir}{model_name_or_path}",
-        )
+        if model_name_or_path is None:
+            raise ValueError("model_name_or_path is required")
+        try:
+            self.real_model_path = snapshot_download(
+                repo_id=model_name_or_path,
+                local_dir=f"{download_dir}{model_name_or_path}",
+            )
+        except:
+            self.real_model_path = model_name_or_path
         logging.info(f"Model will be loaded from {self.real_model_path}")
         self.sampling_params = SamplingParams(
             temperature=temperature,
@@ -38,7 +42,8 @@ class LocalModelGenerator:
             max_tokens=max_tokens,
             top_k=top_k,
             repetition_penalty=repetition_penalty,
-            seed=seed,
+            seed=seed
+            # hat_template_kwargs={"enable_thinking": False},
         )
         self.llm = LLM(
             model=self.real_model_path,

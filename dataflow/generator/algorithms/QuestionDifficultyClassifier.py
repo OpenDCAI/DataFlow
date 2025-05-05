@@ -8,11 +8,11 @@ from dataflow.utils.registry import GENERATOR_REGISTRY
 
 @GENERATOR_REGISTRY.register()
 class QuestionDifficultyClassifier():
-    def __init__(self, config):
+    def __init__(self, args):
         """
         Initialize the QuestionCategoryClassifier with the provided configuration.
         """
-        self.config = config
+        self.config = args
         self.prompts = QuestionDifficultyPrompt()
         self.input_file = self.config.get("input_file")
         self.output_file = self.config.get("output_file")

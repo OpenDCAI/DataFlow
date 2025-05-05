@@ -10,8 +10,8 @@ from dataflow.generator.utils.LocalModelGenerator import LocalModelGenerator
 from dataflow.generator.utils.APIGenerator_aisuite import APIGenerator_aisuite
 
 class QuestionRefiner:
-    def __init__(self, config: Dict):
-        self.config = config
+    def __init__(self, args: Dict):
+        self.config = args
         
         self.prompt = QuestionRefinePrompt()
         self.model_generator = self.__init_model__()
@@ -19,6 +19,7 @@ class QuestionRefiner:
 
         self.input_file = config['input_file']
         self.output_file = config['output_file']
+        self.output_refined_question_key = config.get('output_refined_question_key')
         self.input_db_key = config.get('input_db_key', 'id')
         self.num_threads = config.get('num_threads', 5)
         self.max_retries = config.get('max_retries', 3)
@@ -91,20 +92,20 @@ class QuestionRefiner:
             parsed_response = self._parse_response(response[0], item['question'])
             # logging.warning(parsed_response)
             # print(parsed_response)
-            item['refined_question'] = parsed_response
+            item[self.output_refined_question_key] = parsed_response
             return item
         except Exception as e:
             if retry_count < self.max_retries:
                 # logging.warning(f"Retry {retry_count + 1} for item")
                 return self._process_item_with_retry(item, retry_count + 1)
             # logging.error(f"Failed after {self.max_retries} retries for item: {e}")
-            item['refined_question'] = item['question'] 
+            item[self.output_refined_question_key] = item['question'] 
             return item
 
     def run(self) -> None:
-        # logging.info(f"Loading items from {self.input_path}")
+        # logging.info(f"Loading items from {self.input_file}")
         try:
-            items = self.load_jsonl(self.input_path)
+            items = self.load_jsonl(self.input_file)
 
             question_id_to_index = {item['question_id']: idx for idx, item in enumerate(items)}
             
@@ -124,8 +125,8 @@ class QuestionRefiner:
                         logging.error(f"Error processing question_id={question_id}: {e}")
                         continue
             
-            self.save_jsonl(items, self.output_path)
-            # logging.info(f"Successfully processed {len(items)} items to {self.output_path}")
+            self.save_jsonl(items, self.output_file)
+            # logging.info(f"Successfully processed {len(items)} items to {self.output_file}")
             
         except Exception as e:
             logging.error(f"Fatal error in processing pipeline: {e}")

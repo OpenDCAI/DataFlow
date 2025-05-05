@@ -37,7 +37,7 @@ class PairQualScorer(TextScorer):
         self.model = BertForRegression(self.model_name)
         self.tokenizer = transformers.BertTokenizerFast.from_pretrained(self.model_name, cache_dir=self.model_cache_dir)
         if self.model_state_dict:
-            self.model.load_state_dict(torch.load(self.model_state_dict))
+            self.model.load_state_dict(torch.load(self.model_state_dict, map_location='cpu'))
         self.model.to(self.device).eval()
     
     def evaluate_batch(self, batch):

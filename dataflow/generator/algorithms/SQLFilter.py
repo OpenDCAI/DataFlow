@@ -11,6 +11,7 @@ import re
 import pandas as pd
 import os
 import multiprocessing as mp
+from concurrent.futures import ThreadPoolExecutor, as_completed
 import copy
 from dataflow.utils.registry import GENERATOR_REGISTRY
 
@@ -83,29 +84,66 @@ class SQLFilter:
             is_correct = False
             return {"idx": idx,"is_correct": is_correct, "results": result}
         
+    # def run_sqls_parallel(self, datas, db_root_path, num_cpus, meta_time_out, exec_result=[]):
+    #     '''
+    #     Execute the given SQL statement and return the results.
+    #     '''
+    #     pbar = tqdm(total=len(datas))
+    #     pbar.set_description("Executing SQLs")
+    #     pool = mp.Pool(processes=num_cpus)
+
+    #     def result_callback(result):
+    #         pbar.update()
+    #         exec_result.append(result)
+
+    #     for i,data_pair in enumerate(datas):
+    #         ground_truth = data_pair[self.input_sql_key]
+    #         db_id = data_pair[self.input_dbid_key].replace('\n', '')
+    #         db_id = re.sub(r'[^A-Za-z0-9_]', '', db_id)
+    #         db_place = os.path.join(db_root_path.rstrip('/'), db_id, f"{db_id}.sqlite")
+    #         # result = self.execute_model(ground_truth, db_place, i, meta_time_out)
+    #         # exec_result.append(result)
+    #         pool.apply_async(SQLFilter.execute_model, args=(ground_truth, db_place, i, meta_time_out), callback=result_callback)
+        
+    #     pool.close()
+    #     pool.join()
+    #     pbar.close()
+    #     return sorted(exec_result, key=lambda x: x['idx'])
+    
     def run_sqls_parallel(self, datas, db_root_path, num_cpus, meta_time_out, exec_result=[]):
         '''
-        Execute the given SQL statement and return the results.
+        Execute the given SQL statements in parallel and return sorted results.
         '''
-        pbar = tqdm(total=len(datas))
-        pbar.set_description("Executing SQLs")
-        pool = mp.Pool(processes=num_cpus)
+        pbar = tqdm(total=len(datas), desc="Executing SQLs")
 
-        def result_callback(result):
-            pbar.update()
-            exec_result.append(result)
+        def wrap_task(ground_truth, db_place, idx, timeout):
+            try:
+                return SQLFilter.execute_model(ground_truth, db_place, idx, timeout)
+            except Exception as e:
+                logging.error(f"Error executing SQL idx={idx}: {e}")
+                return {"idx": idx, "error": str(e)}
 
-        for i,data_pair in enumerate(datas):
-            ground_truth = data_pair[self.input_sql_key]
-            db_id = data_pair[self.input_dbid_key].replace('\n', '')
-            db_id = re.sub(r'[^A-Za-z0-9_]', '', db_id)
-            db_place = os.path.join(db_root_path.rstrip('/'), db_id, f"{db_id}.sqlite")
-            # result = self.execute_model(ground_truth, db_place, i, meta_time_out)
-            # exec_result.append(result)
-            pool.apply_async(SQLFilter.execute_model, args=(ground_truth, db_place, i, meta_time_out), callback=result_callback)
-        
-        pool.close()
-        pool.join()
+        with ThreadPoolExecutor(max_workers=num_cpus) as executor:
+            futures = []
+
+            for i, data_pair in enumerate(datas):
+                ground_truth = data_pair[self.input_sql_key]
+                db_id = data_pair[self.input_dbid_key].replace('\n', '')
+                db_id = re.sub(r'[^A-Za-z0-9_]', '', db_id)
+                db_place = os.path.join(db_root_path.rstrip('/'), db_id, f"{db_id}.sqlite")
+
+                future = executor.submit(wrap_task, ground_truth, db_place, i, meta_time_out)
+                futures.append(future)
+
+            for future in as_completed(futures):
+                try:
+                    result = future.result()
+                    exec_result.append(result)
+                except Exception as e:
+                    logging.error(f"Error retrieving result from future: {e}")
+                    exec_result.append({"idx": -1, "error": str(e)})
+                pbar.update()
+
         pbar.close()
         return sorted(exec_result, key=lambda x: x['idx'])
     
@@ -143,6 +181,15 @@ class SQLFilter:
                 used_prompt = self.prompt.text_sql_consistency_prompt(question, sql, evidence)
                 formatted_prompts.append(used_prompt.strip())
         return formatted_prompts
+    
+    def process_single_question(self, question):
+        try:
+            # 注意：这里传入的是单个元素的列表，因为 generate_text_from_input 是 batch 接口
+            result = self.model_generator.generate_text_from_input([question])
+            return result[0] if result else ""
+        except Exception as e:
+            logging.error(f"Error processing question: {e}")
+            return ""
 
     def run(self):
         '''
@@ -164,7 +211,26 @@ class SQLFilter:
         formatted_prompts = self._reformat_prompt(dataframe)
 
         # Generate responses using the model
-        responses = self.model_generator.generate_text_from_input(formatted_prompts)
+        # responses = self.model_generator.generate_text_from_input(formatted_prompts)
+        responses = []
+        with ThreadPoolExecutor(max_workers=self.num_cpus) as executor:
+            futures = {
+                executor.submit(self.process_single_question, question): idx
+                for idx, question in enumerate(tqdm(formatted_prompts, desc="Submitting tasks"))
+            }
+
+            results_buffer = [None] * len(formatted_prompts)
+
+            for future in tqdm(as_completed(futures), total=len(formatted_prompts), desc="Collecting responses"):
+                idx = futures[future]
+                try:
+                    result = future.result()
+                    results_buffer[idx] = result
+                except Exception as e:
+                    logging.error(f"Error retrieving future result: {e}")
+                    results_buffer[idx] = ""
+
+        responses = results_buffer
 
         dataframe_note = copy.deepcopy(dataframe)
         dataframe_del = copy.deepcopy(dataframe) 

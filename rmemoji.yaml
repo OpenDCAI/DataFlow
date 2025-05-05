@@ -1,0 +1,12 @@
+# python process.py --config demos/text_pipeline/pipe1.yaml
+model_cache_path: '../dataflow_cache' # Path to cache models
+# dependencies: [text]
+use_hf: False # Whether to use huggingface_dataset, if used, ignore the local data path below
+dataset_name: 'togethercomputer/RedPajama-Data-V2'
+dataset_split: 'train'
+name: 'default'
+revision: null
+input_file: 'text_pipeline/tmp/pt_raw_synthetic.jsonl'  # Local data path, supports json, jsonl, parquet formats
+formatter: "TextFormatter" # Data loader type
+keys: 'raw_content' # Key name to be processed, for sft data, it can be specified as ['instruction','input','output']
+output_file: "text_pipeline/result/pt_synthetic.jsonl"

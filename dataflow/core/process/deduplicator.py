@@ -1,4 +1,5 @@
 from datasets import Dataset
+from dataflow.format import TextFormatter
 
 class Deduplicator:
 
@@ -19,7 +20,11 @@ class TextDeduplicator(Deduplicator):
 
     def __init__(self, args=None):
         self.data_type = "text"
-        
+        if "input_file" in args.keys():
+            self.config = args
+            self.formatter = TextFormatter(args)
+            self.dataset = self.formatter.load_dataset()
+
     def __call__(self, dataset):
         init_len = len(dataset)
         labels = self.dedup_func(dataset)
@@ -32,6 +37,10 @@ class TextDeduplicator(Deduplicator):
             deduped_dataset = dataset.filter(labels)
         print(f'Implemented {self.dedupliactor_name}. Data Number: {init_len} -> {len(deduped_dataset)}')
         return deduped_dataset
+    
+    def run(self):
+        deduplicated_dataset = self.__call__(self.dataset)
+        deduplicated_dataset.dump(self.config['output_file'])
 
 class ImageDeduplicator(Deduplicator):
 

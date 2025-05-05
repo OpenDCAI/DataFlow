@@ -1,0 +1,22 @@
+model_cache_path: '../ckpt' # Path to cache models
+dependencies: [text]
+save_path: "demos/demos_result/math/pipeline_Q/Bigmath_synth_3_o3_mini_questionlist_cleaned_by_o4-mini.jsonl"
+
+data:
+  text:
+    use_hf: False # Whether to use huggingface_dataset, if used, ignore the local data path below
+    data_path: '/root/workspace/culfjk4p420c73amv510/herunming/DataFlow/Bigmath_synth_3_o3_mini_questionlist.jsonl'  # Local data path, supports json, jsonl, parquet formats
+    formatter: "TextFormatter" # Data loader type
+
+    keys: 'prompt' # Key name to be processed, for sft data, it can be specified as ['instruction','input','output']
+
+processors:
+  MathProblemFilter:
+    min_score: 0
+    max_score: 1
+    input_question_key: 'prompt'
+    max_worker: 100
+    api_args:
+      model_name: 'o4-mini'
+      api_url: 'http://123.129.219.111:3000/v1/chat/completions' 
+      mode_test: True

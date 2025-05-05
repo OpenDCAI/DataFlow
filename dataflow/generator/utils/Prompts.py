@@ -902,4 +902,88 @@ class FinalPromptGeneration:
 
         return prompt
 
+class PretrainPrompt:
+    def __init__(self):
+        pass
 
+    def get_prompts(self):
+        return {
+            "prompt_1": {
+                "instruction": "You are a helpful assistant.",
+                "input": "Rewrite the following content in the style of a news article: {content}"
+            },
+            "prompt_2": {
+                "instruction": "You are a helpful assistant.",
+                "input": "Rephrase the following text in a simpler and more beginner-friendly way: {content}"
+            },
+            "prompt_3": {
+                "instruction": "You are a helpful assistant.",
+                "input": "The following text is an excerpt. Please complete the missing context before and after it: {content}"
+            },
+            "prompt_4": {
+                "instruction": "You are a helpful assistant.",
+                "input": "Expand the following content by adding more background information, examples, and elaboration: {content}"
+            },
+            "prompt_5": {
+                "instruction": "You are a helpful assistant.",
+                "input": "Extract key information from the following content and generate several question-answer pairs: {content}"
+            },
+            "prompt_6": {
+                "instruction": "You are a helpful assistant.",
+                "input": "Convert the following text into a list of knowledge triples in the form (subject, predicate, object): {content}"
+            },
+            "prompt_7": {
+                "instruction": "You are a helpful assistant.",
+                "input": "Summarize the following text and list its main points clearly: {content}"
+            },
+            "prompt_8": {
+                "instruction": "You are a helpful assistant.",
+                "input": "Based on the following content, generate a dialogue between two characters discussing the key points: {content}"
+            },
+            "prompt_9": {
+                "instruction": "You are a helpful assistant.",
+                "input": "Perform step-by-step reasoning on the following content and explain each step logically: {content}"
+            },
+            "prompt_10": {
+                "instruction": "You are a helpful assistant.",
+                "input": "Intentionally introduce 2–3 common errors into the following text, then provide a corrected version: {content}"
+            },
+            "prompt_11": {
+                "instruction": "You are a helpful assistant.",
+                "input": "Generate three diverse paraphrases of the following content to increase data variety: {content}"
+            },
+            "prompt_12": {
+                "instruction": "You are a helpful assistant.",
+                "input": "Construct a counterfactual scenario based on the following content and describe how the outcome would change: {content}"
+            },
+            "prompt_13": {
+                "instruction": "You are tasked with generating summary-based exercises. Summarize the given context and create a question that captures the key idea. The answer should provide a concise response.",
+                "input": "Summarize the following paragraph and generate only a question in the form: 'Please summarize this paragraph from the perspective of [specific aspect].' and a concise answer, where [specific aspect] needs to be close to the origin context.\n For example:\nQuestion: Please summarize this paragraph from the perspective of xxx.\nAnswer: answer.\n paragraph: {content}"
+            },
+            "prompt_14": {
+                "instruction": "You are an intelligent chatbot designed for converting text into multi-hop question-answer pairs. Remember: DO NOT output anything else, only output the new question-answer pairs you make.",
+                "input": "\nYou are an expert at generating multi-hop question-answer pairs.\nFor each context, you should:\n1. Identify multiple related facts or pieces of information\n2. Create questions that require reasoning across these multiple pieces\n3. Ensure the reasoning chain is clear and logical\n4. Generate questions that require at least 2-3 steps of reasoning\n5. Include the reasoning steps in the answer\n6. Reasoning steps is alternative\n\nGive your response with this information:\nQuestion: [Complex question requiring multiple reasoning steps]\nReasoning Steps:\n1. [First reasoning step]\n2. [Second reasoning step]\n3. [Final reasoning step]\nAnswer: [Final answer]\nSupporting Facts: [List of relevant text segments used]\nYour response must directly start with the Question without any preamble, After the information is generated finish your response right away.\nHere is the context you need to convert to a multi-hop question-answer pair following the system info rules:\n{content}\n"
+            },
+            "prompt_15": {
+                "instruction": "You are tasked with generating fill-in-the-middle exercises based on a given context. Remove a portion of the context, and use the remaining text as the context for the exercise, where the missing portion must be reconstructed.",
+                "input": "Given the following text, remove one or two sentences from the middle (marked as <<THIS PART DELETED>>) and frame the remaining text as a fill-in-the-middle exercise question. Provide the missing sentences as the answer.\nThe output format is:\nContext: [Text with <<THIS PART DELETED>> marking the deleted portion in the middle of the context]\nQuestion: What sentences logically fit into the missing portion marked as <<THIS PART DELETED>>?\nAnswer: [The missing content from the original text]\n\nFor example:\nInput:\nContext: Alice loves baking cakes. She prepares the batter carefully and bakes it at the perfect temperature. After that, she decorates the cake beautifully.\nOutput:\nContext: Alice loves baking cakes. <<THIS PART DELETED>> After that, she decorates the cake beautifully.\nQuestion: What sentences logically fit into the missing portion marked as <<THIS PART DELETED>>?\nAnswer: She prepares the batter carefully and bakes it at the perfect temperature.\nContext: {content}\n"
+            },
+            "prompt_16": {
+                "instruction": "You are tasked with generating reading comprehension questions. Generate diverse questions based on the given text, considering different audiences and question types. Ensure the output format strictly includes only 'Question: xxx' and 'Answer: xxx'.",
+                "input": "Please create a {question_types} for a {audiences} based on the following text, focusing on {perspectives}. Your task is to ensure the question evaluates understanding of the text and is relevant to the specified audience and perspective.\n Text: {content}\nFor example:\nQuestion: xxx \nAnswer: xxx. \nNote: You only need to generate One question and One answer.",
+                "audiences": [
+                    "elementary school students",
+                    "general adults",
+                    "experts"
+                ],
+                "perspectives": [
+                    "the structure of the text",
+                    "logical reasoning"
+                ],
+                "question_types": [
+                    "3-choice question",
+                    "true/false question",
+                    "open-ended question"
+                ]
+            }
+        }

@@ -22,6 +22,7 @@ class ExtraKnowledgeGenerator:
 
         self.input_file = config['input_file']
         self.output_file = config['output_file']
+        self.output_knowledge_key = config['output_knowledge_key']
         self.input_question_key = config['input_question_key']
         self.input_sql_key = config['input_sql_key']
         self.input_schema_key = config['input_schema_key']
@@ -91,26 +92,26 @@ class ExtraKnowledgeGenerator:
             # logging.warning(response)
             parsed_response = self._parse_response(response[0])
             # logging.warning(parsed_response)
-            item['extra_knowledge'] = parsed_response
+            item[self.output_knowledge_key] = parsed_response
             return item
         except Exception as e:
             if retry_count < self.max_retries:
                 # logging.warning(f"Retry {retry_count + 1} for item")
                 return self._process_item_with_retry(item, retry_count + 1)
             # logging.error(f"Failed after {self.max_retries} retries for item : {e}")
-            item['extra_knowledge'] = ''
+            item[self.output_knowledge_key] = ''
             return item
 
     def run(self) -> None:
-        # logging.info(f"Loading items from {self.input_path}")
-        items = self.load_jsonl(self.input_path)
+        # logging.info(f"Loading items from {self.input_file}")
+        items = self.load_jsonl(self.input_file)
         if self.exist_knowledge:
             logging.info(f"Extra knowledge already exists, skipping generation.")
-            self.save_jsonl(items, self.output_path)
+            self.save_jsonl(items, self.output_file)
         else:
             # logging.info(f"Start generating extra knowledge.")
             try:
-                items = self.load_jsonl(self.input_path)
+                items = self.load_jsonl(self.input_file)
                 
                 question_id_to_index = {item['question_id']: idx for idx, item in enumerate(items)}
             
@@ -130,8 +131,8 @@ class ExtraKnowledgeGenerator:
                             logging.error(f"Error processing question_id={question_id}: {e}")
                             continue
                 
-                self.save_jsonl(items, self.output_path)
-                # logging.info(f"Successfully processed {len(items)} items to {self.output_path}")
+                self.save_jsonl(items, self.output_file)
+                # logging.info(f"Successfully processed {len(items)} items to {self.output_file}")
                 
             except Exception as e:
                 logging.error(f"Fatal error in processing pipeline: {e}")

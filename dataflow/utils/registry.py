@@ -1,4 +1,5 @@
 import importlib
+import logging
 class Registry():
     """
     The registry that provides name -> object mapping, to support third-party
@@ -68,10 +69,11 @@ class Registry():
                         self._obj_map[name] = clss
                         return clss
                     except AttributeError as e:
-                        print(e)
+                        logging.debug(f"{str(e)}")
                         continue
                     except Exception as e:
                         raise e
+                logging.error(f"No object named '{name}' found in '{self._name}' registry!")
                 raise KeyError(f"No object named '{name}' found in '{self._name}' registry!")
             elif self._name == "processor":
                 for x in ['text.refiners', 'text.filters', 'text.deduplicators', 'text.reasoners', 'image.filters', 'image.deduplicators', 'video.filters']:
@@ -83,10 +85,11 @@ class Registry():
                         self._obj_map[name] = clss
                         return clss
                     except AttributeError as e:
-                        print(e)
+                        logging.debug(f"{str(e)}")
                         continue
                     except Exception as e:
                         raise e
+                logging.error(f"No object named '{name}' found in '{self._name}' registry!")
                 raise KeyError(f"No object named '{name}' found in '{self._name}' registry!")
             elif self._name == "generator":
                 module_path = "dataflow.generator.algorithms"
@@ -101,13 +104,14 @@ class Registry():
                     self._obj_map[name] = clss
                     return clss
                 except AttributeError as e:
-                    print(e)
+                    logging.debug(f"{e.__str__()}")
                 except Exception as e:
                     raise e
-                    
+                logging.error(f"No object named '{name}' found in '{self._name}' registry!")
                 raise KeyError(f"No object named '{name}' found in '{self._name}' registry!")
 
-        
+        if ret is None:
+            logging.error(f"No object named '{name}' found in '{self._name}' registry!")
         assert ret is not None, f"No object named '{name}' found in '{self._name}' registry!"
         
         return ret
@@ -159,13 +163,12 @@ class LazyLoader(types.ModuleType):
         # 动态加载模块
         try:
             spec = importlib.util.spec_from_file_location(class_name, file_path)
-            print(spec)
+            logging.debug(f"LazyLoader {self.__path__} successfully imported spec {spec.__str__()}")
             module = importlib.util.module_from_spec(spec)
-            print(module)
-            print(spec.loader)
+            logging.debug(f"LazyLoader {self.__path__} successfully imported module {module.__str__()} from spec {spec.__str__()}")
             spec.loader.exec_module(module)
         except Exception as e:
-            print(e)
+            logging.error(f"{e.__str__()}")
             raise e
 
         # 提取类
@@ -181,13 +184,15 @@ class LazyLoader(types.ModuleType):
         :return: 动态加载的类对象
         """
         if item in self._loaded_classes:
+            logging.debug(f"Lazyloader {self.__path__} got cached class {cls}")
             return self._loaded_classes[item]
         # 从映射结构中获取文件路径和类名
         if item in self._import_structure:
             file_path, class_name = self._import_structure[item]
-            print(file_path, class_name)
+            logging.info(f"Lazyloader {self.__path__} trying to import {item} ")
             cls = self._load_class_from_file(file_path, class_name)
-            print(cls)
+            logging.debug(f"Lazyloader {self.__path__} got and cached class {cls}")
             self._loaded_classes[item] = cls
             return cls
+        logging.debug(f"Module {self.__name__} has no attribute {item}")
         raise AttributeError(f"Module {self.__name__} has no attribute {item}")

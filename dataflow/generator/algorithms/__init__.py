@@ -26,12 +26,15 @@ _import_structure = {
     "QuestionDifficultyClassifier": (cur_path + "QuestionDifficultyClassifier" + ".py", "QuestionDifficultyClassifier"),
     "QuestionGenerator": (cur_path + "QuestionGenerator" + ".py", "QuestionGenerator"),
     "QuestionRefiner": (cur_path + "QuestionRefiner" + ".py", "QuestionRefiner"),
+    "SchemaLinking": (cur_path + "SchemaLinking" + ".py", "SchemaLinking"),
     "SQLDifficultyClassifier": (cur_path + "SQLDifficultyClassifier" + ".py", "SQLDifficultyClassifier"),
     "SQLFilter": (cur_path + "SQLFilter" + ".py", "SQLFilter"),
     "StaticCodeChecker": (cur_path + "StaticCodeChecker" + ".py", "StaticCodeChecker"),
     "Text2SQLDifficultyClassifier": (cur_path + "Text2SQLDifficultyClassifier" + ".py", "Text2SQLDifficultyClassifier"),
     "TextSQLConsistency": (cur_path + "TextSQLConsistency" + ".py", "TextSQLConsistency"),
     "TreeSitterParser": (cur_path + "TreeSitterParser" + ".py", "TreeSitterParser"),
+    "PretrainGenerator": (cur_path + "PretrainGenerator" + ".py", "PretrainGenerator"),
+    "SupervisedFinetuneGenerator": (cur_path + "SupervisedFinetuneGenerator" + ".py", "SupervisedFinetuneGenerator"),
 }
 
-sys.modules[__name__] = LazyLoader(__name__, "dataflow/Eval/image", _import_structure)
+sys.modules[__name__] = LazyLoader(__name__, "dataflow/generator/algorithm", _import_structure)

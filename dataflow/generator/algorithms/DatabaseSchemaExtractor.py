@@ -16,6 +16,11 @@ class DatabaseSchemaExtractor:
         self.input_file = config['input_file']
         self.table_schema_path = config['table_schema_path']
         self.output_file = config['output_file']
+        self.output_raw_schema_key = config['output_raw_schema_key']
+        self.output_ddl_key = config['output_ddl_key']
+        self.output_whole_format_schema_key = config['output_whole_format_schema_key']
+        self.output_selected_format_schema_key = config['output_selected_format_schema_key']
+
         self.input_db_key = config['input_db_key']
         self.input_question_key = config['input_question_key']
         self.input_sql_key = config['input_sql_key']
@@ -256,11 +261,11 @@ class DatabaseSchemaExtractor:
                 # logging.warning(f'start execute idx {item["question_id"]}')
                 schema = self.extract_schema(db_info, db_conn)
                 # logging.warning(1)
-                item['raw_schema'] = schema
-                item['ddl'] = self.generate_ddl_from_schema(schema)
+                item[self.output_raw_schema_key] = schema
+                item[self.output_ddl_key] = self.generate_ddl_from_schema(schema)
                 # logging.warning(2)
-                item['whole_format_schema'] = self.generate_formatted_schema(schema)
-                item['selected_format_schema'] = self.generate_selected_format_schema(item[self.selected_schema_key])
+                item[self.output_whole_format_schema_key] = self.generate_formatted_schema(schema)
+                item[self.output_selected_format_schema_key] = self.generate_selected_format_schema(item[self.selected_schema_key])
                 # logging.warning(3)
 
         except sqlite3.Error as e:

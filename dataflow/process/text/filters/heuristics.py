@@ -448,7 +448,7 @@ class LoremIpsumFilter(TextFilter):
     def __init__(self, args_dict: dict):
         super().__init__(args_dict)
         self.filter_name = 'LoremIpsumFilter'
-        self.threshold = args_dict.get('threshold')
+        self.threshold = float(args_dict.get('threshold'))
 
     def filter_func(self, dataset):
         valid_checks = []

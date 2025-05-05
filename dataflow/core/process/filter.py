@@ -1,5 +1,6 @@
 from dataflow.data import DataFlowDataset
 from dataflow.core import ScoreRecord
+from dataflow.format import TextFormatter
 from datasets import Dataset
 class Filter():
 
@@ -16,6 +17,10 @@ class TextFilter(Filter):
     
     def __init__(self, args=None):
         self.data_type = "text"
+        if "input_file" in args.keys():
+            self.config = args
+            self.formatter = TextFormatter(args)
+            self.dataset = self.formatter.load_dataset()
         
     def __call__(self, dataset):
         init_len = len(dataset)
@@ -32,6 +37,10 @@ class TextFilter(Filter):
 
         print(f'Implemented {self.filter_name}. Data Number: {init_len} -> {len(filtered_dataset)}', flush=True)
         return filtered_dataset
+    
+    def run(self):
+        filtered_dataset = self.__call__(self.dataset)
+        filtered_dataset.dump(save_path=self.config['output_file'])
 
 class ImageFilter(Filter):
     
