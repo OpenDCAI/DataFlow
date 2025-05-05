@@ -16,4 +16,5 @@ This documentation is intended to provide a comprehensive guide to the metrics, 
 
    src/getting_started/index
    src/metrics/index
+   src/developer/index
 
