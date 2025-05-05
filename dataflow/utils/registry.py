@@ -184,7 +184,7 @@ class LazyLoader(types.ModuleType):
         :return: 动态加载的类对象
         """
         if item in self._loaded_classes:
-            logging.debug(f"Lazyloader {self.__path__} got cached class {cls}")
+            # logging.debug(f"Lazyloader {self.__path__} got cached class {cls}")
             return self._loaded_classes[item]
         # 从映射结构中获取文件路径和类名
         if item in self._import_structure:
