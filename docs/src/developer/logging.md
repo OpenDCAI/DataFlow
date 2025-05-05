@@ -8,14 +8,15 @@ logging.basicConfig(level=logging.INFO,
     datefmt="%Y-%m-%d %H:%M:%S"
     )
 ```
-使用方法如下所示，其中debug, info, warning, error代表不同的日志等级，默认情况下DEBUG等级的日志不会显示。
+使用方法如下所示，使用前需要调用`get_logger()`函数获取logger，其中debug, info, warning, error代表不同的日志等级，默认情况下DEBUG等级的日志不会显示。
 ```python
+from dataflow.utils.utils import get_logger
 def main():
-    
-    logging.debug("This is DEBUG message")
-    logging.info("This is INFO message")
-    logging.warning("This is WARNING message")
-    logging.error("This is ERROR message")
+    logger = get_logger()
+    logger.debug("This is DEBUG message")
+    logger.info("This is INFO message")
+    logger.warning("This is WARNING message")
+    logger.error("This is ERROR message")
     
     return
 
@@ -32,7 +33,7 @@ main()
                         self._obj_map[name] = clss
                         return clss
                     except AttributeError as e:
-                        logging.debug(f"{str(e)}")
+                        logger.debug(f"{str(e)}")
                         continue
                     except Exception as e:
                         raise e
@@ -40,18 +41,18 @@ main()
 2. INFO: 让用户得知目前的运行情况，如：
 ```python
 def pipeline_step(yaml_path, step_name, step_type):
-    import logging
     import yaml
-    logging.info(f"Loading yaml {yaml_path} ......")
+    logger = get_logger()
+    logger.info(f"Loading yaml {yaml_path} ......")
     with open(yaml_path, "r") as f:
         config = yaml.safe_load(f)
     config = merge_yaml(config)
-    logging.info(f"Load yaml success, config: {config}")
+    logger.info(f"Load yaml success, config: {config}")
     if step_type == "process":
         algorithm = get_processor(step_name, config)
     elif step_type == "generator":
         algorithm = get_generator(step_name, config)
-    logging.info("Start running ...")
+    logger.info("Start running ...")
     algorithm.run()
 ```
 3. WARNING：可能出现问题的错误信息（暂时没有例子）
