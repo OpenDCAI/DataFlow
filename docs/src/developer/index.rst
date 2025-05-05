@@ -1,7 +1,7 @@
 Developer Documentation
 ================================
 
-Please see docs below for information on how to develop OpenDataFlow-Eval.
+Please see docs below for information on how to develop DataFlow.
 
 .. toctree::
    :maxdepth: 2
