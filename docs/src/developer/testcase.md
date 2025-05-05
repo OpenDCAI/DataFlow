@@ -2,16 +2,6 @@
 
 testcase的写法可以参考CodePipeline/test/ast_checker_test.py
 ```python
-import unittest
-import tempfile
-import os
-import sys
-import json
-sys.path.append("..")
-sys.path.append(".")
-sys.path.append("../..")
-from dataflow.utils.utils import get_generator
-
 class TreeSitterParserTest(unittest.TestCase):
     
     def setUp(self):
