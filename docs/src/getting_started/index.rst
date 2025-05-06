@@ -1,7 +1,7 @@
 Getting Started
 ================================
 
-Please see docs below for information on how to get started with Open-DataFlow-Eval.
+Please see docs below for information on how to get started with DataFlow.
 
 .. toctree::
    :maxdepth: 2
