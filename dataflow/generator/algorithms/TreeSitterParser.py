@@ -5,6 +5,7 @@ import pandas as pd
 from tree_sitter import Language, Parser
 from tree_sitter_languages import get_language
 from dataflow.utils.registry import GENERATOR_REGISTRY
+from dataflow.utils.utils import get_logger
 # import tree_sitter_bash as tsbash
 # import tree_sitter_c as tsc
 # import tree_sitter_c_sharp as tscsharp
@@ -38,9 +39,10 @@ class TreeSitterParser:
         self.output_file = config.get('output_file')
         self.input_key = config.get('input_key', 'code')
         # self.output_key = config.get('output_key', 'answer')
-        
-        logging.info("Initializing TreeSitterParser...")
+        self.logger = get_logger()
+        self.logger.info("Initializing TreeSitterParser...")
         if not self.input_file or not self.output_file:
+            self.logger.error("Both input_file and output_file must be specified in the config.")
             raise ValueError("Both input_file and output_file must be specified in the config.")
         self.lang_parsers = {}
         # 初始化语言模块
@@ -106,17 +108,17 @@ class TreeSitterParser:
                     parser.set_language(get_language(lang))
                     self.lang_parsers[lang] = parser
             except AttributeError as e:
-                logging.info(f"Unsupported Language: {lang}")
-                logging.info(f"Error {e}")
+                self.logger.info(f"Unsupported Language: {lang}")
+                self.logger.info(f"Error {e}")
                 return None
         return self.lang_parsers[lang]
     
     def run(self):
-        logging.info("Start running TreeSitterParser...")
-        logging.info(f"Reading input file: {self.input_file}...")
+        self.logger.info("Start running TreeSitterParser...")
+        self.logger.info(f"Reading input file: {self.input_file}...")
         df = pd.read_json(self.input_file, lines=True)
         data = df.to_dict(orient='records')
-        logging.info(f"Read Success!")
+        self.logger.info(f"Read Success!")
         for item in tqdm(data):
                 parser = self._get_parser(item['lang'])
                 if parser is not None:
@@ -124,19 +126,21 @@ class TreeSitterParser:
                     item['ast_error'] = int(tree.root_node.has_error)
                     if item['ast_error'] == 1:
                         item['ast_error_info'] = self.print_tree_errors(item[self.input_key].encode('utf-8'), tree)
-                    print(f"Processed lang: {item['lang']}")                
+                    self.logger.debug(f"Processed lang: {item['lang']}")                
                 else:
                     item['ast_error'] = -1
-        logging.info(f"Saving Result into {self.output_file}")
+        self.logger.info(f"Saving Result into {self.output_file}")
         with open(self.output_file, 'w') as f:
             for item in data:
                 for k,v in item.items():
+                    if isinstance(v, list):
+                        continue
                     if pd.isna(v):
                         item[k] = None
                 json.dump(item, f)
                 f.write('\n')
-        logging.info(f"Save Success!")
-        logging.info("Shutting down TreeSitterParser...")
+        self.logger.info(f"Save Success!")
+        self.logger.info("Shutting down TreeSitterParser...")
 
 
         

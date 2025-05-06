@@ -11,7 +11,7 @@ from dataflow.utils.registry import GENERATOR_REGISTRY
 class CodeCommentGenerator:
     def __init__(self, config :dict):
         self.config = config
-        print("config", config)
+        # print("config", config)
         self.input_file = config.get("input_file")
         self.output_file = config.get("output_file")
         self.input_key = config.get('input_key', 'content')

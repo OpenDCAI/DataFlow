@@ -24,6 +24,7 @@ from dataflow.core import ReasonerFilter
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from tqdm import tqdm
 from dataflow.utils.registry import PROCESSOR_REGISTRY
+import logging
 
 @PROCESSOR_REGISTRY.register()
 class MathProblemFilter(ReasonerFilter):
@@ -72,7 +73,7 @@ Here is the problem to evaluate:
             )
         except Exception as e:
             # API call failed, return 0
-            print(f"API call failed for problem: {problem}. Error: {e}")
+            logging.error(f"API call failed for problem: {problem}. Error: {e}")
             return 0
         else:
             try:
@@ -84,7 +85,7 @@ Here is the problem to evaluate:
                 return 1 if test_value == 'true' else 0
             except Exception as e:
                 # Response format error, return 0
-                print(f"Response format error for problem: {problem}. Error: {e}")
+                logging.error(f"Response format error for problem: {problem}. Error: {e}")
                 return 0
 
     def filter_func(self, dataset):
@@ -101,7 +102,7 @@ Here is the problem to evaluate:
                     if problem:
                         futures.append(executor.submit(self.process_problem, problem))
                 except json.JSONDecodeError:
-                    print(f"Invalid JSON format in line: {line}")
+                    logging.error(f"Invalid JSON format in line: {line}")
                     results.append(0)
 
             for future in tqdm(as_completed(futures), total=len(futures), desc="Processing"):
@@ -114,10 +115,10 @@ Here is the problem to evaluate:
 
     def handle_api_error(self, error_message):
         """Handles API errors and provides guidance"""
-        print(f"API Error: {error_message}")
-        print("Possible reasons:")
-        print("1. Network connection issue. Please check your internet connection.")
-        print("2. Invalid API URL. Please verify the URL format and accessibility.")
-        print("3. API service unavailable. Please check if the service is running properly.")
-        print("4. API key issue. Please ensure your API key is valid and has proper permissions.")
-        print("Suggestion: Try again after checking the above issues.")
+        logging.error(f"API Error: {error_message}")
+        logging.error("Possible reasons:")
+        logging.error("1. Network connection issue. Please check your internet connection.")
+        logging.error("2. Invalid API URL. Please verify the URL format and accessibility.")
+        logging.error("3. API service unavailable. Please check if the service is running properly.")
+        logging.error("4. API key issue. Please ensure your API key is valid and has proper permissions.")
+        logging.error("Suggestion: Try again after checking the above issues.")

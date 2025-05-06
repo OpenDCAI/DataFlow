@@ -9,6 +9,7 @@ from mcts_run.utils.json_operator import load_file, dump_json
 import copy
 import time
 from dataflow.utils.registry import GENERATOR_REGISTRY
+import logging
 
 @GENERATOR_REGISTRY.register()
 class MCTSAnswerGenerator:
@@ -22,7 +23,7 @@ class MCTSAnswerGenerator:
 
     def _process_task(self, i, data_list):
         data_list = pd.read_json(self.input_file, lines=True)
-        print(f'Begin to solve the problem {i + 1}...\n')
+        logging.info(f'Begin to solve the problem {i + 1}...\n')
         data = data_list[i]['question']
         answer = data_list[i]['real_answer']
 
@@ -35,7 +36,7 @@ class MCTSAnswerGenerator:
         )
 
         output, root = Task.run()
-        print(f'The solution to problem {i + 1} is complete.\n')
+        logging.info(f'The solution to problem {i + 1} is complete.\n')
 
         base_dir = os.getcwd()
         output_dir = pathlib.Path(f'{base_dir}/outputs/{self.args.task_name}/{self.args.file}/{Task.mode}')
@@ -50,15 +51,15 @@ class MCTSAnswerGenerator:
             dump_json(output_file, self.output_list)
 
     def run(self):
-        print('-' * 30, 'Begin testing', '-' * 30, '\n')
+        logging.debug('-' * 30, 'Begin testing', '-' * 30, '\n')
         file = self.args.load_file_path
-        print('** file_path: ', file)
+        logging.debug('** file_path: ', file)
 
         try:
             data_list = load_file(file)
             data_len = len(data_list)
         except Exception as e:
-            print(f'File must be standardized json!\nError type:{e}\n')
+            logging.error(f'File must be standardized json!\nError type:{e}\n')
             return
 
         assert data_len > 0, "Data list is empty!\n"
@@ -68,12 +69,12 @@ class MCTSAnswerGenerator:
             for future in futures:
                 future.result()
 
-        print('_' * 60)
-        print(f'Total number of questions: {data_len}\n')
-        print('_' * 60)
+        logging.debug('_' * 60)
+        logging.debug(f'Total number of questions: {data_len}\n')
+        logging.debug('_' * 60)
 
         elapsed_time = time.time() - self.start_time
-        print(f"程序运行时间: {elapsed_time:.2f} 秒")
+        logging.debug(f"程序运行时间: {elapsed_time:.2f} 秒")
 
 
 

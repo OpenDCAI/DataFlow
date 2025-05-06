@@ -60,3 +60,7 @@ class ReasonerFilter(Reasoner):
 
         print(f'Implemented {self.filter_name}. Data Number: {init_len} -> {len(filtered_dataset)}', flush=True)
         return filtered_dataset
+    
+    def run(self):
+        filtered_dataset = self.__call__(self.dataset)
+        filtered_dataset.dump(save_path=self.config['output_file'])

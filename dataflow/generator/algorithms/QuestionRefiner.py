@@ -4,11 +4,13 @@ import logging
 from tqdm import tqdm
 from concurrent.futures import ThreadPoolExecutor, as_completed
 import threading
+from dataflow.utils.registry import GENERATOR_REGISTRY
 from dataflow.generator.utils.Prompts import QuestionRefinePrompt
 from dataflow.generator.utils.APIGenerator_request import APIGenerator_request
 from dataflow.generator.utils.LocalModelGenerator import LocalModelGenerator
 from dataflow.generator.utils.APIGenerator_aisuite import APIGenerator_aisuite
 
+@GENERATOR_REGISTRY.register()
 class QuestionRefiner:
     def __init__(self, args: Dict):
         self.config = args

@@ -5,14 +5,14 @@ import logging
 import colorlog
 
 def download_model_from_hf(model_name, model_cache_dir):
-    print(f"Downloading {model_name} to {model_cache_dir}.")
+    logging.info(f"Downloading {model_name} to {model_cache_dir}.")
     command = ['huggingface-cli', 'download', '--resume-download', model_name, '--local-dir', model_cache_dir]
     result = subprocess.run(command, capture_output=True, text=True)
     if result.returncode != 0:
-        print(f"Failed to download {model_name}.")
-        print(result.stderr)
+        logging.error(f"Failed to download {model_name}.")
+        logging.error(result.stderr)
         return False
-    print(f"Successfully downloaded {model_name} to {model_cache_dir}.")
+    logging.info(f"Successfully downloaded {model_name} to {model_cache_dir}.")
     return True
 
 def round_to_sigfigs(num, sigfigs):
@@ -109,8 +109,8 @@ def list_image_eval_metrics():
         else:
             metric_dict[v['data_type']] = [k]
     for k, v in metric_dict.items():
-        print(f"metric for {k} data:")
-        print(v)
+        logging.info(f"metric for {k} data:")
+        logging.info(v)
 
 
 def get_scorer(metric_name, device):
@@ -141,7 +141,7 @@ def get_scorer(metric_name, device):
 
 def new_get_scorer(scorer_name, model_args):
     from dataflow.utils.registry import MODEL_REGISTRY
-    print(scorer_name, model_args)
+    logging.info(scorer_name, model_args)
     scorer = MODEL_REGISTRY.get(scorer_name)(args_dict=model_args)
     
     assert scorer is not None, f"Scorer for {scorer_name} is not found."
@@ -190,13 +190,13 @@ def get_processor(processor_name, config=None, args=None):
     from dataflow.utils.registry import PROCESSOR_REGISTRY
     if config is not None:
         args = config
-    
+    logger = get_logger()
     # print(processor_name, args, flush=True)
     processor = PROCESSOR_REGISTRY.get(processor_name)(args)
     if processor is not None:
-        logging.info(f"Successfully get processor {processor_name}, args {args}")
+        logger.info(f"Successfully get processor {processor_name}, args {args}")
     else:
-        logging.error(f"Processor {processor} is not found")
+        logger.error(f"Processor {processor} is not found")
     assert processor is not None
     return processor
 
@@ -204,10 +204,11 @@ def get_generator(generator_name, args):
     from dataflow.utils.registry import GENERATOR_REGISTRY
     # print(generator_name, args)
     generator = GENERATOR_REGISTRY.get(generator_name)(args)
+    logger = get_logger()
     if generator is not None:
-        logging.info(f"Successfully get generator {generator_name}, args {args}")
+        logger.info(f"Successfully get generator {generator_name}, args {args}")
     else:
-        logging.error(f"Generator {generator} is not found")
+        logger.error(f"Generator {generator} is not found")
     assert generator is not None
     return generator
 
@@ -220,7 +221,7 @@ def get_logger(level=logging.INFO):
     console_handler.setLevel(level)
     # 定义颜色输出格式
     color_formatter = colorlog.ColoredFormatter(
-        '%(log_color)s%(levelname)s: %(message)s',
+        '%(log_color)s %(asctime)s | %(filename)-20s- %(module)-20s- %(funcName)-20s- %(lineno)5d - %(name)-10s | %(levelname)8s | Processno %(process)5d - Threadno %(thread)-15d : %(message)s', 
         log_colors={
             'DEBUG': 'cyan',
             'INFO': 'green',
@@ -239,18 +240,18 @@ def get_logger(level=logging.INFO):
     return logger
 
 def pipeline_step(yaml_path, step_name, step_type):
-    import logging
     import yaml
-    logging.info(f"Loading yaml {yaml_path} ......")
+    logger = get_logger()
+    logger.info(f"Loading yaml {yaml_path} ......")
     with open(yaml_path, "r") as f:
         config = yaml.safe_load(f)
     config = merge_yaml(config)
-    logging.info(f"Load yaml success, config: {config}")
+    logger.info(f"Load yaml success, config: {config}")
     if step_type == "process":
         algorithm = get_processor(step_name, config)
     elif step_type == "generator":
         algorithm = get_generator(step_name, config)
-    logging.info("Start running ...")
+    logger.info("Start running ...")
     algorithm.run()
     
 

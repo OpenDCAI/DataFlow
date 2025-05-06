@@ -117,7 +117,7 @@ class StaticCodeChecker:
    #             detail = "No issues found."
             else:
                 check_result = 1
-                detail = extract_findings(stdout)
+                detail = stdout
 
 
         except Exception as e:
@@ -171,8 +171,10 @@ class StaticCodeChecker:
         # 将更新后的数据保存到输出文件
         with open(self.output_file, 'w', encoding='utf-8') as f:
             for item in data:
-                print("item", item)
-                json.dump(item, f, ensure_ascii=False)
+                for k,v in item.items():
+                    if pd.isna(v):
+                        item[k] = None
+                json.dump(item, f)
                 f.write('\n')
         
         logging.info(f"Save Success!")

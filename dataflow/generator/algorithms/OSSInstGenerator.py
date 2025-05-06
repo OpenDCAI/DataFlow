@@ -1,8 +1,8 @@
 import os
-from ..utils.LocalModelGenerator import LocalModelGenerator
-from ..utils.APIGenerator_aisuite import APIGenerator_aisuite
-from ..utils.APIGenerator_request import APIGenerator_request
-from ..utils.Prompts import OssInstGeneratorPrompt as OIP
+from dataflow.generator.utils.LocalModelGenerator import LocalModelGenerator
+from dataflow.generator.utils.APIGenerator_aisuite import APIGenerator_aisuite
+from dataflow.generator.utils.APIGenerator_request import APIGenerator_request
+from dataflow.generator.utils.Prompts import OssInstGeneratorPrompt as OIP
 import pandas as pd
 from dataflow.utils.registry import GENERATOR_REGISTRY
 
