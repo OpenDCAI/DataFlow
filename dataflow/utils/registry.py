@@ -186,8 +186,9 @@ class LazyLoader(types.ModuleType):
         """
         logger = get_logger()
         if item in self._loaded_classes:
+            cls = self._loaded_classes[item]
             logger.debug(f"Lazyloader {self.__path__} got cached class {cls}")
-            return self._loaded_classes[item]
+            return cls
         # 从映射结构中获取文件路径和类名
         if item in self._import_structure:
             file_path, class_name = self._import_structure[item]
