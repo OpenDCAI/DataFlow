@@ -1,7 +1,6 @@
 import json
 import logging
 from typing import Dict, List
-from tqdm import tqdm
 import pandas as pd
 from transformers import AutoTokenizer
 from huggingface_hub import snapshot_download
@@ -10,6 +9,7 @@ from dataflow.utils.registry import GENERATOR_REGISTRY
 from dataflow.generator.utils.LocalModelGenerator import LocalModelGenerator
 from dataflow.generator.utils.APIGenerator_aisuite import APIGenerator_aisuite
 from dataflow.generator.utils.APIGenerator_request import APIGenerator_request
+from dataflow.utils.utils import get_logger
 
 def extract_json_objects(model_output, nums=3):
     """
@@ -43,11 +43,14 @@ def extract_json_objects(model_output, nums=3):
 @GENERATOR_REGISTRY.register()
 class SupervisedFinetuneGenerator:
     def __init__(self, config: Dict):
+        self.logger = get_logger()
         self.config = config
         self.input_file = config['input_file']
         self.output_file = config['output_file']
         self.key = config['keys']
         self.model = self.__init_model__()
+        self.logger.info(f"Initializing SupervisedFinetuneGenerator with input_file={self.input_file}, output_file={self.output_file}, keys={self.key}...")
+
 
     def __init_model__(self):
         """
@@ -56,15 +59,21 @@ class SupervisedFinetuneGenerator:
         generator_type = self.config.get("generator_type", "local").lower()
 
         if generator_type == "local":
+            self.logger.info("Using LocalModelGenerator...")
             return LocalModelGenerator(self.config)
         elif generator_type == "aisuite":
+            self.logger.info("Using APIGenerator_aisuite...")
             return APIGenerator_aisuite(self.config)
         elif generator_type == "request":
+            self.logger.info("Using APIGenerator_request...")
             return APIGenerator_request(self.config)
         else:
             raise ValueError(f"Invalid generator type: {generator_type}")
 
+
     def run(self):
+        self.logger.info("Running SupervisedFinetuneGenerator...")
+
         raw_dataframe = pd.read_json(self.input_file, lines=True)
         
         num_questions = 1
@@ -168,4 +177,9 @@ class SupervisedFinetuneGenerator:
         # 用新的行列表更新原始DataFrame
         raw_dataframe = pd.DataFrame(expanded_rows)
 
-        raw_dataframe.to_json(self.output_file, orient='records', lines=True)   
+        try:
+            raw_dataframe.to_json(self.output_file, orient='records', lines=True)
+            self.logger.info(f"Saved the output to {self.output_file}.")
+        except Exception as e:
+            self.logger.error(f"Error saving the output file {self.output_file}: {e}")
+

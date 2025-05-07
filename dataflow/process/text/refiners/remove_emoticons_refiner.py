@@ -2,29 +2,23 @@ from dataflow.core import TextRefiner
 from dataflow.data import TextDataset
 from dataflow.utils.registry import PROCESSOR_REGISTRY
 from tqdm import tqdm
-
-
-"""
-The RemoveEmoticonsRefiner class is a text refiner designed to remove emoticons from specified text fields within a dataset.
-It uses a predefined list of emoticons (from `EMOTICONS_EMO.keys()`), iterating through each item in the dataset and 
-removing any detected emoticons from the specified fields. 
-
-This refiner is particularly useful for datasets where emoticons might affect the accuracy of text processing or analysis.
-After removing the emoticons, the refiner returns the modified dataset along with a count of items that were altered, 
-resulting in cleaner and more standardized text.
-"""
+from dataflow.utils.utils import get_logger
 
 @PROCESSOR_REGISTRY.register()
 class RemoveEmoticonsRefiner(TextRefiner):
     def __init__(self, args_dict: dict):
         super().__init__(args_dict)
+        self.logger = get_logger()
         self.refiner_name = 'RemoveEmoticonsRefiner'
         self.emoticons = EMOTICONS_EMO.keys()
+        self.logger.info(f"Initializing {self.refiner_name}...")
 
     def refine_func(self, dataset):
+        self.logger.info(f"Start running {self.refiner_name}...")
         refined_data = []
         numbers = 0
         keys = dataset.keys if isinstance(dataset.keys, list) else [dataset.keys]
+
         for item in tqdm(dataset, desc=f"Implementing {self.refiner_name}"):
             if isinstance(item, dict):
                 modified = False  
@@ -40,12 +34,15 @@ class RemoveEmoticonsRefiner(TextRefiner):
                         if original_text != no_emoticon_text:
                             item[key] = no_emoticon_text
                             modified = True  
+                            self.logger.debug(f"Modified text for key '{key}': Original: {original_text[:30]}... -> Refined: {no_emoticon_text[:30]}...")
 
                 refined_data.append(item)
                 if modified:
                     numbers += 1
+                    self.logger.debug(f"Item modified, total modified so far: {numbers}")
 
         dataset.dataset = refined_data
+        self.logger.info(f"Refining completed. Total items modified: {numbers}")
         return dataset, numbers
 
 """
