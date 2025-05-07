@@ -20,6 +20,7 @@ configs/process/experiments/
 **/meteorscorer/data/meteor-1.5.jar
 **/ciderscorer/coco-val-df.p
 **/data
+!dataflow/data/
 **/ckpt
 **/ckpr
 tmp.*
