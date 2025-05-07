@@ -5,6 +5,7 @@ from dataflow.generator.utils import LocalModelGenerator, APIGenerator_aisuite, 
 from dataflow.generator.utils.Prompts import QuestionDifficultyPrompt
 import re
 from dataflow.utils.registry import GENERATOR_REGISTRY
+from dataflow.utils.utils import get_logger
 
 @GENERATOR_REGISTRY.register()
 class QuestionDifficultyClassifier():
@@ -18,6 +19,7 @@ class QuestionDifficultyClassifier():
         self.output_file = self.config.get("output_file")
         self.input_key = self.config.get("input_key", "question")  # default key for question input
         self.output_key = self.config.get("output_key", "classification_result")  # default output key
+        self.logger = get_logger()
         
         # Ensure input_file and output_file are provided
         if not self.input_file or not self.output_file:

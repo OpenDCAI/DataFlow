@@ -9,6 +9,7 @@ from dataflow.generator.utils.Prompts import QuestionRefinePrompt
 from dataflow.generator.utils.APIGenerator_request import APIGenerator_request
 from dataflow.generator.utils.LocalModelGenerator import LocalModelGenerator
 from dataflow.generator.utils.APIGenerator_aisuite import APIGenerator_aisuite
+from dataflow.utils.utils import get_logger
 
 @GENERATOR_REGISTRY.register()
 class QuestionRefiner:
@@ -19,14 +20,14 @@ class QuestionRefiner:
         self.model_generator = self.__init_model__()
         self._lock = threading.Lock() 
 
-        self.input_file = config['input_file']
-        self.output_file = config['output_file']
-        self.output_refined_question_key = config.get('output_refined_question_key')
-        self.input_db_key = config.get('input_db_key', 'id')
-        self.num_threads = config.get('num_threads', 5)
-        self.max_retries = config.get('max_retries', 3)
-        self.input_question_key = config.get('input_question_key', 'question')
-
+        self.input_file = self.config['input_file']
+        self.output_file = self.config['output_file']
+        self.output_refined_question_key = self.config.get('output_refined_question_key')
+        self.input_db_key = self.config.get('input_db_key', 'id')
+        self.num_threads = self.config.get('num_threads', 5)
+        self.max_retries = self.config.get('max_retries', 3)
+        self.input_question_key = self.config.get('input_question_key', 'question')
+        self.logger = get_logger()
 
 
     def __init_model__(self) -> Union[LocalModelGenerator, APIGenerator_aisuite, APIGenerator_request]:
@@ -49,9 +50,9 @@ class QuestionRefiner:
                     try:
                         data.append(json.loads(line))
                     except json.JSONDecodeError as e:
-                        logging.warning(f"Invalid JSON in line: {line.strip()}. Error: {e}")
+                        self.logger.warning(f"Invalid JSON in line: {line.strip()}. Error: {e}")
         except IOError as e:
-            logging.error(f"Error loading {file_path}: {e}")
+            self.logger.error(f"Error loading {file_path}: {e}")
             raise
         return data
     
@@ -63,7 +64,7 @@ class QuestionRefiner:
                     for item in data:
                         f.write(json.dumps(item) + '\n')
         except IOError as e:
-            logging.error(f"Error saving to {file_path}: {e}")
+            self.logger.error(f"Error saving to {file_path}: {e}")
             raise
 
     def _generate_prompt(self, item: Dict) -> str:
@@ -84,7 +85,7 @@ class QuestionRefiner:
             )
             return result_line.split("RESULT:", 1)[1].strip()
         except (StopIteration, IndexError):
-            logging.warning(f"Unexpected response format: {response[:200]}...")
+            self.logger.warning(f"Unexpected response format: {response[:200]}...")
             return original_question
 
     def _process_item_with_retry(self, item: Dict, retry_count: int = 2) -> Dict:
@@ -92,20 +93,20 @@ class QuestionRefiner:
             prompt = self._generate_prompt(item)
             response = self.model_generator.generate_text_from_input([prompt])
             parsed_response = self._parse_response(response[0], item['question'])
-            # logging.warning(parsed_response)
+            # self.logger.warning(parsed_response)
             # print(parsed_response)
             item[self.output_refined_question_key] = parsed_response
             return item
         except Exception as e:
             if retry_count < self.max_retries:
-                # logging.warning(f"Retry {retry_count + 1} for item")
+                # self.logger.warning(f"Retry {retry_count + 1} for item")
                 return self._process_item_with_retry(item, retry_count + 1)
-            # logging.error(f"Failed after {self.max_retries} retries for item: {e}")
+            # self.logger.error(f"Failed after {self.max_retries} retries for item: {e}")
             item[self.output_refined_question_key] = item['question'] 
             return item
 
     def run(self) -> None:
-        # logging.info(f"Loading items from {self.input_file}")
+        # self.logger.info(f"Loading items from {self.input_file}")
         try:
             items = self.load_jsonl(self.input_file)
 
@@ -124,12 +125,12 @@ class QuestionRefiner:
                         processed_item = future.result()
                         items[question_id_to_index[question_id]] = processed_item
                     except Exception as e:
-                        logging.error(f"Error processing question_id={question_id}: {e}")
+                        self.logger.error(f"Error processing question_id={question_id}: {e}")
                         continue
             
             self.save_jsonl(items, self.output_file)
-            # logging.info(f"Successfully processed {len(items)} items to {self.output_file}")
+            # self.logger.info(f"Successfully processed {len(items)} items to {self.output_file}")
             
         except Exception as e:
-            logging.error(f"Fatal error in processing pipeline: {e}")
+            self.logger.error(f"Fatal error in processing pipeline: {e}")
             raise

@@ -6,8 +6,7 @@ import pandas as pd
 import sqlite3
 import re
 from dataflow.utils.registry import GENERATOR_REGISTRY
-
-
+from dataflow.utils.utils import get_logger
 
 
 class Schema:
@@ -748,8 +747,11 @@ class SQLDifficultyClassifier:
         self.output_key = self.config.get("output_key", "sql_difficulty")
         # self.db_root_path = self.config.get("db_root_path")
 
+        self.logger = get_logger()
+
         # Ensure required paths and keys are provided
         if not self.input_file or not self.output_file:
+            self.logger.error("Both input_file and output_file must be specified in the config.")
             raise ValueError("Both input_file and output_file must be specified in the config.")
         
     def get_schema(self, db):
@@ -780,10 +782,9 @@ class SQLDifficultyClassifier:
         print the statistics of the SQL difficulty.
         '''
         counts = dataframe[self.output_key].value_counts()
-        logging.info("===== SQL 难度统计结果 =====")
-        for difficulty in ['easy', 'medium', 'hard', 'extra']:
-            logging.info(f"{difficulty.title()}: {counts.get(difficulty, 0)}")
-        logging.info("============================")
+        self.logger.info("SQL Difficulty Statistics")
+        difficulty_counts = {d: counts.get(d, 0) for d in ['easy', 'medium', 'hard', 'extra']}
+        self.logger.info(" | ".join([f"{d.title()}: {v}" for d, v in difficulty_counts.items()]))
     
     def run(self):
         '''
@@ -821,6 +822,7 @@ class SQLDifficultyClassifier:
         '''
         # Check if the input sql key exists in the dataframe
         if self.input_sql_key not in dataframe.columns:
+            self.logger.error(f"input_sql_key: {self.input_sql_key} not found in the dataframe.")
             raise ValueError(f"input_sql_key: {self.input_sql_key} not found in the dataframe.")
         
         # Check if the input dbid key exists in the dataframe
@@ -829,4 +831,5 @@ class SQLDifficultyClassifier:
 
         # Check if the output key already exists in the dataframe
         if self.output_key in dataframe.columns:
+            self.logger.warning(f"Found {self.output_key} in the dataframe, which would overwrite an existing column. Please use a different output_key.")
             raise ValueError(f"Found {self.output_key} in the dataframe, which would overwrite an existing column. Please use a different output_key.")

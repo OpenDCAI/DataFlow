@@ -8,6 +8,7 @@ from typing import Dict, List, Optional
 from concurrent.futures import ThreadPoolExecutor, as_completed
 import threading
 from dataflow.utils.registry import GENERATOR_REGISTRY
+from dataflow.utils.utils import get_logger
 
 @GENERATOR_REGISTRY.register()
 class DatabaseSchemaExtractor:
@@ -30,13 +31,15 @@ class DatabaseSchemaExtractor:
         self.num_threads = config.get('num_threads', 5)
         self._schema_cache = {}
 
+        self.logger = get_logger()
+
 
     def load_jsonl(self, file_path: str) -> List[Dict]:
         try:
             df = pd.read_json(file_path, lines=True)
             return df.to_dict('records')
         except Exception as e:
-            logging.error(f"Error loading {file_path}: {e}")
+            self.logger.error(f"Error loading {file_path}: {e}")
             raise
     
     def save_jsonl(self, data: List[Dict], file_path: str) -> None:
@@ -44,7 +47,7 @@ class DatabaseSchemaExtractor:
             df = pd.DataFrame(data)
             df.to_json(file_path, orient='records', lines=True, force_ascii=False)
         except Exception as e:
-            logging.error(f"Error saving to {file_path}: {e}")
+            self.logger.error(f"Error saving to {file_path}: {e}")
             raise
 
     def collect_schema(self, db_id):
@@ -99,7 +102,7 @@ class DatabaseSchemaExtractor:
                     examples = [str(row[0]) for row in cursor.fetchall() if row[0] is not None]
                     schema['tables'][table_name]['columns'][col_name]['examples'] = examples
                 except sqlite3.Error as e:
-                    logging.warning(f"Unable to access examples for {table_name}.{col_name}: {e}")
+                    self.logger.warning(f"Unable to access examples for {table_name}.{col_name}: {e}")
             
             for pk in db_info["primary_keys"]:
                 if isinstance(pk, list):  
@@ -251,7 +254,7 @@ class DatabaseSchemaExtractor:
         # logging.warning(db_info)
 
         if not db_info:
-            logging.warning(f"No schema found for database {db_id}")
+            self.logger.warning(f"No schema found for database {db_id}")
             return item
         
         db_path = os.path.join(self.database_base_path, db_id, f"{db_id}.sqlite")
@@ -269,13 +272,14 @@ class DatabaseSchemaExtractor:
                 # logging.warning(3)
 
         except sqlite3.Error as e:
-            logging.error(f"Database error for {db_id}: {e}")
+            self.logger.error(f"Database error for {db_id}: {e}")
 
         # logging.warning(f"Schema extraction completed for {db_id}")
         
         return item
 
     def run(self) -> None:
+        self.logger.info("Starting DatabaseSchemaExtractor")
         try:
             items = self.load_jsonl(self.input_file)
             self._schema_cache = {}
@@ -294,12 +298,12 @@ class DatabaseSchemaExtractor:
                         try:
                             items[question_id_to_index[question_id]] = future.result()
                         except Exception as e:
-                            logging.error(f"Error processing question_id={question_id}: {e}")
+                            self.logger.error(f"Error processing question_id={question_id}: {e}")
                         finally:
                             pbar.update(1)
             
             self.save_jsonl(items, self.output_file)
             
         except Exception as e:
-            logging.error(f"Fatal error: {e}")
+            self.logger.error(f"Fatal error: {e}")
             raise

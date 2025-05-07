@@ -4,6 +4,7 @@ import logging
 import re
 from word2number import w2n
 from dataflow.utils.registry import GENERATOR_REGISTRY
+from dataflow.utils.utils import get_logger
 
 class StringProcessor:
     """
@@ -149,6 +150,7 @@ class AnswerExtractor:
         Initializes the AnswerExtractor class with a string cleaner.
         """
         self.string_cleaner = string_cleaner
+        self.logger = get_logger()
 
     def extract_answer(self, pred_str, data_name, use_last_number=True):
         """
@@ -253,7 +255,7 @@ class AnswerExtraction_qwenmatheval:
         if self.response_key not in key_list:
             raise ValueError(f"response_key: {self.response_key} not found in dataframe columns.")
         
-        logging.info(f"Found {len(raw_dataframe)} rows.")
+        self.logger.info(f"Found {len(raw_dataframe)} rows.")
         extractions = [self.answer_extractor.extract_answer(resp, self.data_name) for resp in tqdm(raw_dataframe[self.response_key], desc='Processing')]
         raw_dataframe[self.extraction_key] = extractions
         raw_dataframe.to_json(self.output_file, orient='records', lines=True)

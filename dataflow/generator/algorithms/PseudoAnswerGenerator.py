@@ -8,6 +8,7 @@ import yaml
 import logging
 import pandas as pd
 from dataflow.utils.registry import GENERATOR_REGISTRY
+from dataflow.utils.utils import get_logger
 
 @GENERATOR_REGISTRY.register()
 class PseudoAnswerGenerator:
@@ -27,7 +28,8 @@ class PseudoAnswerGenerator:
         self.max_times = self.config["max_times"]
         self.model_generator = self.__init_model__()
         self.extractor = AnswerExtraction_qwenmatheval(self.config) 
-    
+        self.logger = get_logger()
+
     def __init_model__(self):
         if self.config["generator_type"] == "local":
             return LocalModelGenerator(self.config)
@@ -40,7 +42,7 @@ class PseudoAnswerGenerator:
     
     def run(self):
         # read input file : accept jsonl file only
-        logging.info(f"Reading input file: {self.input_file}")
+        self.logger.info(f"Reading input file: {self.input_file}")
         dataframe = pd.read_json(self.input_file,lines=True)
         input_data_number = dataframe.shape[0]
         # check if input_prompt_key are in the dataframe
@@ -64,15 +66,15 @@ class PseudoAnswerGenerator:
         user_prompts = dataframe[self.input_key].tolist()
         answer_dict = defaultdict(list)
         solution_dict = defaultdict(list)
-        logging.info(f"Generating answers for {len(user_prompts)} questions")
+        self.logger.info(f"Generating answers for {len(user_prompts)} questions")
         for i in range(self.max_times):
-            logging.info(f"Generating: {i+1} times")
+            self.logger.info(f"Generating: {i+1} times")
             solutions = self.model_generator.generate_text_from_input(user_prompts)
             answers = [self.extractor.answer_extractor.extract_answer(solution, self.extractor.data_name) for solution in solutions]
             for idx, answer in enumerate(answers):
                 answer_dict[idx].append(answer)
                 solution_dict[idx].append((answer, solutions[idx]))
-        logging.info(f"Generating final answers")
+        self.logger.info(f"Generating final answers")
         dataframe[self.output_key_answer] = dataframe.get(self.output_key_answer, None) 
         dataframe[self.output_key_solutions] = dataframe.get(self.output_key_solutions, None) 
         dataframe[self.output_key_correct_solution_example] = dataframe.get(self.output_key_correct_solution_example, None) 
@@ -89,5 +91,5 @@ class PseudoAnswerGenerator:
         # 过滤掉没有答案的行
         dataframe = dataframe[dataframe[self.output_key_answer_value].notna()]
         dataframe = dataframe[dataframe[self.output_key_correct_solution_example].notna()]
-        logging.info(f"Data number {input_data_number} -> {dataframe.shape[0]}")
+        self.logger.info(f"Data number {input_data_number} -> {dataframe.shape[0]}")
         dataframe.to_json(self.output_file,orient="records",lines=True)

@@ -4,6 +4,7 @@ import pandas as pd
 from dataflow.utils.utils import get_generator
 import logging
 from dataflow.utils.registry import GENERATOR_REGISTRY
+from dataflow.utils.utils import get_logger
 
 @GENERATOR_REGISTRY.register()
 class AnswerPipelineRoot:
@@ -14,6 +15,7 @@ class AnswerPipelineRoot:
         self.input_gt_key = config.get("input_gt_key")
         self.output_file_with_gt = config.get("output_file_with_gt")
         self.output_file_without_gt = config.get("output_file_without_gt")
+        self.logger = get_logger()
 
     def run(self):
         # 读取输入文件
@@ -25,7 +27,7 @@ class AnswerPipelineRoot:
         if self.input_gt_key not in df.columns or self.input_gt_key == "" or self.input_gt_key == None:
             # 直接copy input file 到 output file without gt
             df.to_json(self.output_file_without_gt, orient="records", lines=True)
-            logging.warning(f"No gt in input file, copy input file to output file without gt")
+            self.logger.warning(f"No gt in input file, copy input file to output file without gt")
             return
 
 
@@ -63,8 +65,8 @@ class AnswerPipelineRoot:
         # 输出
         df_with_gt.to_json(self.output_file_with_gt, orient="records", lines=True)
         df_without_gt.to_json(self.output_file_without_gt, orient="records", lines=True)
-        logging.info(f"output {df_with_gt.shape[0]} rows with gt to {self.output_file_with_gt}")
-        logging.info(f"output {df_without_gt.shape[0]} rows without gt to {self.output_file_without_gt}")
+        self.logger.info(f"output {df_with_gt.shape[0]} rows with gt to {self.output_file_with_gt}")
+        self.logger.info(f"output {df_without_gt.shape[0]} rows without gt to {self.output_file_without_gt}")
                 
         
 

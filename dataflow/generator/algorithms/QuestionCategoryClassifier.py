@@ -6,6 +6,7 @@ from dataflow.generator.utils.Prompts import QuestionCategoryPrompt
 import re
 from dataflow.utils.registry import GENERATOR_REGISTRY
 import logging
+from dataflow.utils.utils import get_logger
 
 @GENERATOR_REGISTRY.register()
 class QuestionCategoryClassifier():
@@ -19,7 +20,8 @@ class QuestionCategoryClassifier():
         self.output_file = self.config.get("output_file")
         self.input_key = self.config.get("input_key", "question")  # default key for question input
         self.output_key = self.config.get("output_key", "classification_result")  # default output key
-        
+        self.logger = get_logger()
+
         # Ensure input_file and output_file are provided
         if not self.input_file or not self.output_file:
             raise ValueError("Both input_file and output_file must be specified in the config.")
@@ -88,10 +90,10 @@ class QuestionCategoryClassifier():
                 dataframe.at[idx, "secondary_category"] = classification.get("secondary_category", "")
 
             except json.JSONDecodeError:
-                logging.warning(f"[警告] JSON 解析失败，收到的原始数据: {repr(classification_str)}")
+                self.logger.warning(f"[警告] JSON 解析失败，收到的原始数据: {repr(classification_str)}")
             except Exception as e:
-                logging.error(f"[错误] 解析分类结果失败: {e}")
-                logging.debug(f"[DEBUG] 原始字符串：{repr(classification_str)}")
+                self.logger.error(f"[错误] 解析分类结果失败: {e}")
+                self.logger.debug(f"[DEBUG] 原始字符串：{repr(classification_str)}")
 
 
 
@@ -106,5 +108,5 @@ class QuestionCategoryClassifier():
         # Save DataFrame to the output file
         dataframe.to_json(self.output_file, orient="records", lines=True, force_ascii=False)
 
-        logging.info(f"Classification results saved to {self.output_file}")
+        self.logger.info(f"Classification results saved to {self.output_file}")
         return

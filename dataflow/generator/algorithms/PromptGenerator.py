@@ -6,6 +6,7 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 import threading
 from tqdm import tqdm
 from dataflow.utils.registry import GENERATOR_REGISTRY
+from dataflow.utils.utils import get_logger
 
 @GENERATOR_REGISTRY.register()
 class PromptGenerator:
@@ -26,13 +27,14 @@ class PromptGenerator:
         self.use_cot = config['use_cot']
         self.num_threads = config.get('num_threads', 5)
         self.timeout = config.get('timeout', 60)  
+        self.logger = get_logger()
 
     def load_jsonl(self, file_path: str) -> List[Dict]:
         try:
             with open(file_path, 'r', encoding='utf-8') as f:
                 return [json.loads(line) for line in f if line.strip()]
         except (IOError, json.JSONDecodeError) as e:
-            logging.error(f"Error loading {file_path}: {e}")
+            self.logger.error(f"Error loading {file_path}: {e}")
             raise
 
     def save_jsonl(self, data: List[Dict], file_path: str) -> None:
@@ -41,11 +43,11 @@ class PromptGenerator:
                 for item in data:
                     f.write(json.dumps(item) + '\n')
         except IOError as e:
-            logging.error(f"Error saving to {file_path}: {e}")
+            self.logger.error(f"Error saving to {file_path}: {e}")
             raise
 
     def _process_item(self, item: Dict) -> Dict:
-        # logging.warning(f"Processing item: {item}")
+        # self.logger.warning(f"Processing item: {item}")
         if self.prompt_type == 'dail-sql':
             if self.use_cot:
                 item[self.output_key] = self.prompt.dial_sql_cot_prompt(
@@ -79,11 +81,11 @@ class PromptGenerator:
         return item
 
     def run(self) -> None:
-        # logging.info(f"Starting processing on {self.input_file}")
+        # self.logger.info(f"Starting processing on {self.input_file}")
         try:
             items = self.load_jsonl(self.input_file)
             question_id_to_index = {item['question_id']: idx for idx, item in enumerate(items)}
-            # logging.warning(item_map)
+            # self.logger.warning(item_map)
 
             with ThreadPoolExecutor(max_workers=self.num_threads) as executor:
                 futures = {
@@ -100,12 +102,12 @@ class PromptGenerator:
                         processed_item = future.result()
                         items[question_id_to_index[question_id]].update(processed_item)
                     except Exception as e:
-                        logging.error(f"Error processing question_id={question_id}: {e}")
+                        self.logger.error(f"Error processing question_id={question_id}: {e}")
                         continue
             
             self.save_jsonl(items, self.output_file)
-            # logging.info(f"Successfully processed {len(items)} items to {self.output_file}")
+            # self.logger.info(f"Successfully processed {len(items)} items to {self.output_file}")
             
         except Exception as e:
-            logging.error(f"Fatal error in processing pipeline: {e}")
+            self.logger.error(f"Fatal error in processing pipeline: {e}")
             raise

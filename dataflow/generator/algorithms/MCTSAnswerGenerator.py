@@ -10,6 +10,7 @@ import copy
 import time
 from dataflow.utils.registry import GENERATOR_REGISTRY
 import logging
+from dataflow.utils.utils import get_logger
 
 @GENERATOR_REGISTRY.register()
 class MCTSAnswerGenerator:
@@ -20,10 +21,11 @@ class MCTSAnswerGenerator:
         self.start_time = time.time()
         self.input_file = self.config.get("input_file")
         self.output_file = self.config.get("output_file")
+        self.logger = get_logger()
 
     def _process_task(self, i, data_list):
         data_list = pd.read_json(self.input_file, lines=True)
-        logging.info(f'Begin to solve the problem {i + 1}...\n')
+        self.logger.info(f'Begin to solve the problem {i + 1}...\n')
         data = data_list[i]['question']
         answer = data_list[i]['real_answer']
 
@@ -36,7 +38,7 @@ class MCTSAnswerGenerator:
         )
 
         output, root = Task.run()
-        logging.info(f'The solution to problem {i + 1} is complete.\n')
+        self.logger.info(f'The solution to problem {i + 1} is complete.\n')
 
         base_dir = os.getcwd()
         output_dir = pathlib.Path(f'{base_dir}/outputs/{self.args.task_name}/{self.args.file}/{Task.mode}')
@@ -51,15 +53,15 @@ class MCTSAnswerGenerator:
             dump_json(output_file, self.output_list)
 
     def run(self):
-        logging.debug('-' * 30, 'Begin testing', '-' * 30, '\n')
+        self.logger.debug('-' * 30, 'Begin testing', '-' * 30, '\n')
         file = self.args.load_file_path
-        logging.debug('** file_path: ', file)
+        self.logger.debug('** file_path: ', file)
 
         try:
             data_list = load_file(file)
             data_len = len(data_list)
         except Exception as e:
-            logging.error(f'File must be standardized json!\nError type:{e}\n')
+            self.logger.error(f'File must be standardized json!\nError type:{e}\n')
             return
 
         assert data_len > 0, "Data list is empty!\n"
@@ -69,12 +71,12 @@ class MCTSAnswerGenerator:
             for future in futures:
                 future.result()
 
-        logging.debug('_' * 60)
-        logging.debug(f'Total number of questions: {data_len}\n')
-        logging.debug('_' * 60)
+        self.logger.debug('_' * 60)
+        self.logger.debug(f'Total number of questions: {data_len}\n')
+        self.logger.debug('_' * 60)
 
         elapsed_time = time.time() - self.start_time
-        logging.debug(f"程序运行时间: {elapsed_time:.2f} 秒")
+        self.logger.debug(f"程序运行时间: {elapsed_time:.2f} 秒")
 
 
 

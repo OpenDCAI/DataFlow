@@ -9,7 +9,7 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 from tqdm import tqdm
 from tinydb import TinyDB
 from dataflow.utils.registry import GENERATOR_REGISTRY
-logging.basicConfig(level=logging.INFO)
+from dataflow.utils.utils import get_logger
 
 @GENERATOR_REGISTRY.register()
 class AnswerGenerator_reasoning:
@@ -20,7 +20,8 @@ class AnswerGenerator_reasoning:
         self.config = config
         self.check_config()
         self.db = TinyDB(self.config['db_path'])
-        logging.info(f"DB path: {self.config['db_path']}")
+        self.logger = get_logger()
+        self.logger.info(f"DB path: {self.config['db_path']}")
         self.max_workers = self.config.get('max_workers',4)
         self.output_content_key = self.config.get('output_content_key', 'content')
         self.output_reasoning_key = self.config.get('output_reasoning_key', 'reasoning_content')
@@ -59,13 +60,13 @@ class AnswerGenerator_reasoning:
             response = requests.post(url, data=payload, headers=headers,timeout=1800)
             status_code = response.status_code
             if status_code == 200:
-                logging.info(f"Response code is 200, Get the answer successfully")
+                self.logger.info(f"Response code is 200, Get the answer successfully")
                 return response.json(),id
             else:
-                logging.error(f"Error: {status_code} - {response.text}")
+                self.logger.error(f"Error: {status_code} - {response.text}")
                 return None,id
         except Exception as e:
-            logging.error(f"Error: {e}")
+            self.logger.error(f"Error: {e}")
             return None,id
 
     def Analyze_response_json(self, response_json):
@@ -74,16 +75,16 @@ class AnswerGenerator_reasoning:
         '''
         # check stop reason
         if response_json["choices"][0]["finish_reason"] != "stop":
-            logging.error(f"Error: The model stopped for reason: {response_json['choices'][0]['finish_reason']}")
+            self.logger.error(f"Error: The model stopped for reason: {response_json['choices'][0]['finish_reason']}")
             return None
         
         # check if reasoning_content exists
         if 'reasoning_content' in response_json['choices'][0]['message'] and response_json['choices'][0]['message']['reasoning_content'] != "":
-            logging.info(f"Get reasoning content successfully")
+            self.logger.info(f"Get reasoning content successfully")
             reasoning_content = response_json['choices'][0]['message']['reasoning_content']
             content = response_json['choices'][0]['message']['content']
         else:
-            logging.info(f"No reasoning content, try to parse reasoning part in content")
+            self.logger.info(f"No reasoning content, try to parse reasoning part in content")
             text = response_json['choices'][0]['message']['content']
             text_split = text.split("</think>")
             if len(text_split) == 2 and "<think>" in text_split[0]:
@@ -93,7 +94,7 @@ class AnswerGenerator_reasoning:
                 reasoning_content = reasoning_content.replace("<think>", "").replace("</think>", "").replace("<answer>", "").replace("</answer>", "")
                 content = content.replace("<think>", "").replace("</think>", "").replace("<answer>", "").replace("</answer>", "")
             else:
-                logging.error(f"Error: Failed to parse reasoning content from the response")
+                self.logger.error(f"Error: Failed to parse reasoning content from the response")
                 return None
         total_token = response_json['usage']['total_tokens']
         return reasoning_content, content, total_token
@@ -120,7 +121,7 @@ class AnswerGenerator_reasoning:
         if self.config['input_key'] not in raw_dataframe.columns:
             key_list = raw_dataframe.columns.tolist()
             raise ValueError(f"input_key: {self.config['input_key']} not found in the dataframe, please check the input_key: {key_list}")
-        logging.info(f"Found {len(raw_dataframe)} rows in the dataframe")
+        self.logger.info(f"Found {len(raw_dataframe)} rows in the dataframe")
         # generate id for hash
         dataframe = raw_dataframe.copy()
         dataframe['id'] = dataframe.index
@@ -129,7 +130,7 @@ class AnswerGenerator_reasoning:
         existing_ids = [item['id'] for item in self.db.all()]
         # filter out existing ids
         dataframe = dataframe[~dataframe['id'].isin(existing_ids)]
-        logging.info(f"Found {len(existing_ids)} existing ids, there are {len(dataframe)} rows to generate")
+        self.logger.info(f"Found {len(existing_ids)} existing ids, there are {len(dataframe)} rows to generate")
 
         # generate answer and save at once
         with ThreadPoolExecutor(max_workers=self.config['max_workers']) as executor:
@@ -146,7 +147,7 @@ class AnswerGenerator_reasoning:
                         row['id']
                     )
                 )
-                logging.info(f"Submitted task {index} of {len(dataframe)}")
+                self.logger.info(f"Submitted task {index} of {len(dataframe)}")
             for future in as_completed(futures):
                 response_json,id = future.result()
                 reasoning_content, content, total_token = self.Analyze_response_json(response_json)
@@ -158,7 +159,7 @@ class AnswerGenerator_reasoning:
                     self.output_content_key:content,
                     self.output_total_token_key:total_token
                 })
-                logging.info(f"Saved {id} to db")
+                self.logger.info(f"Saved {id} to db")
         
         # save dataframe to file
         for item in self.db.all():

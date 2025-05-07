@@ -9,6 +9,7 @@ except ImportError:
     from dataflow.generator.utils.Prompts import QuestionSynthesisPrompt
 from dataflow.utils.registry import GENERATOR_REGISTRY
 import logging
+from dataflow.utils.utils import get_logger
 
 @GENERATOR_REGISTRY.register()
 class QuestionGenerator():
@@ -34,6 +35,7 @@ class QuestionGenerator():
 
         # Initialize the model
         self.model = self.__init_model__()
+        self.logger = get_logger()
 
     def __init_model__(self):
         """
@@ -95,9 +97,9 @@ class QuestionGenerator():
                 raise ValueError(f"Synth_or_Input is a reserved column name to show if the question is generated or not, please rename it")
 
             if self.num_prompts == 0:
-                logging.info(f"num_prompts is 0, skip generation")
+                self.logger.info(f"num_prompts is 0, skip generation")
                 dataframe.to_json(self.output_file, orient="records", lines=True, force_ascii=False)
-                logging.info(f"Generated questions saved to {self.output_file}")
+                self.logger.info(f"Generated questions saved to {self.output_file}")
                 return
 
             # Reformat the prompts for question generation
@@ -121,7 +123,7 @@ class QuestionGenerator():
             # Save DataFrame to JSON file
             dataframe.to_json(self.output_file, orient="records", lines=True, force_ascii=False)
 
-            logging.info(f"Generated questions saved to {self.output_file}")
+            self.logger.info(f"Generated questions saved to {self.output_file}")
 
         except Exception as e:
-            logging.error(f"[错误] 处理过程中发生异常: {e}")
+            self.logger.error(f"[错误] 处理过程中发生异常: {e}")

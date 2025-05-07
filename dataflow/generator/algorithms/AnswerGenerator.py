@@ -6,6 +6,7 @@ import yaml
 import logging
 import pandas as pd
 from dataflow.utils.registry import GENERATOR_REGISTRY
+from dataflow.utils.utils import get_logger
 
 @GENERATOR_REGISTRY.register()
 class AnswerGenerator:
@@ -20,7 +21,7 @@ class AnswerGenerator:
         self.output_file = self.config.get("output_file")
         self.input_prompt_key = self.config.get("input_key", "prompt")
         self.output_text_key = self.config.get("output_key", "response")
-
+        self.logger = get_logger()
         # Ensure required paths and keys are provided
         if not self.input_file or not self.output_file:
             raise ValueError("Both input_file and output_file must be specified in the config.")

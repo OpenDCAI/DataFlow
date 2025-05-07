@@ -2,6 +2,7 @@ from dataflow.generator.utils.Prompts import TextSQLConsistencyPrompt
 from dataflow.generator.utils.LocalModelGenerator import LocalModelGenerator
 from dataflow.generator.utils.APIGenerator_aisuite import APIGenerator_aisuite
 from dataflow.generator.utils.APIGenerator_request import APIGenerator_request
+from dataflow.utils.utils import get_logger
 from func_timeout import func_timeout, FunctionTimedOut
 from tqdm import tqdm
 import logging
@@ -43,8 +44,11 @@ class SQLFilter:
         self.output_goldcorrect_key = self.config.get("output_goldcorrect_key", "is_correct")
         self.output_goldresult_key = self.config.get("output_goldresult_key", "exec_result")
 
+        self.logger = get_logger()
+
         # Ensure required paths and keys are provided
         if not self.input_file or not self.output_file:
+            self.logger.error("Both input_file and output_file must be specified in the config.")
             raise ValueError("Both input_file and output_file must be specified in the config.")
 
     @staticmethod
@@ -60,7 +64,7 @@ class SQLFilter:
         return result
     
     @staticmethod
-    def execute_model(ground_truth, db_place, idx, meta_time_out):
+    def execute_model(ground_truth, db_place, idx, meta_time_out, logger):
         '''
         Execute SQL model with timeout and error handling.
         '''
@@ -71,44 +75,19 @@ class SQLFilter:
                         args=(ground_truth, db_place))
             return {"idx": idx,"is_correct": is_correct, "results": results}
         except KeyboardInterrupt:
-            logging.info("KeyboardInterrupt")
+            logger.info("KeyboardInterrupt")
             sys.exit(0)
         except FunctionTimedOut:
-            logging.info(f"timeout when execute idx {idx}")
+            logger.info(f"timeout when execute idx {idx}")
             result = (f'timeout')
             is_correct = False
             return {"idx": idx,"is_correct": is_correct, "results": result}
         except Exception as e:
-            logging.info(f"error: {e} when execute idx {idx}")
+            logger.info(f"error: {e} when execute idx {idx}")
             result = (f'error:{e}')  # possibly len(query) > 512 or not executable
             is_correct = False
             return {"idx": idx,"is_correct": is_correct, "results": result}
         
-    # def run_sqls_parallel(self, datas, db_root_path, num_cpus, meta_time_out, exec_result=[]):
-    #     '''
-    #     Execute the given SQL statement and return the results.
-    #     '''
-    #     pbar = tqdm(total=len(datas))
-    #     pbar.set_description("Executing SQLs")
-    #     pool = mp.Pool(processes=num_cpus)
-
-    #     def result_callback(result):
-    #         pbar.update()
-    #         exec_result.append(result)
-
-    #     for i,data_pair in enumerate(datas):
-    #         ground_truth = data_pair[self.input_sql_key]
-    #         db_id = data_pair[self.input_dbid_key].replace('\n', '')
-    #         db_id = re.sub(r'[^A-Za-z0-9_]', '', db_id)
-    #         db_place = os.path.join(db_root_path.rstrip('/'), db_id, f"{db_id}.sqlite")
-    #         # result = self.execute_model(ground_truth, db_place, i, meta_time_out)
-    #         # exec_result.append(result)
-    #         pool.apply_async(SQLFilter.execute_model, args=(ground_truth, db_place, i, meta_time_out), callback=result_callback)
-        
-    #     pool.close()
-    #     pool.join()
-    #     pbar.close()
-    #     return sorted(exec_result, key=lambda x: x['idx'])
     
     def run_sqls_parallel(self, datas, db_root_path, num_cpus, meta_time_out, exec_result=[]):
         '''
@@ -118,9 +97,9 @@ class SQLFilter:
 
         def wrap_task(ground_truth, db_place, idx, timeout):
             try:
-                return SQLFilter.execute_model(ground_truth, db_place, idx, timeout)
+                return SQLFilter.execute_model(ground_truth, db_place, idx, timeout, self.logger)
             except Exception as e:
-                logging.error(f"Error executing SQL idx={idx}: {e}")
+                self.logger.error(f"Error executing SQL idx={idx}: {e}")
                 return {"idx": idx, "error": str(e)}
 
         with ThreadPoolExecutor(max_workers=num_cpus) as executor:
@@ -140,7 +119,7 @@ class SQLFilter:
                     result = future.result()
                     exec_result.append(result)
                 except Exception as e:
-                    logging.error(f"Error retrieving result from future: {e}")
+                    self.logger.error(f"Error retrieving result from future: {e}")
                     exec_result.append({"idx": -1, "error": str(e)})
                 pbar.update()
 
@@ -159,6 +138,7 @@ class SQLFilter:
         elif generator_type == "request":
             return APIGenerator_request(self.config)
         else:
+            self.logger.error(f"Invalid generator type: {generator_type}")
             raise ValueError(f"Invalid generator type: {generator_type}")
         
     def _reformat_prompt(self, dataframe):
@@ -188,7 +168,7 @@ class SQLFilter:
             result = self.model_generator.generate_text_from_input([question])
             return result[0] if result else ""
         except Exception as e:
-            logging.error(f"Error processing question: {e}")
+            self.logger.error(f"Error processing question: {e}")
             return ""
 
     def run(self):
@@ -204,7 +184,7 @@ class SQLFilter:
         # Execute gold sqls from datas
         selected_columns = [self.input_sql_key, self.input_dbid_key]
         datas = dataframe[selected_columns].to_dict('records')
-        logging.info(f"Original data volume: {len(datas)}")
+        self.logger.info(f"Original data volume: {len(datas)}")
         exec_result = self.run_sqls_parallel(datas, self.db_root_path, self.num_cpus, self.meta_time_out, exec_result=[])
 
         # Reformat the prompts for question generation
@@ -227,7 +207,7 @@ class SQLFilter:
                     result = future.result()
                     results_buffer[idx] = result
                 except Exception as e:
-                    logging.error(f"Error retrieving future result: {e}")
+                    self.logger.error(f"Error retrieving future result: {e}")
                     results_buffer[idx] = ""
 
         responses = results_buffer
@@ -270,7 +250,7 @@ class SQLFilter:
                 dataframe_note.at[idx, self.output_reason_key] = analysis_part.strip()
                 
             except Exception as e:
-                logging.warning(f"Failed to judge the consistency of the SQL: {e}")
+                self.logger.warning(f"Failed to judge the consistency of the SQL: {e}")
                 dataframe_note.at[idx, self.output_consistency_key] = "ERROR"
                 dataframe_note.at[idx, self.output_reason_key] = f"Failed to judge: {str(e)}"
 
@@ -279,7 +259,7 @@ class SQLFilter:
         os.makedirs(output_dir, exist_ok=True)
         output_note_dir = os.path.dirname(self.output_note_file)
         os.makedirs(output_note_dir, exist_ok=True)
-        logging.info(f"Filtered data volume: {len(dataframe_del)}")
+        self.logger.info(f"Filtered data volume: {len(dataframe_del)}")
 
         # Save DataFrame to JSON file
         dataframe_del.to_json(self.output_file, orient="records", lines=True, force_ascii=False)
@@ -293,32 +273,40 @@ class SQLFilter:
         '''
         # Check if the input sql key exists in the dataframe
         if self.input_sql_key not in dataframe.columns:
+            self.logger.error(f"input_sql_key: {self.input_sql_key} not found in the dataframe.")
             raise ValueError(f"input_sql_key: {self.input_sql_key} not found in the dataframe.")
         
         # Check if the input dbid key exists in the dataframe
         if self.input_dbid_key not in dataframe.columns:
+            self.logger.error(f"input_dbid_key: {self.input_dbid_key} not found in the dataframe.")
             raise ValueError(f"input_dbid_key: {self.input_dbid_key} not found in the dataframe.")
         
         # Check if the input question key exists in the dataframe
         if self.input_question_key not in dataframe.columns:
+            self.logger.error(f"input_question_key: {self.input_question_key} not found in the dataframe.")
             raise ValueError(f"input_question_key: {self.input_question_key} not found in the dataframe.")
         
         # Check if the input evidence key exists in the dataframe
         if self.input_evidence_key != "" and self.input_evidence_key not in dataframe.columns:
+            self.logger.error(f"input_evidence_key: {self.input_evidence_key} not found in the dataframe.")
             raise ValueError(f"input_evidence_key: {self.input_evidence_key} not found in the dataframe.")
         
         # Check if the output key already exists in the dataframe
         if self.output_goldcorrect_key in dataframe.columns:
+            self.logger.error(f"Found {self.output_goldcorrect_key} in the dataframe, which would overwrite an existing column. Please use a different output_key.")
             raise ValueError(f"Found {self.output_goldcorrect_key} in the dataframe, which would overwrite an existing column. Please use a different output_key.")
 
         # Check if the output result key already exists in the dataframe
         if self.output_goldresult_key in dataframe.columns:
+            self.logger.error(f"Found {self.output_goldresult_key} in the dataframe, which would overwrite an existing column. Please use a different output_key.")
             raise ValueError(f"Found {self.output_goldresult_key} in the dataframe, which would overwrite an existing column. Please use a different output_key.")
 
         # Check if the output consistency key already exists in the dataframe
         if self.output_consistency_key in dataframe.columns:
+            self.logger.error(f"Found {self.output_consistency_key} in the dataframe, which would overwrite an existing column. Please use a different output_key.")
             raise ValueError(f"Found {self.output_consistency_key} in the dataframe, which would overwrite an existing column. Please use a different output_key.")
 
         # Check if the output reason key already exists in the dataframe
         if self.output_reason_key in dataframe.columns:
+            self.logger.error(f"Found {self.output_reason_key} in the dataframe, which would overwrite an existing column. Please use a different output_key.")
             raise ValueError(f"Found {self.output_reason_key} in the dataframe, which would overwrite an existing column. Please use a different output_key.")

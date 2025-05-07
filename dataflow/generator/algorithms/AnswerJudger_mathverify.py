@@ -3,6 +3,7 @@ from tqdm import tqdm
 from math_verify import parse, verify, LatexExtractionConfig
 import logging
 from dataflow.utils.registry import GENERATOR_REGISTRY
+from dataflow.utils.utils import get_logger
 
 @GENERATOR_REGISTRY.register()
 class AnswerJudger_mathverify:
@@ -14,7 +15,8 @@ class AnswerJudger_mathverify:
         self.answer_key = self.config['answer_key']
         self.gt_key = self.config['gt_key']
         self.result_key = self.config['result_key']
-    
+        self.logger = get_logger()
+
     def _check_config(self):
         required_keys = [
             'input_file', 'output_file',
@@ -31,7 +33,7 @@ class AnswerJudger_mathverify:
             raise ValueError(f"answer_key: {self.answer_key} not found in the dataframe, please check the input_key: {key_list}")
         if self.gt_key not in key_list:
             raise ValueError(f"gt_key: {self.gt_key} not found in the dataframe, please check the input_key: {key_list}")
-        logging.info(f"Found {len(raw_dataframe)} rows in the dataframe")
+        self.logger.info(f"Found {len(raw_dataframe)} rows in the dataframe")
         results = []
         for answer, gt in tqdm(zip(raw_dataframe[self.answer_key], raw_dataframe[self.gt_key]), total=len(raw_dataframe), desc='processed'):
             results.append(float(verify(parse(answer), parse(gt))) > 0)

@@ -11,6 +11,7 @@ from func_timeout import func_timeout, FunctionTimedOut
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from tqdm import tqdm
 import multiprocessing as mp
+from dataflow.utils.utils import get_logger
 from dataflow.utils.registry import GENERATOR_REGISTRY
 
 @GENERATOR_REGISTRY.register()
@@ -41,10 +42,14 @@ class Text2SQLDifficultyClassifier:
         self.output_cnt_true_key = self.config.get("output_cnt_true_key", "cnt_true")
         self.output_predicted_sqls_key = self.config.get("output_predicted_sqls_key", "predicted_sqls")
 
+        self.logger = get_logger()
+
         # Ensure required paths and keys are provided
         if not self.input_file or not self.output_file:
+            self.logger.error("Both input_file and output_file must be specified in the config.")
             raise ValueError("Both input_file and output_file must be specified in the config.")
         if not self.db_root_path:
+            self.logger.error("db_root_path must be specified in the config.")
             raise ValueError("db_root_path must be specified in the config.")
 
 
@@ -63,7 +68,7 @@ class Text2SQLDifficultyClassifier:
             raise ValueError(f"Invalid generator type: {generator_type}")
     
     @staticmethod
-    def parse_response(response):
+    def parse_response(response, logger):
         pattern = r"```sql\s*(.*?)\s*```"
         
         sql_blocks = re.findall(pattern, response, re.DOTALL)
@@ -73,7 +78,7 @@ class Text2SQLDifficultyClassifier:
             last_sql = sql_blocks[-1].strip()
             return last_sql
         else:
-            logging.warning(f"No SQL blocks found in {response}.")
+            logger.warning(f"No SQL blocks found in {response}.")
             return response
         
     @staticmethod
@@ -88,7 +93,7 @@ class Text2SQLDifficultyClassifier:
 
 
     @staticmethod
-    def execute_model(predicted_sqls, ground_truth, db_place, idx, meta_time_out):
+    def execute_model(predicted_sqls, ground_truth, db_place, idx, meta_time_out, logger):
         results = []
         cnt_true = 0
         res = 0
@@ -123,15 +128,15 @@ class Text2SQLDifficultyClassifier:
                     cnt_true += 1
 
         except KeyboardInterrupt:
-            logging.info("KeyboardInterrupt")
+            logger.info("KeyboardInterrupt")
             sys.exit(0)
         except FunctionTimedOut:
             result = [(f'timeout',)]
-            logging.warning(f"timeout when execute gold sql of question {idx}")
+            logger.warning(f"timeout when execute gold sql of question {idx}")
             res = -1
             cnt_true = -1
         except Exception as e:
-            logging.warning(f"error: {e} when execute gold sql of question {idx}")
+            logger.warning(f"error: {e} when execute gold sql of question {idx}")
             result = [(f'error',)]  # possibly len(query) > 512 or not executable
             res = -1
             cnt_true = -1
@@ -172,7 +177,7 @@ class Text2SQLDifficultyClassifier:
             db_id = data_pair[self.input_dbid_key].replace('\n', '')
             db_id = re.sub(r'[^A-Za-z0-9_]', '', db_id)
             db_place = os.path.join(db_root_path.rstrip('/'), db_id, f"{db_id}.sqlite")
-            return Text2SQLDifficultyClassifier.execute_model(predicted_sqls, ground_truth, db_place, idx, meta_time_out)
+            return Text2SQLDifficultyClassifier.execute_model(predicted_sqls, ground_truth, db_place, idx, meta_time_out, self.logger)
 
         with ThreadPoolExecutor(max_workers=num_cpus) as executor:
             futures = [
@@ -185,7 +190,7 @@ class Text2SQLDifficultyClassifier:
                     result = future.result()
                     exec_result.append(result)  # 顺序不保证
                 except Exception as e:
-                    logging.error(f"Error in SQL execution: {e}")
+                    self.logger.error(f"Error in SQL execution: {e}")
                     exec_result.append(None)
                 pbar.update()
 
@@ -212,10 +217,9 @@ class Text2SQLDifficultyClassifier:
         print the statistics of the SQL difficulty.
         '''
         counts = dataframe[self.output_key].value_counts()
-        logging.info("===== SQL 难度统计结果 =====")
-        for difficulty in ['easy', 'medium', 'hard', 'extra']:
-            logging.info(f"{difficulty.title()}: {counts.get(difficulty, 0)}")
-        logging.info("============================")
+        self.logger.info("SQL Difficulty Statistics")
+        stats = [f"{difficulty.title()}: {counts.get(difficulty, 0)}" for difficulty in ['easy', 'medium', 'hard', 'extra']]
+        self.logger.info(", ".join(stats))
 
     def process_single_question(self, question):
         try:
@@ -223,7 +227,7 @@ class Text2SQLDifficultyClassifier:
             result = self.model_generator.generate_text_from_input([question])
             return result[0] if result else ""
         except Exception as e:
-            logging.error(f"Error processing question: {e}")
+            self.logger.error(f"Error processing question: {e}")
             return ""
         
     def run(self):
@@ -257,20 +261,22 @@ class Text2SQLDifficultyClassifier:
                     result = future.result()
                     results_buffer[idx] = result
                 except Exception as e:
-                    logging.error(f"Error retrieving future result: {e}")
+                    self.logger.error(f"Error retrieving future result: {e}")
                     results_buffer[idx] = ""
 
         responses = results_buffer
         
         # Group responses for each original input (10 responses per input)
         num_data = len(input_prompts)
-        assert len(responses) == num_data * 10, \
-            f"Expected {num_data * 10} responses, but got {len(responses)}"
+        if len(responses) != num_data * 10:
+            error_msg = f"Expected {num_data * 10} responses, but got {len(responses)}"
+            self.logger.error(error_msg)
+            raise AssertionError(error_msg)
         grouped_responses = [
             responses[i * 10:(i + 1) * 10] for i in range(num_data)
         ]
         grouped_parsed_responses = [
-            [Text2SQLDifficultyClassifier.parse_response(sql) for sql in group]
+            [Text2SQLDifficultyClassifier.parse_response(sql, self.logger) for sql in group]
             for group in grouped_responses
         ]
 
@@ -281,15 +287,20 @@ class Text2SQLDifficultyClassifier:
         exec_result = self.run_sqls_parallel(datas, self.db_root_path, num_cpus=self.num_cpus, meta_time_out=self.meta_time_out)
         exec_result = self.sort_results(exec_result)
 
-        assert len(datas) == len(exec_result), \
-            f"Length mismatch: exec_result has {len(exec_result)}, but datas has {len(datas)}"
+        if len(datas) != len(exec_result):
+            error_msg = f"Length mismatch: exec_result has {len(exec_result)}, but datas has {len(datas)}"
+            self.logger.error(error_msg)
+            raise AssertionError(error_msg)
 
         for execres in exec_result:
             datas[execres["idx"]][self.output_cnt_true_key] = execres["cnt_true"]
             datas[execres["idx"]][self.output_key] = self.get_difficulty(execres["cnt_true"])
 
-        assert len(datas) == len(dataframe), \
-            f"Length mismatch: original dataframe has {len(dataframe)}, but datas has {len(datas)}"
+        if len(datas) != len(dataframe):
+            error_msg = f"Length mismatch: original dataframe has {len(dataframe)}, but datas has {len(datas)}"
+            self.logger.error(error_msg)
+            raise AssertionError(error_msg)
+            
         dataframe = pd.DataFrame(datas)
 
         # Ensure output directory exists
@@ -307,24 +318,30 @@ class Text2SQLDifficultyClassifier:
         '''
         # Check if the input sql key exists in the dataframe
         if self.input_sql_key not in dataframe.columns:
+            self.logger.error(f"input_sql_key: {self.input_sql_key} not found in the dataframe.")
             raise ValueError(f"input_sql_key: {self.input_sql_key} not found in the dataframe.")
         
         # Check if the input prompt key exists in the dataframe
         if self.input_prompt_key not in dataframe.columns:
+            self.logger.error(f"input_prompt_key: {self.input_prompt_key} not found in the dataframe.")
             raise ValueError(f"input_prompt_key: {self.input_prompt_key} not found in the dataframe.")
         
         # Check if the input dbid key exists in the dataframe
         if self.input_dbid_key not in dataframe.columns:
+            self.logger.error(f"input_dbid_key: {self.input_dbid_key} not found in the dataframe.")
             raise ValueError(f"input_dbid_key: {self.input_dbid_key} not found in the dataframe.")
         
         # Check if the output key already exists in the dataframe
         if self.output_key in dataframe.columns:
+            self.logger.warning(f"Found {self.output_key} in the dataframe, which would overwrite an existing column. Please use a different output_key.")
             raise ValueError(f"Found {self.output_key} in the dataframe, which would overwrite an existing column. Please use a different output_key.")
 
         # Check if the output cnt_true key already exists in the dataframe
         if self.output_cnt_true_key in dataframe.columns:
+            self.logger.warning(f"Found {self.output_cnt_true_key} in the dataframe, which would overwrite an existing column. Please use a different output_key.")
             raise ValueError(f"Found {self.output_cnt_true_key} in the dataframe, which would overwrite an existing column. Please use a different output_key.")
 
         # Check if the output predicted_sqls key already exists in the dataframe
         if self.output_predicted_sqls_key in dataframe.columns:
+            self.logger.warning(f"Found {self.output_predicted_sqls_key} in the dataframe, which would overwrite an existing column. Please use a different output_key.")
             raise ValueError(f"Found {self.output_predicted_sqls_key} in the dataframe, which would overwrite an existing column. Please use a different output_key.")

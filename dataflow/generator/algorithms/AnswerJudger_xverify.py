@@ -4,6 +4,7 @@ from xVerify_Custom.src.xVerify.model import Model
 from xVerify_Custom.src.xVerify.custommodel import Model_custom
 from xVerify_Custom.src.xVerify.eval import Evaluator
 from dataflow.utils.registry import GENERATOR_REGISTRY
+from dataflow.utils.utils import get_logger
 
 @GENERATOR_REGISTRY.register()
 class AnswerJudger_xverify:
@@ -13,6 +14,7 @@ class AnswerJudger_xverify:
     def __init__(self, configs: dict):
         self.configs = configs
         self.check_config()
+        self.logger = get_logger()
 
     def check_config(self):
         """
