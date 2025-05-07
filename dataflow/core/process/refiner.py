@@ -1,4 +1,5 @@
 from dataflow.format import TextFormatter
+from dataflow.utils.utils import get_logger
 
 class Refiner():
 
@@ -12,6 +13,7 @@ class TextRefiner(Refiner):
 
     def __init__(self, args=None):
         self.data_type = "text"
+        self.logger = get_logger()
         if "input_file" in args.keys():
             self.config = args
             self.formatter = TextFormatter(args)
@@ -21,7 +23,7 @@ class TextRefiner(Refiner):
         
     def __call__(self, dataset):
         refined_dataset, numbers = self.refine_func(dataset)
-        print(f'Implemented {self.refiner_name}. {numbers} data refined.', flush=True)
+        self.logger.info(f'Implemented {self.refiner_name}. {numbers} data refined.')
         
         return refined_dataset
     

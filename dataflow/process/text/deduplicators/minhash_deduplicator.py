@@ -3,17 +3,22 @@ from dataflow.utils.registry import PROCESSOR_REGISTRY
 from datasketch import MinHash, MinHashLSH  # use datasketch-1.6.5
 from tqdm import tqdm
 from collections.abc import Sequence
+from dataflow.utils.utils import get_logger
 
 
 @PROCESSOR_REGISTRY.register()
 class MinHashDeduplicator(TextDeduplicator):
     def __init__(self, args_dict: dict):
         super().__init__(args_dict)
+        self.logger = get_logger()
         self.dedupliactor_name = 'MinHashDeduplicator'
+        self.logger.info(f"Initializing {self.dedupliactor_name}...")
+        
+        # Initialize parameters
         self.num_perm = args_dict.get('num_perm', 128)
         self.threshold = args_dict.get('threshold', 0.9)
-        self.use_n_gram = args_dict.get('use_n_gram', True) 
-        self.n_gram = args_dict.get('n_gram', 5) 
+        self.use_n_gram = args_dict.get('use_n_gram', True)
+        self.n_gram = args_dict.get('n_gram', 5)
 
     def create_minhash(self, data):
         minhash = MinHash(num_perm=self.num_perm)
@@ -26,6 +31,7 @@ class MinHashDeduplicator(TextDeduplicator):
         return minhash
 
     def dedup_func(self, dataset):
+        self.logger.info(f"Start running {self.dedupliactor_name}...")
         lsh = MinHashLSH(threshold=self.threshold, num_perm=self.num_perm)
 
         labels = [0] * len(dataset)
@@ -34,12 +40,14 @@ class MinHashDeduplicator(TextDeduplicator):
                 text = str(sample[dataset.keys])
                 minhash = self.create_minhash(text)
                 result = lsh.query(minhash)
+                
                 if len(result) == 0:
                     labels[idx] = 1
-                    session.insert(idx, minhash)  
+                    session.insert(idx, minhash)
+                    self.logger.debug(f"Inserted item {idx} into LSH with minhash.")
 
+        self.logger.info(f"Deduplication completed. Total unique items: {sum(labels)}")
         return labels
-
         
         
 
