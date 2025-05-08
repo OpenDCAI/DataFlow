@@ -8,6 +8,7 @@ from tqdm import tqdm
 import logging
 import re
 from word2number import w2n
+from dataflow.utils.utils import get_logger
 
 # Helper Class for String Processing
 class StringProcessor:
@@ -227,6 +228,7 @@ class AnswerGroundTruthFilter(ReasonerFilter):
             'exact': self.exact_compare,
             'math_verify': self.math_verify_compare
         }
+        self.logger = get_logger()
 
         self.compare = name2compare[args_dict.get('compare_method', 'exact')]
 

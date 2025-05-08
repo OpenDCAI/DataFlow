@@ -25,6 +25,7 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 from tqdm import tqdm
 from dataflow.utils.registry import PROCESSOR_REGISTRY
 import logging
+from dataflow.utils.utils import get_logger
 
 @PROCESSOR_REGISTRY.register()
 class MathProblemFilter(ReasonerFilter):
@@ -37,6 +38,7 @@ class MathProblemFilter(ReasonerFilter):
         self.model = self.model_name
         self.api_key = args_dict.get("api_key", "")
         self.filter_name = 'MathProblemFilter'
+        self.logger = get_logger()
 
     def build_prompt(self, question):
         """Constructs an evaluation prompt with four progressive checks"""
@@ -73,7 +75,7 @@ Here is the problem to evaluate:
             )
         except Exception as e:
             # API call failed, return 0
-            logging.error(f"API call failed for problem: {problem}. Error: {e}")
+            self.logger.error(f"API call failed for problem: {problem}. Error: {e}")
             return 0
         else:
             try:
@@ -85,7 +87,7 @@ Here is the problem to evaluate:
                 return 1 if test_value == 'true' else 0
             except Exception as e:
                 # Response format error, return 0
-                logging.error(f"Response format error for problem: {problem}. Error: {e}")
+                self.logger.error(f"Response format error for problem: {problem}. Error: {e}")
                 return 0
 
     def filter_func(self, dataset):
@@ -102,7 +104,7 @@ Here is the problem to evaluate:
                     if problem:
                         futures.append(executor.submit(self.process_problem, problem))
                 except json.JSONDecodeError:
-                    logging.error(f"Invalid JSON format in line: {line}")
+                    self.logger.error(f"Invalid JSON format in line: {line}")
                     results.append(0)
 
             for future in tqdm(as_completed(futures), total=len(futures), desc="Processing"):
@@ -115,10 +117,10 @@ Here is the problem to evaluate:
 
     def handle_api_error(self, error_message):
         """Handles API errors and provides guidance"""
-        logging.error(f"API Error: {error_message}")
-        logging.error("Possible reasons:")
-        logging.error("1. Network connection issue. Please check your internet connection.")
-        logging.error("2. Invalid API URL. Please verify the URL format and accessibility.")
-        logging.error("3. API service unavailable. Please check if the service is running properly.")
-        logging.error("4. API key issue. Please ensure your API key is valid and has proper permissions.")
-        logging.error("Suggestion: Try again after checking the above issues.")
+        self.logger.error(f"API Error: {error_message}")
+        self.logger.error("Possible reasons:")
+        self.logger.error("1. Network connection issue. Please check your internet connection.")
+        self.logger.error("2. Invalid API URL. Please verify the URL format and accessibility.")
+        self.logger.error("3. API service unavailable. Please check if the service is running properly.")
+        self.logger.error("4. API key issue. Please ensure your API key is valid and has proper permissions.")
+        self.logger.error("Suggestion: Try again after checking the above issues.")

@@ -1,14 +1,10 @@
-import logging
-logging.basicConfig(level=logging.DEBUG,
-    format="%(asctime)s | %(pathname)s - %(funcName)s - %(lineno)d - %(module)s - %(name)s | %(levelname)s | Processno %(process)d - Threadno %(thread)d : %(message)s", 
-    datefmt="%Y-%m-%d %H:%M:%S"
-    )
+from dataflow.utils.utils import get_logger
 def main():
-    
-    logging.debug("This is DEBUG message")
-    logging.info("This is INFO message")
-    logging.warning("This is WARNING message")
-    logging.error("This is ERROR message")
+    logger = get_logger()
+    logger.debug("This is DEBUG message")
+    logger.info("This is INFO message")
+    logger.warning("This is WARNING message")
+    logger.error("This is ERROR message")
     
     return
 

@@ -30,10 +30,11 @@ setup(
             'timm==1.0.8', 'fasttext==0.9.3', 'filelock==3.15.4',
             'google-api-core==2.19.1', 'google-api-python-client==2.140.0', 
             'google-auth==2.33.0', 'google-auth-httplib2==0.2.0', 
-            'googleapis-common-protos==1.63.2', 'kenlm==0.2.0', 'langkit==0.0.33',
+            'googleapis-common-protos==1.63.2', 'kenlm==0.3.0', 'langkit==0.0.33',
             'loguru==0.7.2', 'matplotlib==3.9.2', 'multiprocess==0.70.16', 
             'openai==1.44.1', 'prettytable==3.11.0', 'pyspark==3.5.2', 
             'sentencepiece==0.2.0', 'vendi-score==0.0.3', 'wget==3.2',
-            'presidio_analyzer[transformers]','presidio_anonymizer'],
+            'presidio_analyzer[transformers]','presidio_anonymizer', 'aisuite', 
+            'math_verify', 'tinydb', 'word2number', 'docstring_parser', 'colorlog'],
     }
 )

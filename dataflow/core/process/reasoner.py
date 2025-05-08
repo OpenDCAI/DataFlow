@@ -1,5 +1,6 @@
 from dataflow.data import DataFlowDataset
 from dataflow.core import ScoreRecord
+from dataflow.format import TextFormatter
 from datasets import Dataset
 
 class Reasoner():
@@ -23,7 +24,7 @@ class ReasonerFilter(Reasoner):
         self.max_worker = args.get("max_worker",1)
         
         # answer format filter
-        self.keys = args.get("keys","")
+        self.keys = args.get("input_keys","")
         # self.output_question_key = args.get("output_question_key","")
         
         # answer gt verification
@@ -40,6 +41,11 @@ class ReasonerFilter(Reasoner):
             self.model_name = api_args['model_name']
             self.api_url = api_args['api_url']
             self.mode_test = api_args['mode_test']
+            
+        if "input_file" in args.keys():
+            self.formatter = TextFormatter(args)
+            self.dataset = self.formatter.load_dataset()
+
             
     def filter_func(self, dataset):
         pass
@@ -63,4 +69,4 @@ class ReasonerFilter(Reasoner):
     
     def run(self):
         filtered_dataset = self.__call__(self.dataset)
-        filtered_dataset.dump(save_path=self.config['output_file'])
+        filtered_dataset.dump(save_path=self.args['output_file'])
