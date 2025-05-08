@@ -231,6 +231,7 @@ class AnswerExtraction_qwenmatheval:
         self.response_key = self.config['response_key']
         self.extraction_key = self.config['extraction_key']
         self.data_name = self.config.get('dataset_name', None)
+        self.logger = get_logger()
 
         # Initialize helpers
         unit_manager = UnitTextManager()
