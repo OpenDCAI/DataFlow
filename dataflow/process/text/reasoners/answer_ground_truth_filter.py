@@ -8,7 +8,6 @@ from tqdm import tqdm
 import logging
 import re
 from word2number import w2n
-from dataflow.utils.utils import get_logger
 
 # Helper Class for String Processing
 class StringProcessor:
@@ -228,29 +227,23 @@ class AnswerGroundTruthFilter(ReasonerFilter):
             'exact': self.exact_compare,
             'math_verify': self.math_verify_compare
         }
-        self.logger = get_logger()
 
         self.compare = name2compare[args_dict.get('compare_method', 'exact')]
 
     def exact_compare(self, answer, ground_truth):
-        return str(answer) == str(ground_truth)
+        return answer == ground_truth
     
     def math_verify_compare(self, answer, ground_truth):
         try:
-            return verify(parse(str(ground_truth)), parse(str(answer)))
+            return verify(parse(ground_truth), parse(answer))
         except:
-            try:
-                return verify(parse(ground_truth), parse(answer))
-            except:
-                return False
+            return False
 
     def filter_func(self, dataset):
         indexes = np.zeros(len(dataset)).astype(int)
         for i in range(len(dataset)):
-            final_answer =  self.answer_extractor.extract_answer(dataset[i][self.test_answer_key], dataset[i].get('data_name', None))
-            if self.gt_answer_key in dataset[i]:
-                # print("-------------------------------")
-                # print(final_answer, dataset[i][self.gt_answer_key])
-                if self.compare(final_answer, dataset[i][self.gt_answer_key]):
+            final_answer =  self.answer_extractor.extract_answer(dataset[i]['answer'], dataset[i].get('data_name', None))
+            if 'ground_truth_answer' in dataset[i]:
+                if self.compare(final_answer, dataset[i]['ground_truth_answer']):
                     indexes[i] = 1
         return indexes

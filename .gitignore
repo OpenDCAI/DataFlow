@@ -20,16 +20,7 @@ configs/process/experiments/
 **/meteorscorer/data/meteor-1.5.jar
 **/ciderscorer/coco-val-df.p
 **/data
-!dataflow/data/
 **/ckpt
-**/ckpr
 tmp.*
 configs/process/text_process_reasoner.yaml
 docs/src/getting_started/Dev.md
-configs/process/test_process_math.yaml
-Text2SqlPipeline/bird_example/
-
-*.jsonl
-*.pt
-*.pth
-./.git/*

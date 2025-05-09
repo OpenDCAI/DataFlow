@@ -12,10 +12,7 @@ class TextFormatter:
         self.dataset_split = cfg.get('dataset_split', None) 
         self.name = cfg.get('name', None) 
         self.revision = cfg.get('revision', None)
-        if 'data_path' in cfg.keys():
-            self.data_dir = cfg.get('data_path', None) 
-        else:
-            self.data_dir = cfg.get('input_file', None) 
+        self.data_dir = cfg.get('data_path', None) 
         self.keys = cfg.get('keys', None)  
         self.use_hf = cfg.get('use_hf')
 

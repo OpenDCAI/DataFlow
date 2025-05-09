@@ -12,14 +12,14 @@ google-auth-httplib2==0.2.0
 googleapis-common-protos==1.63.2
 imagededup == 0.3.2
 jsonargparse==4.32.0
-kenlm==0.3.0
+kenlm==0.2.0
 langkit==0.0.33
 loguru==0.7.2
 matplotlib==3.9.2
 multiprocess==0.70.16
 nltk==3.8
 numpy==1.26.4
-openai==1.44.1
+openai=1.44.1
 pandas==2.2.2
 prettytable==3.11.0
 pyspark==3.5.2
@@ -39,5 +39,3 @@ transformers==4.44.2
 vendi-score==0.0.3
 vllm==0.6.0
 wget==3.2
-func_timeout==4.3.5
-jsonargparse

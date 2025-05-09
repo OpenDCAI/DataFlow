@@ -4,7 +4,6 @@ import typing
 import numpy as np
 import torch
 from dataflow.utils import check_serializable_fields
-from dataflow.utils.utils import get_logger
 
 class DataFlowDataset(torch.utils.data.Dataset):
 
@@ -12,7 +11,6 @@ class DataFlowDataset(torch.utils.data.Dataset):
         self.map_func = []
         self.cache = {}
         self.score_record = None
-        self.logger = get_logger()
         pass
 
     def __getitem__(self, index):
@@ -62,7 +60,7 @@ class DataFlowDataset(torch.utils.data.Dataset):
                 json.dump(item_copy, f)
                 f.write('\n')
 
-        self.logger.info(f'Data saved to {save_file}')
+        print(f'Data saved to {save_file}')
 
     def set_image_preprocess(self, preprocess):
         self.image_preprocess = preprocess

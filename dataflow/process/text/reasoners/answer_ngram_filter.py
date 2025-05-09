@@ -3,7 +3,6 @@ import numpy as np
 import re
 from dataflow.utils.registry import PROCESSOR_REGISTRY
 from dataflow.Eval.Text import NgramScorer
-from dataflow.utils.utils import get_logger
 
 @PROCESSOR_REGISTRY.register()
 class AnswerNgramFilter(ReasonerFilter):
@@ -13,13 +12,11 @@ class AnswerNgramFilter(ReasonerFilter):
         self.min_score = args_dict['min_score']
         self.max_score = args_dict['max_score']
         self.ngrams = args_dict['ngrams']
-        self.logger = get_logger()
-        
+
     def filter_func(self, dataset):
         scores = []
         for sample in dataset:
-            answer = sample[self.question_key]
-            answer += sample[self.answer_key]
+            answer = sample['answer']
             content = answer.lower()
             content = re.sub(r'[^\w\s]', '', content)
             words = content.split()

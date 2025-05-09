@@ -6,9 +6,9 @@
 # -- Project information -----------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#project-information
 
-project = 'DataFlow'
-copyright = '2024, DataFlow'
-author = 'DataFlow'
+project = 'Open-DataFlow-Eval'
+copyright = '2024, Open-DataFlow'
+author = 'Open-DataFlow'
 release = '0.1'
 
 # -- General configuration ---------------------------------------------------

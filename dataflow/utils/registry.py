@@ -1,5 +1,4 @@
 import importlib
-from .utils import get_logger
 class Registry():
     """
     The registry that provides name -> object mapping, to support third-party
@@ -59,7 +58,6 @@ class Registry():
 
     def get(self, name):
         ret = self._obj_map.get(name)
-        logger = get_logger()
         if ret is None:
             if self._name == 'model': 
                 for x in ['Text', 'image', 'video']:
@@ -70,11 +68,10 @@ class Registry():
                         self._obj_map[name] = clss
                         return clss
                     except AttributeError as e:
-                        logger.debug(f"{str(e)}")
+                        print(e)
                         continue
                     except Exception as e:
                         raise e
-                logger.error(f"No object named '{name}' found in '{self._name}' registry!")
                 raise KeyError(f"No object named '{name}' found in '{self._name}' registry!")
             elif self._name == "processor":
                 for x in ['text.refiners', 'text.filters', 'text.deduplicators', 'text.reasoners', 'image.filters', 'image.deduplicators', 'video.filters']:
@@ -86,33 +83,12 @@ class Registry():
                         self._obj_map[name] = clss
                         return clss
                     except AttributeError as e:
-                        logger.debug(f"{str(e)}")
+                        print(e)
                         continue
                     except Exception as e:
                         raise e
-                logger.error(f"No object named '{name}' found in '{self._name}' registry!")
                 raise KeyError(f"No object named '{name}' found in '{self._name}' registry!")
-            elif self._name == "generator":
-                module_path = "dataflow.generator.algorithms"
-                # all text generators in text_generator_list 
-                # text_generator_list = [
-                #     "QuestionGenerator",
-                # ]
-                # for x in text_generator_list:
-                try:
-                    module_lib = importlib.import_module(module_path)
-                    clss = getattr(module_lib, name)
-                    self._obj_map[name] = clss
-                    return clss
-                except AttributeError as e:
-                    logger.debug(f"{e.__str__()}")
-                except Exception as e:
-                    raise e
-                logger.error(f"No object named '{name}' found in '{self._name}' registry!")
-                raise KeyError(f"No object named '{name}' found in '{self._name}' registry!")
-
-        if ret is None:
-            logger.error(f"No object named '{name}' found in '{self._name}' registry!")
+        
         assert ret is not None, f"No object named '{name}' found in '{self._name}' registry!"
         
         return ret
@@ -130,7 +106,6 @@ class Registry():
 MODEL_REGISTRY = Registry('model')
 FORMATTER_REGISTRY = Registry('formatter')
 PROCESSOR_REGISTRY = Registry('processor')
-GENERATOR_REGISTRY = Registry('generator')
 
 import importlib.util
 import types
@@ -160,18 +135,12 @@ class LazyLoader(types.ModuleType):
         """
         if not os.path.exists(file_path):
             raise FileNotFoundError(f"File {file_path} does not exist")
-        logger = get_logger()
+        
         # 动态加载模块
-        try:
-            spec = importlib.util.spec_from_file_location(class_name, file_path)
-            logger.debug(f"LazyLoader {self.__path__} successfully imported spec {spec.__str__()}")
-            module = importlib.util.module_from_spec(spec)
-            logger.debug(f"LazyLoader {self.__path__} successfully imported module {module.__str__()} from spec {spec.__str__()}")
-            spec.loader.exec_module(module)
-        except Exception as e:
-            logger.error(f"{e.__str__()}")
-            raise e
-
+        spec = importlib.util.spec_from_file_location(class_name, file_path)
+        module = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(module)
+        
         # 提取类
         if not hasattr(module, class_name):
             raise AttributeError(f"Class {class_name} not found in {file_path}")
@@ -184,18 +153,12 @@ class LazyLoader(types.ModuleType):
         :param item: 类名
         :return: 动态加载的类对象
         """
-        logger = get_logger()
         if item in self._loaded_classes:
-            cls = self._loaded_classes[item]
-            logger.debug(f"Lazyloader {self.__path__} got cached class {cls}")
-            return cls
+            return self._loaded_classes[item]
         # 从映射结构中获取文件路径和类名
         if item in self._import_structure:
             file_path, class_name = self._import_structure[item]
-            logger.info(f"Lazyloader {self.__path__} trying to import {item} ")
             cls = self._load_class_from_file(file_path, class_name)
-            logger.debug(f"Lazyloader {self.__path__} got and cached class {cls}")
             self._loaded_classes[item] = cls
             return cls
-        logger.debug(f"Module {self.__name__} has no attribute {item}")
         raise AttributeError(f"Module {self.__name__} has no attribute {item}")

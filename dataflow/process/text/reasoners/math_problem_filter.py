@@ -24,8 +24,6 @@ from dataflow.core import ReasonerFilter
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from tqdm import tqdm
 from dataflow.utils.registry import PROCESSOR_REGISTRY
-import logging
-from dataflow.utils.utils import get_logger
 
 @PROCESSOR_REGISTRY.register()
 class MathProblemFilter(ReasonerFilter):
@@ -38,7 +36,6 @@ class MathProblemFilter(ReasonerFilter):
         self.model = self.model_name
         self.api_key = args_dict.get("api_key", "")
         self.filter_name = 'MathProblemFilter'
-        self.logger = get_logger()
 
     def build_prompt(self, question):
         """Constructs an evaluation prompt with four progressive checks"""
@@ -75,7 +72,7 @@ Here is the problem to evaluate:
             )
         except Exception as e:
             # API call failed, return 0
-            self.logger.error(f"API call failed for problem: {problem}. Error: {e}")
+            print(f"API call failed for problem: {problem}. Error: {e}")
             return 0
         else:
             try:
@@ -87,24 +84,24 @@ Here is the problem to evaluate:
                 return 1 if test_value == 'true' else 0
             except Exception as e:
                 # Response format error, return 0
-                self.logger.error(f"Response format error for problem: {problem}. Error: {e}")
+                print(f"Response format error for problem: {problem}. Error: {e}")
                 return 0
 
     def filter_func(self, dataset):
         """Main filtering function that processes the entire dataset and returns a list of 0s and 1s"""
         results = []
-        max_workers = self.max_worker  # Adjust based on your needs
+        max_workers = 1  # Adjust based on your needs
 
         dataset = dataset.to_list()
         with ThreadPoolExecutor(max_workers=max_workers) as executor:
             futures = []
             for record in dataset:
                 try:
-                    problem = record.get(self.input_question_key, "")
+                    problem = record.get("problem", "")
                     if problem:
                         futures.append(executor.submit(self.process_problem, problem))
                 except json.JSONDecodeError:
-                    self.logger.error(f"Invalid JSON format in line: {line}")
+                    print(f"Invalid JSON format in line: {line}")
                     results.append(0)
 
             for future in tqdm(as_completed(futures), total=len(futures), desc="Processing"):
@@ -117,10 +114,10 @@ Here is the problem to evaluate:
 
     def handle_api_error(self, error_message):
         """Handles API errors and provides guidance"""
-        self.logger.error(f"API Error: {error_message}")
-        self.logger.error("Possible reasons:")
-        self.logger.error("1. Network connection issue. Please check your internet connection.")
-        self.logger.error("2. Invalid API URL. Please verify the URL format and accessibility.")
-        self.logger.error("3. API service unavailable. Please check if the service is running properly.")
-        self.logger.error("4. API key issue. Please ensure your API key is valid and has proper permissions.")
-        self.logger.error("Suggestion: Try again after checking the above issues.")
+        print(f"API Error: {error_message}")
+        print("Possible reasons:")
+        print("1. Network connection issue. Please check your internet connection.")
+        print("2. Invalid API URL. Please verify the URL format and accessibility.")
+        print("3. API service unavailable. Please check if the service is running properly.")
+        print("4. API key issue. Please ensure your API key is valid and has proper permissions.")
+        print("Suggestion: Try again after checking the above issues.")
