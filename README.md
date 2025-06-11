@@ -1,5 +1,3 @@
-[中文主页](./README.zh-CN.md)
-
 # DataFlow
 
 <div align="center">
@@ -12,9 +10,7 @@
 [![](https://img.shields.io/github/last-commit/Open-DataFlow/DataFlow)](https://github.com/Open-DataFlow/DataFlow/commits/main/)
 [![](https://img.shields.io/github/contributors/Open-DataFlow/DataFlow)](https://github.com/Open-DataFlow/DataFlow/graphs/contributors)
 
-[简体中文](./README.zh-CN.md) | [English](./README.md)
-
-
+[简体中文](./README.zh-CN.md) | English
 
 
 **[Features](#Features) • [Quick Start](#Quick_Start) • [Documentation]() • [Contributing](#贡献) • [License](#许可证)**
