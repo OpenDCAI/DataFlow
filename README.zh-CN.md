@@ -2,45 +2,43 @@
 
 # DataFlow
 
-<p align="center">
+<div align="center">
   <img src="./static/images/Face.png">
-</p>
-<a href="https://opensource.org/license/apache-2-0" target="_blank">
-    <img alt="License: apache-2-0" src="https://img.shields.io/github/license/saltstack/salt" />
-</a>
-<a href="https://github.com/GAIR-NLP/ProX" target="_blank">
-    <img alt="GitHub Stars" src="https://img.shields.io/github/stars/Open-DataFlow/DataFlow-Eval-Process?style=social" />
-</a>
-<a href="https://github.com/GAIR-NLP/ProX/issues" target="_blank">
-    <img alt="Open Issues" src="https://img.shields.io/github/issues-raw/Open-DataFlow/DataFlow-Eval-Process" />
-</a>
+
+[![](https://img.shields.io/github/license/Open-DataFlow/DataFlow)](https://github.com/Open-DataFlow/DataFlow/blob/main/LICENSE)
+[![](https://img.shields.io/github/stars/Open-DataFlow/DataFlow?style=social)](https://github.com/Open-DataFlow/DataFlow)
+[![](https://img.shields.io/github/issues-raw/Open-DataFlow/DataFlow)](https://github.com/Open-DataFlow/DataFlow/issues)
+[![](https://img.shields.io/github/last-commit/Open-DataFlow/DataFlow)](https://github.com/Open-DataFlow/DataFlow/commits/main/)
+[![](https://img.shields.io/github/contributors/Open-DataFlow/DataFlow)](https://github.com/Open-DataFlow/DataFlow/graphs/contributors)
+
+[功能特点](#功能特点) • [快速开始](#本地运行) • [使用文档](https://docs.easy-dataset.com/) • [贡献](#贡献) • [许可证](#许可证)
+
+
+</div>
 
 DataFlow-Eval 是一个数据质量和处理的评估系统，可以从多个维度评估数据质量并筛选高质量数据。我们主要支持具有强大理论支持的学术论文中的最新算法。
 
 我们目前支持文本、图像、视频和多模态数据类型。
 
 ## Table of Contents
-- [DataFlow-Eval](#dataflow-eval)
+- [DataFlow](#dataflow)
   - [Table of Contents](#table-of-contents)
   - [模块和模态支持](#模块和模态支持)
-  - [🔥 新闻](#新闻)
-  - [🛠 安装](#安装)
-  - [🚀 快速开始](#快速开始)
-    - [快速评估](#快速评估)
-    - [快速处理](#快速处理)    
-  - [💪 Jupyter Notebook Demo](#jupyter-notebook-demo)
+  - [新闻](#新闻)
+  - [安装](#安装)
+  - [快速开始](#快速开始)
+    - [快速评估:](#快速评估)
+    - [快速处理:](#快速处理)
+  - [Jupyter Notebook Demo](#jupyter-notebook-demo)
     - [文本示例](#文本示例)
     - [图像示例](#图像示例)
     - [视频示例](#视频示例)
-  - [📌 数据评估&处理文档](#数据评估文档)
+  - [数据评估\&处理文档](#数据评估处理文档)
     - [文本文档](#文本文档)
     - [图像文档](#图像文档)
     - [视频文档](#视频文档)
-  - [🧠 数据评估&处理算法](#数据评估算法)
-    - [文本算法](#文本算法)
-    - [图像算法](#图像算法)
-    - [视频算法](#视频算法)
-  - [👋 数据评估论文总结(综述)](#数据评估论文总结综述)
+  - [数据评估\&处理算法](#数据评估处理算法)
+  - [数据评估论文总结(综述)](#数据评估论文总结综述)
 
 ## 模块和模态支持
 

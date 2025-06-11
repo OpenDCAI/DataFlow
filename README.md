@@ -2,19 +2,25 @@
 
 # DataFlow
 
-<p align="center">
+<div align="center">
   <img src="./static/images/Face.png">
-</p>
-<a href="https://opensource.org/license/apache-2-0" target="_blank">
-    <img alt="License: apache-2-0" src="https://img.shields.io/github/license/saltstack/salt" />
-</a>
-<a href="https://github.com/Open-DataFlow/Open-DataFlow-Eval" target="_blank">
-    <img alt="GitHub Stars" src="https://img.shields.io/github/stars/Open-DataFlow/DataFlow-Eval-Process?style=social" />
-</a>
-<a href="https://github.com/Open-DataFlow/Open-DataFlow-Eval/issues" target="_blank">
-    <img alt="Open Issues" src="https://img.shields.io/github/issues-raw/Open-DataFlow/DataFlow-Eval-Process" />
-</a>
 
+
+[![](https://img.shields.io/github/license/Open-DataFlow/DataFlow)](https://github.com/Open-DataFlow/DataFlow/blob/main/LICENSE)
+[![](https://img.shields.io/github/stars/Open-DataFlow/DataFlow?style=social)](https://github.com/Open-DataFlow/DataFlow)
+[![](https://img.shields.io/github/issues-raw/Open-DataFlow/DataFlow)](https://github.com/Open-DataFlow/DataFlow/issues)
+[![](https://img.shields.io/github/last-commit/Open-DataFlow/DataFlow)](https://github.com/Open-DataFlow/DataFlow/commits/main/)
+[![](https://img.shields.io/github/contributors/Open-DataFlow/DataFlow)](https://github.com/Open-DataFlow/DataFlow/graphs/contributors)
+
+[简体中文](./README.zh-CN.md) | [English](./README.md)
+
+
+
+
+**[Features](#Features) • [Quick Start](#Quick_Start) • [Documentation]() • [Contributing](#贡献) • [License](#许可证)**
+
+
+</div>
 
 ## Overview
 DataFlow-Eval-Process is a data evaluation and processing system designed to evaluate data quality from multiple dimensions and filter out high-quality data. We mainly support SOTA algorithms within academic papers with strong theoretical support.
