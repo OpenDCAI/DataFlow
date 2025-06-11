@@ -22,6 +22,7 @@ DataFlow-Eval-Process is a data evaluation and processing system designed to eva
 We now support text, image, video, and multimodality data types.
 
 ## News
+- [2025-06-30] 🎉 We release the documentation of dataflow.
 - [2025-05-30] 🎉 We added two data processing pipelines, i.e. knowledge base cleaning, and agentic rag data construction pipeline.
 - [2025-04-30] 🎉 We added four data processing pipelines, i.e. text, code, nl2sql, and reasoning data pipeline.
 - [2024-12-26] 🎉 Our first data evaluation and processing system is now open source.
