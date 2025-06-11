@@ -40,4 +40,6 @@ pip install -e .
 ```
 
 ## Features
+1. Reasoning Pipeline
 
+2. 
