@@ -13,15 +13,21 @@
 [简体中文](./README.zh-CN.md) | English
 
 
-**[Features](#Features) • [Quick Start](#Quick_Start) • [Documentation]() • [Contributing](#贡献) • [License](#许可证)**
+**[Features](#Features) • [Quick Start](#Quick_Start) • [Documentation](https://open-dataflow.github.io/DataFlow-Doc/) • [Contributing](#贡献) • [License](#许可证)**
 
 
 </div>
 
 ## Overview
-DataFlow-Eval-Process is a data evaluation and processing system designed to evaluate data quality from multiple dimensions and filter out high-quality data. We mainly support SOTA algorithms within academic papers with strong theoretical support.
+DataFlow is a data evaluation and processing system designed to 1) evaluate data quality from multiple dimensions; 2) filter out high-quality data and 3) generate chain-of-thought or other types of augmentation. We mainly support SOTA algorithms within academic papers with strong theoretical support.
 
-We now support text, image, video, and multimodality data types.
+<!-- We now support text, image, video, and multimodality data types. -->
+Specifically, we first build various `operators` based on rules, LLMs, and LLM APIs, which are then assembled into six `pipelines`. These pipelines form the complete `Dataflow` system. Further, We also build an `agent` that can flexibly compose new pipelines with existing `operators` on demand.
+
+Current Pipelines in Dataflow are as follows:
+- **Reasoning Pipeline**: Enhances existing question–answer pairs with (1) extended chain-of-thought, (2) category classification, and (3) difficulty estimation.
+- **Text2SQL Pipeline**: Translates natural language questions into SQL queries, supplemented with explanations, chain-of-thought reasoning, and contextual schema information.
+
 
 ## News
 - [2025-07-25] 🎉 We release the dataflow-agent.
@@ -35,7 +41,7 @@ We now support text, image, video, and multimodality data types.
 ## Installation
 For environment setup, please using the following commands👇
 
-```
+```shell
 conda create -n dataflow python=3.10
 conda activate dataflow
 pip install -e .
@@ -43,5 +49,8 @@ pip install -e .
 
 ## Features
 ### 1. Reasoning Pipeline
+![](./static/images/demo_reasoning.png)
 
-### 2. NL2SQL 
+For demo inputs and outputs, you can refence our [Reasoning Pipeline sample](https://huggingface.co/datasets/Open-Dataflow/dataflow-demo-Reasonning/) on Huggingface.
+
+### 2. Text2SQL 
