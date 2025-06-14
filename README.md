@@ -61,4 +61,9 @@ pip install -e .
 
 For demo inputs and outputs, you can refence our [Reasoning Pipeline sample](https://huggingface.co/datasets/Open-Dataflow/dataflow-demo-Reasonning/) on Huggingface.
 
+- Performance Boost：
+  - ![](./static/images/reasoning_performance.png)
+
+
+
 ### 2. Text2SQL 
