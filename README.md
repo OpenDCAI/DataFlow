@@ -30,8 +30,7 @@
 
 ## Overview
 
-<div align="center">
-  <img src="./static/images/dataflow_framework.png">
+  <img src="./static/images/dataflow_framework.jpg">
 
 DataFlow is a data evaluation and processing system designed to **clean, augment and evaluate** high-quality data from noisy sources (PDF, plain-text, low-quality QA), thereby improving the performance of large language models (LLMs) in specific domains through targeted training (Pre-training, Supervised Fine-tuing, RL training) or RAG using knowledge base cleaning. **DataFlow has been empirically validated to improve domain-oriented LLM's performance in fields such as healthcare, finance, and law.**
 
