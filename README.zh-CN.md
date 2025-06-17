@@ -27,6 +27,9 @@ DataFlow 是一个数据评估和处理系统，旨在从嘈杂的数据源（�
 具体来说，我们构建了多样化的 `算子`（operator），利用基于规则的方法、深度学习模型、大语言模型（LLMs）和 LLM API。这些算子被系统地集成到六个不同的 `流水线`（Pipeline） 中，共同构成了完整的 `Dataflow` 系统。此外，我们还开发了一个智能 `Agent`，能够根据任务需求动态组合现有的 `算子`，自动构建新的 `Pipeline`。
 
 ## 管道与代理
+
+  <img src="./static/images/dataflow_framework.jpg">
+
 Dataflow 当前的管道如下：
 - **Text Pipeline**：从大规模纯文本数据中挖掘问答对，用于 SFT 和强化学习训练。
 - **Reasoning Pipeline**：对现有的问答对进行增强，包括（1）扩展思维链（COT），（2）分类，（3）难度估计。
