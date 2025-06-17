@@ -29,14 +29,11 @@
 - [2024-10-14] 🎉 Our first data-centric evaluation system is now open source.
 
 ## Overview
-DataFlow is a data evaluation and processing system designed to **extract, clean, and augment** high-quality training data from noisy sources (PDF, plain-text, low-quality QA), thereby improving the performance of large language models in specific domains through targeted training (Pre-training, Supervised Fine-tuing, RL training). **DataFlow has been empirically validated to improve model performance in fields such as healthcare, finance, and law.**
 
-<!-- 1. Evaluate data quality from multiple dimensions; 
-2. Filter out high-quality data;
-3. Generate chain-of-thought or other types of augmentation. We mainly support SOTA algorithms within academic papers with strong theoretical support. -->
+DataFlow is a data evaluation and processing system designed to **clean, augment and evaluate** high-quality data from noisy sources (PDF, plain-text, low-quality QA), thereby improving the performance of large language models (LLMs) in specific domains through targeted training (Pre-training, Supervised Fine-tuing, RL training) or RAG using knowledge base cleaning. **DataFlow has been empirically validated to improve domain-oriented LLM's performance in fields such as healthcare, finance, and law.**
 
-<!-- We now support text, image, video, and multimodality data types. -->
-Specifically, we constructing diverse `operators` leveraging rule-based methods, deep learning models, large language models (LLMs), and LLM APIs. These operators are systematically integrated into six distinct `pipelines`, collectively forming the comprehensive `Dataflow` system. Additionally, we develop an intelligent `agent` capable of dynamically assembling new `pipelines` by recombining existing `operators` on demand.
+Specifically, we constructing diverse `operators` leveraging rule-based methods, deep learning models, LLMs, and LLM APIs. These operators are systematically integrated into distinct `pipelines`, collectively forming the comprehensive `Dataflow system`. Additionally, we develop an intelligent `Dataflow-agent` capable of dynamically assembling new `pipelines` by recombining existing `operators` on demand.
+
 
 
 <!-- Text: 输入是烂数据 通过大模型 输出QA （主要是强化学习）
