@@ -103,15 +103,15 @@ We filted 3k record from `alpaca` dataset and compare it with radom selected 3k 
 
 We verify our reasoning pipeline by SFT on a Qwen2.5-32B-Instruct with Reasoning Pipeline synsthized data. We generated 1k and 5k SFT data pairs. Results are: 
 
-
-
 - ![](./static/images/reasoning_performance.png)
 
 
 
 ### 3. Text2SQL PipeLine
+We fine-tuned the Qwen2.5-Coder-7B model on the Bird dataset using both Supervised Fine-tuning (SFT) and Reinforcement Learning (RL), with data constructed via the DataFlow-Text2SQL Pipeline. Results are:
+![alt text](./static/images/text2sql.png)
 
-
+### 
 ## Citation
 ```
 @article{wang2025rare,
