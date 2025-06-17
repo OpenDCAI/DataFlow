@@ -13,13 +13,12 @@
 [简体中文](./README.zh-CN.md) | English
 
 
-**[Features](#Features) • [Quick Start](#Quick_Start) • [Documentation](https://open-dataflow.github.io/DataFlow-Doc/) • [Contributing](#贡献) • [License](#许可证)**
-
+**[Features](#Features) • [Quick Start](#Quick_Start) • [Documentation](https://open-dataflow.github.io/DataFlow-Doc/) • [Experiments](#Experiments)**
 
 </div>
 
 
-## News
+## 1 News
 - [2025-07-25] 🎉 We release the dataflow-agent.
 - [2025-06-30] 🎉 We release the documentation of dataflow.
 <!-- - [2025-05-30] 🎉 We added two data processing pipelines, i.e. knowledge base cleaning, and agentic rag data construction pipeline. -->
@@ -28,7 +27,7 @@
 - [2024-10-14] 🎉 We summarize data evaluation papers and codes in [👋 Awesome Data Evaluation](./Awesome_Data_Evaluation.md)
 - [2024-10-14] 🎉 Our first data-centric evaluation system is now open source.
 
-## Overview
+## 2 Overview
 
 DataFlow is a data evaluation and processing system designed to **clean, augment and evaluate** high-quality data from noisy sources (PDF, plain-text, low-quality QA), thereby improving the performance of large language models (LLMs) in specific domains through targeted training (Pre-training, Supervised Fine-tuing, RL training) or RAG using knowledge base cleaning. **DataFlow has been empirically validated to improve domain-oriented LLM's performance in fields such as healthcare, finance, and law.**
 
@@ -43,19 +42,29 @@ Agentic RAG: 输入QA，出来是 QA。没有额外信息解决不了，必须�
 Knowlege Base Cleaning: PDF，表格+doc text输入，输出是高质量知识库
 Dataflow-agent: 用Agent自动合成pipeline。编排已有算子。 -->
 
-## Pipelines & Agent
+## 3 Pipelines & Agent
 Current Pipelines in Dataflow are as follows:
-- **Text Pipeline**: Mine question-answer pairs from large-scale plain-text data for use in SFT and RL training.
+- **Text Pipeline**: Mine question-answer pairs from large-scale plain-text data (mostly crawed from InterNet) for use in SFT and RL training.
+  - ![](./static/images/text_pipeline.png)
+  - [[HuggingFace🤗 demo input & output for **Text Pipeline**]](https://huggingface.co/datasets/Open-Dataflow/dataflow-demo-Text)
 - **Reasoning Pipeline**: Enhances existing question–answer pairs with (1) extended chain-of-thought, (2) category classification, and (3) difficulty estimation.
+  - ![](./static/images/demo_reasoning.png)
+  - [[HuggingFace🤗 demo input & output for **Reasoning Pipeline**]](https://huggingface.co/datasets/Open-Dataflow/dataflow-demo-Reasonning)
 - **Text2SQL Pipeline**: Translates natural language questions into SQL queries, supplemented with explanations, chain-of-thought reasoning, and contextual schema information.
+  - [[HuggingFace🤗 demo input & output for **Text2SQL Pipeline**]](https://huggingface.co/datasets/Open-Dataflow/dataflow-demo-Text2SQL)
 - **Agentic RAG Pipeline**: Identify and extract QA pairs from existing QA datasets or knowledge bases that require external knowledge to answer, for use in downstream training of Agnetic RAG tasks.
-- **Knowlege Base Cleaning Pipeline**: Extract and structure knowledge from unorganized sources like tables, PDFs, and Word documents into usable entries for downstream RAG or QA pair generation.
+<!-- - **Knowlege Base Cleaning Pipeline**: Extract and structure knowledge from unorganized sources like tables, PDFs, and Word documents into usable entries for downstream RAG or QA pair generation. -->
 
 
-Building on top of this, we also provide the **DataFlow Agent**, which can arrange existing `operators` and automatically construct new pipelines based on task requirements.
+Building on top of this, we also provide the
+- **DataFlow Agent**: Can arrange existing `operators` and automatically construct new pipelines based on task requirements.
+  - [[HuggingFace🤗 demo input & output for **DataFlow Agent**]](https://huggingface.co/datasets/Open-Dataflow/dataflow-demo-Agent)
 
 
-## Quick Start
+<!-- ### 3.1 Text Pipeline
+![](./static/images/demo_reasoning.png) -->
+
+## 4 Quick Start
 For environment setup and installation, please using the following commands👇
 
 ```shell
@@ -70,18 +79,29 @@ pip install -e .
 For **Quick-Start** and **Guide**, please visit or [Documentation](https://open-dataflow.github.io/DataFlow-Doc/).
 
 
-## Features & Visualization
+## 5 Experiments
+For Detailed Experiments setting, please visit 
 
-### 1. Text PipeLine
+
+### 5.1 Text PipeLine
+
+#### 5.1.1 Pre-training data filter pipeline
+The `pre-training data processing pipeline` was applied to randomly sampled data from the RedPajama dataset, resulting in a final data retention rate of 13.65%. The analysis results using `QuratingScorer` are shown in the figure. As can be seen, the filtered pretraining data significantly outperforms the original data across four scoring dimensions: writing style, requirement for expert knowledge, factual content, and educational value. This demonstrates the effectiveness of the DataFlow pretraining data processing.
+
+![alt text](./static/images/text-pretrain.png)
+
+#### 5.1.2 SFT data filter pipeline
+We filted 3k record from `alpaca` dataset and compare it with radom selected 3k data from `alpaca` dataset by training it on Qwen2.5-7B. Results are:
 
 
+![](./static/images/text-sft.png)
 ### 2. Reasoning Pipeline
-![](./static/images/demo_reasoning.png)
 
-For demo inputs and outputs, you can refence our [Reasoning Pipeline sample](https://huggingface.co/datasets/Open-Dataflow/dataflow-demo-Reasonning/) on Huggingface.
+We verify our reasoning pipeline by SFT on a Qwen2.5-32B-Instruct with Reasoning Pipeline synsthized data. We generated 1k and 5k SFT data pairs. Results are: 
 
-- Performance Boost：
-  - ![](./static/images/reasoning_performance.png)
+
+
+- ![](./static/images/reasoning_performance.png)
 
 
 
@@ -98,7 +118,7 @@ For demo inputs and outputs, you can refence our [Reasoning Pipeline sample](htt
 }
 ```
 
-## Statistics
+<!-- ## Statistics
 <a href="https://star-history.com/#Open-DataFlow/DataFlow&Date">
  <picture>
    <source media="(prefers-color-scheme: dark)" srcset="https://api.star-history.com/svg?repos=Open-DataFlow/DataFlow&type=Date&theme=dark" />
@@ -106,4 +126,4 @@ For demo inputs and outputs, you can refence our [Reasoning Pipeline sample](htt
    <img alt="Star History Chart" src="https://api.star-history.com/svg?repos=Open-DataFlow/DataFlow&type=Date" />
  </picture>
 </a>
-
+ -->

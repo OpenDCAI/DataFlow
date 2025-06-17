@@ -74,6 +74,9 @@ pip install -e .
 }
 ```
 
+
+
+<!-- 
 ## 统计信息
 <a href="https://star-history.com/#Open-DataFlow/DataFlow&Date">
  <picture>
@@ -81,4 +84,4 @@ pip install -e .
    <source media="(prefers-color-scheme: light)" srcset="https://api.star-history.com/svg?repos=Open-DataFlow/DataFlow&type=Date" />
    <img alt="Star History Chart" src="https://api.star-history.com/svg?repos=Open-DataFlow/DataFlow&type=Date" />
  </picture>
-</a>
+</a> -->
