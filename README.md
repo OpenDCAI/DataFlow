@@ -44,10 +44,10 @@ Agentic RAG: 输入QA，出来是 QA。没有额外信息解决不了，必须�
 Knowlege Base Cleaning: PDF，表格+doc text输入，输出是高质量知识库
 Dataflow-agent: 用Agent自动合成pipeline。编排已有算子。 -->
 
-## 3 Pipelines & Agent
+## 3 Pipelines Functionality
 Current Pipelines in Dataflow are as follows:
 - **Text Pipeline**: Mine question-answer pairs from large-scale plain-text data (mostly crawed from InterNet) for use in SFT and RL training.
-  - ![](./static/images/text_pipeline.png)
+  - ![](./static/images/dataflow_text_pipeline.jpg)
   - [[HuggingFace🤗 demo input & output for **Text Pipeline**]](https://huggingface.co/datasets/Open-Dataflow/dataflow-demo-Text)
 - **Reasoning Pipeline**: Enhances existing question–answer pairs with (1) extended chain-of-thought, (2) category classification, and (3) difficulty estimation.
   - ![](./static/images/demo_reasoning.png)
@@ -83,7 +83,7 @@ pip install -e .
 For **Quick-Start** and **Guide**, please visit or [Documentation](https://open-dataflow.github.io/DataFlow-Doc/).
 
 
-## 5 Experiments
+## 5 Experimental Results
 For Detailed Experiments setting, please visit 
 
 
