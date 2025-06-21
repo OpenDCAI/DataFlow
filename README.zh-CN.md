@@ -1,48 +1,65 @@
 # DataFlow
 
+# DataFlow
+
 <div align="center">
   <img src="./static/images/Face.png">
 
 [![](https://img.shields.io/github/license/Open-DataFlow/DataFlow)](https://github.com/Open-DataFlow/DataFlow/blob/main/LICENSE)
 [![](https://img.shields.io/github/stars/Open-DataFlow/DataFlow?style=social)](https://github.com/Open-DataFlow/DataFlow)
 [![](https://img.shields.io/github/issues-raw/Open-DataFlow/DataFlow)](https://github.com/Open-DataFlow/DataFlow/issues)
-[![](https://img.shields.io/github/last-commit/Open-DataFlow/DataFlow)](https://github.com/Open-DataFlow/Data/Flowcommits/main/)
+[![](https://img.shields.io/github/last-commit/Open-DataFlow/DataFlow)](https://github.com/Open-DataFlow/DataFlow/commits/main/)
 [![](https://img.shields.io/github/contributors/Open-DataFlow/DataFlow)](https://github.com/Open-DataFlow/DataFlow/graphs/contributors)
 
 [简体中文](./README.zh-CN.md) | English
 
-**[特性](#特性) • [快速开始](#快速开始) • [文档](https://open-dataflow.github.io/DataFlow-Doc/) • [贡献](#贡献) • [许可证](#许可证)**
+**[功能介绍](#功能介绍) • [快速开始](#快速开始) • [文档](https://open-dataflow.github.io/DataFlow-Doc/) • [实验结果](#实验结果)**
 
 </div>
 
-## 新闻
-- [2025-07-25] 🎉 我们发布了 Dataflow-agent。
-- [2025-06-30] 🎉 我们发布了 Dataflow 的文档。
-- [2024-10-14] 🎉 我们在 [👋 Awesome_Data_Evaluation](./Awesome_Data_Evaluation.md) 中总结了数据评估相关的论文和代码。
-- [2024-10-14] 🎉 我们的第一个以数据为中心的评估系统现已开源。
+## 1 最新动态
 
-## 概述
-DataFlow 是一个数据评估和处理系统，旨在从嘈杂的数据源（如 PDF、纯文本、低质量问答）中 **清洗、扩增和评估** 高质量训练数据，从而通过针对性训练（预训练、监督微调、强化学习训练）提升大型语言模型（LLM, large language model）在特定领域的表现。**DataFlow已经在医疗、金融和法律等领域通过实验证明可以提升面向领域的大模型性能。**
+- [2025-07-25] 🎉 发布 dataflow-agent。
+- [2025-06-30] 🎉 发布 dataflow 官方文档。
+- [2024-10-14] 🎉 整理数据评估相关论文和代码，详见 [👋 Awesome Data Evaluation](./Awesome_Data_Evaluation.md)
+- [2024-10-14] 🎉 第一个数据中心化评估系统开源。
 
-具体来说，我们构建了多样化的 `算子`（operator），利用基于规则的方法、深度学习模型、大语言模型（LLMs）和 LLM API。这些算子被系统地集成到六个不同的 `流水线`（Pipeline） 中，共同构成了完整的 `Dataflow` 系统。此外，我们还开发了一个智能 `Agent`，能够根据任务需求动态组合现有的 `算子`，自动构建新的 `Pipeline`。
+## 2 项目概述
 
-## 管道与代理
+<img src="./static/images/dataflow_framework.jpg">
 
-  <img src="./static/images/dataflow_framework.jpg">
+DataFlow 是一个数据系统，旨在从噪声数据源（PDF、纯文本、低质量问答）中**生成、加工并评估高质量数据**，以提升大语言模型（LLMs）在特定领域的表现，支持预训练、监督微调（SFT）、强化学习训练以及基于知识库的 RAG 系统。**我们在医疗、金融和法律等多个垂类领域实证验证了 DataFlow 的有效性。**
 
-Dataflow 当前的管道如下：
-- **Text Pipeline**：从大规模纯文本数据中挖掘问答对，用于 SFT 和强化学习训练。
-- **Reasoning Pipeline**：对现有的问答对进行增强，包括（1）扩展思维链（COT），（2）分类，（3）难度估计。
-- **Text2SQL Pipeline**：将自然语言问题翻译成 SQL 查询，并补充解释、思维链和上下文模式信息。
-- **Agentic RAG Pipeline**：从现有的问答数据集或知识库中识别并提取需要外部知识来回答的问答对，用于下游的Agentic RAG 任务训练。
-- **知识库清洗管道**：从表格、PDF 和 Word 文档等数据来源中提取并结构化知识，生成可用于下游 RAG 或问答对生成的条目。
+我们构建了多种基于规则、深度学习、大语言模型及其 API 的 `数据算子（Operators）`，并将其系统性地整合为多条 `数据流程（Pipelines）`，共同组成完整的 `DataFlow 系统`。此外，我们还构建了智能的 `DataFlow-Agent`，支持按需动态编排已有算子，合成新的数据流程。
 
-在此基础上，我们还提供了 **DataFlow Agent**，可以根据任务需求安排现有的 `operator` 并自动构建新的管道。
+## 3 数据流程功能介绍
 
-## 快速开始
-对于环境设置和安装，请使用以下命令👇
+目前 DataFlow 包含以下主要数据处理流程：
 
-```shell
+- **文本处理流程（Text Pipeline）**：从大规模纯文本（多为网络爬取）中挖掘问答对，用于监督微调和强化学习训练。
+  - ![](./static/images/dataflow_text_pipeline.jpg)
+  - [[HuggingFace🤗 示例数据]](https://huggingface.co/datasets/Open-Dataflow/dataflow-demo-Text)
+
+- **推理流程（Reasoning Pipeline）**：增强已有问答对，添加 (1) 长链式推理（Chain-of-Thought），(2) 类别标注，(3) 难度估计。
+  - ![](./static/images/dataflow_reasoning_pipeline.jpg)
+  - [[HuggingFace🤗 示例数据]](https://huggingface.co/datasets/Open-Dataflow/dataflow-demo-Reasonning)
+
+- **Text2SQL 流程**：将自然语言问题转化为 SQL 查询，辅以解释、思维链推理和数据库结构上下文信息。
+  - ![](./static/images/dataflow_text2sql_pipeline.jpg)
+  - [[HuggingFace🤗 示例数据]](https://huggingface.co/datasets/Open-Dataflow/dataflow-demo-Text2SQL)
+
+- **Agent式RAG流程**：从已有问答或知识库中挖掘需要外部知识才能作答的问答对，用于训练 Agentic RAG 模型。
+
+此外，我们还提供：
+
+- **DataFlow-Agent**：基于任务需求，自动编排现有算子并合成新的数据处理流程。
+  - [[HuggingFace🤗 示例数据]](https://huggingface.co/datasets/Open-Dataflow/dataflow-demo-Agent)
+
+## 4 快速开始
+
+请使用如下命令进行环境配置和安装👇
+
+```bash
 conda create -n dataflow python=3.10
 conda activate dataflow
 
@@ -50,33 +67,39 @@ git clone https://github.com/Open-DataFlow/DataFlow
 cd DataFlow
 pip install -e .
 ```
+## 4 快速开始
 
-对于 **快速开始** 和 **指南**，请访问我们的 [文档](https://open-dataflow.github.io/DataFlow-Doc/)。
+更多使用说明和入门指南，请参考我们的 [项目文档](https://open-dataflow.github.io/DataFlow-Doc/)。
 
-## 特性与可视化
+## 5 实验结果
 
-### 1. 文本管道
+如需详细的实验设置，请参考文档或论文说明。
 
-### 2. 推理管道
-![](./static/images/demo_reasoning.png)
+### 5.1 文本流程（Text Pipeline）
 
-您可以参考我们在 Huggingface 上的 [推理管道样本](https://huggingface.co/datasets/Open-Dataflow/dataflow-demo-Reasonning/)，查看演示输入和输出。
+#### 5.1.1 预训练数据过滤流程
 
-- 性能提升：
-  - ![](./static/images/reasoning_performance.png)
+我们将 `预训练数据处理流程` 应用于从 RedPajama 数据集中随机采样的数据，最终保留率为 **13.65%**。使用 `QuratingScorer` 进行质量评估，结果如下图所示：在**写作风格、专业性要求、事实准确性和教育价值**四个维度上，过滤后的数据显著优于原始数据，验证了 DataFlow 预训练数据处理流程的有效性。
 
-### 3. 文本转 SQL 管道
+![预训练数据评估图](./static/images/text-pretrain.png)
 
-## 引用
-```plaintext
-@article{wang2025rare,
-  title={Rare: Retrieval-augmented reasoning modeling},
-  author={Wang, Zhengren and Yu, Jiayang and Ma, Dongsheng and Chen, Zhe and Wang, Yu and Li, Zhiyu and Xiong, Feiyu and Wang, Yanfeng and Tang, Linpeng and Zhang, Wentao and others},
-  journal={arXiv preprint arXiv:2503.23513},
-  year={2025}
-}
-```
+#### 5.1.2 微调（SFT）数据过滤流程
 
+我们从 `alpaca` 数据集中筛选了 3000 条高质量数据，与随机选取的 3000 条 `alpaca` 数据进行对比，并在 Qwen2.5-7B 模型上进行 SFT 训练。对比结果如下：
+
+![](./static/images/text-sft.png)
+
+### 5.2 推理流程（Reasoning Pipeline）
+
+我们在 Qwen2.5-32B-Instruct 模型上，使用 Reasoning Pipeline 合成的 1000 条和 5000 条数据进行了微调训练（SFT），评估其对模型推理能力的提升，结果如下图所示：
+
+![](./static/images/reasoning_performance.png)
+
+### 5.3 Text2SQL 流程
+
+我们在 Bird 数据集上使用 DataFlow-Text2SQL 流程构建数据，并分别通过监督微调（SFT）与强化学习（RL）对 Qwen2.5-Coder-7B 模型进行了训练。实验结果如下：
+
+![Text2SQL结果图](./static/images/text2sql.png)
 
 
 <!-- 
