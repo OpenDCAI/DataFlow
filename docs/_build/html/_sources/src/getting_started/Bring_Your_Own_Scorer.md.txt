@@ -1,3 +1,0 @@
-# Customized Scorer
-
-## TODO
