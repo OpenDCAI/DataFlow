@@ -140,20 +140,34 @@ You are using the latest version: 1.0.0.
 </div>
 
 ## 🤝 6. 社区与支持
-✨ **发现了 Bug 或有功能建议？** 欢迎在我们的 [GitHub Issues](../../issues) 页面提交，我们非常期待你的反馈与建议！
 
-🚀 **想要贡献代码？** 欢迎通过 [GitHub Pull Requests](../../pulls) 提交你的改进，一起推动项目进步！
+欢迎加入 DataFlow 开源社区，提出问题、分享想法、与其他开发者一起共建项目！
 
-📌 关注**我们课题组的小红书账号 26133106768**，获取最新的研究进展与项目动态！我们期待与你分享更多前沿成果！🎉🎉🎉
-<div align="center">
-  <img src="./static/images/xiaohongshu.jpg" width="30%">
-</div>
-📌 欢迎通过微信群、小红书和 Twitter 等渠道，加入 DataFlow 开源社区 与其他开发者交流互动！🎉🎉🎉
+•	📮 [GitHub Issues](../../issues)：提交 Bug 或功能建议。
+
+•	🔧 [GitHub Pull Requests](../../pulls)：贡献代码改进。
+
+•	💬 欢迎扫码加入下方社群（微信群、小红书、Twitter），与我们和其他开发者互动交流~
+
 <div align="center">
   <img src="./static/images/community_ch.jpg" width="60%">
 </div>
 
-## 📊 7. 统计信息
+## 📜 7. 引用
+
+如果 DataFlow 对你的研究或项目有帮助，欢迎引用支持我们：
+
+```bibtex
+@misc{dataflow2025,
+  author       = {DataFlow Develop Team},
+  title        = {DataFlow: A Unified Framework for Data-Centric AI},
+  year         = {2025},
+  howpublished = {\url{https://github.com/OpenDCAI/DataFlow}},
+  note         = {Accessed: 2025-07-08}
+}
+```
+
+## 📊 8. 统计信息
 <div align="center">
   <a href="https://star-history.com/#OpenDCAI/DataFlow&Date">
     <picture>
@@ -165,6 +179,12 @@ You are using the latest version: 1.0.0.
   
 </div>
 
+---
+
 <div align="center">
-  <sub>由 <strong>PKU-DCAI</strong> 团队倾情维护 ❤️</sub>
+  <sub>
+    由  
+    <a href="https://zwt233.github.io/" target="_blank"><strong>PKU-DCAI 研究团队</strong></a> ❤️ 开发与维护 <br>
+    欢迎关注课题组小红书账号：<strong>26133106768</strong>
+  </sub>
 </div>
