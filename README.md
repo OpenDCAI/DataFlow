@@ -140,21 +140,31 @@ We fine-tuned the Qwen2.5-Coder-14B model on the Bird dataset using both Supervi
 </div>
 
 ## 🤝 6. Community & Support
-✨ **Found a bug or have a feature request?** Submit it to our [GitHub Issues](../../issues)! We welcome your feedback and suggestions.
+Join the DataFlow open-source community to ask questions, share ideas, and collaborate with other developers!
 
-🚀 **Want to contribute code?** Feel free to submit your code improvements via [GitHub Pull Requests](../../pulls) and help us advance the project!
+•	📮 [GitHub Issues](../../issues): Report bugs or suggest features
+ 
+•	🔧 [GitHub Pull Requests](../../pulls): Contribute code improvements
 
-📌 Follow **our lab’s Xiaohongshu account 26133106768** for the latest updates on our research and ongoing projects. We look forward to sharing more cutting-edge work with you! 🎉🎉🎉
-<div align="center">
-  <img src="./static/images/xiaohongshu.jpg" width="30%">
-</div>
-
-📌 Welcome to connect and interact with fellow **DataFlow open-source community** members through our WeChat, Xiaohongshu, and Twitter communities! 🎉🎉🎉
+•	💬 Join our community groups to connect with us and other contributors!
+ 
 <div align="center">
   <img src="./static/images/community_en.jpg" width="60%">
 </div>
 
-## 📊 7. Statistics
+## 📜 7. Citation
+If you use DataFlow in your research, feel free to give us a cite.
+```bibtex
+@misc{dataflow2025,
+  author       = {DataFlow Develop Team},
+  title        = {DataFlow: A Unified Framework for Data-Centric AI},
+  year         = {2025},
+  howpublished = {\url{https://github.com/OpenDCAI/DataFlow}},
+  note         = {Accessed: 2025-07-08}
+}
+```
+
+## 📊 8. Statistics
 <div align="center">
   <a href="https://star-history.com/#OpenDCAI/DataFlow&Date">
     <picture>
@@ -166,6 +176,11 @@ We fine-tuned the Qwen2.5-Coder-14B model on the Bird dataset using both Supervi
   
 </div>
 
+---
 <div align="center">
-  <sub>Maintained with ❤️ by the <strong>PKU-DCAI</strong> Research Team</sub>
+  <sub>
+    Developed and maintained by the 
+    <a href="https://zwt233.github.io/" target="_blank"><strong>PKU-DCAI Research Team</strong></a> ❤️ <br>
+    Connect with us on Xiaohongshu: <strong>26133106768</strong>
+  </sub>
 </div>
