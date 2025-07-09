@@ -9,7 +9,7 @@ from typing import List
 class APILLMServing_aisuite(LLMServingABC):
     def __init__(self, config: dict):
         configs = config  # Assuming config.configs is a list of configurations
-
+        raise NotImplementedError("APILLMServing_aisuite is not implemented yet, please use APILLMServing_request instead.")
         # Extract the configurations from the provided dictionary
         self.model_id = configs.get("model_id", 'openai:gpt-4o')
         self.temperature = configs.get("temperature", 0.75)
@@ -23,57 +23,10 @@ class APILLMServing_aisuite(LLMServingABC):
         self.logprobs = configs.get("logprobs", None)
         self.system_prompt = configs.get("system_prompt", "You are a helpful assistant")
         
-        # Input and output file paths and keys
-        self.datastorage = FileStorage(configs)
         
 
         logging.info(f"API Generator will generate text using {self.model_id}")
     
-    def generate(self):
-        # check config
-        
-
-        client = ai.Client()
-        outputs = []
-
-        # Read input file
-        dataframe = self.datastorage.read(self.input_file, "dataframe")
-        
-        # Check if input_key is in the dataframe
-        if self.input_key not in dataframe.columns:
-            key_list = dataframe.columns.tolist()
-            raise ValueError(f"input_key: {self.input_key} not found in the dataframe, please check the input_key: {key_list}")
-        
-        # Check if output_key is in the dataframe
-        if self.output_key in dataframe.columns:
-            key_list = dataframe.columns.tolist()
-            raise ValueError(f"Found {self.output_key} in the dataframe, which leads to overwriting the existing column, please check the output_key: {key_list}")
-        
-        # Generate text
-        user_prompts = dataframe[self.input_key].tolist()
-        for user_prompt in user_prompts:
-            messages = [
-                {"role": "system", "content": self.system_prompt},
-                {"role": "user", "content": user_prompt}
-            ]
-            response = client.chat.completions.create(
-                model=self.model_id,
-                messages=messages,
-                temperature=self.temperature,
-                top_p=self.top_p,
-                max_tokens=self.max_tokens,
-                n=self.n,
-                stream=self.stream,
-                stop=self.stop,
-                logprobs=self.logprobs,
-                presence_penalty=self.presence_penalty,
-                frequency_penalty=self.frequency_penalty,
-            )
-            content = response.choices[0].message.content
-            outputs.append(content)
-        dataframe[self.output_key] = outputs
-        self.datastorage.write(self.output_file, dataframe)
-        return dataframe
 
     def generate_from_input(self, input: List[str]) -> List[str]:
         client = ai.Client()

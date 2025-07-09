@@ -75,13 +75,6 @@ def main():
         # print(DataFlowPath.get_dataflow_scripts_dir())
     elif args.command == 'env':
         cli_env()
-        # print("TODO Calling cli_env with config:", args.config)
-
-# def train(config):
-#     print(f'Training with config: {config}')
-
-# def evaluate(config):
-#     print(f'Evaluating with config: {config}')
 
 if __name__ == '__main__':
     main()

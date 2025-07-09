@@ -2,6 +2,7 @@ import json
 import requests
 import os
 import logging
+from ..logger import get_logger
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from tqdm import tqdm
 from dataflow.core  import LLMServingABC
@@ -12,6 +13,7 @@ class APILLMServing_request(LLMServingABC):
     """
     def __init__(self, 
                  api_url: str = "https://api.openai.com/v1/chat/completions",
+                 key_name_of_api_key: str = "DF_API_KEY",
                  model_name: str = "gpt-4o",
                  max_workers: int = 10
                  ):
@@ -19,20 +21,15 @@ class APILLMServing_request(LLMServingABC):
         self.api_url = api_url
         self.model_name = model_name
         self.max_workers = max_workers
+        self.logger = get_logger()
 
         # config api_key in os.environ global, since safty issue.
-        self.api_key = os.environ.get("API_KEY")
+        self.api_key = os.environ.get(key_name_of_api_key)
         if self.api_key is None:
-            raise ValueError("Lack of API_KEY")
-
-    """corden due to I don't confindent about implementation——Sunnyhaze
-    def check_config(self):
-        # Ensure all necessary keys are in the config
-        necessary_keys = ['input_file', 'output_file', 'input_key', 'output_key', 'max_workers']
-        for key in necessary_keys:
-            if key not in self.config:
-                raise ValueError(f"Key {key} is missing in the config")
-    """    
+            error_msg = f"Lack of `{key_name_of_api_key}` in environment variables. Please set `{key_name_of_api_key}` as your api-key to {api_url} before using APILLMServing_request."
+            self.logger.error(error_msg)
+            raise ValueError(error_msg)
+  
     def format_response(self, response: dict) -> str:    
         # check if content is formatted like <think>...</think>...<answer>...</answer>
         content = response['choices'][0]['message']['content']
@@ -48,8 +45,6 @@ class APILLMServing_request(LLMServingABC):
             return f"<think>{reasoning_content}</think>\n<answer>{content}</answer>"
         else:
             return content
-
-        
 
 
     def api_chat(self, system_info: str, messages: str, model: str):
@@ -79,41 +74,6 @@ class APILLMServing_request(LLMServingABC):
             logging.error(f"API request error: {e}")
             return None
 
-    def generate(self):
-        pass # for develop, TODO
-    """ Corden due to I don't confindent about implementation——Sunnyhaze
-    def generate(self):
-        self.check_config()
-        # Read input file
-        raw_dataframe = self.datastorage.read(self.config['input_file'], "dataframe")
-        if self.config['input_key'] not in raw_dataframe.columns:
-            raise ValueError(f"input_key: {self.config['input_key']} not found in the dataframe.")
-        
-        logging.info(f"Found {len(raw_dataframe)} rows in the dataframe")
-
-        responses = [None] * len(raw_dataframe)  # 创建一个列表，确保结果顺序与输入数据一致
-
-        # Use ThreadPoolExecutor to handle multiple requests concurrently
-        with ThreadPoolExecutor(max_workers=self.config['max_workers']) as executor:
-            futures = []
-            for idx, row in raw_dataframe.iterrows():
-                futures.append(
-                    executor.submit(
-                        self.api_chat,
-                        self.config['system_prompt'],
-                        row[self.config['input_key']],
-                        self.config['model_name'],
-                    )
-                )
-            
-            for idx, future in enumerate(as_completed(futures)):
-                response = future.result()
-                responses[idx] = response  # 将响应放到正确的索引位置，确保顺序一致
-
-        raw_dataframe[self.config['output_key']] = responses
-        self.datastorage.write(self.config['output_file'], raw_dataframe)
-        return
-    """
     def generate_from_input(self, 
                             user_inputs: list[str], system_prompt: str = "You are a helpful assistant"
                             ) -> list[str]:
