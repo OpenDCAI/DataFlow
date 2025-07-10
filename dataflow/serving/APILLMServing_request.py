@@ -165,6 +165,52 @@ class APILLMServing_request(LLMServingABC):
                     responses[response[0]] = response[1]
         return responses
     
+    def generate_from_dialogue(self, dialogues: list[list[dict]]) -> list[str]:
+        def api_chat_with_id(messages: str, model: str, id):
+            try:
+                payload = json.dumps({
+                    "model": model,
+                    "messages": messages
+                })
+
+                headers = {
+                    'Authorization': f"Bearer {self.api_key}",
+                    'Content-Type': 'application/json',
+                    'User-Agent': 'Apifox/1.0.0 (https://apifox.com)'
+                }
+                # Make a POST request to the API
+                response = requests.post(self.api_url, headers=headers, data=payload, timeout=1800)
+                if response.status_code == 200:
+                    # logging.info(f"API request successful")
+                    response_data = response.json()
+                    # logging.info(f"API response: {response_data['choices'][0]['message']['content']}")
+                    return id,self.format_response(response_data)
+                else:
+                    logging.error(f"API request failed with status {response.status_code}: {response.text}")
+                    return id,None
+            except Exception as e:
+                logging.error(f"API request error: {e}")
+                return id,None
+        responses = [None] * len(dialogues)
+        # -- end of subfunction api_chat_with_id --
+
+        # 使用 ThreadPoolExecutor 并行处理多个问题
+        # logging.info(f"Generating {len(questions)} responses")
+        with ThreadPoolExecutor(max_workers=self.max_workers) as executor:
+            futures = [
+                executor.submit(
+                    api_chat_with_id,
+                    messages = dialogue,
+                    model = self.model_name,
+                    id = idx
+                ) for idx, dialogue in enumerate(dialogues)
+            ]
+            for future in tqdm(as_completed(futures), total=len(futures), desc="Generating......"):
+                    response = future.result() # (id, response)
+                    responses[response[0]] = response[1]
+        return responses
+    
+    
     def cleanup(self):
         # Cleanup resources if needed
         logging.info("Cleaning up resources in APILLMServing_request")
