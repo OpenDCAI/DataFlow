@@ -165,7 +165,7 @@ class APILLMServing_request(LLMServingABC):
                     responses[response[0]] = response[1]
         return responses
     
-    def generate_from_dialogue(self, dialogues: list[list[dict]]) -> list[str]:
+    def generate_from_conversations(self, conversations: list[list[dict]]) -> list[str]:
         def api_chat_with_id(messages: str, model: str, id):
             try:
                 payload = json.dumps({
@@ -191,7 +191,7 @@ class APILLMServing_request(LLMServingABC):
             except Exception as e:
                 logging.error(f"API request error: {e}")
                 return id,None
-        responses = [None] * len(dialogues)
+        responses = [None] * len(conversations)
         # -- end of subfunction api_chat_with_id --
 
         # 使用 ThreadPoolExecutor 并行处理多个问题
@@ -203,7 +203,7 @@ class APILLMServing_request(LLMServingABC):
                     messages = dialogue,
                     model = self.model_name,
                     id = idx
-                ) for idx, dialogue in enumerate(dialogues)
+                ) for idx, dialogue in enumerate(conversations)
             ]
             for future in tqdm(as_completed(futures), total=len(futures), desc="Generating......"):
                     response = future.result() # (id, response)
