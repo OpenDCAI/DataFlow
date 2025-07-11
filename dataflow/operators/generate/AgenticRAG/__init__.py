@@ -1,9 +1,9 @@
 from .AutoPromptGenerator import AutoPromptGenerator
 from .QAScorer import QAScorer
 from .QAGenerator import QAGenerator
-from .AtomicTaskGenerator import AtomicTaskGenerator
-from .DepthQAGenerator import DepthQAGenerator
-from .WidthQAGenerator import WidthQAGenerator
+from .atomic_task_generator import AtomicTaskGenerator
+from .depth_qa_generator import DepthQAGenerator
+from .width_qa_generator import WidthQAGenerator
 
 __all__ = [
     "AutoPromptGenerator",

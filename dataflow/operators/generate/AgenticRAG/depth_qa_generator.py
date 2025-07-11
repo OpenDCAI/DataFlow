@@ -170,7 +170,6 @@ class DepthQAGenerator(OperatorABC):
                     continue
 
             dataframe = dataframe.iloc[valid_indices].copy()
-            # dataframe[self.output_key] = new_queries
 
             # step3: Generate question based on superset and relation
             sys_prompts, user_prompts = self._reformat_prompt(dataframe, "get_new_question")
