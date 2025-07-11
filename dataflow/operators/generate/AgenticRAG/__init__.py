@@ -10,5 +10,5 @@ __all__ = [
     "QAScorer",
     "QAGenerator",
     "AtomicTaskGenerator",
-    "depth_qa_generator"
+    "DepthQAGenerator"
 ]
