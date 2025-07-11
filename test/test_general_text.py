@@ -1,4 +1,4 @@
-from dataflow.operators.filter.GeneralText import LexicalDiversityFilter
+from dataflow.operators.filter import LexicalDiversityFilter
 from dataflow.utils.storage import FileStorage
 
 class TextPipeline():

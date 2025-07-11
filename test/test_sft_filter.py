@@ -1,4 +1,4 @@
-from dataflow.operators.filter.GeneralText import (
+from dataflow.operators.filter import (
     WordNumberFilter,
     SuperfilteringFilter,
     DeitaQualityFilter,

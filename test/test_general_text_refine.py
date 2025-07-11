@@ -1,4 +1,4 @@
-from dataflow.operators.refine.GeneralText import (
+from dataflow.operators.refine import (
     HtmlEntityRefiner,
     LowercaseRefiner,
     NERRefiner,

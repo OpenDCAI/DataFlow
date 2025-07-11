@@ -27,9 +27,9 @@ def test_all_operator_registry():
 
 if __name__ == "__main__":
     # 全局table，看所有注册的算子的str名称和对应的module路径
-    print(OPERATOR_REGISTRY)
-    exit(0)
     # 获得所有算子的类名2class映射
+    OPERATOR_REGISTRY._get_all()
+    print(OPERATOR_REGISTRY)
     dataflow_obj_map = OPERATOR_REGISTRY.get_obj_map()
 
     print(dataflow_obj_map)
@@ -56,3 +56,7 @@ if __name__ == "__main__":
             print("\033[92m  __init__ signature parameters: \033[0m")
             pprint(init_signature_params)
         print()
+    keys = list(dataflow_obj_map.keys())
+    import json
+    with open('operators.txt', 'w') as f:
+        json.dump(keys, f)

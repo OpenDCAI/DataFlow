@@ -1,4 +1,4 @@
-from dataflow.operators.filter.Reasoning import (
+from dataflow.operators.filter import (
     AnswerNgramFilter
 )
 

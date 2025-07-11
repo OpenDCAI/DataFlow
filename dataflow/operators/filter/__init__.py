@@ -5,6 +5,7 @@ from dataflow.utils.registry import LazyLoader
 # from .AgenticRAG import *
 cur_path = "dataflow/operators/filter/"
 _import_structure = {
+    # GeneralText
     # Primary filters
     "NgramFilter": (cur_path + "GeneralText/ngram_filter.py", "NgramFilter"),
     "LanguageFilter": (cur_path + "GeneralText/language_filter.py", "LanguageFilter"),
@@ -57,13 +58,17 @@ _import_structure = {
     "SemDeduplicator": (cur_path + "GeneralText/sem_deduplicator.py", "SemDeduplicator"),
     "SimHashDeduplicator": (cur_path + "GeneralText/simhash_deduplicator.py", "SimHashDeduplicator"),
 
-    # "AnswerFormatterFilter": (cur_path + "GeneralText/Reasoning/answer_formatter_filter.py", "AnswerFormatterFilter"),
-    # "AnswerGroundTruthFilter": (cur_path + "GeneralText/Reasoning/answer_groundtruth_filter.py", "AnswerGroundTruthFilter"),
-    # "AnswerJudger_Mathverify": (cur_path + "GeneralText/Reasoning/answer_judger_mathverify.py", "AnswerJudger_Mathverify"),
-    # "AnswerNgramFilter": (cur_path + "GeneralText/Reasoning/answer_ngram_filter.py", "AnswerNgramFilter"),
-    # "AnswerPipelineRoot": (cur_path + "GeneralText/Reasoning/answer_pipeline_root.py", "AnswerPipelineRoot"),
-    # "AnswerTokenLengthFilter": (cur_path + "GeneralText/Reasoning/answer_token_length_filter.py", "AnswerTokenLengthFilter"),
-    # "QuestionFilter": (cur_path + "GeneralText/Reasoning/question_filter.py", "QuestionFilter"),
+    # Reasoning
+    "AnswerFormatterFilter": (cur_path + "Reasoning/answer_formatter_filter.py", "AnswerFormatterFilter"),
+    "AnswerGroundTruthFilter": (cur_path + "Reasoning/answer_groundtruth_filter.py", "AnswerGroundTruthFilter"),
+    "AnswerJudger_MathVerify": (cur_path + "Reasoning/answer_judger_mathverify.py", "AnswerJudger_MathVerify"),
+    "AnswerNgramFilter": (cur_path + "Reasoning/answer_ngram_filter.py", "AnswerNgramFilter"),
+    "AnswerPipelineRoot": (cur_path + "Reasoning/answer_pipeline_root.py", "AnswerPipelineRoot"),
+    "AnswerTokenLengthFilter": (cur_path + "Reasoning/answer_token_length_filter.py", "AnswerTokenLengthFilter"),
+    "QuestionFilter": (cur_path + "Reasoning/question_filter.py", "QuestionFilter"),
+    
+    # AgenticRAG
+    "ContentChooser": (cur_path + "AgenticRAG/content_chooser.py", "ContentChooser")
 }
 
 sys.modules[__name__] = LazyLoader(__name__, "dataflow/operators/filter/", _import_structure)

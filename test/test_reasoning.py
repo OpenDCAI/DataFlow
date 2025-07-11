@@ -1,12 +1,12 @@
 import pytest
-from dataflow.operators.generate.Reasoning import (
+from dataflow.operators.generate import (
     QuestionCategoryClassifier,
     QuestionDifficultyClassifier,
     QuestionGenerator,
     AnswerGenerator,
 )
 
-from dataflow.operators.filter.Reasoning import *
+from dataflow.operators.filter import *
 from dataflow.utils.storage import FileStorage
 from dataflow.serving import APILLMServing_request, LocalModelLLMServing
 from dataflow.core import LLMServingABC

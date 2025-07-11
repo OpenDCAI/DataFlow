@@ -40,9 +40,9 @@ _import_structure = {
     "BERTScorer": (cur_path + "GeneralText/gen/bert_scorer.py", "BERTScorer"),
 
     # Reasoning (额外添加的 Reasoning 模块，如不需要可移除)
-    # "CategoryInfo": (cur_path + "Reasoning/category_info.py", "CategoryInfo"),
-    # "DifficultyInfo": (cur_path + "Reasoning/difficulty_info.py", "DifficultyInfo"),
-    # "ToKenInfo": (cur_path + "Reasoning/TokenInfo.py", "token_info"),
+    "CategoryInfo": (cur_path + "Reasoning/category_info.py", "CategoryInfo"),
+    "DifficultyInfo": (cur_path + "Reasoning/difficulty_info.py", "DifficultyInfo"),
+    "ToKenInfo": (cur_path + "Reasoning/token_info.py", "ToKenInfo"),
 }
 
 sys.modules[__name__] = LazyLoader(__name__, "dataflow/operators/eval/", _import_structure)

@@ -1,5 +1,5 @@
 import os
-from dataflow.serving.APILLMServing_request import APILLMServing_request  # 根据你的实际路径修改
+from dataflow.serving import APILLMServing_request  # 根据你的实际路径修改
 
 
 def test_openai_serving():
