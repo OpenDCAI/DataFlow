@@ -2,22 +2,21 @@ from dataflow import get_logger
 from dataflow.core import OperatorABC
 from dataflow.utils.storage import DataFlowStorage
 from dataflow.utils.registry import OPERATOR_REGISTRY
-from dataflow.operators.eval.GeneralText import NgramScorer
+from dataflow.operators.eval.GeneralText import TextbookScorer
 
 @OPERATOR_REGISTRY.register()
-class NgramFilter(OperatorABC):
+class TextbookFilter(OperatorABC):
 
-    def __init__(self, min_score=0.8, max_score=1, ngrams=5):
+    def __init__(self, min_score=0.99, max_score=1, model_cache_dir:str='./dataflow_cache'):
         self.logger = get_logger()
         self.min_score = min_score
         self.max_score = max_score
-        self.scorer = NgramScorer(ngrams)
-        self.logger.info(f"Initializing {self.__class__.__name__} with min_scores: {self.min_score} and max_scores: {self.max_score}...")  
+        self.scorer = TextbookScorer(model_cache_dir=model_cache_dir)
+        self.logger.info(f"Initializing {self.__class__.__name__} with min_score = {min_score} and max_score = {max_score}")
 
-    def run(self, storage: DataFlowStorage, input_key: str, output_key: str='NgramScore'):
+    def run(self, storage: DataFlowStorage, input_key: str, output_key: str='TextbookScore'):
         self.input_key = input_key
         self.output_key = output_key
-        self.logger.info(f"Running {self.__class__.__name__} with input_key: {self.input_key} and output_key: {self.output_key}...")
         dataframe = storage.read("dataframe")
         scores = self.scorer.eval(dataframe, self.input_key)
         dataframe[self.output_key] = scores
