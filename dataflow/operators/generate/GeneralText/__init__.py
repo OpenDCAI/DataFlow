@@ -1,7 +1,7 @@
-from .PretrainGenerator import PretrainGenerator
-from .SupervisedFinetuneGenerator import SupervisedFinetuneGenerator
+from .pretrain_generator import PretrainGenerator
+from .sft_generator import SupervisedFinetuneGenerator
 
 __all__ = [
-    "PretrainGenerator",
-    "SupervisedFinetuneGenerator",
+    "pretrain_generator",
+    "sft_generator",
 ]
