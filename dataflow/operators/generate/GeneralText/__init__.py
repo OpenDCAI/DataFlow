@@ -1,5 +1,5 @@
-from .PretrainGenerator import PretrainGenerator
-from .SupervisedFinetuneGenerator import SupervisedFinetuneGenerator
+from .pretrain_generator import PretrainGenerator
+from .sft_generator import SupervisedFinetuneGenerator
 
 __all__ = [
     "PretrainGenerator",
