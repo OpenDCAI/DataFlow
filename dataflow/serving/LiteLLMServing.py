@@ -7,14 +7,6 @@ from tqdm import tqdm
 from dataflow.core import LLMServingABC
 from dataflow.logger import get_logger
 
-try:
-    import litellm
-except ImportError:
-    raise ImportError(
-        "litellm is not installed. Please install it with: "
-        "pip install open-dataflow[litellm] or pip install litellm"
-    )
-
 
 class LiteLLMServing(LLMServingABC):
     """
@@ -58,6 +50,16 @@ class LiteLLMServing(LLMServingABC):
             All configuration parameters are immutable after initialization.
             If you need different settings, create a new instance.
         """
+        
+        # Import litellm at initialization time to support lazy importing
+        try:
+            import litellm
+            self._litellm = litellm
+        except ImportError:
+            raise ImportError(
+                "litellm is not installed. Please install it with: "
+                "pip install open-dataflow[litellm] or pip install litellm"
+            )
         
         self.model = model
         self.api_base = api_base
@@ -193,7 +195,7 @@ class LiteLLMServing(LLMServingABC):
                 completion_params["api_version"] = self.api_version
                 
             # Make a minimal test call to validate setup
-            response = litellm.completion(**completion_params)
+            response = self._litellm.completion(**completion_params)
             self.logger.success("LiteLLM setup validation successful")
         except Exception as e:
             self.logger.error(f"LiteLLM setup validation failed: {e}")
@@ -240,7 +242,7 @@ class LiteLLMServing(LLMServingABC):
         last_error = None
         for attempt in range(retry_times):
             try:
-                response = litellm.completion(**completion_params)
+                response = self._litellm.completion(**completion_params)
                 # Convert response to dict format for format_response
                 response_dict = response.model_dump() if hasattr(response, 'model_dump') else response.dict()
                 return self.format_response(response_dict)
@@ -348,7 +350,7 @@ class LiteLLMServing(LLMServingABC):
             last_error = None
             for attempt in range(retry_times):
                 try:
-                    response = litellm.embedding(
+                    response = self._litellm.embedding(
                         input=[text],
                         **embedding_params
                     )
@@ -385,7 +387,7 @@ class LiteLLMServing(LLMServingABC):
     def get_supported_models(self) -> List[str]:
         """Get list of supported models for the current provider."""
         try:
-            return litellm.model_list
+            return self._litellm.model_list
         except Exception as e:
             self.logger.warning(f"Could not retrieve model list: {e}")
             return []
