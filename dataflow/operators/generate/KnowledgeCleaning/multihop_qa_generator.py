@@ -12,7 +12,7 @@ import json
 from tqdm import tqdm
 import re
 
-class MultiHopQAGenerator(OperatorABC):
+class multihop_qa_generator(OperatorABC):
     r"""A processor for generating multi-hop question-answer pairs from user
     data.
 
@@ -51,14 +51,14 @@ class MultiHopQAGenerator(OperatorABC):
         
         if lang == "zh":
             return (
-                "MultiHopQAGenerator 是多跳问答对生成处理器",
+                "multihop_qa_generator 是多跳问答对生成处理器",
                 "支持从文本数据自动生成需要多步推理的问题-答案对",
                 "包含文本预处理、信息抽取和智能问答生成全流程",
                 "支持配置语言模型服务及多种生成参数"
             )
         else:  # Default to English
             return (
-                "MultiHopQAGenerator processes text to create multi-hop QA pairs",
+                "multihop_qa_generator processes text to create multi-hop QA pairs",
                 "Automatically generates questions requiring multi-step reasoning",
                 "Handles full pipeline: text preprocessing, information extraction",
                 "and intelligent QA generation with configurable LLM backend"

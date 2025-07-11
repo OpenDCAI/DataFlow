@@ -8,9 +8,9 @@ from dataflow.core import OperatorABC
 from dataflow.core import LLMServingABC
 
 @OPERATOR_REGISTRY.register()
-class KnowledgeCleaner(OperatorABC):
+class knowledge_cleaner(OperatorABC):
     '''
-        KnowledgeCleaner is a class that cleans knowledge for RAG to make them more accurate, reliable and readable.
+        knowledge_cleaner is a class that cleans knowledge for RAG to make them more accurate, reliable and readable.
     '''
     def __init__(self, llm_serving: LLMServingABC, lang="en"):
         self.logger = get_logger()

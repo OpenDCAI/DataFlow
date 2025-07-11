@@ -1173,9 +1173,9 @@
     },
     {
       "node": 27,
-      "name": "CorpusTextSplitter",
+      "name": "corpus_text_splitter",
       "description": [
-        "CorpusTextSplitter是轻量级文本分割工具，",
+        "corpus_text_splitter是轻量级文本分割工具，",
         "支持词/句/语义/递归分块，",
         "可配置块大小、重叠和最小块长度"
       ],
@@ -1231,7 +1231,7 @@
     },
     {
       "node": 28,
-      "name": "KnowledgeExtractor",
+      "name": "knowledge_extractor",
       "description": "知识提取算子：支持从多种文件格式中提取结构化内容并转换为标准Markdown\n核心功能：\n1. PDF文件：使用MinerU解析引擎提取文本/表格/公式，保留原始布局\n2. Office文档(DOC/PPT等)：通过DocConverter转换为Markdown格式\n3. 网页内容(HTML/XML)：使用trafilatura提取正文并转为Markdown\n4. 纯文本(TXT/MD)：直接透传不做处理\n特殊处理：\n- 自动识别中英文文档(lang参数)\n- 支持本地文件路径和URL输入\n- 生成中间文件到指定目录(intermediate_dir)",
       "command": {
         "init": [
@@ -1270,7 +1270,7 @@
     },
     {
       "node": 29,
-      "name": "KnowledgeCleaner",
+      "name": "knowledge_cleaner",
       "description": "知识清洗算子：对原始知识内容进行标准化处理，包括HTML标签清理、特殊字符规范化、链接处理和结构优化，提升RAG知识库的质量。主要功能：\n1. 移除冗余HTML标签但保留语义化标签\n2. 标准化引号/破折号等特殊字符\n3. 处理超链接同时保留文本\n4. 保持原始段落结构和代码缩进\n5. 确保事实性内容零修改",
       "command": {
         "init": [

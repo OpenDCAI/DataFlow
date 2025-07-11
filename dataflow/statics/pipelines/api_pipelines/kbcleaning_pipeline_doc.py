@@ -1,8 +1,8 @@
 from dataflow.operators.generate.KnowledgeCleaning import (
-    CorpusTextSplitter,
-    KnowledgeExtractor,
-    KnowledgeCleaner,
-    MultiHopQAGenerator,
+    corpus_text_splitter,
+    knowledge_extractor,
+    knowledge_cleaner,
+    multihop_qa_generator,
 )
 from dataflow.utils.storage import FileStorage
 from dataflow.serving import APILLMServing_request
@@ -23,23 +23,23 @@ class KBCleaningPipeline():
                 max_workers=100
         )
 
-        self.knowledge_cleaning_step1 = KnowledgeExtractor(
+        self.knowledge_cleaning_step1 = knowledge_extractor(
             intermediate_dir="../example_data/KBCleaningPipeline/raw/",
             lang="ch"
         )
 
-        self.knowledge_cleaning_step2 = CorpusTextSplitter(
+        self.knowledge_cleaning_step2 = corpus_text_splitter(
             split_method="token",
             chunk_size=512,
             tokenizer_name="Qwen/Qwen2.5-7B-Instruct",
         )
 
-        self.knowledge_cleaning_step3 = KnowledgeCleaner(
+        self.knowledge_cleaning_step3 = knowledge_cleaner(
             llm_serving=api_llm_serving,
             lang="ch"
         )
 
-        self.knowledge_cleaning_step4 = MultiHopQAGenerator(
+        self.knowledge_cleaning_step4 = multihop_qa_generator(
             llm_serving=api_llm_serving,
             lang="ch"
         )

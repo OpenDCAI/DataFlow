@@ -1,8 +1,8 @@
 from dataflow.operators.generate.KnowledgeCleaning import (
-    CorpusTextSplitter,
-    KnowledgeExtractor,
-    KnowledgeCleaner,
-    MultiHopQAGenerator,
+    corpus_text_splitter,
+    knowledge_extractor,
+    knowledge_cleaner,
+    multihop_qa_generator,
 )
 from dataflow.utils.storage import FileStorage
 from dataflow.serving import LocalModelLLMServing_vllm
@@ -25,23 +25,23 @@ class KBCleaningPipeline():
             vllm_repetition_penalty=1.2
         )
 
-        self.knowledge_cleaning_step1 = KnowledgeExtractor(
+        self.knowledge_cleaning_step1 = knowledge_extractor(
             intermediate_dir="../example_data/KBCleaningPipeline/raw/",
             lang="en"
         )
 
-        self.knowledge_cleaning_step2 = CorpusTextSplitter(
+        self.knowledge_cleaning_step2 = corpus_text_splitter(
             split_method="token",
             chunk_size=512,
             tokenizer_name="Qwen/Qwen2.5-7B-Instruct",
         )
 
-        self.knowledge_cleaning_step3 = KnowledgeCleaner(
+        self.knowledge_cleaning_step3 = knowledge_cleaner(
             llm_serving=local_llm_serving,
             lang="en"
         )
 
-        self.knowledge_cleaning_step4 = MultiHopQAGenerator(
+        self.knowledge_cleaning_step4 = multihop_qa_generator(
             llm_serving=local_llm_serving,
             lang="en"
         )

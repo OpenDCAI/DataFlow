@@ -16,7 +16,7 @@ from dataflow.utils.storage import DataFlowStorage
 from dataflow.core import OperatorABC
 
 @OPERATOR_REGISTRY.register()
-class CorpusTextSplitter(OperatorABC):
+class corpus_text_splitter(OperatorABC):
     def __init__(self,
                  chunk_size: int = 512,
                  chunk_overlap: int = 50,
@@ -39,13 +39,13 @@ class CorpusTextSplitter(OperatorABC):
     def get_desc(lang: str = "zh"):
         if(lang=="zh"):
             return (
-                "CorpusTextSplitter是轻量级文本分割工具，",
+                "corpus_text_splitter是轻量级文本分割工具，",
                 "支持词/句/语义/递归分块，",
                 "可配置块大小、重叠和最小块长度",
             )
         elif(lang=="en"):
             return (
-                "CorpusTextSplitter is a lightweight text segmentation tool",
+                "corpus_text_splitter is a lightweight text segmentation tool",
                 "that supports multiple chunking methods",
                 "(token/sentence/semantic/recursive) with configurable size and overlap,",
                 "optimized for RAG applications."
