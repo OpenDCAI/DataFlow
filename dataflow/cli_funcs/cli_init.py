@@ -20,6 +20,12 @@ def _copy_pipelines():
     copy_files_recursively(DataFlowPath.get_dataflow_pipelines_dir(), target_dir)
     # Copy pipelines
 
+def _copy_playground():
+    target_dir = os.getcwd()
+    if not os.path.exists(target_dir):
+        os.makedirs(target_dir)
+    copy_files_recursively(DataFlowPath.get_dataflow_playground_dir(), target_dir)
+
 def _copy_examples():
     target_dir = os.path.join(os.getcwd(), "example_data")
     if not os.path.exists(target_dir):
@@ -33,7 +39,7 @@ def cli_init(subcommand):
     if subcommand == "base":
         _copy_pipelines()
         _copy_examples()
-        
+        _copy_playground()
     # if subcommand == "model_zoo":
     #     _copy_train_scripts()
     #     _copy_demo_runs() 
