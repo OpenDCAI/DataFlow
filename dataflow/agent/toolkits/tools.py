@@ -37,7 +37,6 @@ import subprocess
 from collections import defaultdict, deque
 from dataflow.utils.storage import FileStorage
 from .pipeline_processor import local_tool_for_update_operators_info
-# from .logger import get_logger
 from dataflow import get_logger
 logger = get_logger()
 from dataflow.cli_funcs.paths import DataFlowPath
@@ -59,21 +58,23 @@ class GlobalVariables(BaseModel):
 class ChatAgentRequest(BaseModel):
     user_id: Optional[int] = None
     target: str = ""
-    api_key:str = ""
-    chat_api_url:str = ""
+    api_key: str = ""
+    chat_api_url: str = ""
     model: Optional[str] = None
-    kb_id: Optional[str] = None
-    temperature: Optional[float] = None
-    max_tokens: Optional[int] = None
-    language: Optional[str] = None
     sessionKEY: str
-    json_file: str
-    py_path: str
-    execute_the_pipeline: bool
-    use_local_model: bool
-    local_model_name_or_path: str
-    timeout: int
-    max_debug_round: int
+    timeout: int = 3600
+    max_debug_round: int = 1
+    language: Optional[str] = "zh"
+
+    # —— pipeline 场景独有 ——
+    json_file: Optional[str] = None
+    py_path: Optional[str] = None
+    execute_the_pipeline: bool = False
+    use_local_model: bool = False
+    local_model_name_or_path: Optional[str] = None
+
+    # —— operator 场景独有 ——
+    execute_the_operator: bool = False
 
 
 class ChatResponse(BaseModel):
@@ -170,7 +171,7 @@ def get_kb_content(request: ChatAgentRequest) -> Optional[Any]:
         print(f"Error: An unknown error occurred: {e}")
     return None
 
-def get_operator_content(request: Any, data_key: Union[Dict[str, Any], List[Dict[str, Any]]]) -> Any:
+def get_operator_content(request: Any, data_key: Union[Dict[str, Any], List[Dict[str, Any]]], keep_keys = None) -> Any:
     """
     Retrieve operator content from the configuration file based on the data key.
     """
@@ -204,6 +205,18 @@ def get_operator_content(request: Any, data_key: Union[Dict[str, Any], List[Dict
         print(f"Error: Unable to parse JSON file {file_path}!")
         return None
     result = operator_content.get(subtype)
+    # KEEP_KEYS = {
+    #     "node",
+    #     "name",
+    #     "type",
+    #     "description",
+    #     "command",
+    # }
+    if keep_keys is not None:
+        KEEP_KEYS = keep_keys
+        result = [
+            {k: op.get(k) for k in KEEP_KEYS} for op in result
+        ]
     if result is None:
         print(f"Warning: Key '{subtype}' not found in Operator.json; available keys: {list(operator_content.keys())}")
     return result
@@ -252,8 +265,8 @@ def get_operator_content_map_from_all_operators(
     # if subtype == "MIXTURE":
     #     result = get_operator_descriptions("dataflow")
     #     return result
-    base_dir = os.path.dirname(os.path.abspath(__file__))
-    file_path = os.path.join(base_dir, "resources", "Operator_patched.json")
+    # base_dir = os.path.dirname(os.path.abspath(__file__))
+    file_path = os.path.join(parent_dir, "resources", "Operator_patched.json")
     try:
         with open(file_path, "r", encoding="utf-8") as f:
             operator_content = json.load(f)
@@ -326,21 +339,6 @@ def get_operator_descriptions(root_package: str = "dataflow",
         return None
     # 2. 生成描述 ------------------------------------------------------
     desc_list: List[Dict[str, Any]] = []
-    # for idx, cls in enumerate(operator_classes, 1):
-    #     try:
-    #         desc = cls.get_desc(lang)
-    #     except Exception as e:
-    #         # 调用失败直接跳过，不写入结果
-    #         print(f"[Skip] {cls.__name__}: {e}")
-    #         continue
-
-    #     desc_list.append(
-    #         {
-    #             "node": idx,
-    #             "name": cls.__name__,
-    #             "description": desc,
-    #         }
-    #     )
     for idx, cls in enumerate(operator_classes, 1):
         desc = _call_get_desc_static(cls, lang)
         if desc is None:

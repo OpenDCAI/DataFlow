@@ -32,7 +32,7 @@ from ..toolkits import (
     ChatAgentRequest,
     local_tool_for_sample
 )
-from typing import Dict, List, Any
+from typing import Dict, List, Any,Iterable,Sequence
 import yaml
 import json
 import re
@@ -57,7 +57,13 @@ from dataclasses import dataclass
 from typing import Any, Dict
 import textwrap
 import shutil
-
+from rich.console import Console
+from rich.live import Live
+from rich.spinner import Spinner
+from rich.text import Text
+console = Console()
+from dataflow.cli_funcs.paths import DataFlowPath
+DATAFLOW_PATH = DataFlowPath.get_dataflow_dir()
 @dataclass
 class SandboxResult:
     success: bool
@@ -67,20 +73,56 @@ class SandboxResult:
     traceback: str = ""
     exc_repr: str = ""
     duration: float = 0.0
+# wanted_ref_file
+def _normalise_wanted_ref_files(
+    wanted_ref_files: str | Path | Iterable[str | Path] | None,
+) -> list[str]:
+    if not wanted_ref_files:      # None, '' 等
+        return []
+    if isinstance(wanted_ref_files, (str, Path)):
+        raw: Sequence[str | Path]
+        if isinstance(wanted_ref_files, str) and wanted_ref_files.strip().startswith(("[", "(")):
+            try:
+                raw = ast.literal_eval(wanted_ref_files)
+                if isinstance(raw, (str, bytes)):    
+                    raw = [raw]
+            except Exception:
+                raw = [wanted_ref_files]
+        else:
+            raw = [wanted_ref_files]
+    else:
+        raw = list(wanted_ref_files)          
+    basenames: list[str] = []
+    for item in raw:
+        if not item:
+            continue
+        basenames.append(Path(str(item)).name)
+    seen: set[str] = set()
+    return [x for x in basenames if not (x in seen or seen.add(x))]
 
-TRACEBACK_FILE_RE = re.compile(r'File "([^"]+\.py)", line (\d+)')
+def _extract_deepest_frame_source(
+    wanted_ref_files: Iterable[str] | str | Path | None = None,
+) -> str:
+    # ---------- 兼容性增强部分 ----------
+    wanted_basenames: list[str] = _normalise_wanted_ref_files(wanted_ref_files)
+    if not wanted_basenames:
+        return ""
+    dataflow_path = DATAFLOW_PATH.expanduser().resolve()
+    merged_source: list[str] = []
+    for basename in wanted_basenames:
+        try:
+            file_path = next(dataflow_path.rglob(basename))
+        except StopIteration:
+            continue
 
-def _extract_deepest_frame_source(tb: str) -> str:
-    matches = TRACEBACK_FILE_RE.findall(tb)
-    if not matches:
-        return ""
-    deepest_file = Path(matches[-1][0])          # 最后一帧的文件
-    if not deepest_file.exists():
-        return ""
-    try:
-        return deepest_file.read_text(encoding="utf-8")
-    except Exception:
-        return ""
+        try:
+            merged_source.append(file_path.read_text(encoding="utf-8"))
+        except Exception:
+            continue
+    if merged_source:
+        separator = "\n\n# " + "\n\n# ".join("=" * 80 for _ in merged_source) + "\n\n"
+        return separator.join(merged_source)
+    return ""
 
 class Tee(io.TextIOBase):
     def __init__(self, *targets):
@@ -778,13 +820,22 @@ class ExecutionAgent:
         If the script does not exist yet, run as a normal function first,
         wait for the script to be generated, and then switch to script debugging mode.
         """
+
         # ───────── 0. Preprocess script path ─────────
         py_file: Path | None = None
         if is_debug_subprocess_code:
+            import secrets
+            orig_path = Path(call_args["request"].py_path)          # recommend_pipeline.py
+            token     = secrets.token_hex(8)                        # 8-char hex
+            new_path  = orig_path.with_name(f"{orig_path.stem}_{token}{orig_path.suffix}")
+            if orig_path.exists():
+                shutil.copy(orig_path, new_path) 
+                logger.info(f'[copy to new_path]: {new_path}')
+                call_args["request"].py_path = new_path
             py_path: str | None = call_args.get("request").py_path
+            py_file = Path(py_path)
             if not py_path:
                 raise ValueError("call_args must include the 'py_path' field")
-            py_file = Path(py_path)
             if py_file.exists():
                 code_src = py_file.read_text(encoding="utf-8")
             else:
@@ -798,21 +849,23 @@ class ExecutionAgent:
         else:
             code_src = inspect.getsource(tool_func)
 
-        logger.info(f"[first code src (truncated)]: {code_src[:800]} ...")
-
+        logger.info(f"[first code src (truncated)]: {code_src[:1000]} ...")
+        wanted_ref_file = []
         current_round = 0
         while current_round <= max_debug_rounds:
             logger.info(f"[current_round]: in debug round {current_round} ......")
 
-            # Inject sandbox mark to avoid repeated script overwriting
-            call_args["is_in_debug_process"] = True
+            spinner = Spinner("dots", text=Text(f" Debugging round {current_round}  ", style="bold green"))
+            with Live(spinner, console=console, refresh_per_second=12):
+                # ───────── 1. Isolated execution ─────────
+                call_args["is_in_debug_process"] = True      # Inject sandbox mark
+                call_args['current_round'] = current_round
+                result = run_function_isolated(
+                    tool_func,
+                    kwargs=call_args,
+                    timeout=timeout,
+                )
 
-            # ───────── 1. Isolated execution ─────────
-            result = run_function_isolated(
-                tool_func,
-                kwargs=call_args,
-                timeout=timeout,
-            )
             logger.info(
                 "[run_function_isolated result]:\n"
                 f"[traceback]: {result.traceback}\n"
@@ -820,7 +873,9 @@ class ExecutionAgent:
                 f"[stderr]: {result.stderr}"
             )
             if result.success:
+                console.print("✅  Debug finished, function succeeded\n", style="bold green")
                 return result
+
             # ───────── 2. If the script was just generated, switch debug target ─────────
             if (
                 not is_debug_subprocess_code          # still in function mode
@@ -833,31 +888,30 @@ class ExecutionAgent:
 
             # ───────── 3. Call LLM to fix ─────────
             try:
-                cls_detail_code = _extract_deepest_frame_source(result.traceback)
-
+                cls_detail_code = _extract_deepest_frame_source(wanted_ref_file)
                 data_keys = local_tool_for_sample(
                     call_args["request"], sample_size=1, use_file_sys=1, only_keys=True
                 )
-
                 response_content = await self.debug_agent.debug_pipeline_tool_code(
-                    template_name="task_prompt_for_pipeline_code_debug",
-                    code=textwrap.dedent(code_src),
-                    error=result.traceback,
-                    cls_detail_code=cls_detail_code,
-                    history=history,
-                    data_keys=data_keys,
+                    template_name   = "task_prompt_for_pipeline_code_debug",
+                    code            = textwrap.dedent(code_src),
+                    error           = result.traceback,
+                    cls_detail_code = cls_detail_code,
+                    history         = history,
+                    data_keys       = data_keys,
                 )
-                
                 json_content = self.robust_parse_json(response_content)
                 fixed_code: str | None = json_content.get("code")
+                wanted_ref_file = json_content.get("wanted_ref_file")
                 logger.info(f"[fixed_code]:\n{fixed_code}")
-                logger.warning(f"\n -------[debug agent origin resp]------- \n  {json_content.get('reason')}")
+                logger.warning(f"\n -------[debug agent origin resp]------- \n  {json_content.get('reason')} \n {json_content.get('wanted_ref_file')}")
                 if not fixed_code:
                     raise ValueError("No 'code' field in LLM response content")
-
             except Exception as e:
                 logger.error(f"DebugAgent call failed: {e}")
                 return result
+
+            # ───────── 4. Apply the LLM-repaired code ─────────
             try:
                 if is_debug_subprocess_code:
                     compile(fixed_code, str(py_file), "exec")
@@ -877,6 +931,11 @@ class ExecutionAgent:
             except Exception as e:
                 logger.error(f"Failed to apply LLM fixed code: {e}")
                 return result
+
             current_round += 1
-        logger.error("Reached max rounds of repair, still failed, please intervene manually.")
+
+        logger.error("[!!!Debug Error!!!]:\n Reached max rounds of repair, still failed, please intervene manually.")
         return result
+    
+# if __name__=="__main__":
+#     print(_extract_deepest_frame_source("['tools.py','task_definitions.py']"))

@@ -20,7 +20,7 @@ Thread-safety: DebugAgent instances are not inherently thread-safe and should be
 """
 import json
 import requests
-from typing import Dict, Any
+from typing import Dict, Any,List
 
  
 
@@ -33,22 +33,22 @@ from dataflow import get_logger
 logger = get_logger()
 
 class DebugAgent:
-    def __init__(self, task:Task,memory_entity:Memory,request:ChatAgentRequest):
-        self.task = task
+    def __init__(self, task_chain:List[Task], memory_entity:Memory, request:ChatAgentRequest):
+        self.task_chain = task_chain
+        self.task = self.task_chain[-1]
         self.headers = {
             "Authorization": f"Bearer {self.task.api_key}",
             "Content-Type": "application/json"
         }
         self.memory = memory_entity
         self.client = MemoryClient(self.memory)
-        self.prompt_generator = task.prompts_template
+        self.prompt_generator = self.task.prompts_template
         self.json_template_prompts = self.prompt_generator.json_form_templates
         self.request = request
-        self.json_template_keys = {} #跟任务绑定固定的模板
-        # 在通过Tool做最后处理
+        self.json_template_keys = {}
     async def llm_caller(self,prompts:str):
         json_data = {
-            "model": self.task.modelname,
+            "model": 'o3',
             "messages": [
                 {"role": "system", "content": "你是一个python代码debug专家"},
                 {"role": "user", "content": prompts}
@@ -78,7 +78,12 @@ class DebugAgent:
         return prompt
     
     async def debug_pipeline_tool_code(self, template_name, code, error, cls_detail_code, history, data_keys):
-        prompt = self.prompt_generator.render_code_debug(template_name,code = code,error = error ,cls_detail_code = cls_detail_code,history = history,data_keys = data_keys)
+        prompt = self.prompt_generator.render_code_debug(template_name,
+                                                         code = code,
+                                                         error = error ,
+                                                         cls_detail_code = cls_detail_code,
+                                                         history = history,
+                                                         data_keys = data_keys)
         debug_info = await self.llm_caller(prompt)
         return debug_info
 

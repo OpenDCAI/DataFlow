@@ -1,6 +1,6 @@
 """
 analysis_service.py  ── Analysis service for multi-step conversation & task chain
-Author  : Zhou Liu
+Author  : [Zhou Liu]
 License : MIT
 Created : 2024-06-25
 
@@ -32,6 +32,7 @@ from ..servicemanager.memory_service import Memory
 from ..agentrole.analyst import AnalystAgent
 from ..agentrole.executioner import ExecutionAgent
 from ..agentrole.debugger import DebugAgent
+from ..taskcenter import TaskChainConfig
 import yaml
 import os
  
@@ -48,7 +49,11 @@ class Config:
                 "Content-Type": "application/json"
             }
 class AnalysisService:
-    def __init__(self, tasks: list, memory_entity: Memory, request: ChatAgentRequest,execution_agent:ExecutionAgent):
+    def __init__(self, tasks: list, 
+                 memory_entity: Memory, 
+                 request: ChatAgentRequest,
+                 execution_agent:ExecutionAgent,
+                 cfg: TaskChainConfig):
         self.config = Config(request)
         self.memory = memory_entity
         self.request = request
@@ -60,9 +65,12 @@ class AnalysisService:
         else:
             self.tasks = tasks
         self.prompt_template_generator = self.tasks[-1].prompts_template
-        # self.debug_agent = DebugAgent(self.tasks[-1], self.memory, request=self.request)
         self.debug_agent = execution_agent.debug_agent
         self.execution_agent = execution_agent
+        self.cfg =  cfg
+        self.post_porcess_args = {
+            'request': self.request
+        }
 
     async def process_request(self):
 
@@ -79,28 +87,41 @@ class AnalysisService:
             return await self._process_with_task_chain(self.request, session_id)
 
     async def _process_with_history(self, request, session_id, history):
-        self.memory.add_messages(session_id, [{"role": "user", "content": request.target}])
-        payload = self._build_history_payload(request, history)
-        content = await self._call_llm_api(payload)
-        logger.debug(f"json解析之前的内容：{content}")
+        # Add the user’s latest input to the session memory
+        self.memory.add_messages(
+            session_id,
+            [{"role": "user", "content": request.target}]
+        )
+        payload  = self._build_history_payload(request, history)
+        content  = await self._call_llm_api(payload)
+        logger.debug(f"Content before JSON parsing: {content}")
         context_json = self._safe_parse_json(content)
         if self.debug_agent:
-            logger.debug(f"context_json处理之前的内容：{context_json}")
-            context_json = await self.debug_agent.debug_form(self.tasks[-1].task_name,context_json)
-            logger.debug(f"context_json处理之后的内容：{context_json}")
+            logger.debug(f"context_json before processing: {context_json}")
+            context_json = await self.debug_agent.debug_form(
+                self.tasks[-1].task_name,
+                context_json
+            )
+            logger.debug(f"context_json after processing: {context_json}")
             context_json = self._safe_parse_json(context_json)
         context_json = self._post_process_result(context_json)
         self._update_memory(session_id, context_json)
-        # memory保存最新服务状态：
-        self.memory.save_object(session_id, 'service_state', {
-            "task_results": self.task_results,
-            "tasks": self.tasks,
-        })
+        # Save the latest service state in memory
+        self.memory.save_object(
+            session_id,
+            "service_state",
+            {
+                "task_results": self.task_results,
+                "tasks": self.tasks,
+            }
+        )
         return self._build_response(context_json, content, "ChatAgent")
 
     async def _process_with_task_chain(self, request, session_id):
         last_result = None
-        for task in self.tasks:
+        idx = 0
+        while idx < len(self.tasks):
+            task = self.tasks[idx]
             task.pre_task_result = last_result  
             # task.task_params = generate_pre_task_params(
             #     system_template=task.system_template,
@@ -111,7 +132,6 @@ class AnalysisService:
             #     memory=self.memory,
             #     extral_param = task.tool_call_map
             # )
-            
             task.task_params =await generate_pre_task_params_with_sandboxed_prompt_param_builder(
                 system_template=task.system_template,
                 task_template=task.task_template,
@@ -121,36 +141,45 @@ class AnalysisService:
                 memory=self.memory,
                 extral_param = task.tool_call_map,
                 execution_agent=self.execution_agent,
-                debuggable_tools={"local_tool_for_execute_the_recommended_pipeline":True},
+                debuggable_tools=self.cfg.debuggable_tools,
             )
             task.render_templates()
             agent = AnalystAgent(task, self.memory, self.debug_agent)
             formatted_context = await agent.generate_analysis_results(request)
             last_result = formatted_context
             self.task_results.append(last_result)
+            self.post_porcess_args['task_results'] = self.task_results
+            self.post_porcess_args['last_result'] = last_result
             if task.task_name == "conversation_router":
-                need_rec = formatted_context.get("need_recommendation", False)
-                # purpose = formatted_context.get("purpose","")
-                reply = formatted_context.get("assistant_reply", "")
+                need_rec           = formatted_context.get("need_recommendation",  False)
+                need_write_operator = formatted_context.get("need_write_operator", False)
+                reply              = formatted_context.get("assistant_reply",     "")
+
                 self.memory.add_messages(session_id, [
-                    {"role": "user", "content": request.target},
+                    {"role": "user",      "content": request.target},
                     {"role": "assistant", "content": formatted_context}
                 ])
-                self.memory.set_session_data(session_id, task.task_name ,last_result)
-                if not need_rec:
-                    self.memory.set_session_data(session_id, 'last_result', formatted_context)
-                    self.memory.set_session_data(session_id, task.task_name ,last_result)
+                self.memory.set_session_data(session_id, task.task_name, last_result)
+
+                if (not need_rec) and (not need_write_operator):
+                    self.memory.set_session_data(session_id, "last_result", formatted_context)
                     return self._build_response(
-                        context=formatted_context,
-                        response=reply,
-                        agent_name="ChatAgent"
+                        context  = formatted_context,
+                        response = reply or "ok",
+                        agent_name = "ChatAgent"
                     )
-                else:
-                    # self.tasks.pop(0)
-                    continue
+                if need_rec:
+                    valid_tasks = self.cfg.pipeline_tasks
+                if need_write_operator and not need_rec:
+                    valid_tasks = self.cfg.operator_tasks
+                self.tasks = [t for t in self.tasks if t.task_name in valid_tasks]
+                self.memory.set_session_data(session_id, "intent_router", formatted_context)
+                idx = 0 
+                continue
             # ---------- end router ----------
             if task.is_result_process:
-                last_result = task.task_result_processor(last_result, self.task_results)
+                last_result = task.task_result_processor(**self.post_porcess_args)
+            idx += 1
             logger.info(f"[The final execution result (the result passed to the next task)]:{last_result}")
             self.memory.set_session_data(session_id,f'{task.task_name}',last_result)
         self.memory.add_messages(session_id, [{"role": "user", "content": request.target}])

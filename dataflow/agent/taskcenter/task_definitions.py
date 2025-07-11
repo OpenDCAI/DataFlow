@@ -20,7 +20,17 @@ Thread-safety: Task registration is not thread-safe by default; use with care in
 """
 import os
 from .task_dispatcher import Task
-from ..toolkits import combine_pipeline_result,local_tool_for_get_purpose,local_tool_for_sample,get_operator_content,local_tool_for_get_chat_target,get_operator_content_map_from_all_operators,local_tool_for_get_chat_history,local_tool_for_execute_the_recommended_pipeline,local_tool_for_get_categories
+from ..toolkits import  (post_process_combine_pipeline_result,
+                         post_process_save_op_code,
+                        local_tool_for_get_purpose,
+                        local_tool_for_sample,get_operator_content,
+                        local_tool_for_get_chat_target,
+                        get_operator_content_map_from_all_operators,
+                        local_tool_for_get_chat_history,
+                        local_tool_for_execute_the_recommended_pipeline,
+                        local_tool_for_get_categories,
+                        local_tool_for_debug_and_exe_operator,
+                        local_tool_for_get_match_operator_code)
 from .task_reg import TaskRegistry
 from dataflow.cli_funcs.paths import DataFlowPath
 
@@ -69,13 +79,12 @@ def _make_recommendation_task(prompts_template,request):
         task_template="task_prompt_for_recommendation_inference_pipeline",
         param_funcs={
             "local_tool_for_sample": local_tool_for_sample,
-            # "operator": get_operator_content,
             "operator": get_operator_content_map_from_all_operators,
             "workflow_bg":local_tool_for_get_purpose
 
         },
         is_result_process=True,
-        task_result_processor = combine_pipeline_result,
+        task_result_processor = post_process_combine_pipeline_result,
         use_pre_task_result = True,
         task_name="recommendation_inference_pipeline"
     )
@@ -95,21 +104,53 @@ def _make_execute_the_recommended_pipeline(prompts_template,request):
         task_name="execute_the_recommended_pipeline"
     )
 
-# @TaskRegistry.register('operator_auto_update')
-# def _make_operator_auto_update(prompts_template):
-#     """
-#     算子自动更新任务生成器。
-#     你可以在 param_funcs 中添加各个算子的更新函数，
-#     比如 {"update_op1": func1, "update_op2": func2, …}
-#     """
-#     return Task(
-#         config_path=f'{yaml_dir}/TaskInfo.yaml',
-#         prompts_template=prompts_template,
-#         system_template="system_prompt_for_operator_auto_update",
-#         task_template="task_prompt_for_operator_auto_update",
-#         param_funcs={
-#             # TODO: 在这里填入算子更新所需的参数函数映射
-#             # 如 "refresh_operator_list": refresh_op_list_func,
-#             #    "generate_update_payload": make_payload_func
-#         }
-#     )
+@TaskRegistry.register('match_operator')
+def _make_match_operator(prompts_template,request):
+    return Task(
+        request           = request,
+        config_path       = f"{yaml_dir}/TaskInfo.yaml",  
+        prompts_template  = prompts_template,
+        system_template   = "system_prompt_for_match_operator",
+        task_template     = "task_prompt_for_match_operator",
+        param_funcs       = {
+            "get_operator_content": get_operator_content
+        },
+        is_result_process = False,   
+        use_pre_task_result = False, 
+        task_name         = "match_operator"
+    )
+
+@TaskRegistry.register('write_the_operator')
+def _make_write_and_exe_operator(prompts_template,request):
+    return Task(
+        request           = request,
+        config_path       = f"{yaml_dir}/TaskInfo.yaml",  
+        prompts_template  = prompts_template,
+        system_template   = "system_prompt_for_write_the_operator",
+        task_template     = "task_prompt_for_write_the_operator",
+        param_funcs       = {
+            "example": local_tool_for_get_match_operator_code,
+            "target": local_tool_for_get_purpose
+        },
+        is_result_process = True,
+        task_result_processor = post_process_save_op_code ,   # 结果后处理，存储；
+        use_pre_task_result = True, 
+        task_name         = "write_the_operator"
+    )
+
+@TaskRegistry.register('exe_and_debug_operator')
+def _make_exe_and_debug_operator(prompts_template,request):
+    return Task(
+        request           = request,
+        config_path       = f"{yaml_dir}/TaskInfo.yaml",  
+        prompts_template  = prompts_template,
+        system_template   = "system_prompt_for_exe_and_debug_operator",
+        task_template     = "task_prompt_for_exe_and_debug_operator",
+        param_funcs       = {
+            "local_tool_for_debug_and_exe_operator": local_tool_for_debug_and_exe_operator
+        },
+        is_result_process = False,   
+        use_pre_task_result = False, 
+        task_name         = "exe_and_debug_operator"
+    )
+

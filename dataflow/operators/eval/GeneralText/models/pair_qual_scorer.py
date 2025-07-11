@@ -6,6 +6,7 @@ from dataflow.utils.registry import OPERATOR_REGISTRY
 from dataflow.utils.storage import DataFlowStorage
 from tqdm import tqdm
 from dataflow.utils.utils import get_logger
+import numpy as np
 
 @OPERATOR_REGISTRY.register()
 class PairQualScorer(OperatorABC):

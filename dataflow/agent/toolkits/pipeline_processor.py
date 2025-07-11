@@ -24,6 +24,7 @@ from typing import List, Dict, Any, Type, Iterable, Tuple,Optional
 from dataflow.utils.registry import OPERATOR_REGISTRY
 from pathlib import Path
 import os
+from .tool_factory import TOOL
 from dataflow import get_logger
 logger = get_logger()
 
@@ -235,7 +236,8 @@ def _topological_sort(nodes: List[Dict[str, Any]],
     id2node = {n["id"]: n for n in nodes}
     indeg = defaultdict(int)
     graph = defaultdict(list)
-
+    # logger.info(f"[nodes]:{nodes}")
+    # logger.info(f"[edges]:{edges}")
     for e in edges:
         src, dst = e["source"], e["target"]
         graph[src].append(dst)
@@ -292,7 +294,7 @@ def generate_pipeline_py(
     ]
     extra_imports = [
         "from dataflow.utils.storage import FileStorage",
-        "from dataflow.llmserving import APILLMServing_request, LocalModelLLMServing",
+        "from dataflow.serving import APILLMServing_request, LocalModelLLMServing_vllm, LocalModelLLMServing_sglang",
     ]
 
     def _py_literal(val):
@@ -332,11 +334,11 @@ def generate_pipeline_py(
     if local:
         llm_block = f"""
         # -------- LLM Serving (Local) --------
-        llm_serving = LocalModelLLMServing(
-            model_name_or_path="{local_model_name_or_path}",
-            tensor_parallel_size=1,
-            max_tokens=8192,
-            model_source="local",
+        llm_serving = LocalModelLLMServing_vllm(
+            hf_model_name_or_path="{local_model_name_or_path}",
+            vllm_tensor_parallel_size=1,
+            vllm_max_tokens=8192,
+            hf_local_dir="local",
         )
         """
     else:
@@ -348,11 +350,11 @@ def generate_pipeline_py(
             max_workers=100,
         )
         # For local models, uncomment below
-        # llm_serving = LocalModelLLMServing(
-        #     model_name_or_path="{local_model_name_or_path}",
-        #     tensor_parallel_size=1,
-        #     max_tokens=8192,
-        #     model_source="local",
+        # llm_serving = LocalModelLLMServing_vllm(
+        #     hf_model_name_or_path="{local_model_name_or_path}",
+        #     vllm_tensor_parallel_size=1,
+        #     vllm_max_tokens=8192,
+        #     hf_local_dir="local",
         # )
         """
 
@@ -398,6 +400,7 @@ def generate_pipeline_py(
     py_path.write_text(code, encoding="utf-8")
     return code
 
+@TOOL(desc="生成pipeline代码并且执行")
 def local_tool_for_execute_the_recommended_pipeline(
     pre_task_result: Dict[str, Any],
     request,
@@ -405,6 +408,7 @@ def local_tool_for_execute_the_recommended_pipeline(
     # py_path: str = "recommend_pipeline.py",
     dry_run: bool = False,
     is_in_debug_process: bool = False,
+    current_round: int = 0
 ):
     """
     Generate and (optionally) execute the recommended pipeline.
@@ -412,7 +416,6 @@ def local_tool_for_execute_the_recommended_pipeline(
     directly read the existing file to avoid overwriting patched code during debugging.
     """
     py_file = Path(request.py_path)
-
     if is_in_debug_process and py_file.exists():
         code = py_file.read_text(encoding="utf-8")
         logger.info(f"Reusing existing pipeline file {request.py_path}")

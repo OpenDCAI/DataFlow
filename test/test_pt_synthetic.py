@@ -1,4 +1,4 @@
-from dataflow.operators.process.GeneralText import (
+from dataflow.operators.filter.GeneralText import (
     MinHashDeduplicator,
     LanguageFilter,
     ColonEndFilter,

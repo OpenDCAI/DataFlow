@@ -30,6 +30,10 @@ class DataFlowPath:
         return DataFlowPath.get_dataflow_statics_dir() / "pipelines"
     
     @staticmethod
+    def get_dataflow_playground_dir():
+        return DataFlowPath.get_dataflow_statics_dir() / "playground"
+    
+    @staticmethod
     def get_dataflow_agent_dir():
         return DataFlowPath.get_dataflow_dir() / "agent"
     

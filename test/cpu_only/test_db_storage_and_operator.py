@@ -1,10 +1,10 @@
 from dataflow.operators.db.db_operator import DBOperator
 
-from dataflow.utils.storage import DBStorage
+from dataflow.utils.storage import MyScaleDBStorage
 from dataflow.operators.generate.Reasoning import QuestionDifficultyClassifier
 class DBShowCasePipeline():
     def __init__(self):
-        self.storage = DBStorage()
+        self.storage = MyScaleDBStorage()
         self.operator_step1 = DBOperator("SELECT * FROM example_table")
         self.operator_step2 = QuestionDifficultyClassifier()
     def run(self):
