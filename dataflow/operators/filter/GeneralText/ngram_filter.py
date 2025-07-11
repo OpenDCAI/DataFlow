@@ -7,7 +7,7 @@ from dataflow.operators.eval.GeneralText import NgramScorer
 @OPERATOR_REGISTRY.register()
 class NgramFilter(OperatorABC):
 
-    def __init__(self, min_score=0.99, max_score=1, ngrams=5):
+    def __init__(self, min_score=0.8, max_score=1, ngrams=5):
         self.logger = get_logger()
         self.min_score = min_score
         self.max_score = max_score

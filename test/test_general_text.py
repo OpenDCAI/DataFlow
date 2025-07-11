@@ -1,4 +1,4 @@
-from dataflow.operators.process.GeneralText import LexicalDiversityFilter
+from dataflow.operators.filter.GeneralText import NgramHashDeduplicator
 from dataflow.utils.storage import FileStorage
 from dataflow.serving import APILLMServing_request
 import os
@@ -11,7 +11,7 @@ class TextPipeline():
             cache_type="jsonl",
         )
         self.model_cache_dir = './dataflow_cache'
-        self.processor = LexicalDiversityFilter()
+        self.processor = NgramHashDeduplicator()
 
     def forward(self):
         self.processor.run(

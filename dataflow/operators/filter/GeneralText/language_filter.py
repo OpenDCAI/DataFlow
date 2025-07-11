@@ -45,7 +45,6 @@ class LanguageFilter(OperatorABC):
             top_labels = [label for label, score in label_score_pairs]
             predictions.append(any(label in self.allowed_languages for label in top_labels))
 
-        self.logger.info(f"Finished processing. Saving results...")
         return np.array(predictions).astype(int)
 
     def run(self, storage: DataFlowStorage, input_key: str, output_key: str='language_label'):
