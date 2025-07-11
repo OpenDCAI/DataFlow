@@ -22,7 +22,7 @@ class GPT_generator():
         # Initial filters
         self.prompt_generator.run(
             storage = self.storage.step(),
-            system_prompt = "请帮我翻译这段文字",
+            system_prompt = "Please translate to Chinese.",
             input_key = "raw_content",
         )
 

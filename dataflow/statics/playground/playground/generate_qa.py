@@ -5,7 +5,7 @@ from dataflow.utils.storage import FileStorage
 class GPT_generator():
     def __init__(self):
         self.storage = FileStorage(
-            first_entry_file_name="./dataflow/example/GeneralTextPipeline/math_100.jsonl",
+            first_entry_file_name="../../example/GeneralTextPipeline/math_100.jsonl",
             cache_path="./cache",
             file_name_prefix="math_QA",
             cache_type="jsonl",
