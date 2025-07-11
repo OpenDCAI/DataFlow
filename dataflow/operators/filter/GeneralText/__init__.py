@@ -1,23 +1,23 @@
-from .filters.ngram_filter import NgramFilter
-from .filters.language_filter import LanguageFilter
-from .filters.deita_quality_filter import DeitaQualityFilter
-from .filters.deita_complexity_filter import DeitaComplexityFilter
-from .filters.instag_filter import InstagFilter
-from .filters.pair_qual_filter import PairQualFilter
-from .filters.qurating_filter import QuratingFilter
-from .filters.superfiltering_filter import SuperfilteringFilter
-from .filters.fineweb_edu_filter import FineWebEduFilter
-from .filters.text_book_filter import TextbookFilter
-from .filters.alpagasus_filter import AlpagasusFilter
-from .filters.debertav3_filter import DebertaV3Filter
-from .filters.langkit_filter import LangkitFilter
-from .filters.lexical_diversity_filter import LexicalDiversityFilter
-from .filters.perplexity_filter import PerplexityFilter
-from .filters.perspective_filter import PerspectiveFilter
-from .filters.presidio_filter import PresidioFilter
-from .filters.reward_model_filter import RMFilter
-from .filters.treeinstruct_filter import TreeinstructFilter
-from .filters.heuristics import (
+from .ngram_filter import NgramFilter
+from .language_filter import LanguageFilter
+from .deita_quality_filter import DeitaQualityFilter
+from .deita_complexity_filter import DeitaComplexityFilter
+from .instag_filter import InstagFilter
+from .pair_qual_filter import PairQualFilter
+from .qurating_filter import QuratingFilter
+from .superfiltering_filter import SuperfilteringFilter
+from .fineweb_edu_filter import FineWebEduFilter
+from .text_book_filter import TextbookFilter
+from .alpagasus_filter import AlpagasusFilter
+from .debertav3_filter import DebertaV3Filter
+from .langkit_filter import LangkitFilter
+from .lexical_diversity_filter import LexicalDiversityFilter
+from .perplexity_filter import PerplexityFilter
+from .perspective_filter import PerspectiveFilter
+from .presidio_filter import PresidioFilter
+from .reward_model_filter import RMFilter
+from .treeinstruct_filter import TreeinstructFilter
+from .heuristics import (
     ColonEndFilter,
     WordNumberFilter,
     BlocklistFilter,
@@ -41,12 +41,12 @@ from .filters.heuristics import (
     LineWithJavascriptFilter
 )
 
-from .deduplicators.minhash_deduplicator import MinHashDeduplicator
-from .deduplicators.ccnet_deduplicator import CCNetDeduplicator
-from .deduplicators.hash_deduplicator import HashDeduplicator
-from .deduplicators.ngramhash_deduplicator import NgramHashDeduplicator
-from .deduplicators.sem_deduplicator import SemDeduplicator
-from .deduplicators.simhash_deduplicator import SimHashDeduplicator
+from .minhash_deduplicator import MinHashDeduplicator
+from .ccnet_deduplicator import CCNetDeduplicator
+from .hash_deduplicator import HashDeduplicator
+from .ngramhash_deduplicator import NgramHashDeduplicator
+from .sem_deduplicator import SemDeduplicator
+from .simhash_deduplicator import SimHashDeduplicator
 
 __all__ = [
     'AlpagasusFilter',
