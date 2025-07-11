@@ -139,7 +139,10 @@ We fine-tuned the Qwen2.5-Coder-14B model on the Bird dataset using both Supervi
   <img src="./static/images/text2sql.png" width="60%">
 </div>
 
-## 🤝 6. Community & Support
+## 💐 6. Acknowledgements
+We sincerely appreciate [MinerU](https://github.com/opendatalab/MinerU)'s outstanding contribution, particularly its robust text extraction capabilities from PDFs and documents, which greatly facilitates data loading.
+
+## 🤝 7. Community & Support
 Join the DataFlow open-source community to ask questions, share ideas, and collaborate with other developers!
 
 •	📮 [GitHub Issues](../../issues): Report bugs or suggest features
@@ -152,7 +155,7 @@ Join the DataFlow open-source community to ask questions, share ideas, and colla
   <img src="./static/images/community_en.jpg" width="60%">
 </div>
 
-## 📜 7. Citation
+## 📜 8. Citation
 If you use DataFlow in your research, feel free to give us a cite.
 ```bibtex
 @misc{dataflow2025,
@@ -164,7 +167,7 @@ If you use DataFlow in your research, feel free to give us a cite.
 }
 ```
 
-## 📊 8. Statistics
+## 📊 9. Statistics
 <div align="center">
   <a href="https://star-history.com/#OpenDCAI/DataFlow&Date">
     <picture>
@@ -179,8 +182,8 @@ If you use DataFlow in your research, feel free to give us a cite.
 ---
 <div align="center">
   <sub>
-    Developed and maintained by the 
-    <a href="https://zwt233.github.io/" target="_blank"><strong>PKU-DCAI Research Team</strong></a> ❤️ <br>
-    Connect with us on Xiaohongshu: <strong>26133106768</strong>
+    Connect with the 
+    <a href="https://zwt233.github.io/" target="_blank"><strong>PKU-DCAI Research Team</strong></a> 
+    on Xiaohongshu: <strong>26133106768</strong>
   </sub>
 </div>

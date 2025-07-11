@@ -7,7 +7,7 @@ class Text2SQLPipeline():
     def __init__(self,llm_serving=None):
 
         self.storage = FileStorage(
-            first_entry_file_name="../dataflow/example/Text2SQLPipeline/pipeline.json",
+            first_entry_file_name="DataFlow/dataflow/example/GeneralTextPipeline/translation.jsonl",
             cache_path="./cache",
             file_name_prefix="dataflow_cache_step",
             cache_type="jsonl",
