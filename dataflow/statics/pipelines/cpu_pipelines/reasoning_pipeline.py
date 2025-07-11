@@ -1,4 +1,4 @@
-from dataflow.operators.process.Reasoning import (
+from dataflow.operators.filter.Reasoning import (
     AnswerFormatterFilter,
     AnswerGroundTruthFilter,
     AnswerNgramFilter,
