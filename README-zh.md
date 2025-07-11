@@ -139,7 +139,10 @@ You are using the latest version: 1.0.0.
   <img src="./static/images/text2sql.png" width="60%">
 </div>
 
-## 🤝 6. 社区与支持
+## 💐 6. 致谢
+我们衷心感谢 [MinerU](https://github.com/opendatalab/MinerU) 的卓越工作，其强大的 PDF/文档文本提取功能为数据加载提供了关键支持。
+
+## 🤝 7. 社区与支持
 
 欢迎加入 DataFlow 开源社区，提出问题、分享想法、与其他开发者一起共建项目！
 
@@ -153,7 +156,7 @@ You are using the latest version: 1.0.0.
   <img src="./static/images/community_ch.jpg" width="60%">
 </div>
 
-## 📜 7. 引用
+## 📜 8. 引用
 
 如果 DataFlow 对你的研究或项目有帮助，欢迎引用支持我们：
 
@@ -167,7 +170,7 @@ You are using the latest version: 1.0.0.
 }
 ```
 
-## 📊 8. 统计信息
+## 📊 9. 统计信息
 <div align="center">
   <a href="https://star-history.com/#OpenDCAI/DataFlow&Date">
     <picture>
@@ -183,8 +186,7 @@ You are using the latest version: 1.0.0.
 
 <div align="center">
   <sub>
-    由  
-    <a href="https://zwt233.github.io/" target="_blank"><strong>PKU-DCAI 研究团队</strong></a> ❤️ 开发与维护 <br>
-    欢迎关注课题组小红书账号：<strong>26133106768</strong>
+    想了解更多？欢迎关注我们
+    <a href="https://zwt233.github.io/" target="_blank"><strong>PKU-DCAI 课题组</strong></a>，小红书账号：<strong>26133106768</strong>
   </sub>
 </div>
