@@ -37,6 +37,7 @@ jobs:
         pip install wheel
         pip install -r requirements.txt
         pip install -e .[vllm]
+        pip install -e .[litellm]
 
     - name: Run tests on Windows
       if: startsWith(matrix.os, 'windows')
