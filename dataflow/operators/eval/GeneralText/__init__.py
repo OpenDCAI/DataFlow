@@ -18,6 +18,7 @@ from .models.perplexity_scorer import PerplexityScorer
 from .APIcaller.alpagasus_scorer import AlpagasusScorer
 from .APIcaller.treeinstruct_scorer import TreeinstructScorer
 from .APIcaller.perspective_scorer import PerspectiveScorer
+from .APIcaller.meta_scorer import MetaScorer
 
 from .diversity.vendi_scorer import VendiScorer
 from .diversity.task2vec_scorer import Task2VecScorer
@@ -45,6 +46,7 @@ __all__ = [
     'AlpagasusScorer',
     'TreeinstructScorer',
     'PerspectiveScorer',
+    "MetaScorer",
     'VendiScorer',
     'Task2VecScorer',
     'BleuScorer',

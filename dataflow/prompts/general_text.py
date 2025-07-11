@@ -59,6 +59,90 @@ class SupervisedFinetuneGeneratorPrompt:
         Please create {num_questions} distinct and well-formed questions based on the following context:""".format(num_questions=num_questions)
         return f"<|im_start|>system\n{prompt}<|im_end|>\n<|im_start|>user\n{content}<|im_end|>\n<|im_start|>assistant"
 
+import textwrap
+
+import textwrap
+
+class MetaPrompt:
+    def __init__(self):
+        self.dimensions = [
+            """1. Text Structure: Evaluate the surface-level quality of the text, including spelling accuracy, grammar, vocabulary richness, and sentence structure.
+
+Good example: "The experimental procedure was meticulously documented, with each variable clearly defined."
+Bad example: "teh data was wrong and we dont no why it happen like that"
+
+""",
+            """2. Diversity and Complexity: Assess how rich and conceptually varied the content is, and whether it requires expert or deep reasoning to understand.
+
+Good example: "This article compares Bayesian inference and frequentist approaches in statistical modeling, highlighting theoretical and practical trade-offs."
+Bad example: "Dogs are pets. They bark. They are friendly."
+
+""",
+            """3. Fluency and Understandability: Evaluate whether the text flows naturally, is easy to follow, and avoids awkward or disjointed phrasing.
+
+Good example: "Despite initial challenges, the team successfully completed the deployment by adhering to a revised strategy."
+Bad example: "The problem was and then fixed by something happens deployment successful maybe."
+
+""",
+            """4. Safety: Identify whether the text contains profanities, hate speech, or excessive personally identifiable information (PII).
+
+Good example: "The software collects anonymous usage data to improve performance."
+Bad example: "You idiot, your address 123 Main St will be posted online."
+
+""",
+            """5. Educational Value: Determine whether the text provides insight, stimulates thinking, or offers meaningful learning potential.
+
+Good example: "Understanding the principles of thermodynamics allows engineers to design more efficient engines."
+Bad example: "The sky is blue. Water is wet. This is how it is."
+
+""",
+            """6. Content Accuracy and Effectiveness: Assess the truthfulness, relevance, and practical usefulness of the content.
+
+Good example: "Newton's second law states that F = ma, which explains the relationship between force, mass, and acceleration."
+Bad example: "The Earth is flat and doesn’t rotate around the Sun."
+
+"""
+        ]
+
+        self.system_prompt_template = textwrap.dedent("""\
+            You are an expert evaluator of text content. You will be given a single piece of text and must evaluate it across six specific dimensions listed below. Each dimension includes a description and two concrete examples: one high-quality ("Good example") and one low-quality ("Bad example").
+
+{dimensions_list}
+
+Instructions:
+- Provide a clear evaluation for each of the six dimensions based on the input text.
+- Each evaluation should be one short paragraph.
+- Then assign an integer score from 1 to 5 for each dimension, where:
+  5 = Excellent
+  4 = Good
+  3 = Fair
+  2 = Poor
+  1 = Very Poor
+
+- Your output should end with a **separate final line** that contains a Python-style list of six integers in this format:
+  [5, 4, 3, 5, 4, 5]
+        """)
+
+        self.user_prompt_template = textwrap.dedent("""\
+            Please analyze and evaluate the following text:
+
+Text:
+{text}
+
+Your output should include:
+- One paragraph of analysis for each of the six quality dimensions listed above.
+- A final line with your scores in this exact format:
+  [score1, score2, score3, score4, score5, score6]
+        """)
+
+    def build_system_prompt(self):
+        dimensions_text = "\n".join(self.dimensions)
+        return self.system_prompt_template.format(dimensions_list=dimensions_text)
+
+    def build_user_prompt(self, text):
+        return self.user_prompt_template.format(text=text)
+
+
 class AlpagasusPrompt:
     def __init__(self, dimension='quality'):
         self.dimension = dimension
