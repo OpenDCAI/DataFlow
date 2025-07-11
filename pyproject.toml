@@ -51,6 +51,7 @@ dependencies = {file = "requirements.txt"}
 
 [project.optional-dependencies]
 vllm = ["vllm<0.8"]
+myscale = ["clickhouse-driver"]
 sglang =["sglang[all]<=0.4.3"]
 agent = [
     "cloudpickle",
@@ -64,4 +65,3 @@ agent = [
     "requests",
     "termcolor",
 ]
-

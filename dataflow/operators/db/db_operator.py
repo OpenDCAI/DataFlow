@@ -1,7 +1,7 @@
 from dataflow.utils.registry import OPERATOR_REGISTRY
 from dataflow import get_logger
 from dataflow.core import OperatorABC
-from dataflow.utils.storage import DBStorage
+from dataflow.utils.storage import MyScaleDBStorage
 
 @OPERATOR_REGISTRY.register()
 class DBOperator(OperatorABC):
@@ -15,7 +15,7 @@ class DBOperator(OperatorABC):
         self.logger = get_logger()
         self.expr = expr
     
-    def run(self, storage:DBStorage, input_key:str) -> list:
+    def run(self, storage:MyScaleDBStorage, input_key:str) -> list:
         """
         Execute the SQL expression against the database storage.
         

@@ -1,6 +1,6 @@
 """
 prompts_template.py  ── Simple prompt template manager and renderer
-Author  : Zhou Liu
+Author  : [Zhou Liu]
 License : MIT
 Created : 2024-06-24
 

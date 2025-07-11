@@ -630,8 +630,8 @@ class StopWordFilter(OperatorABC):
         self.logger.info(f"Initializing {self.__class__.__name__} with threshold = {self.threshold}, use_tokenizer = {self.use_tokenizer}...")
         import nltk
         # Download stopwords for the English language
-        nltk.data.path.append('./dataflow/operators/process/GeneralText/filters/')
-        nltk.download('stopwords', download_dir='./dataflow/operators/process/GeneralText/filters/')
+        nltk.data.path.append('./dataflow/operators/filter/GeneralText/nltkdata/')
+        nltk.download('stopwords', download_dir='./dataflow/operators/filter/GeneralText/nltkdata/')
 
     @staticmethod
     def get_desc(lang: str = "zh"):
@@ -1021,7 +1021,7 @@ class BlocklistFilter(OperatorABC):
 
     def load_blocklist(self):
         dataflow_dir = DataFlowPath.get_dataflow_dir()
-        file_path = f"{dataflow_dir}/operators/process/GeneralText/filters/blocklist/{self.language}.txt"
+        file_path = f"{dataflow_dir}/operators/filter/GeneralText/blocklist/{self.language}.txt"
         self.logger.info(f"Loading blocklist for language '{self.language}' from {file_path}...")
         with open(file_path, 'r', encoding='utf-8') as file:
             blocklist = set(line.strip().lower() for line in file if line.strip())

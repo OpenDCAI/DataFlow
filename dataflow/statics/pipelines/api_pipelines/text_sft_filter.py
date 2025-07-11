@@ -1,5 +1,5 @@
  
-from dataflow.operators.process.GeneralText import AlpagasusFilter
+from dataflow.operators.filter.GeneralText import AlpagasusFilter
 
 from dataflow.utils.storage import FileStorage
 from dataflow.serving import APILLMServing_request

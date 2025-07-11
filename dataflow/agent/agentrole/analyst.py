@@ -74,10 +74,10 @@ class AnalystAgent:
             session_key=session_key
         )
         if self.debug_agent:
-            logger.info(f"[Task name]: ---------------{self.task.task_name}---------------")
+            logger.info(f"[Task name]: {self.task.task_name}")
             content = await self.debug_agent.debug_form(self.task.task_name, content)
         self.task.task_result = self.robust_parse_json(content)
-        logger.debug(f"[parse results]: \n --------------- {self.task.task_result} ---------------")
+        logger.info(f"[parse results]:  {self.task.task_result}")
         return self.task.task_result
     def _strip_json_comments(self, s: str) -> str:
         """

@@ -197,11 +197,12 @@ class Memory:
 class MemoryClient:
     def __init__(self, memory):
         self.memory = memory
+
     async def post(self,
-                        url,headers,json_data,
-                        session_key: str) -> str:
+                   url, headers, json_data,
+                   session_key: str) -> str:
         session_id = self.memory.get_session_id(session_key)
-        # 记录发送的 messages
+        # Record the sent messages
         if "messages" in json_data:
             self.memory.add_messages(session_id, json_data["messages"])
         async with httpx.AsyncClient() as client:
@@ -209,13 +210,13 @@ class MemoryClient:
                 url,
                 headers=headers,
                 json=json_data,
-                timeout=120.0
+                timeout=360.0
             )
             resp.raise_for_status()
             result = resp.json()
-        # 记录 assistant message（只记录第一 choice）
+        # Record the assistant message (only the first choice)
         choice = result.get("choices", [{}])[0].get("message")
         if choice:
             self.memory.add_response(session_id, choice)
-        # 返回 message content
+        # Return the message content
         return choice["content"] if choice and "content" in choice else ""

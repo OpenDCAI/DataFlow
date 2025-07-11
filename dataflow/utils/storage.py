@@ -172,21 +172,194 @@ class FileStorage(DataFlowStorage):
             raise ValueError(f"Unsupported file type: {self.cache_type}, output file should end with json, jsonl, csv, parquet, pickle")
         
         return file_path
-    
 
-class DBStorage(DataFlowStorage):
+from threading import Lock
+
+_clickhouse_clients = {}
+_clickhouse_clients_lock = Lock()
+
+# 预定义字段前缀
+SYS_FIELD_PREFIX = 'sys:'
+USER_FIELD_PREFIX = 'user:'
+
+# 获取ClickHouse Client单例
+def get_clickhouse_client(db_config):
+    key = (
+        db_config['host'],
+        db_config.get('port', 9000),
+        db_config.get('user', 'default'),
+        db_config.get('database', 'dataflow'),
+    )
+    with _clickhouse_clients_lock:
+        if key not in _clickhouse_clients:
+            try:
+                from clickhouse_driver import Client
+            except ImportError as e:
+                raise ImportError("clickhouse_driver is required for MyScaleDBStorage but not installed. Please install it via 'pip install clickhouse-driver'.") from e
+            _clickhouse_clients[key] = Client(
+                host=db_config['host'],
+                port=db_config.get('port', 9000),
+                user=db_config.get('user', 'default'),
+                password=db_config.get('password', ''),
+                database=db_config.get('database', 'default'),
+                settings={"use_numpy": True}
+            )
+        return _clickhouse_clients[key]
+
+# 安全加载json数据
+def safe_json_loads(x):
+        if isinstance(x, dict):
+            return x
+        if isinstance(x, str):
+            try:
+                return json.loads(x)
+            except Exception:
+                return x  # 保留原始字符串
+        if pd.isna(x):
+            return None
+        return x  # 其它类型原样返回
+
+# 预定义min_hashes计算方法，当前全部返回[0]
+def _default_min_hashes(self, data_dict):
+    return [0]
+
+class MyScaleDBStorage(DataFlowStorage):
     """
-    Storage for database.
-    This is a placeholder class, you can implement your own database storage.
+    Storage for Myscale/ClickHouse database using clickhouse_driver.
     """
-    def __init__(self, db_config: dict):
+    def validate_required_params(self):
+        """
+        校验MyScaleDBStorage实例的关键参数有效性：
+        - pipeline_id, input_task_id, output_task_id 必须非空，否则抛出异常。
+        - page_size, page_num 若未设置则赋默认值（page_size=10000, page_num=0）。
+        所有算子在使用storage前应调用本方法。
+        """
+        missing = []
+        if not self.pipeline_id:
+            missing.append('pipeline_id')
+        if not self.input_task_id:
+            missing.append('input_task_id')
+        if not self.output_task_id:
+            missing.append('output_task_id')
+        if missing:
+            raise ValueError(f"Missing required storage parameters: {', '.join(missing)}")
+        if not hasattr(self, 'page_size') or self.page_size is None:
+            self.page_size = 10000
+        if not hasattr(self, 'page_num') or self.page_num is None:
+            self.page_num = 0
+
+    def __init__(
+        self,
+        db_config: dict,
+        pipeline_id: str = None,
+        input_task_id: str = None,
+        output_task_id: str = None,
+        page_size: int = 10000,
+        page_num: int = 0
+    ):
+        """
+        db_config: {
+            'host': 'localhost',
+            'port': 9000,
+            'user': 'default',
+            'password': '',
+            'database': 'dataflow',
+            'table': 'dataflow_table'
+        }
+        pipeline_id: str, 当前 pipeline 的标识（可选，默认 None）
+        input_task_id: str, 输入任务的标识（可选，默认 None）
+        output_task_id: str, 输出任务的标识（可选，默认 None）
+        page_size: int, 分页时每页的记录数（默认 10000）
+        page_num: int, 当前页码（默认 0）
+        """
         self.db_config = db_config
+        self.client = get_clickhouse_client(db_config)
+        self.table = db_config.get('table', 'dataflow_table')
+        self.logger = get_logger()
+        self.pipeline_id: str = pipeline_id
+        self.input_task_id: str = input_task_id
+        self.output_task_id: str = output_task_id
+        self.page_size: int = page_size
+        self.page_num: int = page_num
+        self.validate_required_params()
 
     def read(self, output_type: Literal["dataframe", "dict"]) -> Any:
-        raise NotImplementedError("DBStorage.read() is not implemented yet.")
-    
-    def excute_read(self, expr:str, output_type: Literal["dataframe", "dict"]) -> Any:
-        pass
+        """
+        Read data from Myscale/ClickHouse table.
+        """
+        where_clauses = []
+        params = {}
+        if self.pipeline_id:
+            where_clauses.append("pipeline_id = %(pipeline_id)s")
+            params['pipeline_id'] = self.pipeline_id
+        if self.input_task_id:
+            where_clauses.append("task_id = %(task_id)s")
+            params['task_id'] = self.input_task_id
+        where_sql = f"WHERE {' AND '.join(where_clauses)}" if where_clauses else ""
+        limit_offset = f"LIMIT {self.page_size} OFFSET {(self.page_num-1)*self.page_size}" if self.page_size else ""
+        sql = f"SELECT * FROM {self.table} {where_sql} {limit_offset}"
+        self.logger.info(f"Reading from DB: {sql} with params {params}")
+        result = self.client.execute(sql, params, with_column_types=True)
+        rows, col_types = result
+        columns = [col[0] for col in col_types]
+        df = pd.DataFrame(rows, columns=columns)
+        # 解析 data 字段为 dict
+        if 'data' not in df.columns:
+            raise ValueError("Result does not contain required 'data' field.")
+
+        # 只保留 data 字段
+        data_series = df['data'].apply(safe_json_loads)
+
+        if output_type == "dataframe":
+            # 返回只有 data 一列的 DataFrame
+            return pd.DataFrame({'data': data_series})
+        elif output_type == "dict":
+            # 返回 data 字段的 dict 列表
+            return list(data_series)
+        else:
+            raise ValueError(f"Unsupported output type: {output_type}")
 
     def write(self, data: Any) -> Any:
-        raise NotImplementedError("DBStorage.write() is not implemented yet.")
+        """
+        Write data to Myscale/ClickHouse table.
+        data: pd.DataFrame or List[dict]，每行是data字段内容（dict）。
+        """
+        if isinstance(data, list):
+            df = pd.DataFrame(data)
+        elif isinstance(data, pd.DataFrame):
+            df = data
+        else:
+            raise ValueError(f"Unsupported data type: {type(data)}")
+        # data字段本身就是每行的内容
+        if 'data' not in df.columns:
+            # 兼容直接传入dict列表的情况
+            df['data'] = df.apply(lambda row: row.to_dict(), axis=1)
+        # 统一处理data列
+        df['data'] = df['data'].apply(lambda x: x if isinstance(x, dict) else (json.loads(x) if isinstance(x, str) else {}))
+        # 自动填充pipeline_id, task_id, raw_data_id, min_hashes
+        df['pipeline_id'] = self.pipeline_id
+        df['task_id'] = self.output_task_id
+        df['raw_data_id'] = df['data'].apply(lambda d: d.get(SYS_FIELD_PREFIX + 'raw_data_id', 0) if isinstance(d, dict) else 0)
+        df['min_hashes'] = df['data'].apply(lambda d: _default_min_hashes(d) if isinstance(d, dict) else [0])
+        # data字段转为JSON字符串
+        df['data'] = df['data'].apply(lambda x: json.dumps(x, ensure_ascii=False) if not isinstance(x, str) else x)
+        # 只保留必需字段
+        required_cols = ['pipeline_id', 'task_id', 'raw_data_id', 'min_hashes', 'data']
+        df = df[required_cols]
+        records = df.to_dict(orient="records")
+        values = [
+            (
+                rec['pipeline_id'],
+                rec['task_id'],
+                int(rec['raw_data_id']),
+                rec['min_hashes'],
+                rec['data']
+            ) for rec in records
+        ]
+        insert_sql = f"""
+        INSERT INTO {self.table} (pipeline_id, task_id, raw_data_id, min_hashes, data)
+        VALUES
+        """
+        self.logger.info(f"Inserting {len(values)} rows into {self.table}")
+        self.client.execute(insert_sql, values)
+        return f"Inserted {len(values)} rows into {self.table}"

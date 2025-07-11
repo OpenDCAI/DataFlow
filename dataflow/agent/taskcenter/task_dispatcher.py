@@ -21,15 +21,15 @@ Thread-safety depends on user code and injected functions.
 import json
 import requests
 import yaml
-from typing import Dict, Any
+from typing import Dict, Any, Iterable
 import os
 from enum import Enum
 from ..promptstemplates.prompt_template import PromptsTemplateGenerator
 import importlib
 import inspect
 import pickle
-import yaml
-from typing import Callable, Dict, Any, Union, List
+from dataclasses import dataclass, field
+from typing import Callable, Dict, Any, Union, List, Set
 FuncSpec = Dict[str, str]
 def func2spec(fn: Callable) -> FuncSpec:
     """
@@ -55,6 +55,45 @@ def is_module_level_fn(fn: Any) -> bool:
     """
     return inspect.isfunction(fn) and fn.__qualname__ == fn.__name__
 
+
+@dataclass
+class TaskChainConfig:
+    # ── Router 分流时可保留的任务名 ──
+    pipeline_tasks: Set[str] = field(
+        default_factory=lambda: {
+            "data_content_classification",
+            "recommendation_inference_pipeline",
+            "execute_the_recommended_pipeline",
+        }
+    )
+    operator_tasks: Set[str] = field(
+        default_factory=lambda: {
+            "match_operator",
+            "write_the_operator",
+        }
+    )
+    # ── 传给 generate_pre_task_params_with_sandboxed_prompt_param_builder 的调试工具 ──
+    debuggable_tools: Dict[str, bool] = field(
+        default_factory=lambda: {
+            "local_tool_for_execute_the_recommended_pipeline": True,
+        }
+    )
+
+def build_cfg(tasks: Iterable) -> TaskChainConfig:
+    pipeline_tasks, operator_tasks, dbg_tools = set(), set(), {}
+    for t in tasks:
+        match getattr(t, "category", None):
+            case "pipeline":  pipeline_tasks.add(t.task_name)
+            case "operator":  operator_tasks.add(t.task_name)
+
+        dbg_tools.update(getattr(t, "need_debug_tools", {}))
+
+    return TaskChainConfig(
+        pipeline_tasks  = pipeline_tasks,
+        operator_tasks  = operator_tasks,
+        debuggable_tools= dbg_tools
+    )
+
 class Task:
     def __init__(self, request, config_path, prompts_template: PromptsTemplateGenerator,
                  system_template: str, task_template: str,
@@ -70,29 +109,38 @@ class Task:
         self.api_key          = request.api_key
         self.base_url         = request.chat_api_url
         self.modelname        = request.model
+
+        task_entry = config.get(task_name, {}) if task_name else {}
+        if "special_model" in task_entry:
+            self.modelname = task_entry.pop("special_model") or self.modelname
+
         # self.tasktype      = TaskType(config["tasktype"])
         # ------------------- Runtime fields -------------------
         self.prompts_template   = prompts_template
         self.param_funcs        = param_funcs         # May contain non-picklable objects
         self.task_result_processor = task_result_processor
         # ------------------- Data fields -------------------
-        self.task_name        = task_name
-        self.system_template  = system_template
-        self.task_template    = task_template
-        self.sys_prompts      = ""
-        self.task_prompts     = ""
-        self.done             = False
-        self.task_result      = ""
+        self.task_name          = task_name
+        self.system_template    = system_template
+        self.task_template      = task_template
+        self.sys_prompts        = ""
+        self.task_prompts       = ""
+        self.done               = False
+        self.task_result        = ""
         self.pre_task_result: Union[Dict[str, Any], List[Dict[str, Any]]] = {}
         self.use_pre_task_result = use_pre_task_result
-        self.depends_on       = [] # Task dependencies, default is previous task result
-        self.task_params      = None
-        self.is_result_process= is_result_process
+        self.depends_on         = [] # Task dependencies, default is previous task result
+        self.task_params        = None
+        self.is_result_process  = is_result_process
+        self.category           = ''
+        self.need_debug_tools   = {}
         if self.task_name in config:
-            self.tool_call_map= config[self.task_name]
+            self.tool_call_map      = config[self.task_name].get('tools', {})
+            self.category           = config[self.task_name].get('category', '')
+            self.need_debug_tools   = config[self.task_name].get('need_debug_tools',{})
         else:
-            self.tool_call_map= {}
-
+            self.tool_call_map  = {}
+        
     def render_templates(self):
         """
         Dynamically render all templates based on task parameters.

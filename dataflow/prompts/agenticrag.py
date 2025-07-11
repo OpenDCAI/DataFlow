@@ -442,6 +442,77 @@ Evaluate the consistency of the core content of the golden answer and the other 
     Other Answer: {llm_answer}
         '''
         return prompt
+
+    def more_optional_answer_system_prompt(self) -> str:
+        system_prompt = """
+  You are an expert in **linguistic variation** and **data augmentation**. Your task is to generate a comprehensive list of all plausible and commonly recognized alternative expressions, formats, and aliases for a given input entity or piece of information. The goal is to create high-quality training data that captures diverse ways of referring to the same concept.
+
+  **Key Guidelines:**
+
+  1.  **Equivalence:** Each alternative expression must refer to *exactly the same entity or information* as the original input. Do not include broader categories, narrower sub-types, or related but distinct concepts.
+  2.  **Scope of Variation:** Focus on:
+      Different **formatting conventions** (e.g., dates, numbers, units).
+      Common **abbreviations, acronyms, or initialisms**.
+      Well-known **aliases, nicknames, or shorter forms** in common usage.
+      Synonyms or rephrasing should *only* be included if they are direct, commonly accepted equivalents.
+  3.  **Context-Agnosticism:** Unless the input itself implies a specific context, generate general-purpose variations. Avoid creating variations that are only valid in very niche or obscure contexts.
+  4.  **Inclusion of Original:** Always include the original input as the first item in the generated list.
+  5.  **Format:** Output the variations as a JSON list of strings.
+
+  **Examples:**
+
+  Input: 1977-01-26
+  Output: ["1977-01-26", "1977 01 26", "1977.01.26", "January 26, 1977", "26 Jan 1977", "Jan 26, 1977"]
+
+  Input: United Nations
+  Output: ["United Nations", "U.N.", "UN"]
+
+  Input: 3.14159
+  Output: ["3.14159", "π", "pi", "PI"]
+
+  Input: Doctor of Philosophy
+  Output: ["Doctor of Philosophy", "Ph.D.", "PhD", "Doctorate"]
+
+  Input: New York City
+  Output: ["New York City", "NYC", "The Big Apple"]
+
+  Input: kilogram
+  Output: ["kilogram", "kg", "kilograms"]
+        
+        """
+
+        return system_prompt
+
+    def more_optional_answer_prompt(self, answer) -> str:
+        prompt = f"""
+    The original answer is: {answer}
+    Please list all possible textual expressions that have the same meaning or refer to the same entity, especially in different formats (e.g., dates, names, abbreviations).
+    Respond with a JSON list of strings. Do not explain.
+
+        """
+        return prompt
+
+    def golden_doc_prompt(self, golden_doc, question) -> str:
+        prompt = f"""
+You are given the following document containing relevant information needed to answer a question.
+Document:
+\"\"\"
+{golden_doc}
+\"\"\"
+
+Question:
+{question}
+
+Instructions:
+- Answer the question using ONLY the information from the provided document.
+- Provide a concise, direct answer without any explanations or additional commentary.
+- If numerical values are involved, preserve their exact format (e.g., use commas in thousands, proper units, dates in YYYY-MM-DD).
+- Do NOT include any information that is not explicitly present in the document.
+- If the question requests specific data, extract ONLY that data.
+
+Return your final answer directly.
+        """
+        return prompt
     
 class DepthQAGeneratorPrompt:
     '''
