@@ -1,4 +1,4 @@
-from dataflow.operators.eval.GeneralText import DeitaQualityScorer
+from dataflow.operators.eval import DeitaQualityScorer
 from dataflow.core import OperatorABC
 import numpy as np
 from dataflow.utils.registry import OPERATOR_REGISTRY

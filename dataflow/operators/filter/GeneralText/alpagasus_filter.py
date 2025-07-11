@@ -3,7 +3,7 @@ from dataflow.core import OperatorABC
 from dataflow.utils.storage import DataFlowStorage
 from dataflow.utils.registry import OPERATOR_REGISTRY
 from dataflow.core import LLMServingABC
-from dataflow.operators.eval.GeneralText import AlpagasusScorer
+from dataflow.operators.eval import AlpagasusScorer
 
 @OPERATOR_REGISTRY.register()
 class AlpagasusFilter(OperatorABC):

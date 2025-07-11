@@ -1,4 +1,4 @@
-from dataflow.operators.eval.GeneralText import FineWebEduScorer
+from dataflow.operators.eval import FineWebEduScorer
 from dataflow.core import OperatorABC
 from dataflow.utils.storage import DataFlowStorage
 from dataflow.utils.registry import OPERATOR_REGISTRY

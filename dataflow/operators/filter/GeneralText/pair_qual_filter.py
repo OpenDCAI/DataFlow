@@ -1,4 +1,4 @@
-from dataflow.operators.eval.GeneralText import PairQualScorer
+from dataflow.operators.eval import PairQualScorer
 import numpy as np
 from dataflow.core import OperatorABC
 from dataflow.utils.registry import OPERATOR_REGISTRY

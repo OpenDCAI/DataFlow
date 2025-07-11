@@ -1,4 +1,4 @@
-from dataflow.operators.eval.GeneralText import SuperfilteringScorer
+from dataflow.operators.eval import SuperfilteringScorer
 import numpy as np
 from dataflow.core import OperatorABC
 from dataflow.utils.registry import OPERATOR_REGISTRY

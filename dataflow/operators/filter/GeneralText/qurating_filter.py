@@ -1,4 +1,4 @@
-from dataflow.operators.eval.GeneralText import QuratingScorer
+from dataflow.operators.eval import QuratingScorer
 import numpy as np
 from dataflow.core import OperatorABC
 from dataflow.utils.registry import OPERATOR_REGISTRY

@@ -4,7 +4,7 @@ from dataflow import get_logger
 from dataflow.core import OperatorABC
 from dataflow.utils.storage import DataFlowStorage
 from dataflow.utils.registry import OPERATOR_REGISTRY
-from dataflow.operators.eval.GeneralText import NgramScorer
+from dataflow.operators.eval import NgramScorer
 
 
 @OPERATOR_REGISTRY.register()

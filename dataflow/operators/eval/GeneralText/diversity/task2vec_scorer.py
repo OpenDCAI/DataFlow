@@ -1,5 +1,5 @@
-from .task2vec.task2vec import Task2Vec
-from .task2vec import task_similarity
+from dataflow.operators.eval.GeneralText.diversity.task2vec.task2vec import Task2Vec
+from dataflow.operators.eval.GeneralText.diversity.task2vec import task_similarity
 import torch
 import random
 from transformers import GPT2Tokenizer, GPT2LMHeadModel

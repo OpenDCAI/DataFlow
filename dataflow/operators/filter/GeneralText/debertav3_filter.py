@@ -3,7 +3,7 @@ from dataflow import get_logger
 from dataflow.core import OperatorABC
 from dataflow.utils.storage import DataFlowStorage
 from dataflow.utils.registry import OPERATOR_REGISTRY
-from dataflow.operators.eval.GeneralText import DebertaV3Scorer
+from dataflow.operators.eval import DebertaV3Scorer
 
 @OPERATOR_REGISTRY.register()
 class DebertaV3Filter(OperatorABC):

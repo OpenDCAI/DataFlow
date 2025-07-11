@@ -3,7 +3,7 @@ from dataflow import get_logger
 from dataflow.core import OperatorABC
 from dataflow.utils.storage import DataFlowStorage
 from dataflow.utils.registry import OPERATOR_REGISTRY
-from dataflow.operators.eval.GeneralText import PerplexityScorer
+from dataflow.operators.eval import PerplexityScorer
 
 @OPERATOR_REGISTRY.register()
 class PerplexityFilter(OperatorABC):
