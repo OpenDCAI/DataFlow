@@ -4,7 +4,7 @@ from dataflow import get_logger
 from dataflow.utils.storage import DataFlowStorage
 from dataflow.core import OperatorABC
 
-class BM25_Miner():
+class BM25Miner():
     """
     A self-contained class for performing BM25 search.
     It builds an in-memory index from the provided documents.
@@ -146,7 +146,7 @@ class BM25HardNeg(OperatorABC):
         doc_ids = list(range(len(documents))) # Use simple integer indices as document IDs
         
         self.logger.info(f"Building BM25 index for {len(documents)} documents...")
-        bm25_miner = BM25_Miner(documents=documents, doc_ids=doc_ids)
+        bm25_miner = BM25Miner(documents=documents, doc_ids=doc_ids)
         self.logger.info("BM25 index built successfully.")
 
         # 3. Process each row to find hard negatives

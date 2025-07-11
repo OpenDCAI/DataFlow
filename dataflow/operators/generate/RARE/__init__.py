@@ -1,6 +1,6 @@
-from .Doc2Query import Doc2Query
-from .BM25HardNeg import BM25HardNeg
-from .ReasonDistill import ReasonDistill
+from .doc_to_query import Doc2Query
+from .bm25_hard_negative import BM25HardNeg
+from .reason_distill import ReasonDistill
 
 __all__ = [
     "Doc2Query",

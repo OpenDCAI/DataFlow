@@ -36,9 +36,9 @@ _import_structure = {
     "AutoPromptGenerator": (cur_path + "AgenticRAG/AutoPromptGenerator.py", "AutoPromptGenerator"),
     "QAScorer": (cur_path + "AgenticRAG/QAScorer.py", "QAScorer"),
     "QAGenerator": (cur_path + "AgenticRAG/QAGenerator.py", "QAGenerator"),
-    "Doc2Query": (cur_path + "RARE/Doc2Query.py", "Doc2Query"),
-    "BM25HardNeg": (cur_path + "RARE/BM25HardNeg.py", "BM25HardNeg"),
-    "ReasonDistill": (cur_path + "RARE/ReasonDistill.py", "ReasonDistill"),
+    "Doc2Query": (cur_path + "RARE/doc_to_query.py", "Doc2Query"),
+    "BM25HardNeg": (cur_path + "RARE/bm25_hard_negative.py", "BM25HardNeg"),
+    "ReasonDistill": (cur_path + "RARE/reason_distill.py", "ReasonDistill"),
 }
 
 sys.modules[__name__] = LazyLoader(__name__, "dataflow/operators/generate/", _import_structure)
