@@ -4,7 +4,7 @@ from dataflow.operators.generate.AgenticRAG import (
     QAScorer
 )
 
-from dataflow.operators.process.AgenticRAG import (
+from dataflow.operators.filter.AgenticRAG import (
     ContentChooser,
 )
 from dataflow.utils.storage import FileStorage

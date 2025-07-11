@@ -5,7 +5,7 @@ from dataflow.operators.generate.Reasoning import (
     AnswerGenerator,
 )
 
-from dataflow.operators.process.Reasoning import (
+from dataflow.operators.filter.Reasoning import (
     QuestionFilter,
     AnswerPipelineRoot,
     AnswerFormatterFilter,
