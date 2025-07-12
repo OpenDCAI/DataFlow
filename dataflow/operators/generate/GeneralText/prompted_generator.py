@@ -7,7 +7,7 @@ from dataflow.core import OperatorABC
 from dataflow.core import LLMServingABC
 
 @OPERATOR_REGISTRY.register()
-class PromptGenerator(OperatorABC):
+class PromptedGenerator(OperatorABC):
     '''
     Answer Generator is a class that generates answers for given questions.
     '''

@@ -15,8 +15,8 @@ _import_structure = {
     # GeneralText
     "PretrainGenerator": (cur_path + "GeneralText/pretrain_generator.py", "PretrainGenerator"),
     "SupervisedFinetuneGenerator": (cur_path + "GeneralText/sft_generator.py", "SupervisedFinetuneGenerator"),
-    "PromptGenerator": (cur_path + "GeneralText/prompt_generator.py", "PromptGenerator"),
-    
+    "PromptedGenerator": (cur_path + "GeneralText/prompted_generator.py", "PromptedGenerator"),
+
     # Reasoning
     "AnswerGenerator": (cur_path + "Reasoning/answer_generator.py", "AnswerGenerator"),
     "QuestionCategoryClassifier": (cur_path + "Reasoning/question_category_classifier.py", "QuestionCategoryClassifier"),
