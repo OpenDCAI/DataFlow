@@ -40,7 +40,7 @@ class RemoteDataLoader():
             question_key = "question",
             answer_key = "answer"
         )
-@pytest.mark.cpu  
+@pytest.mark.gpu  
 def test_remote_data_loader():
     """
     Test function to run the RemoteDataLoader
