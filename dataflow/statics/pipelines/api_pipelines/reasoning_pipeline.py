@@ -1,11 +1,11 @@
-from dataflow.operators.generate.Reasoning import (
+from dataflow.operators.generate import (
     QuestionCategoryClassifier,
     QuestionDifficultyClassifier,
     QuestionGenerator,
     AnswerGenerator,
 )
 
-from dataflow.operators.filter.Reasoning import (
+from dataflow.operators.filter import (
     QuestionFilter,
     AnswerPipelineRoot,
     AnswerFormatterFilter,

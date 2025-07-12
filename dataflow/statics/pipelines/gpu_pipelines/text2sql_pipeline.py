@@ -1,4 +1,4 @@
-from dataflow.operators.generate.Text2SQL import *
+from dataflow.operators.generate import *
 from dataflow.utils.storage import FileStorage
 from dataflow.serving import LocalModelLLMServing_vllm
 
