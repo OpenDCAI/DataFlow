@@ -16,7 +16,10 @@ class GPT_generator():
                 model_name="gpt-4o",
                 max_workers=50
         )
-        self.prompt_generator = PromptedGenerator(llm_serving = self.llm_serving, system_prompt = "Please solve this math problem.",)        
+        self.prompt_generator = PromptedGenerator(
+            llm_serving = self.llm_serving, 
+            system_prompt = "Please solve this math problem.", # System prompt for math problem solving
+        )
 
     def forward(self):
         # Initial filters

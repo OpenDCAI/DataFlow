@@ -16,7 +16,10 @@ class Qwen_generator():
             vllm_tensor_parallel_size=1,
             vllm_max_tokens=8192,
         )
-        self.prompt_generator = PromptedGenerator(llm_serving = self.llm_serving, system_prompt = "Please translate to Chinese.",)        
+        self.prompt_generator = PromptedGenerator(
+            llm_serving = self.llm_serving, 
+            system_prompt = "Please translate to Chinese.", # System prompt for translation
+        )
 
     def forward(self):
         # Initial filters
@@ -24,7 +27,6 @@ class Qwen_generator():
             storage = self.storage.step(),
             input_key = "raw_content",
         )
-
 
 if __name__ == "__main__":
     # This is the entry point for the pipeline
