@@ -9,6 +9,28 @@ from pathlib import Path
 from rich.console import Console
 from rich.table import Table
 
+import ast
+from pathlib import Path
+
+def generate_import_structure_from_type_checking(source_file: str, base_path: str) -> dict:
+    source = Path(source_file).read_text()
+    tree = ast.parse(source)
+
+    import_structure = {}
+
+    for node in ast.walk(tree):
+        if isinstance(node, ast.If) and getattr(node.test, 'id', '') == 'TYPE_CHECKING':
+            for subnode in node.body:
+                if isinstance(subnode, ast.ImportFrom):
+                    module_rel = subnode.module.replace(".", "/")
+                    for alias in subnode.names:
+                        name = alias.name
+                        module_file = f"{base_path}{module_rel}.py"
+                        import_structure[name] = (module_file, name)
+
+    return import_structure
+
+
 class Registry():
     """
     The registry that provides name -> object mapping, to support third-party
