@@ -16,13 +16,12 @@ class Qwen_generator():
             vllm_tensor_parallel_size=4,
             vllm_max_tokens=8192,
         )
-        self.prompt_generator = PromptedGenerator(llm_serving = self.llm_serving)        
+        self.prompt_generator = PromptedGenerator(llm_serving = self.llm_serving, system_prompt = "Please solve this math problem.",)        
 
     def forward(self):
         # Initial filters
         self.prompt_generator.run(
             storage = self.storage.step(),
-            system_prompt = "Please translate to Chinese.",
             input_key = "raw_content",
         )
 

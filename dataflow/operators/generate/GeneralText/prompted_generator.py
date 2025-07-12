@@ -11,15 +11,16 @@ class PromptedGenerator(OperatorABC):
     '''
     Answer Generator is a class that generates answers for given questions.
     '''
-    def __init__(self, llm_serving: LLMServingABC):
+    def __init__(self, llm_serving: LLMServingABC, system_prompt: str = "You are a helpful agent."):
         self.logger = get_logger()
         self.llm_serving = llm_serving
+        self.system_prompt = system_prompt
     
     @staticmethod
     def get_desc(lang: str = "zh"):
-        return "基于prompt和一个" if lang == "zh" else "Generate pre-training format multi-turn dialogue Q&A data based on the given document content."
+        return "基于prompt生成数据" if lang == "zh" else "Generate data from prompt."
 
-    def run(self, storage: DataFlowStorage, system_prompt: str = "You are a helpful agent.", input_key: str = "raw_content", output_key: str = "generated_content"):
+    def run(self, storage: DataFlowStorage, input_key: str = "raw_content", output_key: str = "generated_content"):
         self.input_key, self.output_key = input_key, output_key
         self.logger.info("Running PromptGenerator...")
 
@@ -34,7 +35,7 @@ class PromptedGenerator(OperatorABC):
         for index, row in dataframe.iterrows():
             raw_content = row.get(self.input_key, '')
             if raw_content:
-                llm_input = system_prompt + raw_content
+                llm_input = self.system_prompt + raw_content
                 llm_inputs.append(llm_input)
         
         # Generate the text using the model
