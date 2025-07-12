@@ -34,6 +34,8 @@ if TYPE_CHECKING:
     from .Reasoning.difficulty_info import DifficultyInfo
     from .Reasoning.token_info import ToKenInfo
 
+    from .AgenticRAG.statistics.f1_scorer import F1Scorer
+
 else:
     import sys
     from dataflow.utils.registry import LazyLoader, generate_import_structure_from_type_checking

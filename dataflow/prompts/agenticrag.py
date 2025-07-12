@@ -152,7 +152,6 @@ class AtomicTaskGeneratorPrompt:
     
     def initial_conclusion_system_prompt(self) -> str:
         system_prompt = '''
-        |
   # Conclusion Extraction and Relationship Generation Specifications
 
   ## I. Input/Output Requirements
@@ -320,28 +319,14 @@ class AtomicTaskGeneratorPrompt:
   A: xx City
   Output: {"Q": "What is the city with the highest temperature in global daily maximum temperatures?"}
 
-  Input:
-  ID: AASTOCKS Financial News - Key News
-  R: Closing price and percentage increase of XL Er Nantes-U at 2025/04/28 04:30 GMT+010
-  A: AASTOCKS Financial News - Key News reported that XL Er Nantes-U closed at $11.34 with a 14.0% increase. (Published at 2025/04/28 04:30 GMT+010)
-  Output: {"Q": "What were the closing price (in USD) and percentage increase of XL Er Nantes-U at 2025/04/28 04:30 GMT+010?"}
-  Example Explanation: Since this conclusion can be obtained from multiple financial websites, the question can omit the data source identifier.
-
-  Input:
-  ID: SELF-ALIGNMENT WITH INSTRUCTION BACKTRANSLATION
-  R: Humpback65B's indicators in MMLU evaluation: 1) Zero-shot average accuracy; 2) Subfield scores (Humanities, STEM, Social Sciences, Others); 3) Comparison with LLaMA65B's zero-shot accuracy; 4) Few-shot (5-shot) score
-  A: In the MMLU evaluation, the fine-tuned Humpback65B model achieved a zero-shot average accuracy of 59.0% (specific field scores: Humanities 65.6%, STEM 47.6%, Social Sciences 68.1%, Others 60.8%), an improvement over the base LLaMA65B model's zero-shot accuracy of 54.8%, although it performed worse in the few-shot (5-shot) setting (63.4%).
-  Output: {"Q": "According to the paper 'SELF-ALIGNMENT WITH INSTRUCTION BACKTRANSLATION', what is the zero-shot average accuracy of the fine-tuned Humpback65B model in the MMLU evaluation, along with its specific field scores (Humanities, STEM, Social Sciences, and Others), how does this compare to the zero-shot accuracy of the base LLaMA65B model, and what score did Humpback65B achieve in the few-shot (5-shot) setting?"}
-  Example Explanation: Since this conclusion is a specific result from a paper, the question includes the data source identifier as a hint.
-
   Only output JSON without additional content.
   '''
         return system_prompt
     
-    def initial_question_prompt(self, conclusion, relation) -> str:
+    def initial_question_prompt(self, identifier, conclusion, relation) -> str:
         prompt = f'''
-            Data to be Processed:
-        ID: text
+        Data to be Processed:
+        ID: {identifier}
         R: {relation}
         A: {conclusion}
         '''
@@ -390,14 +375,7 @@ class AtomicTaskGeneratorPrompt:
         return prompt
 
     def llm_answer_prompt(self, input) -> str:
-        prompt = f'''
-Please solve the following problem and return as many relevant results as possible that "
-"meet the query requirements. Ensure responses are as concise as possible, focusing only "
-"on key information while omitting redundant details."
-"Please return the result in JSON format with keys 'answer_list': List[str] the list of answers."
-"\n\n"
-"The task is: \n
-{input}
+        prompt = f'''Please solve the following problem and return as many relevant results as possible that meet the query requirements.\n Ensure responses are as concise as possible, focusing only on key information while omitting redundant details.\n The task is:\n {input}
         '''.strip()
         
         return prompt
@@ -493,24 +471,14 @@ Evaluate the consistency of the core content of the golden answer and the other 
         return prompt
 
     def golden_doc_prompt(self, golden_doc, question) -> str:
-        prompt = f"""
-You are given the following document containing relevant information needed to answer a question.
+        prompt = f"""You are given the following document that contains relevant information to help answer a question.
 Document:
 \"\"\"
 {golden_doc}
 \"\"\"
-
 Question:
 {question}
-
-Instructions:
-- Answer the question using ONLY the information from the provided document.
-- Provide a concise, direct answer without any explanations or additional commentary.
-- If numerical values are involved, preserve their exact format (e.g., use commas in thousands, proper units, dates in YYYY-MM-DD).
-- Do NOT include any information that is not explicitly present in the document.
-- If the question requests specific data, extract ONLY that data.
-
-Return your final answer directly.
+Please answer the question using ONLY the information in the provided document. Return the final answer directly, with no explanation.
         """
         return prompt
     
