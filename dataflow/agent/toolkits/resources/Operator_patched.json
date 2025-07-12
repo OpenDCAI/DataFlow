@@ -2028,28 +2028,13 @@
     },
     {
       "node": 51,
-      "name": "PromptGenerator",
-      "description": "该算子用于构建完整的提示词和思维链推理过程。\n\n输入参数：\n- input_question_key: 问题键（如：question）\n- input_sql_key: SQL语句键（如：SQL）\n- input_schema_key: 数据库DDL信息键（如：ddl）\n- input_evidence_key: 输入中额外知识的键（如：evidence）\n- prompt_type: 提示词格式（如：omni-sql）\n- output_sft_prompt_key: SFT提示词输出键（如：sft_prompt）\n- output_rl_prompt_key: RL提示词输出键（如：rl_prompt）\n- output_cot_key: 思维链推理输出键（如：sft_output）\n- input_key: 输入数据主键（如：data）\n- input_dbid_key: 数据库ID键（如：db_id）\n- db_root_path: 数据库根目录（如：/mnt/public/data/.../dev_databases）\n- num_threads: 多线程并行数\n\n输出参数：\n- output_sft_prompt_key: SFT提示词\n- output_rl_prompt_key: RL提示词\n- output_cot_key: 思维链推理输出",
+      "name": "PromptedGenerator",
+      "description": "基于prompt和一个",
       "command": {
         "init": [
           {
             "name": "llm_serving",
             "default": null,
-            "kind": "POSITIONAL_OR_KEYWORD"
-          },
-          {
-            "name": "db_root_path",
-            "default": null,
-            "kind": "POSITIONAL_OR_KEYWORD"
-          },
-          {
-            "name": "num_threads",
-            "default": 5,
-            "kind": "POSITIONAL_OR_KEYWORD"
-          },
-          {
-            "name": "timeout",
-            "default": 60,
             "kind": "POSITIONAL_OR_KEYWORD"
           }
         ],
@@ -2060,38 +2045,18 @@
             "kind": "POSITIONAL_OR_KEYWORD"
           },
           {
-            "name": "input_sql_key",
-            "default": "SQL",
+            "name": "system_prompt",
+            "default": "You are a helpful agent.",
             "kind": "POSITIONAL_OR_KEYWORD"
           },
           {
-            "name": "input_question_key",
-            "default": "question",
+            "name": "input_key",
+            "default": "raw_content",
             "kind": "POSITIONAL_OR_KEYWORD"
           },
           {
-            "name": "input_dbid_key",
-            "default": "db_id",
-            "kind": "POSITIONAL_OR_KEYWORD"
-          },
-          {
-            "name": "input_schema_key",
-            "default": "ddl",
-            "kind": "POSITIONAL_OR_KEYWORD"
-          },
-          {
-            "name": "output_sft_prompt_key",
-            "default": "sft_prompt",
-            "kind": "POSITIONAL_OR_KEYWORD"
-          },
-          {
-            "name": "output_rl_prompt_key",
-            "default": "rl_prompt",
-            "kind": "POSITIONAL_OR_KEYWORD"
-          },
-          {
-            "name": "output_cot_key",
-            "default": "sft_output",
+            "name": "output_key",
+            "default": "generated_content",
             "kind": "POSITIONAL_OR_KEYWORD"
           }
         ]
@@ -2477,6 +2442,80 @@
     },
     {
       "node": 61,
+      "name": "PromptGenerator",
+      "description": "该算子用于构建完整的提示词和思维链推理过程。\n\n输入参数：\n- input_question_key: 问题键（如：question）\n- input_sql_key: SQL语句键（如：SQL）\n- input_schema_key: 数据库DDL信息键（如：ddl）\n- input_evidence_key: 输入中额外知识的键（如：evidence）\n- prompt_type: 提示词格式（如：omni-sql）\n- output_sft_prompt_key: SFT提示词输出键（如：sft_prompt）\n- output_rl_prompt_key: RL提示词输出键（如：rl_prompt）\n- output_cot_key: 思维链推理输出键（如：sft_output）\n- input_key: 输入数据主键（如：data）\n- input_dbid_key: 数据库ID键（如：db_id）\n- db_root_path: 数据库根目录（如：/mnt/public/data/.../dev_databases）\n- num_threads: 多线程并行数\n\n输出参数：\n- output_sft_prompt_key: SFT提示词\n- output_rl_prompt_key: RL提示词\n- output_cot_key: 思维链推理输出",
+      "command": {
+        "init": [
+          {
+            "name": "llm_serving",
+            "default": null,
+            "kind": "POSITIONAL_OR_KEYWORD"
+          },
+          {
+            "name": "db_root_path",
+            "default": null,
+            "kind": "POSITIONAL_OR_KEYWORD"
+          },
+          {
+            "name": "num_threads",
+            "default": 5,
+            "kind": "POSITIONAL_OR_KEYWORD"
+          },
+          {
+            "name": "timeout",
+            "default": 60,
+            "kind": "POSITIONAL_OR_KEYWORD"
+          }
+        ],
+        "run": [
+          {
+            "name": "storage",
+            "default": null,
+            "kind": "POSITIONAL_OR_KEYWORD"
+          },
+          {
+            "name": "input_sql_key",
+            "default": "SQL",
+            "kind": "POSITIONAL_OR_KEYWORD"
+          },
+          {
+            "name": "input_question_key",
+            "default": "question",
+            "kind": "POSITIONAL_OR_KEYWORD"
+          },
+          {
+            "name": "input_dbid_key",
+            "default": "db_id",
+            "kind": "POSITIONAL_OR_KEYWORD"
+          },
+          {
+            "name": "input_schema_key",
+            "default": "ddl",
+            "kind": "POSITIONAL_OR_KEYWORD"
+          },
+          {
+            "name": "output_sft_prompt_key",
+            "default": "sft_prompt",
+            "kind": "POSITIONAL_OR_KEYWORD"
+          },
+          {
+            "name": "output_rl_prompt_key",
+            "default": "rl_prompt",
+            "kind": "POSITIONAL_OR_KEYWORD"
+          },
+          {
+            "name": "output_cot_key",
+            "default": "sft_output",
+            "kind": "POSITIONAL_OR_KEYWORD"
+          }
+        ]
+      },
+      "required": "",
+      "depends_on": [],
+      "mode": "GPU"
+    },
+    {
+      "node": 62,
       "name": "QuestionRefiner",
       "description": "该算子用于对已有的自然语言问题进行润色改写。\n\n输入参数：\n- input_question_key: 问题键\n- num_threads: 多线程并行数\n\n输出参数：\n- output_refined_question_key: 生成的润色后问题的key",
       "command": {
@@ -2520,7 +2559,7 @@
       "mode": "GPU"
     },
     {
-      "node": 62,
+      "node": 63,
       "name": "SchemaLinking",
       "description": "该算子用于通过解析SQL语句提取使用的数据库Schema。\n\n输入参数：\n- table_info_file：tables.jsonl文件路径，包含数据库Schema信息\n- input_sql_key：SQL语句键\n- input_dbid_key：db_id key，数据库名\n\n输出参数：\n- output_used_schema_key：SQL中实际使用的表和列信息，格式为字典，键为表名，值为列名列表",
       "command": {
@@ -2559,7 +2598,7 @@
       "mode": ""
     },
     {
-      "node": 63,
+      "node": 64,
       "name": "SQLDifficultyClassifier",
       "description": "该算子用于基于SQL中的关键词数量统计划分难度。\n\n输入参数：\n- input_sql_key：SQL key\n- input_dbid_key：db_id key，数据库名\n\n输出参数：\n- output_key：SQL语句的难度标签",
       "command": {
@@ -2598,7 +2637,7 @@
       "mode": ""
     },
     {
-      "node": 64,
+      "node": 65,
       "name": "SQLFilter",
       "description": "该算子用于筛选SQL执行异常和模型判定SQL与自然语言问题是否一致。\n\n输入参数：\n- input_sql_key: 输入数据中SQL语句的字段名\n- input_question_key: 输入数据中自然语言问题的字段名\n- input_dbid_key: 输入数据中数据库ID的字段名\n- db_root_path: 数据库文件的根目录路径\n- num_cpus: 并行线程数\n- meta_time_out: SQL执行超时时间",
       "command": {
@@ -2652,7 +2691,7 @@
       "mode": "GPU"
     },
     {
-      "node": 65,
+      "node": 66,
       "name": "Text2SQLDifficultyClassifier",
       "description": "该算子用于根据大模型生成SQL的准确率对Text2SQL问题进行难度分类。\n\n输入参数：\n- input_sql_key：原始SQL的键名\n- input_dbid_key：数据库ID的键名\n- input_prompt_key：Text2SQL提示词的键名\n- db_root_path：数据库文件的根目录路径\n- num_cpus：并行执行的CPU线程数\n- meta_time_out：SQL执行的超时时间\n\n难度划分阈值：\n- easy_medium：正确SQL数 ≥ 该值为easy难度（默认：9）\n- medium_hard：正确SQL数 ≥ 该值且 < easy_medium为medium难度（默认：5）\n- hard_extra：正确SQL数 ≥ 该值且 < medium_hard为hard难度（默认：2）\n\n输出参数：\n- output_difficulty_key：SQL执行难度标签的键名",
       "command": {
@@ -2726,7 +2765,7 @@
       "mode": "GPU"
     },
     {
-      "node": 66,
+      "node": 67,
       "name": "CorpusTextSplitter",
       "description": [
         "CorpusTextSplitter是轻量级文本分割工具，",
@@ -2784,7 +2823,7 @@
       "mode": ""
     },
     {
-      "node": 67,
+      "node": 68,
       "name": "KnowledgeExtractor",
       "description": "知识提取算子：支持从多种文件格式中提取结构化内容并转换为标准Markdown\n核心功能：\n1. PDF文件：使用MinerU解析引擎提取文本/表格/公式，保留原始布局\n2. Office文档(DOC/PPT等)：通过DocConverter转换为Markdown格式\n3. 网页内容(HTML/XML)：使用trafilatura提取正文并转为Markdown\n4. 纯文本(TXT/MD)：直接透传不做处理\n特殊处理：\n- 自动识别中英文文档(lang参数)\n- 支持本地文件路径和URL输入\n- 生成中间文件到指定目录(intermediate_dir)",
       "command": {
@@ -2823,7 +2862,7 @@
       "mode": ""
     },
     {
-      "node": 68,
+      "node": 69,
       "name": "KnowledgeCleaner",
       "description": "知识清洗算子：对原始知识内容进行标准化处理，包括HTML标签清理、特殊字符规范化、链接处理和结构优化，提升RAG知识库的质量。主要功能：\n1. 移除冗余HTML标签但保留语义化标签\n2. 标准化引号/破折号等特殊字符\n3. 处理超链接同时保留文本\n4. 保持原始段落结构和代码缩进\n5. 确保事实性内容零修改",
       "command": {
@@ -2862,7 +2901,7 @@
       "mode": "GPU"
     },
     {
-      "node": 69,
+      "node": 70,
       "name": "AutoPromptGenerator",
       "description": "该算子用于为给的的文档片段生成提示词，用于生成种子QA对\n\n输入参数：\n- input_key: 包含文档片段的字段名\n- output_key: 包含提示词的字段名\n",
       "command": {
@@ -2896,7 +2935,7 @@
       "mode": "GPU"
     },
     {
-      "node": 70,
+      "node": 71,
       "name": "QAScorer",
       "description": "该算子用于为给的的文档片段生成种子QA对打分\n\n输入参数：\n- input_question_key: Field name containing the generated question\n- input_answer_key: Field name containing the generated answer\n- output_question_quality_key: Field name containing the question quality grade\n- output_question_quality_feedback_key: Field name containing the question quality feedback\n- output_answer_alignment_key: Field name containing the answer alignment grade\n- output_answer_alignment_feedback_key: Field name containing the answer alignment feedback\n- output_answer_verifiability_key: Field name containing the answer verifiability grade\n- output_downstream_value_key: Field name containing the downstream value grade\n- output_downstream_value_feedback_key: Field name containing the downstream value feedback\n",
       "command": {
@@ -2970,7 +3009,7 @@
       "mode": "GPU"
     },
     {
-      "node": 71,
+      "node": 72,
       "name": "QAGenerator",
       "description": "该算子用于生成对应文档片段的QA对。\n\n输入参数：\n- input_key: 包含文档片段的字段名\n- prompt_key: 包含提示词的字段名\n- output_quesion_key: 包含生成问题的字段名\n- output_answer_key: 包含生成答案的字段名\n",
       "command": {
@@ -3014,7 +3053,7 @@
       "mode": "GPU"
     },
     {
-      "node": 72,
+      "node": 73,
       "name": "AtomicTaskGenerator",
       "description": [],
       "command": {
@@ -3088,7 +3127,7 @@
       "mode": "GPU"
     },
     {
-      "node": 73,
+      "node": 74,
       "name": "DepthQAGenerator",
       "description": [],
       "command": {
@@ -3127,7 +3166,7 @@
       "mode": "GPU"
     },
     {
-      "node": 74,
+      "node": 75,
       "name": "WidthQAGenerator",
       "description": [],
       "command": {
@@ -3171,7 +3210,7 @@
       "mode": "GPU"
     },
     {
-      "node": 75,
+      "node": 76,
       "name": "Doc2Query",
       "description": "RAREPipeline: Doc2Query 算子使用大语言模型为给定文档生成推理密集型问题。\n\n输入参数：\n- input_key: 包含文档片段的字段名\n- output_question_key: 包含生成问题的字段名\n- output_scenario_key: 包含生成情景的字段名\n",
       "command": {
@@ -3215,7 +3254,7 @@
       "mode": "GPU"
     },
     {
-      "node": 76,
+      "node": 77,
       "name": "BM25HardNeg",
       "description": "RAREPipeline: BM25HardNeg 算子使用 BM25 算法为给定查询挖掘困难负样本。\n\n输入参数：\n- input_question_key: 包含查询的字段名。\n- input_text_key: 包含正面文档的字段名。\n- output_negatives_key: 用于存储挖掘出的困难负样本列表的字段名。\n- num_neg: 每个查询需要挖掘的困难负样本数量。\n",
       "command": {
@@ -3253,7 +3292,7 @@
       "mode": ""
     },
     {
-      "node": 77,
+      "node": 78,
       "name": "ReasonDistill",
       "description": "RAREPipeline: ReasonDistill 算子通过组合正负示例文档，提示大语言模型生成详细的推理过程。\n\n输入参数：\n- input_text_key: 包含正面文档的字段名。\n- input_question_key: 包含问题的字段名。\n- input_scenario_key: 包含情景的字段名。\n- input_hardneg_key: 包含困难负样本列表的字段名。\n- output_key: 用于存储生成推理过程的字段名。\n",
       "command": {
@@ -3302,7 +3341,7 @@
       "mode": "GPU"
     },
     {
-      "node": 78,
+      "node": 79,
       "name": "HtmlUrlRemoverRefiner",
       "description": "去除文本中的URL和HTML标签",
       "command": {
@@ -3325,7 +3364,7 @@
       "mode": ""
     },
     {
-      "node": 79,
+      "node": 80,
       "name": "HtmlEntityRefiner",
       "description": "去除文本中的HTML实体",
       "command": {
@@ -3368,7 +3407,7 @@
       "mode": ""
     },
     {
-      "node": 80,
+      "node": 81,
       "name": "PIIAnonymizeRefiner",
       "description": "去除文本中的URL和HTML标签",
       "command": {
@@ -3412,7 +3451,7 @@
       "mode": ""
     },
     {
-      "node": 81,
+      "node": 82,
       "name": "ReferenceRemoverRefiner",
       "description": "删除文本中未闭合的引用标签和引用链接",
       "command": {
@@ -3435,7 +3474,7 @@
       "mode": ""
     },
     {
-      "node": 82,
+      "node": 83,
       "name": "RemoveEmoticonsRefiner",
       "description": "去除文本中的URL和HTML标签",
       "command": {
@@ -3458,7 +3497,7 @@
       "mode": ""
     },
     {
-      "node": 83,
+      "node": 84,
       "name": "RemoveExtraSpacesRefiner",
       "description": "去除文本中的多余空格",
       "command": {
@@ -3481,7 +3520,7 @@
       "mode": ""
     },
     {
-      "node": 84,
+      "node": 85,
       "name": "RemoveEmojiRefiner",
       "description": "去除文本中的表情符号",
       "command": {
@@ -3504,7 +3543,7 @@
       "mode": ""
     },
     {
-      "node": 85,
+      "node": 86,
       "name": "RemoveImageRefsRefiner",
       "description": "去除文本中的图片引用",
       "command": {
