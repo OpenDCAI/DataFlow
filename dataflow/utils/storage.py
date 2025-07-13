@@ -40,6 +40,9 @@ class FileStorage(DataFlowStorage):
         self.logger = get_logger()
 
     def _get_cache_file_path(self, step) -> str:
+        if step == -1:
+            self.logger.error("You must call storage.step() before reading or writing data. Please call storage.step() first for each operator step.")  
+            raise ValueError("You must call storage.step() before reading or writing data. Please call storage.step() first for each operator step.")
         if step == 0:
             # If it's the first step, use the first entry file name
             return os.path.join(self.first_entry_file_name)
@@ -56,6 +59,10 @@ class FileStorage(DataFlowStorage):
     
     def _load_local_file(self, file_path: str, file_type: str) -> pd.DataFrame:
         """Load data from local file based on file type."""
+        # check if file exists
+        if not os.path.exists(file_path):
+            raise FileNotFoundError(f"File {file_path} does not exist. Please check the path.")
+        # Load file based on type
         try:
             if file_type == "json":
                 return pd.read_json(file_path)

@@ -5,7 +5,7 @@ from dataflow.utils.storage import FileStorage
 class GPT_generator():
     def __init__(self):
         self.storage = FileStorage(
-            first_entry_file_name="../../dataflow/example/GeneralTextPipeline/translation.jsonl",
+            first_entry_file_name="../../dataflow/example/GeneralTextPipeline/translation.jsonl1",
             cache_path="./cache",
             file_name_prefix="translation",
             cache_type="jsonl",
@@ -16,13 +16,15 @@ class GPT_generator():
                 model_name="gpt-4o",
                 max_workers=2
         )
-        self.prompt_generator = PromptedGenerator(llm_serving = self.llm_serving)        
+        self.prompt_generator = PromptedGenerator(
+            llm_serving = self.llm_serving,
+            system_prompt = "Please translate to Chinese.",
+        )        
 
     def forward(self):
         # Initial filters
         self.prompt_generator.run(
             storage = self.storage.step(),
-            system_prompt = "Please translate to Chinese.",
             input_key = "raw_content",
         )
 
