@@ -155,7 +155,7 @@ class PDFExtractor(OperatorABC):
                 self.logger.info(f"Primary extracted result written to: {output_file}")
                 output_file_all.append(output_file)
             else:
-                if os.path.exists(content):
+                if not os.path.exists(content):
                     output_file=""
                     self.logger.error(f"File Not Found Error: Path {content} does not exist!")
                 else:
