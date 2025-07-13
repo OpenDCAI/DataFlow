@@ -28,6 +28,7 @@ if TYPE_CHECKING:
     # KnowledgeCleaning
     from .KnowledgeCleaning.corpus_text_splitter import CorpusTextSplitter
     from .KnowledgeCleaning.knowledge_extractor import KnowledgeExtractor
+    from .KnowledgeCleaning.pdf_extractor import PDFExtractor
     from .KnowledgeCleaning.knowledge_cleaner import KnowledgeCleaner
     from .KnowledgeCleaning.multihop_qa_generator import MultiHopQAGenerator
 
