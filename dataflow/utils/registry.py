@@ -156,6 +156,43 @@ class Registry():
         Get the object map of the registry.
         """
         return self._obj_map
+    
+    def get_type_of_operator(self):
+        """
+        Classify the operator type by its path of registration.
+        This is used to classify operators into different categories.
+        :return: A dictionary with operator type as keys and their name as values.
+        """
+        # eval operators
+        eval_operators = []
+        filter_operators = []
+        generate_operators = []
+        refine_operators = []
+        conversations_operators = []
+        db_operators = []
+
+        for name, obj in self._obj_map.items():
+            if 'eval' in obj.__module__:
+                eval_operators.append(name)
+            elif 'filter' in obj.__module__:
+                filter_operators.append(name)
+            elif 'generate' in obj.__module__:
+                generate_operators.append(name)
+            elif 'refine' in obj.__module__:
+                refine_operators.append(name)
+            elif 'conversations' in obj.__module__:
+                conversations_operators.append(name)
+            elif 'db' in obj.__module__:
+                db_operators.append(name)
+
+        return {
+            'eval': eval_operators,
+            'filter': filter_operators,
+            'generate': generate_operators,
+            'refine': refine_operators,
+            'conversations': conversations_operators,
+            'db': db_operators
+        }
 
 OPERATOR_REGISTRY = Registry(name='operators', sub_modules=['eval', 'filter', 'generate', 'refine', 'conversations'])
 class LazyLoader(types.ModuleType):
