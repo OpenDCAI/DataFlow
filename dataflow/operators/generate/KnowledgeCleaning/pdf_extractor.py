@@ -155,23 +155,27 @@ class PDFExtractor(OperatorABC):
                 self.logger.info(f"Primary extracted result written to: {output_file}")
                 output_file_all.append(output_file)
             else:
-                _, ext = os.path.splitext(content)
-                if ext in [".pdf"]:
-                    output_file=_parse_pdf_to_md(
-                        content,
-                        self.intermediate_dir,
-                        self.lang,
-                        "txt"
-                    )
-                elif ext in [".doc", ".docx", ".pptx", ".ppt"]:
-                    raise Exception("Function Under Maintaining...Please transfer your file to pdf format first.")
-                elif ext in [".html", ".xml"]:
-                    output_file=_parse_xml_to_md(raw_file=content,output_file=output_file)
-                elif ext in [".txt",".md"]:
-                    # for .txt and .md file, no action is taken
-                    output_file=content
+                if os.path.exists(content):
+                    output_file=""
+                    self.logger.error(f"File Not Found Error: Path {content} does not exist!")
                 else:
-                    raise Exception("Unsupported file type: " + ext)
+                    _, ext = os.path.splitext(content)
+                    if ext in [".pdf"]:
+                        output_file=_parse_pdf_to_md(
+                            content,
+                            self.intermediate_dir,
+                            self.lang,
+                            "txt"
+                        )
+                    #elif ext in [".doc", ".docx", ".pptx", ".ppt"]:
+                    elif ext in [".html", ".xml"]:
+                        output_file=_parse_xml_to_md(raw_file=content,output_file=output_file)
+                    elif ext in [".txt",".md"]:
+                        # for .txt and .md file, no action is taken
+                        output_file=content
+                    else:
+                        self.logger.error(f"Type Error: {ext} file is not supported for {content}")
+                        output_file = ""
                 output_file_all.append(output_file)
         dataframe[output_key] = output_file_all
         output_file_path = storage.write(dataframe)
