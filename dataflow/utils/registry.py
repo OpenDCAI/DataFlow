@@ -252,16 +252,16 @@ class LazyLoader(types.ModuleType):
                     sys.modules[parent] = dummy_mod
 
             spec = importlib.util.spec_from_file_location(mod_name, abs_file_path)
-            logger.debug(f"LazyLoader {self.__path__} successfully imported spec {spec}")
+            logger.debug(f"LazyLoader {self.__path__} successfully imported spec {spec.__str__()}")
             module = importlib.util.module_from_spec(spec)
             sys.modules[mod_name] = module
-            logger.debug(f"LazyLoader {self.__path__} successfully imported module {module} from spec {spec}")
+            logger.debug(f"LazyLoader {self.__path__} successfully imported module {module.__str__()} from spec {spec.__str__()}")
             logger.debug(f"Module name: {module.__name__}")
             logger.debug(f"Module file: {module.__file__}")
             logger.debug(f"Module package: {module.__package__}")
             spec.loader.exec_module(module)
         except Exception as e:
-            logger.error(f"{e}")
+            logger.error(f"{e.__str__()}")
             raise e
 
         # 提取类
