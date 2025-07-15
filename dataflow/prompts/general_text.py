@@ -22,7 +22,7 @@ class PretrainGeneratorPrompt:
         """
         return prompt.format(content=content)
     
-class SupervisedFinetuneGeneratorSeedPrompt:
+class SFTGeneratorSeedPrompt:
     
     def __init__(self):
         pass
