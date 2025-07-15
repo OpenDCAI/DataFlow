@@ -33,10 +33,7 @@ class AgenticRAGEvalPipeline():
             llm_serving=llm_serving
         )
 
-        self.task_step2 = F1Scorer(
-            prediction_key="refined_answer",
-            ground_truth_key="golden_doc_answer"
-        )
+        self.task_step2 = F1Scorer()
         
     def forward(self):
 
@@ -47,7 +44,9 @@ class AgenticRAGEvalPipeline():
 
         self.task_step2.run(
             storage=self.storage.step(),
-            output_key="F1Score"
+            output_key="F1Score",
+            prediction_key="refined_answer",
+            ground_truth_key="golden_doc_answer"
         )
 
 if __name__ == "__main__":

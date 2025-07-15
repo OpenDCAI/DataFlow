@@ -12,11 +12,9 @@ from dataflow import get_logger
 @OPERATOR_REGISTRY.register()
 class F1Scorer(OperatorABC):
 
-    def __init__(self, prediction_key, ground_truth_key):
+    def __init__(self):
         self.logger = get_logger()
         self.logger.info(f"Initializing {self.__class__.__name__}...")
-        self.prediction_key = prediction_key
-        self.ground_truth_key = ground_truth_key
         self.logger.info(f"{self.__class__.__name__} initialized.")
 
     @staticmethod
@@ -99,9 +97,16 @@ class F1Scorer(OperatorABC):
         self.logger.info("Evaluation complete!")
         return f1_scores
 
-    def run(self, storage: DataFlowStorage, output_key):
+    def run(self, 
+            storage: DataFlowStorage, 
+            prediction_key:str ="refined_answer",
+            ground_truth_key:str ="golden_doc_answer",
+            output_key:str ="F1Score",
+            ):
         dataframe = storage.read("dataframe")
         self.output_key = output_key
+        self.prediction_key = prediction_key
+        self.ground_truth_key = ground_truth_key
         self._validate_dataframe(dataframe)
         scores = self.eval(dataframe)
         dataframe[self.output_key] = scores

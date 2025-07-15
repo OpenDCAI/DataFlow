@@ -18,15 +18,27 @@ class WidthQAGenerator(OperatorABC):
         self.llm_serving = llm_serving
 
     @staticmethod
-    def get_desc(self, lang):
+    def get_desc(lang: str = "zh"):
         if lang == "zh":
             return (
+                "该算子用于结合两个问答，生成新的问题。\n\n"
+                "输入参数：\n"
+                "- input_question_key: 输入问题字段名（默认值：\"question\"）\n"
+                "- input_identifier_key: 输入标识符字段名（默认值：\"identifier\"）\n"
+                "- input_answer_key: 输入答案字段名（默认值：\"answer\"）\n"
+                "- output_question_key: 输出问题字段名（默认值：\"generated_width_task\"）\n"
             )
         elif lang == "en":
             return (
+                "This operator is used to combine two QA pairs and generate a new question."
+                "Input Parameters:\n"
+                "- input_question_key: Field name for the input question (default: \"question\")\n"
+                "- input_identifier_key: Field name for the input identifier (default: \"identifier\")\n"
+                "- input_answer_key: Field name for the input answer (default: \"answer\")\n"
+                "- output_question_key: Field name for the output question (default: \"generated_width_task\")\n"
             )
         else:
-            return
+            return "WidthQAGenerator combine two QA pairs and generate a new question."
     
     def _validate_dataframe(self, dataframe: pd.DataFrame):
         required_keys = [self.input_question_key, self.input_answer_key, self.input_identifier_key]

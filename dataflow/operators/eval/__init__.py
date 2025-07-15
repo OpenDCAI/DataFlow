@@ -34,7 +34,7 @@ if TYPE_CHECKING:
     from .Reasoning.difficulty_info import DifficultyInfo
     from .Reasoning.token_info import ToKenInfo
 
-    from .AgenticRAG.statistics.f1_scorer import F1Scorer
+    from .AgenticRAG.f1_scorer import F1Scorer
 
 else:
     import sys
