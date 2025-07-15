@@ -109,7 +109,7 @@ class DiyAnswerGeneratorPrompt:
     
     def Classic_COT_Prompt(self, question: str) -> str:
         try:
-            self.prompt_template + question + r'''Your response must start directly with "Solution:" without any preamble. Finish your response immediately after the solution.'''
+            return self.prompt_template + question + r'''Your response must start directly with "Solution:" without any preamble. Finish your response immediately after the solution.'''
         except:
             self.logger.debug(f"Please check if the symbol {{question}} in prompt is missing.")
             

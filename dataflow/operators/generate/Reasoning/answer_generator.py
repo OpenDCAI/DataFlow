@@ -1,4 +1,4 @@
-from dataflow.prompts.reasoning import AnswerGeneratorPrompt, GeneralAnswerGeneratorPrompt
+from dataflow.prompts.reasoning import AnswerGeneratorPrompt, GeneralAnswerGeneratorPrompt, DiyAnswerGeneratorPrompt
 import pandas as pd
 from dataflow.utils.registry import OPERATOR_REGISTRY
 from dataflow import get_logger
@@ -23,13 +23,14 @@ class AnswerGenerator(OperatorABC):
         self.prompts = AnswerGeneratorPrompt()    
         self.llm_serving = llm_serving
         self.content_type = content_type
+        self.prompt_template = prompt_template
         
         if content_type == "math":
             self.prompts = AnswerGeneratorPrompt()
         elif content_type == "general":
             self.prompts = GeneralAnswerGeneratorPrompt()
         elif content_type == "diy":
-            self.prompts = DiyAnswerGeneratorPrompt(prompt_template)
+            self.prompts = DiyAnswerGeneratorPrompt(self.prompt_template)
         
     @staticmethod
     def get_desc(lang: str = "zh"):
