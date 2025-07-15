@@ -36,31 +36,26 @@ class AnswerGenerator(OperatorABC):
     def get_desc(lang: str = "zh"):
         if lang == "zh":
             return (
-                "该算子用于生成数学问题的标准答案，调用大语言模型进行分步推理和计算。\n\n"
+                "该算子用于为给定问题生成答案，支持数学、通用和自定义类型的内容，调用大语言模型进行推理。\n\n"
                 "输入参数：\n"
-                "- input_file：输入文件路径\n"
-                "- output_file：输出文件路径\n"
-                "- generator_type：生成器类型（aisuite/request）\n"
-                "- model_name：使用的大模型名称\n"
-                "- max_worker：并发线程数\n\n"
+                "- llm_serving：LLM服务实例，用于生成答案\n"
+                "- content_type：内容类型，可选值为'math'（数学）、'general'（通用）、'diy'（自定义），默认'math'\n"
+                "- prompt_template：自定义提示模板字符串，当content_type为'diy'时必填\n\n"
                 "输出参数：\n"
-                "- output_key：生成的答案字段"
+                "- output_key：生成的答案字段，默认'generated_cot'"
             )
         elif lang == "en":
             return (
-                "This operator generates standard answers for math problems using LLMs "
-                "for step-by-step reasoning and calculation.\n\n"
+                "This operator generates answers for given questions, supporting math, general, and custom content types using LLMs for reasoning. \n\n"
                 "Input Parameters:\n"
-                "- input_file: Input file path\n"
-                "- output_file: Output file path\n"
-                "- generator_type: Generator type (aisuite/request)\n"
-                "- model_name: Name of the model used\n"
-                "- max_worker: Number of threads\n\n"
+                "- llm_serving: LLM serving instance for answer generation\n"
+                "- content_type: Content type, optional values 'math', 'general', 'diy', default 'math'\n"
+                "- prompt_template: Custom prompt template string, required when content_type is 'diy'\n\n"
                 "Output Parameters:\n"
-                "- output_key: Generated answer field"
+                "- output_key: Generated answer field, default 'generated_cot'"
             )
         else:
-            return "AnswerGenerator produces standardized answers for mathematical questions."
+            return "AnswerGenerator produces answers for questions using large language models."
 
     def _validate_dataframe(self, dataframe: pd.DataFrame):
         required_keys = [self.input_key]

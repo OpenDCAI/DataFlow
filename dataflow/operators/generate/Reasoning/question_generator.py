@@ -40,11 +40,25 @@ class QuestionGenerator(OperatorABC):
             return (
                 "该算子用于基于现有问题生成新问题。\n\n"
                 "输入参数：\n"
-                "- eval_stage：评估阶段标识\n"
-                "- read_min/max_score：分数过滤阈值\n"
-                "- 其他参数同基础分类器\n\n"
+                "- num_prompts：生成问题的数量，整数，范围1-5（含），默认1\n"
+                "- content_type：内容类型，可选值为'math'（数学）、'general'（通用）、'diy'（自定义），默认'math'\n"
+                "- prompt_template：自定义提示模板字符串，当content_type为'diy'时必填，需包含'{question}'占位符\n"
+                "- llm_serving：LLM服务实例，用于生成问题\n\n"
                 "输出参数：\n"
-                "- generated_questions：生成的新问题列表（每个原问题生成1-5个）"
+                "- 原始输入列（由input_key指定）：新增生成的问题\n"
+                "- Synth_or_Input：标识问题来源，'input'表示原始问题，'synth'表示生成的新问题"
+            )
+        elif lang == "en":
+            return (
+                "Generates new questions based on existing ones. \n\n"
+                "Input Parameters:\n"
+                "- num_prompts: Number of questions to generate per input, integer between 1-5 (inclusive), default 1\n"
+                "- content_type: Content type, optional values 'math', 'general', 'diy', default 'math'\n"
+                "- prompt_template: Custom prompt template string, required when content_type is 'diy', must contain '{question}' placeholder\n"
+                "- llm_serving: LLM serving instance for question generation\n\n"
+                "Output Parameters:\n"
+                "- Original input column (specified by input_key): Contains newly generated questions\n"
+                "- Synth_or_Input: Indicates question source, 'input' for original questions, 'synth' for generated questions"
             )
         elif lang == "en":
             return (
