@@ -2,8 +2,9 @@ from dataflow.utils.registry import OPERATOR_REGISTRY
 from dataflow import get_logger
 from dataflow.core import OperatorABC
 from dataflow.utils.storage import DataFlowStorage
-from dataflow.prompts.reasoning import QuestionFilterPrompt
+from dataflow.prompts.reasoning import QuestionFilterPrompt, GeneralQuestionFilterPrompt
 from dataflow.core import LLMServingABC
+from typing import Literal
 
 import re
 
@@ -12,9 +13,17 @@ class QuestionFilter(OperatorABC):
     def __init__(self,
                  system_prompt: str = "You are a helpful assistant.",
                  llm_serving: LLMServingABC = None,
+                 content_type: Literal["math", "general", "diy"] = "math",
+                 prompt_template: str = None,
                  ):
 
-        # self.check_config(config)
+        if content_type == "general":
+            self.prompt_template = GeneralQuestionFilterPrompt()
+        elif content_type == "math":
+            self.prompt_template = QuestionFilterPrompt()
+        elif content_type == "diy":
+            self.prompt_template = prompt_template
+            
         self.logger = get_logger()
         self.system_prompt = system_prompt
         self.llm_serving = llm_serving
@@ -75,7 +84,7 @@ class QuestionFilter(OperatorABC):
         self.input_key = input_key
         dataframe = storage.read("dataframe")
         questions = dataframe[input_key]
-        inputs = [QuestionFilterPrompt().build_prompt(question) for question in questions]
+        inputs = [self.prompt_template.build_prompt(question) for question in questions]
         responses = self.llm_serving.generate_from_input(user_inputs=inputs, system_prompt=self.system_prompt)
         results = [self.ResolveResponse(response) for response in responses]
         
