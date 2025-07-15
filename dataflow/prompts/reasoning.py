@@ -329,10 +329,10 @@ class GeneralQuestionFilterPrompt:
         4. If all above pass, check whether there is enough information to complete the task; missing necessary conditions ⇒ fail, redundant details are acceptable.
 
         After these steps, output exactly:
-        {
+        {{
             "judgement_test": true/false,
             "error_type": "<error description or null>"
-        }
+        }}
         You may include your chain of thought, but the final output must be the JSON above.
 
         Here is the content to evaluate:
