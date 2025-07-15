@@ -22,13 +22,12 @@ class QuestionFilter(OperatorABC):
         elif content_type == "math":
             self.prompt_template = QuestionFilterPrompt()
         elif content_type == "diy":
-            self.prompt_template = prompt_template
+            self.prompt_template = DiyQuestionFilterPrompt(prompt_template)
             
         self.logger = get_logger()
         self.system_prompt = system_prompt
         self.llm_serving = llm_serving
-
-
+        
     @staticmethod
     def get_desc(lang: str = "zh"):
         if lang == "zh":

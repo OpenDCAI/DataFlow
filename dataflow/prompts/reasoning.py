@@ -341,3 +341,10 @@ class GeneralQuestionFilterPrompt:
         -------------------------------
         """
         return prompt
+    
+class DiyQuestionFilterPrompt:
+    def __init__(self, prompt_template):
+        self.prompt_template = prompt_template
+    
+    def build_prompt(self, question):
+        return self.prompt_template.format(question=question)
