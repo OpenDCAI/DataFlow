@@ -31,7 +31,7 @@ from dataflow.operators.refine import (
     RemoveEmojiRefiner,
     RemoveExtraSpacesRefiner
 )
-from dataflow.operators.generate import SFTGeneratorSeed
+from dataflow.operators.generate import SupervisedFinetuneGeneratorSeed
 from dataflow.serving import LocalModelLLMServing_vllm
 from dataflow.utils.storage import FileStorage
 
@@ -75,7 +75,7 @@ class SFTTextSynPipeline():
         self.line_start_with_bulletpoint_filter = LineStartWithBulletpointFilter(threshold=0.9)
         self.line_with_javascript_filter = LineWithJavascriptFilter(threshold=3)
         self.quality_filter = PairQualFilter(min_score=-2, max_score=10000, lang='en')
-        self.sft_generator = SFTGeneratorSeed(
+        self.sft_generator = SupervisedFinetuneGeneratorSeed(
             llm_serving=self.llm_serving
         )
         self.word_number_filter_syn = WordNumberFilter(

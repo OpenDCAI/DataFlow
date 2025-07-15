@@ -1,6 +1,6 @@
  
 from dataflow.operators.filter import AlpagasusFilter
-from dataflow.operators.generate import CondorGenerator
+from dataflow.operators.generate import SupervisedFinetuneGenerator
 from dataflow.operators.refine import CondorRefiner
 from dataflow.utils.storage import FileStorage
 from dataflow.serving import APILLMServing_request
@@ -20,7 +20,7 @@ class TextPipeline():
                 model_name="gpt-4o",
                 max_workers=100
         )
-        self.generator = CondorGenerator(llm_serving=llm_serving, num_samples=self.num_generated_samples)
+        self.generator = SupervisedFinetuneGenerator(llm_serving=llm_serving, num_samples=self.num_generated_samples)
         self.refiner = CondorRefiner(llm_serving=llm_serving)
         self.alpagasus_filter = AlpagasusFilter(min_score=3,max_score=5,llm_serving=llm_serving)
 
