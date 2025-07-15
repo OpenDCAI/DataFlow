@@ -3,7 +3,8 @@ from typing import TYPE_CHECKING
 if TYPE_CHECKING:
     # GeneralText
     from .GeneralText.pretrain_generator import PretrainGenerator
-    from .GeneralText.sft_generator import SupervisedFinetuneGenerator
+    from .GeneralText.sft_generator_from_seed import SFTGeneratorSeed
+    from .GeneralText.condor_generator import CondorGenerator
     from .GeneralText.prompted_generator import PromptedGenerator
 
     # Reasoning

@@ -1,8 +1,6 @@
 import numpy as np
 import subprocess
-import torch
 import logging
-import colorlog
 from dataflow.logger import get_logger
 from dataflow.core import get_operator
 
@@ -29,17 +27,3 @@ def merge_yaml(config):
         return config
     
 
-def init_model(generator_type:str =None):
-    if generator_type is None:
-        raise ValueError("generator_type is not found in config")
-    if generator_type == "local":
-        from dataflow.utils.LocalModelGenerator import LocalModelGenerator
-        return LocalModelGenerator(config)
-    elif generator_type == "aisuite":
-        from dataflow.utils.APIGenerator_aisuite import APIGenerator_aisuite
-        return APIGenerator_aisuite(config)
-    elif generator_type == "request":
-        from dataflow.utils.APIGenerator_request import APIGenerator_request
-        return APIGenerator_request(config)
-    else:
-        raise ValueError(f"Invalid generator type: {config['generator_type']}, must be one of: local, aisuite, request")

@@ -19,6 +19,7 @@ if TYPE_CHECKING:
     from .GeneralText.spelling_correction_refiner import SpellingCorrectionRefiner
     from .GeneralText.stemming_lemmatization_refiner import StemmingLemmatizationRefiner
     from .GeneralText.text_normalization_refiner import TextNormalizationRefiner
+    from .GeneralText.condor_refiner import CondorRefiner
 else:
     import sys
     from dataflow.utils.registry import LazyLoader, generate_import_structure_from_type_checking

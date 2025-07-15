@@ -239,12 +239,26 @@ class LazyLoader(types.ModuleType):
         mod_name = '.'.join((*prefix_parts, *rel_parts))
         logger = get_logger()
         # 动态加载模块
+
         try:
+            parts = mod_name.split(".")
+            for i in range(1, len(parts)):
+                parent = ".".join(parts[:i])
+                if parent not in sys.modules:
+                    dummy_mod = importlib.util.module_from_spec(
+                        importlib.util.spec_from_loader(parent, loader=None)
+                    )
+                    dummy_mod.__path__ = [os.path.dirname(abs_file_path)]
+                    sys.modules[parent] = dummy_mod
+
             spec = importlib.util.spec_from_file_location(mod_name, abs_file_path)
             logger.debug(f"LazyLoader {self.__path__} successfully imported spec {spec.__str__()}")
             module = importlib.util.module_from_spec(spec)
             sys.modules[mod_name] = module
             logger.debug(f"LazyLoader {self.__path__} successfully imported module {module.__str__()} from spec {spec.__str__()}")
+            logger.debug(f"Module name: {module.__name__}")
+            logger.debug(f"Module file: {module.__file__}")
+            logger.debug(f"Module package: {module.__package__}")
             spec.loader.exec_module(module)
         except Exception as e:
             logger.error(f"{e.__str__()}")

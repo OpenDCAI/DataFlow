@@ -1,4 +1,4 @@
-from dataflow.prompts.general_text import SupervisedFinetuneGeneratorPrompt
+from dataflow.prompts.general_text import SFTGeneratorSeedPrompt
 import re
 import json
 import pandas as pd
@@ -22,16 +22,11 @@ def extract_json_object(model_output):
             continue
     return None
 
-from transformers import AutoTokenizer  # 引入 tokenizer 库
-
 @OPERATOR_REGISTRY.register()
-class SupervisedFinetuneGenerator(OperatorABC):
-    '''
-    Answer Generator is a class that generates answers for given questions.
-    '''
+class SFTGeneratorSeed(OperatorABC):
     def __init__(self, llm_serving: LLMServingABC):
         self.logger = get_logger()
-        self.prompts = SupervisedFinetuneGeneratorPrompt()    
+        self.prompts = SFTGeneratorSeedPrompt()    
         self.llm_serving = llm_serving
         
         self.tokenizer = llm_serving.tokenizer
@@ -43,7 +38,7 @@ class SupervisedFinetuneGenerator(OperatorABC):
 
     def run(self, storage: DataFlowStorage, input_key: str = "raw_content"):
         self.input_key = input_key
-        self.logger.info("Running PretrainGenerator...")
+        self.logger.info("Running SFTGenerator...")
 
         # Load the raw dataframe from the input file
         dataframe = storage.read('dataframe')

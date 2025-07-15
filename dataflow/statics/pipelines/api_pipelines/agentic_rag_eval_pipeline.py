@@ -17,7 +17,7 @@ class AgenticRAGEvalPipeline():
     def __init__(self, llm_serving=None):
 
         self.storage = FileStorage(
-            first_entry_file_name="/mnt/public/data/lh/yqj/DataFlow/dataflow/example/AgenticRAGPipeline/eval_test_data.jsonl",
+            first_entry_file_name="../example_data/AgenticRAGPipeline/eval_test_data.jsonl",
             cache_path="./agenticRAG_eval_cache",
             file_name_prefix="agentic_rag_eval",
             cache_type="jsonl",
