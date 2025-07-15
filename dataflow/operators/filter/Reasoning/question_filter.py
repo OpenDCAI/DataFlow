@@ -2,7 +2,7 @@ from dataflow.utils.registry import OPERATOR_REGISTRY
 from dataflow import get_logger
 from dataflow.core import OperatorABC
 from dataflow.utils.storage import DataFlowStorage
-from dataflow.prompts.reasoning import QuestionFilterPrompt, GeneralQuestionFilterPrompt
+from dataflow.prompts.reasoning import QuestionFilterPrompt, GeneralQuestionFilterPrompt, DiyQuestionFilterPrompt
 from dataflow.core import LLMServingABC
 from typing import Literal
 
@@ -23,7 +23,8 @@ class QuestionFilter(OperatorABC):
             self.prompt_template = QuestionFilterPrompt()
         elif content_type == "diy":
             self.prompt_template = DiyQuestionFilterPrompt(prompt_template)
-            
+        
+        self.content_type = content_type
         self.logger = get_logger()
         self.system_prompt = system_prompt
         self.llm_serving = llm_serving

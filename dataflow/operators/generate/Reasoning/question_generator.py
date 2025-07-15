@@ -1,24 +1,33 @@
-from dataflow.prompts.reasoning import QuestionSynthesisPrompt
-import pandas as pd
-import random
+from dataflow.prompts.reasoning import QuestionSynthesisPrompt,GeneralQuestionSynthesisPrompt
 from dataflow.utils.registry import OPERATOR_REGISTRY
 from dataflow import get_logger
-
 from dataflow.utils.storage import DataFlowStorage
 from dataflow.core import OperatorABC
 from dataflow.core import LLMServingABC
+import pandas as pd
+import random
+from typing import Literal
 
 @OPERATOR_REGISTRY.register()
 class QuestionGenerator(OperatorABC):
     def __init__(self, 
-                 num_prompts: int = 1,
-                 llm_serving: LLMServingABC = None
+                num_prompts: int = 1,
+                llm_serving: LLMServingABC = None,
+                content_type: Literal["math", "general", "diy"] = "math",
+                prompt_template: str = None,
                 ):
         """
         Initialize the QuestionGenerator with the provided configuration.
         """
         self.logger = get_logger()
-        self.prompts = QuestionSynthesisPrompt()
+        if content_type == "math":
+            self.prompts = QuestionSynthesisPrompt()
+        elif content_type == "general":
+            self.prompts = GeneralQuestionSynthesisPrompt()
+        elif content_type == "diy":
+            self.prompts = prompt_template
+        
+        self.content_type = content_type
         self.num_prompts = num_prompts
         self.llm_serving = llm_serving
 
@@ -75,15 +84,23 @@ class QuestionGenerator(OperatorABC):
         ]
 
         formatted_prompts = []
+        self.logger.info(f"content_type: {self.content_type}")
         for question in dataframe[self.input_key]:
             if self.num_prompts == 0:
                 formatted_prompts.append("")  # Skip generating for this question
             else:
+                if self.content_type == "math" or self.content_type == "general":
                 # Randomly choose the required number of transformations from diversity_mode
-                selected_items = random.sample(diversity_mode, self.num_prompts)
-                for selected_item in selected_items:
-                    used_prompt = self.prompts.question_synthesis_prompt(selected_item, question)
-                    formatted_prompts.append(used_prompt.strip())
+                    selected_items = random.sample(diversity_mode, self.num_prompts)
+                    for selected_item in selected_items:
+                        used_prompt = self.prompts.question_synthesis_prompt(selected_item, question)
+                        formatted_prompts.append(used_prompt.strip())
+                else: ### diy prompt
+                    try:
+                        used_prompt = self.prompts.format(question=question)
+                        formatted_prompts.append(used_prompt.strip())
+                    except:
+                        self.logger.debug(f"Please check if the symbol {{question}} in prompt is missing.")
 
         return formatted_prompts
 
