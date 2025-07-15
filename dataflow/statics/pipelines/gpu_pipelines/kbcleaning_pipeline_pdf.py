@@ -17,14 +17,6 @@ class KBCleaningPipeline():
             cache_type="json",
         )
 
-        local_llm_serving = LocalModelLLMServing_vllm(
-            hf_model_name_or_path="Qwen/Qwen2.5-7B-Instruct",
-            vllm_max_tokens=1024,
-            vllm_tensor_parallel_size=4,
-            vllm_gpu_memory_utilization=0.6,
-            vllm_repetition_penalty=1.2
-        )
-
         self.knowledge_cleaning_step1 = KnowledgeExtractor(
             intermediate_dir="../example_data/KBCleaningPipeline/raw/",
             lang="en",
@@ -34,16 +26,6 @@ class KBCleaningPipeline():
             split_method="token",
             chunk_size=512,
             tokenizer_name="Qwen/Qwen2.5-7B-Instruct",
-        )
-
-        self.knowledge_cleaning_step3 = KnowledgeCleaner(
-            llm_serving=local_llm_serving,
-            lang="en"
-        )
-
-        self.knowledge_cleaning_step4 = MultiHopQAGenerator(
-            llm_serving=local_llm_serving,
-            lang="en"
         )
 
     def forward(self, url:str=None, raw_file:str=None):
@@ -57,6 +39,24 @@ class KBCleaningPipeline():
             storage=self.storage.step(),
             input_file=extracted,
             output_key="raw_content",
+        )
+
+        local_llm_serving = LocalModelLLMServing_vllm(
+            hf_model_name_or_path="Qwen/Qwen2.5-7B-Instruct",
+            vllm_max_tokens=1024,
+            vllm_tensor_parallel_size=4,
+            vllm_gpu_memory_utilization=0.6,
+            vllm_repetition_penalty=1.2
+        )
+
+        self.knowledge_cleaning_step3 = KnowledgeCleaner(
+            llm_serving=local_llm_serving,
+            lang="en"
+        )
+
+        self.knowledge_cleaning_step4 = MultiHopQAGenerator(
+            llm_serving=local_llm_serving,
+            lang="en"
         )
 
         self.knowledge_cleaning_step3.run(
