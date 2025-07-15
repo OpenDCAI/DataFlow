@@ -54,7 +54,66 @@ class AnswerGeneratorPrompt:
         )
         return prompt + question + r'''Your response must directly start with "Solution:" without any preamble, After the answer is generated finish your response right away.'''
     
+class GeneralAnswerGeneratorPrompt:
+    '''
+    The prompt for the answer generator.
+    '''
+    def __init__(self):
+        pass
 
+    def Classic_COT_Prompt(self, question: str) -> str:
+        """
+        for general reasoning answer generation
+        """
+        prompt = (
+            r'''You are an intelligent chatbot designed for producing the answer to the given reasoning task.
+        Remember: DO NOT output anything else, only output the answer you generate.
+        Generate a solution to the given task strictly following this format:
+        1. Identify key components and premises of the task
+        2. Apply relevant principles, theorems, or methods with step-by-step derivation or argument
+        3. Perform any necessary calculations or logical checks with intermediate verification
+        4. Present the final answer or conclusion in a clear, unambiguous notation
+
+        Format Requirements:
+        - Prefix each step with "→" (use the actual arrow symbol, not its Unicode escape sequence)
+        - Ensure all symbols and special characters are presented using appropriate markup (e.g., LaTeX commands for mathematical symbols, code formatting for code snippets)
+
+        Example Template:
+        Task: Analyze the time complexity of the following sorting algorithm and prove its correctness.
+
+        Solution:
+        1. Identify components:
+        → Algorithm uses divide-and-conquer to split the list in half
+        → Merging step compares elements pairwise
+
+        2. Apply principles:
+        → Recurrence: T(n) = 2T(n/2) + O(n)
+        → By Master Theorem, T(n) = O(n log n)
+
+        3. Verification:
+        → Check base case T(1) = O(1)
+        → Inductive step holds for n = 2^k
+
+        4. Conclusion:
+        → The algorithm runs in \\boxed{O(n\\log n)} time and correctly sorts any input list.
+
+        Here is the given task you need to solve:
+        '''
+        )
+        return prompt + question + r'''Your response must start directly with "Solution:" without any preamble. Finish your response immediately after the solution.'''
+
+
+class DiyAnswerGeneratorPrompt:
+    def __init__(self, prompt_template):
+        self.prompt_template = prompt_template
+    
+    def Classic_COT_Prompt(self, question: str) -> str:
+        try:
+            self.prompt_template + question + r'''Your response must start directly with "Solution:" without any preamble. Finish your response immediately after the solution.'''
+        except:
+            self.logger.debug(f"Please check if the symbol {{question}} in prompt is missing.")
+            
+            
 class QuestionSynthesisPrompt:
     '''
     The prompt for the question synthesis.

@@ -1,22 +1,36 @@
-from dataflow.prompts.reasoning import AnswerGeneratorPrompt
+from dataflow.prompts.reasoning import AnswerGeneratorPrompt, GeneralAnswerGeneratorPrompt
 import pandas as pd
 from dataflow.utils.registry import OPERATOR_REGISTRY
 from dataflow import get_logger
-
 from dataflow.utils.storage import DataFlowStorage
 from dataflow.core import OperatorABC
 from dataflow.core import LLMServingABC
+
+from typing import Literal
 
 @OPERATOR_REGISTRY.register()
 class AnswerGenerator(OperatorABC):
     '''
     Answer Generator is a class that generates answers for given questions.
     '''
-    def __init__(self, llm_serving: LLMServingABC):
+    def __init__(self,
+                llm_serving: LLMServingABC,
+                content_type: Literal["math", "general", "diy"] = "math",
+                prompt_template: str = None
+                ):
+        
         self.logger = get_logger()
         self.prompts = AnswerGeneratorPrompt()    
         self.llm_serving = llm_serving
-    
+        self.content_type = content_type
+        
+        if content_type == "math":
+            self.prompts = AnswerGeneratorPrompt()
+        elif content_type == "general":
+            self.prompts = GeneralAnswerGeneratorPrompt()
+        elif content_type == "diy":
+            self.prompts = DiyAnswerGeneratorPrompt(prompt_template)
+        
     @staticmethod
     def get_desc(lang: str = "zh"):
         if lang == "zh":
