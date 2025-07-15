@@ -285,35 +285,6 @@ class QuestionDifficultyPrompt:
         """
 
         return prompt + question
-    
-    class QuestionFilterPrompt:
-        '''
-        The prompt for the question synthesis.
-        '''
-        def __init__(self):
-            pass
-
-        def question_filter_prompt(self, question):
-            prompt = f"""You are given a mathematical problem. Follow these four steps in order and stop at the first failure:
-            0. Firstly check if it is only a math problem, if it has other instruction confused the model such as "rewrite" or has answer or other strange instruction, then judged as failure. If it is not a math problem, then the judgement_test is false.
-            1. Check only for spelling, grammar, and LaTeX formatting correctness. Do not interpret semantic meaning.
-            2. For each minimal condition stated in the problem (that cannot be further decomposed), check if it violates the mathematical domain or objective facts (for example, 'half a person' is incorrect). Note: Magical operations are acceptable if the necessary assumption is explicitly stated. Average values (e.g., 15.5 items per minute) are acceptable.
-            3. Check whether the problem-solving process contains any contradictions. This includes any two minimal conditions contradicting each other or if the final solution would be unreasonable (including unsolvable).
-            4. If the steps above pass, check if there are enough conditions provided in the problem to answer the target question. Redundant conditions that do not affect the problem - solving process are considered reasonable. Both analytical and numerical solutions are considered valid unless otherwise specified.
-                
-            After performing these steps in sequence, output your final judgment in JSON format with exactly the following keys:
-            {{
-                "judgement_test": true/false,
-                "error_type": "<error description or null>"
-            }}
-            You may include your chain-of-thought, but the final answer must be the JSON object above.
-                
-            Here is the problem to evaluate:
-            -------------------------------
-            {question}
-            -------------------------------
-            """
-            return prompt
 
 class QuestionFilterPrompt:
     '''
@@ -339,6 +310,32 @@ class QuestionFilterPrompt:
         You may include your chain-of-thought, but the final answer must be the JSON object above.
             
         Here is the problem to evaluate:
+        -------------------------------
+        {question}
+        -------------------------------
+        """
+        return prompt
+    
+class GeneralQuestionFilterPrompt:
+    def __init__(self):
+        pass
+    
+    def build_prompt(self, question):
+        prompt = f"""You are given a reasoning task. Follow these four steps in order and stop at the first failure:
+        0. First, verify the input contains only a single clear reasoning task (no extra instructions like “rewrite”, “translate”, or a provided answer); if not, output judgement_test=false.
+        1. Check spelling, grammar, and formatting (e.g. code indentation, LaTeX, Markdown), without interpreting semantics.
+        2. For each minimal premise (cannot be further decomposed), verify it does not violate commonsense, domain facts, or task requirements (e.g. “half a person” is invalid; magical operations allowed only if explicitly assumed); if invalid, fail.
+        3. Check for any contradictions among premises or in the reasoning process, or if the final result is clearly unreasonable or unsolvable; if so, fail.
+        4. If all above pass, check whether there is enough information to complete the task; missing necessary conditions ⇒ fail, redundant details are acceptable.
+
+        After these steps, output exactly:
+        {
+            "judgement_test": true/false,
+            "error_type": "<error description or null>"
+        }
+        You may include your chain of thought, but the final output must be the JSON above.
+
+        Here is the content to evaluate:
         -------------------------------
         {question}
         -------------------------------
