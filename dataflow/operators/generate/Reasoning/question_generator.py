@@ -23,13 +23,7 @@ class QuestionGenerator(OperatorABC):
         self.llm_serving = llm_serving
 
         if self.num_prompts not in range(1,6):
-            raise ValueError("num_prompts must be an integer between 1 and 5 (inclusive)")
-
-    def check_config(self, config: dict) -> None:
-        required_keys = ['input_file', 'output_file', 'generator_type']
-        missing_keys = [key for key in required_keys if key not in config]
-        if missing_keys:
-            raise ValueError(f"Missing required config keys: {missing_keys}")
+            self.logger.debug("num_prompts must be an integer between 1 and 5 (inclusive)")
 
     @staticmethod
     def get_desc(lang: str = "zh"):
