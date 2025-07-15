@@ -6,59 +6,56 @@ from dataflow.core import OperatorABC
 import os
 from pathlib import Path
 from trafilatura import fetch_url, extract
+from termcolor import cprint
 
-def _parse_pdf_to_md(
-    input_pdf_path: str, 
-    output_dir: str,      
-    lang: str = "ch",     
-    parse_method: str = "auto"  # 解析方法：auto/txt/ocr
-):
+def _parse_file_with_mineru(raw_file: str, output_file: str, MinerU_Backend: str = "vlm-sglang-engine") -> str:
+
     """
-    将PDF转换为Markdown（仅使用Pipeline后端）
+    使用 MinerU 将 PDF/图像类文件（pdf/png/jpg/jpeg/webp/gif）解析为 Markdown 文件。
+    
+    参数:
+        raw_file: 输入文件路径，支持 .pdf/.png/.jpg/.jpeg/.webp/.gif
+        output_file: 输出 Markdown 文件的完整路径
+
+    返回:
+        output_file: Markdown 文件路径
     """
+
     try:
-        from mineru.data.data_reader_writer import FileBasedDataWriter
-        from mineru.backend.pipeline.pipeline_analyze import doc_analyze as pipeline_doc_analyze
-        from mineru.backend.pipeline.pipeline_middle_json_mkcontent import union_make as pipeline_union_make
-        from mineru.backend.pipeline.model_json_to_middle_json import result_to_middle_json as pipeline_result_to_middle_json
-        from mineru.utils.enum_class import MakeMode
-    except:
+        import mineru
+    except ImportError:
         raise Exception(
             """
 MinerU is not installed in this environment yet.
 Please refer to https://github.com/opendatalab/mineru to install.
 Or you can just execute 'pip install mineru[pipeline]' and 'mineru-models-download' to fix this error.
-please make sure you have gpu on your machine.
+Please make sure you have GPU on your machine.
 """
         )
-    
+
     logger=get_logger()
-    # 读取PDF文件
-    pdf_bytes = Path(input_pdf_path).read_bytes()
-    pdf_name = Path(input_pdf_path).stem
+    
+    os.environ['MINERU_MODEL_SOURCE'] = "local"  # 可选：从本地加载模型
 
-    # 解析PDF
-    infer_results, all_image_lists, all_pdf_docs, _, ocr_enabled_list = pipeline_doc_analyze(
-        [pdf_bytes], [lang], parse_method=parse_method
-    )
+    MinerU_Version = {"pipeline": "auto", "vlm-sglang-engine": "vlm"}
 
-    # 准备输出目录
-    image_dir = os.path.join(output_dir, f"{pdf_name}_images")
-    os.makedirs(image_dir, exist_ok=True)
-    image_writer = FileBasedDataWriter(image_dir)
-    md_writer = FileBasedDataWriter(output_dir)
+    raw_file = Path(raw_file)
+    pdf_name = raw_file.stem
+    intermediate_dir = output_file
+    try:
+        return_code = os.system(
+            f"mineru -p {raw_file} -o {intermediate_dir} -b {MinerU_Backend} --source local"
+        )
+        if return_code != 0:
+            raise RuntimeError(f"MinerU execution failed with return code: {return_code}")
+    except Exception as e:
+        raise RuntimeError(f"Failed to process file with MinerU: {str(e)}")
 
-    # 生成中间结果和Markdown
-    middle_json = pipeline_result_to_middle_json(
-        infer_results[0], all_image_lists[0], all_pdf_docs[0], 
-        image_writer, lang, ocr_enabled_list[0], True
-    )
-    md_content = pipeline_union_make(middle_json["pdf_info"], MakeMode.MM_MD, os.path.basename(image_dir))
-    # 保存Markdown
-    md_writer.write_string(f"{pdf_name}_pdf.md", md_content)
-    logger.info(f"Markdown saved to: {os.path.join(output_dir, f'{pdf_name}_pdf.md')}")
+    output_file = os.path.join(intermediate_dir, pdf_name, MinerU_Version[MinerU_Backend], f"{pdf_name}.md")
 
-    return os.path.join(output_dir,f"{pdf_name}_pdf.md")
+    logger.info(f"Markdown saved to: {output_file}")
+    return output_file
+
 
 def _parse_doc_to_md(input_file: str, output_file: str):
     """
@@ -146,38 +143,60 @@ class KnowledgeExtractor(OperatorABC):
                 "- Generates intermediate files to specified directory(intermediate_dir)"
             )
 
-    def run(self, storage:DataFlowStorage ,raw_file=None, url=None):
-        self.logger.info("starting to extract...")
-        self.logger.info("If you are providing a url or a large file, this may take a while, please wait...")
-        if(url):
-            output_file=os.path.join(os.path.dirname(storage.first_entry_file_name), "raw/crawled.md")
-            output_file=_parse_xml_to_md(url=url,output_file=output_file)
+    def run(self, storage: DataFlowStorage, raw_file=None, url=None):
+        self.logger.info("Starting extraction...")
+        self.logger.info("If you're providing a URL or a large file, this may take a while. Please wait...")
+
+        # Handle extraction from URL
+        if url:
+            output_file = os.path.join(
+                os.path.dirname(storage.first_entry_file_name),
+                "raw/crawled.md"
+            )
+            output_file = _parse_xml_to_md(url=url, output_file=output_file)
             self.logger.info(f"Primary extracted result written to: {output_file}")
             return output_file
 
-        raw_file_name=os.path.splitext(os.path.basename(raw_file))[0]
-        raw_file_suffix=os.path.splitext(raw_file)[1]
-        raw_file_suffix_no_dot=raw_file_suffix.replace(".","")
-        output_file=os.path.join(self.intermediate_dir,f"{raw_file_name}_{raw_file_suffix_no_dot}.md")
-        if(raw_file_suffix==".pdf"):
-            # optional: 是否从本地加载OCR模型
-            os.environ['MINERU_MODEL_SOURCE'] = "local"
-            output_file=_parse_pdf_to_md(
-                raw_file,
-                self.intermediate_dir,
-                self.lang,
-                "txt"
+        # Extract file name and extension
+        raw_file_name = os.path.splitext(os.path.basename(raw_file))[0]
+        raw_file_suffix = os.path.splitext(raw_file)[1].lower()
+        raw_file_suffix_no_dot = raw_file_suffix.lstrip(".")
+
+        # Define default output path
+        output_file = os.path.join(
+            self.intermediate_dir,
+            f"{raw_file_name}_{raw_file_suffix_no_dot}.md"
+        )
+
+        # Handle supported file types
+        if raw_file_suffix in [".pdf", ".png", ".jpg", ".jpeg", ".webp", ".gif"]:
+            # Use MinerU backend for PDF and image files
+            output_file = _parse_file_with_mineru(
+                raw_file=raw_file,
+                output_file=self.intermediate_dir,
+                MinerU_Backend="vlm-sglang-engine"
             )
-        elif(raw_file_suffix in [".doc", ".docx", ".pptx", ".ppt"]):
-            if(raw_file_suffix==".doc"):
-                raise Exception("Function Under Maintaining...Please transfer your file to pdf format first.")
-        elif(raw_file_suffix in [".html", ".xml"]):
-            output_file=_parse_xml_to_md(raw_file=raw_file,output_file=output_file)
-        elif(raw_file_suffix in [".txt",".md"]):
-            # for .txt and .md file, no action is taken
-            output_file=raw_file
+
+        elif raw_file_suffix in [".doc", ".docx", ".ppt", ".pptx"]:
+            # .doc format is currently not supported
+            if raw_file_suffix == ".doc":
+                raise Exception(
+                    "Function under maintenance. Please convert your file to PDF format first."
+                )
+            # Handling for .docx, .pptx, and .ppt can be added here if needed
+
+        elif raw_file_suffix in [".html", ".xml"]:
+            # Use XML/HTML parser for HTML and XML files
+            output_file = _parse_xml_to_md(raw_file=raw_file, output_file=output_file)
+
+        elif raw_file_suffix in [".txt", ".md"]:
+            # Plain text and markdown files require no processing
+            output_file = raw_file
+
         else:
-            raise Exception("Unsupported file type: " + raw_file_suffix)
+            # Unsupported file type
+            raise Exception(f"Unsupported file type: {raw_file_suffix}")
+
         
         self.logger.info(f"Primary extracted result written to: {output_file}")
         return output_file
