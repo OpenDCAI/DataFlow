@@ -16,7 +16,7 @@ class PseudoAnswerGenerator(OperatorABC):
     '''
     def __init__(self, llm_serving: LLMServingABC = None, max_times: int = 3):
         self.logger = get_logger()
-        self.prompts = AnswerGeneratorPrompt()
+        self.prompts = MathAnswerGeneratorPrompt()
         self.llm_serving = llm_serving
         self.max_times = max_times
         

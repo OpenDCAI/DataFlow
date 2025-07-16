@@ -24,13 +24,12 @@ class QuestionFilter(OperatorABC):
     def get_desc(lang: str = "zh"):
         if lang == "zh":
             return (
-                "该算子用于对问题进行正确性检查，包括格式是否规范、语义是否合理、条件是否矛盾以及是否具备充分信息可解。"
+                "该算子用于对问题进行正确性检查，包括格式是否规范、语义是否合理、条件是否矛盾以及是否具备充分信息可解。"\n\n"
                 "调用大语言模型依次执行四阶段判断，最终返回每个问题是否合格的二分类结果（保留合格样本）。\n\n"
                 "输入参数：\n"
                 "- system_prompt：系统提示词，用于定义模型行为\n"
                 "- llm_serving：LLM服务对象，需实现LLMServingABC接口\n"
-                "- content_type：内容类型，可选值为'math'（数学问题）、'general'（通用问题）或'diy'（自定义模板）\n"
-                "- prompt_template：当content_type为'diy'时，用于指定自定义提示模板\n"
+                "- prompt_template：提示模板对象，用于构建检查提示词\n"
                 "- input_key：输入问题字段名，默认为'math_problem'\n\n"
                 "输出参数：\n"
                 "- 过滤后的DataFrame，仅保留判断结果为True的行\n"
@@ -38,13 +37,11 @@ class QuestionFilter(OperatorABC):
             )
         elif lang == "en":
             return (
-                "This operator checks the correctness of questions, including formatting, semantic validity, logical consistency, "
-                "and whether the problem is solvable. It performs a four-stage evaluation using a large language model and retains qualified samples.\n\n"
+                "This operator checks the correctness of questions, including formatting, semantic validity, logical consistency, "\n                "and whether the problem is solvable. It performs a four-stage evaluation using a large language model and retains qualified samples.\n\n"
                 "Input Parameters:\n"
                 "- system_prompt: System prompt to define model behavior\n"
                 "- llm_serving: LLM serving object implementing LLMServingABC interface\n"
-                "- content_type: Content type, optional values are 'math', 'general', or 'diy' (custom template)\n"
-                "- prompt_template: Custom prompt template when content_type is 'diy'\n"
+                "- prompt_template: Prompt template object for constructing check prompts\n"
                 "- input_key: Field name for input questions, default is 'math_problem'\n\n"
                 "Output Parameters:\n"
                 "- Filtered DataFrame containing only rows with True judgment results\n"
