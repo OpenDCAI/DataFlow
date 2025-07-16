@@ -19,6 +19,7 @@ class QuestionFilter(OperatorABC):
         self.prompt_template = prompt_template
         self.system_prompt = system_prompt
         self.llm_serving = llm_serving
+        self.empty_responses_count = 0  # 添加空响应计数器
         
     @staticmethod
     def get_desc(lang: str = "zh"):
@@ -54,6 +55,10 @@ class QuestionFilter(OperatorABC):
             )
     
     def ResolveResponse(self, response):
+        # 检查空响应
+        if response is None or (isinstance(response, str) and response.strip() == ''):
+            self.empty_responses_count += 1
+            return False
         try:
             pattern = re.compile(r'"judgement_test"\s*:\s*(true|false)', re.IGNORECASE)
             match = pattern.search(response)
@@ -85,5 +90,10 @@ class QuestionFilter(OperatorABC):
         dataframe = dataframe[results]
         output_file = storage.write(dataframe)
         self.logger.info(f"Filtered questions saved to {output_file}")
+        
+        # 记录空响应数量并重置计数器
+        if self.empty_responses_count > 0:
+            self.logger.error(f"Found {self.empty_responses_count} empty responses during filtering.")
+        self.empty_responses_count = 0
         
         return [input_key,]

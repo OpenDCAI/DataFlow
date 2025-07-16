@@ -256,5 +256,11 @@
         "output":"Let A be the number of adults (each \\$10) and C=7 the number of children.  Since “a teacher brings 1 adult” there are actually 2 adults paying.  Children beyond the first 5 get a 50% discount, so\n\nAdult cost = 2·10 = \\$20  \nChild cost = 5·x + 2·(½x) = 5x + x = 6x  \n\nTotal spent = \\$20 + 6x.  They hand over \\$60 and get \\$10 back, so they’ve actually paid \\$50:\n\n 20 + 6x = 50  \n 6x = 30  \n x = 5.\n\nHence the full‐price child ticket is \\$5.",
         "golden_answer":"5",
         "source":"Bigmath_synth"
+    },
+    {
+    "instruction":null,
+    "output":null,
+    "golden_answer":null,
+    "source":null
     }
 ]
