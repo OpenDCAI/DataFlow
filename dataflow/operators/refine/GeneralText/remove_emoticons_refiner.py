@@ -14,7 +14,7 @@ class RemoveEmoticonsRefiner(OperatorABC):
     
     @staticmethod
     def get_desc(lang: str = "zh"):
-        return "去除文本中的URL和HTML标签" if lang == "zh" else "Remove URLs and HTML tags from the text."
+        return "移除文本中的表情符号，例如“:‑)”" if lang == "zh" else "Remove emoticons from text (e.g., ':‑)')."
 
     def run(self, storage: DataFlowStorage, input_key: str):
         self.input_key = input_key

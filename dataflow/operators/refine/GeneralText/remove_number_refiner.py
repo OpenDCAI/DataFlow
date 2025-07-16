@@ -9,6 +9,10 @@ class RemoveNumberRefiner(OperatorABC):
     def __init__(self):
         self.logger = get_logger()
         self.logger.info(f"Initializing {self.__class__.__name__} ...")
+    
+    @staticmethod
+    def get_desc(lang: str = "zh"):
+        return "移除文本中的数字字符" if lang == "zh" else "Remove numeric characters from text."
 
     def run(self, storage: DataFlowStorage, input_key: str):
         self.input_key = input_key

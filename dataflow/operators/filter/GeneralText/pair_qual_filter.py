@@ -19,7 +19,7 @@ class PairQualFilter(OperatorABC):
 
     @staticmethod
     def get_desc(lang: str = "zh"):
-        return "使用PairQual评分器过滤掉低质量数据" if lang == "zh" else "Filter out low-quality data using the PairQual scorer."
+        return "基于PairQualScorer打分器的得分对数据进行过滤。基于bge模型，使用gpt对文本成对比较打分后训练而成。得分越高表示质量越高。" if lang == "zh" else "Filter data using scores from the PairQualScorer. Pairwise quality scorer based on bge and GPT annotations; supports bilingual input."
 
     def eval(self, dataframe, input_key):
         self.logger.info(f"Start evaluating {self.filter_name}...")

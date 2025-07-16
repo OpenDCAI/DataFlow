@@ -24,7 +24,8 @@ class QuratingFilter(OperatorABC):
 
     @staticmethod
     def get_desc(lang: str = "zh"):
-        return "使用Qurating评分器过滤掉低质量数据" if lang == "zh" else "Filter out low-quality data using the Qurating scorer."
+        return "基于QuratingScorer打分器的得分对数据进行过滤。通过 Qurating 模型评估文本的质量，得分越高表示质量越高。" if lang == "zh" else "Filter data using scores from the QuratingScorer. Evaluate quality and educational value of text using Qurating model."
+
 
     def run(self, storage: DataFlowStorage, input_key: str):
         self.input_key = input_key

@@ -24,7 +24,7 @@ class DeitaComplexityScorer(OperatorABC):
 
     @staticmethod
     def get_desc(lang: str = "zh"):
-        return "使用Deita指令复杂度分类器评估指令复杂度" if lang == "zh" else "Evaluate instruction complexity using the Deita instruction complexity classifier."
+        return "基于 Llama 模型的 Deita 指令复杂性评估器，高分表示指令复杂性较高。" if lang == "zh" else "Measure instruction complexity using Llama-based Deita model."
 
     def infer_complexity(self, input_text):
         complexity_template = ("You are a helpful assistant. Please identify the complexity score of the following user query. \n##Query: {instruction}\n##Complexity: ")

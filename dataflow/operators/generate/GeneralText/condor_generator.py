@@ -20,6 +20,11 @@ class CondorGenerator(OperatorABC):
         self.prompt = CondorPrompt() 
         self.logger.info(f'{self.__class__.__name__} initialized.')
     
+    @staticmethod
+    def get_desc(lang: str = "zh"):
+        return "根据预置知识树标签，两阶段从0合成SFT格式数据（合成数量大于5000时建议增加标签数量）" if lang == "zh" else "Two-stage generation of SFT-style data from scratch based on predefined knowledge tree tags (for over 5000 samples, consider increasing the number of tags)."
+
+    
     def parse_generated_responses(self, questions_responses):
         questions_data = []
         for response in questions_responses:

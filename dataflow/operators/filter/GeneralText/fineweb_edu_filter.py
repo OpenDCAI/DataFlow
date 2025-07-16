@@ -17,7 +17,7 @@ class FineWebEduFilter(OperatorABC):
 
     @staticmethod
     def get_desc(lang: str = "zh"):
-        return "使用Fineweb-edu质量分类器过滤低质量文本" if lang == "zh" else "Filter out low-quality text data using the Fineweb-edu quality classifier."
+        return "基于FineWebEduScorer打分器的得分对数据进行过滤。Fineweb-Edu是一个用于评估文本教育价值的分类器，高分表示文本具有较高的教育价值。" if lang == "zh" else "Filter data using scores from the FineWebEduScorer. Fineweb-Edu is a classifier for educational value; higher scores indicate more educational content."
 
     def run(self, storage: DataFlowStorage, input_key: str, output_key: str='FinewebEduScore'):
         self.input_key = input_key

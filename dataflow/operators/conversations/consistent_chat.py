@@ -19,7 +19,11 @@ class ConsistentChatGenerator(OperatorABC):
         self.temperature = temperature
         self.prompt = ConsistentChatPrompt()
         self.logger.info(f'{self.__class__.__name__} initialized.')
-            
+    
+    @staticmethod
+    def get_desc(lang: str = "zh"):
+        return "根据预置主题和人类意图，两阶段从0合成多轮对话格式数据（合成数量大于9000时建议增加标签数量）" if lang == "zh" else "Two-stage generation of multi-turn dialogue data from scratch based on predefined topics and human intents (for over 9000 samples, consider increasing the number of tags)."
+
     def run(self, storage: DataFlowStorage):
         all_query_prompts = []
         

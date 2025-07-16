@@ -22,6 +22,10 @@ class PerplexityScorer(OperatorABC):
             self.logger.error("Please download the model from: https://huggingface.co/edugp/kenlm/tree/main")
             raise RuntimeError(f"Model loading failed. Please download the model from the provided link: https://huggingface.co/edugp/kenlm/tree/main. For default configuration, you can download en.arpa.bin, en.sp.model and en.sp.vocab, and put them in the folder dataflow/operators/GeneralText/models/Kenlm/wikipedia")
         
+    @staticmethod
+    def get_desc(lang: str = "zh"):
+        return "基于 Kenlm 模型计算文本的困惑度，困惑度越低，文本的流畅性和可理解性越高。" if lang == "zh" else "Uses Kenlm to calculate perplexity; lower scores indicate better fluency."
+
     def eval(self, dataframe, input_key):
         input_texts = dataframe.get(input_key, '').to_list()
         self.logger.info(f"Evaluating {self.score_name}...")

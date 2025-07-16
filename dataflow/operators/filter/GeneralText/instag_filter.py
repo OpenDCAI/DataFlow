@@ -23,7 +23,7 @@ class InstagFilter(OperatorABC):
 
     @staticmethod
     def get_desc(lang: str = "zh"):
-        return "使用Instag评分器过滤掉低标签数量数据" if lang == "zh" else "Filter out data with low tag counts using the Instag scorer."
+        return "基于InstagScorer打分器的得分对数据进行过滤。通过返回标签的数量来评估指令的内容多样性，标签越多表示内容多样性越大。" if lang == "zh" else "Filter data using scores from the InstagScorer. Measure instruction content diversity by number of tags."
 
     def run(self, storage: DataFlowStorage, input_instruction_key: str = 'instruction', output_key: str = 'InstagScore'):
         self.input_instruction_key = input_instruction_key

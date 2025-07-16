@@ -18,6 +18,10 @@ class DebertaV3Filter(OperatorABC):
             batch_size=batch_size,
         )
         self.logger.info(f"Initializing {self.__class__.__name__} with allowed_scores = {self.allowed_scores}...")
+    
+    @staticmethod
+    def get_desc(lang: str = "zh"):
+        return "基于DebertaV3Scorer打分器的得分对数据进行过滤。基于 Nvidia Deberta V3 模型的质量分类器，用于评估文本质量。" if lang == "zh" else "Filter data using scores from the DebertaV3Scorer. Text quality classifier based on Nvidia Deberta V3."
         
     def run(self, storage: DataFlowStorage, input_key: str, output_key: str = 'Debertav3Score'):
         self.input_key = input_key

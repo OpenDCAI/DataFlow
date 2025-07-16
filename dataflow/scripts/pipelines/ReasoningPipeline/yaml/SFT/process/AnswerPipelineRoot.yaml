@@ -1,6 +1,0 @@
-input_file: "dataflow/example/ReasoningPipeline//pipeline_math_step5out.jsonl"
-input_key: "data"
-input_answer_key: "output"
-input_gt_key: "golden_answer"
-output_file_with_gt: "dataflow/example/ReasoningPipeline//pipeline_math_step6out_gt.jsonl"
-output_file_without_gt: "dataflow/example/ReasoningPipeline//pipeline_math_step6out_no_gt.jsonl"

@@ -14,6 +14,10 @@ class RMFilter(OperatorABC):
         self.max_score = max_score
         self.scorer = RMScorer(device=device, model_cache_dir=model_cache_dir)
         self.logger.info(f"Initializing {self.__class__.__name__} with min_score = {self.min_score}, max_score = {self.max_score}")
+    
+    @staticmethod
+    def get_desc(lang: str = "zh"):
+        return "基于RMScorer打分器的得分对数据进行过滤。基于人类价值判断的奖励模型打分，高分代表质量较高。" if lang == "zh" else "Filter data using scores from the RMScorer. Quality scoring using reward model trained with human preference data."
         
     def run(self, storage: DataFlowStorage, input_instruction_key: str = 'instruction', input_output_key: str = 'output', output_key: str = 'RMScore'):
         self.input_instruction_key = input_instruction_key

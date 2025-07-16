@@ -31,7 +31,7 @@ class SuperfilteringScorer(OperatorABC):
 
     @staticmethod
     def get_desc(lang: str = "zh"):
-        return "使用Superfiltering评分器评估指令质量" if lang == "zh" else "Evaluate instruction quality using the Superfiltering scorer."
+        return "使用 Superfiltering 方法评估指令的跟随难度，得分越高表示指令越难跟随。" if lang == "zh" else "Evaluate follow difficulty of instructions using Superfiltering."
 
     def inference(self, instruction, input_text, output):
         PROMPT_DICT_NONE = {

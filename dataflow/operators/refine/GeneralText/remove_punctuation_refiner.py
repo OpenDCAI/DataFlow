@@ -11,6 +11,10 @@ class RemovePunctuationRefiner(OperatorABC):
         self.logger = get_logger()
         self.logger.info(f"Initializing {self.__class__.__name__} ...")
         self.punct_to_remove = string.punctuation
+    
+    @staticmethod
+    def get_desc(lang: str = "zh"):
+        return "移除文本中的标点符号" if lang == "zh" else "Remove punctuation from text."
         
     def run(self, storage: DataFlowStorage, input_key: str):
         self.input_key = input_key

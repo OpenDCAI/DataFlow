@@ -27,7 +27,7 @@ class DeitaQualityScorer(OperatorABC):
 
     @staticmethod
     def get_desc(lang: str = "zh"):
-        return "使用Deita指令质量分类器评估指令质量" if lang == "zh" else "Evaluate instruction quality using the Deita instruction quality classifier."
+        return "基于 Llama 模型的 Deita 指令质量评估器，高分表示指令质量较高。" if lang == "zh" else "Evaluate instruction quality using Llama-based Deita model."
 
     def infer_quality(self, input_text, resp_text):
         # Define the template and input format

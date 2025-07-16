@@ -1,6 +1,8 @@
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
+    # GeneralText - General filters
+    from .GeneralText.general_filter import GeneralFilter
     # GeneralText - Primary filters
     from .GeneralText.ngram_filter import NgramFilter
     from .GeneralText.language_filter import LanguageFilter
@@ -54,7 +56,7 @@ if TYPE_CHECKING:
     from .GeneralText.ngramhash_deduplicator import NgramHashDeduplicator
     from .GeneralText.sem_deduplicator import SemDeduplicator
     from .GeneralText.simhash_deduplicator import SimHashDeduplicator
-
+    
     # Reasoning filters
     from .Reasoning.answer_formatter_filter import AnswerFormatterFilter
     from .Reasoning.answer_groundtruth_filter import AnswerGroundTruthFilter

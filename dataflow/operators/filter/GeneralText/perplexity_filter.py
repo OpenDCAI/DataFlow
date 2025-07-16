@@ -17,6 +17,10 @@ class PerplexityFilter(OperatorABC):
             lang=lang
         )
         self.logger.info(f"Initializing {self.__class__.__name__} with min_score = {self.min_score} and max_score = {self.max_score}")
+    
+    @staticmethod
+    def get_desc(lang: str = "zh"):
+        return "基于PerplexityScorer打分器的得分对数据进行过滤。基于 Kenlm 模型计算文本的困惑度，困惑度越低，文本的流畅性和可理解性越高。" if lang == "zh" else "Filter data using scores from the PerplexityScorer. Uses Kenlm to calculate perplexity; lower scores indicate better fluency."
         
     def run(self, storage: DataFlowStorage, input_key: str, output_key: str = 'PerplexityScore'):
         self.input_key = input_key
