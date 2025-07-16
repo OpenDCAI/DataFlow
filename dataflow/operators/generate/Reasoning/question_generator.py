@@ -30,22 +30,22 @@ class QuestionGenerator(OperatorABC):
     def get_desc(lang: str = "zh"):
         if lang == "zh":
             return (
-                "该算子用于基于现有问题生成新问题。\n\n"
+                "该算子用于基于现有问题生成新问题。\n"
                 "输入参数：\n"
                 "- num_prompts：生成问题的数量，整数，范围1-5（含），默认1\n"
                 "- llm_serving：LLM服务实例，用于生成问题\n"
-                "- prompt_template：提示模板对象，用于构建生成提示词\n\n"
+                "- prompt_template：提示模板对象，用于构建生成提示词\n"
                 "输出参数：\n"
                 "- 原始输入列（由input_key指定）：新增生成的问题\n"
                 "- Synth_or_Input：标识问题来源，'input'表示原始问题，'synth'表示生成的新问题"
             )
         elif lang == "en":
             return (
-                "Generates new questions based on existing ones. \n\n"
+                "Generates new questions based on existing ones. \n"
                 "Input Parameters:\n"
                 "- num_prompts: Number of questions to generate per input, integer between 1-5 (inclusive), default 1\n"
                 "- llm_serving: LLM serving instance for question generation\n"
-                "- prompt_template: Prompt template object for constructing generation prompts\n\n"
+                "- prompt_template: Prompt template object for constructing generation prompts\n"
                 "Output Parameters:\n"
                 "- Original input column (specified by input_key): Contains newly generated questions\n"
                 "- Synth_or_Input: Indicates question source, 'input' for original questions, 'synth' for generated questions"
@@ -53,11 +53,11 @@ class QuestionGenerator(OperatorABC):
         elif lang == "en":
             return (
                 "Generates new questions based on existing ones. "
-                "Produces 1-5 new questions per original question.\n\n"
+                "Produces 1-5 new questions per original question.\n"
                 "Input Parameters:\n"
                 "- eval_stage: Evaluation stage identifier\n"
                 "- read_min/max_score: Score filtering thresholds\n"
-                "- Other params same as base classifier\n\n"
+                "- Other params same as base classifier\n"
                 "Output Parameters:\n"
                 "- generated_questions: List of newly generated questions"
             )

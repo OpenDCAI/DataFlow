@@ -26,19 +26,19 @@ class AnswerGenerator(OperatorABC):
     def get_desc(lang: str = "zh"):
         if lang == "zh":
             return (
-                "该算子用于为给定问题生成答案，调用大语言模型进行推理。\n\n"
+                "该算子用于为给定问题生成答案，调用大语言模型进行推理。\n"
                 "输入参数：\n"
                 "- llm_serving：LLM服务实例，用于生成答案\n"
-                "- prompt_template：提示模板对象，用于构建生成提示词\n\n"
+                "- prompt_template：提示模板对象，用于构建生成提示词\n"
                 "输出参数：\n"
                 "- output_key：生成的答案字段，默认'generated_cot'"
             )
         elif lang == "en":
             return (
-                "This operator generates answers for given questions using LLMs for reasoning. \n\n"
+                "This operator generates answers for given questions using LLMs for reasoning. \n"
                 "Input Parameters:\n"
                 "- llm_serving: LLM serving instance for answer generation\n"
-                "- prompt_template: Prompt template object for constructing generation prompts\n\n"
+                "- prompt_template: Prompt template object for constructing generation prompts\n"
                 "Output Parameters:\n"
                 "- output_key: Generated answer field, default 'generated_cot'"
             )
