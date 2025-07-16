@@ -2,7 +2,7 @@
 A collection of prompts for the math reasoning operator.
 '''
 
-class AnswerGeneratorPrompt:
+class MathAnswerGeneratorPrompt:
     '''
     The prompt for the answer generator.
     '''
@@ -56,7 +56,7 @@ class AnswerGeneratorPrompt:
         return prompt + question + r'''Your response must directly start with "Solution:" without any preamble, After the answer is generated finish your response right away.'''
 
 
-class QuestionSynthesisPrompt:
+class MathQuestionSynthesisPrompt:
     '''
     The prompt for the question synthesis.
     '''
@@ -82,7 +82,7 @@ class QuestionSynthesisPrompt:
         """
         return prompt
     
-class QuestionCategoryPrompt:
+class MathQuestionCategoryPrompt:
     '''
     The prompt for the question synthesis.
     '''
@@ -142,7 +142,7 @@ class QuestionCategoryPrompt:
         return prompt
 
     
-class QuestionDifficultyPrompt:
+class MathQuestionDifficultyPrompt:
     '''
     The prompt for the question synthesis.
     '''
@@ -287,7 +287,7 @@ class QuestionDifficultyPrompt:
 
         return prompt + question
 
-class QuestionFilterPrompt:
+class MathQuestionFilterPrompt:
     '''
     The prompt for the question filter.
     '''
@@ -316,4 +316,3 @@ class QuestionFilterPrompt:
         -------------------------------
         """
         return prompt
-    

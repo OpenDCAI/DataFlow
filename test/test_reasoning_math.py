@@ -1,4 +1,3 @@
-import pytest
 from dataflow.operators.generate import (
     QuestionCategoryClassifier,
     QuestionDifficultyClassifier,
@@ -6,7 +5,20 @@ from dataflow.operators.generate import (
     AnswerGenerator,
 )
 
-from dataflow.operators.filter import *
+from dataflow.operators.filter import (
+    QuestionFilter,
+    AnswerFormatterFilter,
+    AnswerGroundTruthFilter,
+    AnswerTokenLengthFilter,
+    AnswerNgramFilter
+)
+
+from dataflow.prompts.reasoning.math import (
+    MathQuestionFilterPrompt,
+    MathAnswerGeneratorPrompt,
+    MathQuestionSynthesisPrompt
+)
+
 from dataflow.utils.storage import FileStorage
 from dataflow.serving import APILLMServing_request, LocalModelLLMServing
 from dataflow.core import LLMServingABC
@@ -23,32 +35,36 @@ class ReasoningPipeline():
         )
 
         # use API server as LLM serving
-        # llm_serving = APILLMServing_request(
-        #         api_url="http://123.129.219.111:3000/v1/chat/completions",
-        #         model_name="gpt-4o",
-        #         max_workers=100
-        # )
-        if llm_serving is None:
-            # use local model as LLM serving
-            llm_serving = LocalModelLLMServing(
-                # model_name_or_path="/data0/models/Qwen2.5-7B-Instruct", # set to your own model path
-                model_name_or_path="/mnt/public/model/huggingface/Qwen2.5-7B-Instruct",
-                tensor_parallel_size=4,
-                max_tokens=8192,
-                model_source="local"
-            )
+        llm_serving = APILLMServing_request(
+                api_url="http://123.129.219.111:3000/v1/chat/completions",
+                model_name="gpt-4o",
+                max_workers=100
+        )
+        
+        # if llm_serving is None:
+        #     # use local model as LLM serving
+        #     llm_serving = LocalModelLLMServing(
+        #         # model_name_or_path="/data0/models/Qwen2.5-7B-Instruct", # set to your own model path
+        #         model_name_or_path="/mnt/public/model/huggingface/Qwen2.5-7B-Instruct",
+        #         tensor_parallel_size=4,
+        #         max_tokens=8192,
+        #         model_source="local"
+        #     )
 
         self.question_filter_step1 = QuestionFilter(
             system_prompt="You are an expert in evaluating mathematical problems. Follow the user's instructions strictly and output your final judgment in the required JSON format.",
-            llm_serving=llm_serving
+            llm_serving=llm_serving,
+            prompt_template=MathQuestionFilterPrompt()
         )
         self.question_gen_step2 =  QuestionGenerator(
             num_prompts=3,
-            llm_serving=llm_serving
+            llm_serving=llm_serving,
+            prompt_template=MathQuestionSynthesisPrompt()
         )
         self.question_filter_step3 = QuestionFilter(
             system_prompt="You are an expert in evaluating mathematical problems. Follow the user's instructions strictly and output your final judgment in the required JSON format.",
-            llm_serving=llm_serving
+            llm_serving=llm_serving,
+            prompt_template=MathQuestionFilterPrompt()
         )
         self.question_difficulty_classifier_step4 = QuestionDifficultyClassifier(
             llm_serving=llm_serving
@@ -57,10 +73,11 @@ class ReasoningPipeline():
             llm_serving=llm_serving
         )
         ########################## branch ############################
-        self.answer_pipeline_root_step6 = AnswerPipelineRoot()
+        # self.answer_pipeline_root_step6 = AnswerPipelineRoot()
         ########################## answer ############################
         self.answer_generator_step7 = AnswerGenerator(
-            llm_serving=llm_serving
+            llm_serving=llm_serving,
+            prompt_template=MathAnswerGeneratorPrompt()
         )
         
         self.answer_format_filter_step8 = AnswerFormatterFilter()
@@ -108,11 +125,11 @@ class ReasoningPipeline():
             output_key = "question_category"
         )
         ############# branch #############
-        self.answer_pipeline_root_step6.run(
-            storage = self.storage.step(),
-            input_answer_key = "output",
-            input_gt_key = "golden_answer"
-        )
+        # self.answer_pipeline_root_step6.run(
+        #     storage = self.storage.step(),
+        #     input_answer_key = "output",
+        #     input_gt_key = "golden_answer"
+        # )
         ############## answer #############
         self.answer_generator_step7.run(
             storage = self.storage.step(),
@@ -137,14 +154,7 @@ class ReasoningPipeline():
             question_key = "instruction",
             answer_key = "generated_cot"
         )
-        
-# @pytest.mark.gpu
-# def test_reasoning_pipeline_runs_without_errors():
-#     try:
-#         pipeline = ReasoningPipeline()
-#         pipeline.forward()
-#     except Exception as e:
-#         pytest.fail(f"ReasoningPipeline execution failed with error: {e}")
+
 if __name__ == "__main__":
     model = ReasoningPipeline()
     model.forward()

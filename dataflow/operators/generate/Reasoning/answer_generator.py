@@ -1,5 +1,3 @@
-from dataflow.prompts.reasoning import AnswerGeneratorPrompt, GeneralAnswerGeneratorPrompt, DiyAnswerGeneratorPrompt
-import pandas as pd
 from dataflow.utils.registry import OPERATOR_REGISTRY
 from dataflow import get_logger
 from dataflow.utils.storage import DataFlowStorage
@@ -7,6 +5,7 @@ from dataflow.core import OperatorABC
 from dataflow.core import LLMServingABC
 
 from typing import Literal
+import pandas as pd
 
 @OPERATOR_REGISTRY.register()
 class AnswerGenerator(OperatorABC):
@@ -15,22 +14,13 @@ class AnswerGenerator(OperatorABC):
     '''
     def __init__(self,
                 llm_serving: LLMServingABC,
-                content_type: Literal["math", "general", "diy"] = "math",
-                prompt_template: str = None
+                prompt_template: None,
                 ):
         
         self.logger = get_logger()
-        self.prompts = AnswerGeneratorPrompt()    
-        self.llm_serving = llm_serving
-        self.content_type = content_type
-        self.prompt_template = prompt_template
         
-        if content_type == "math":
-            self.prompts = AnswerGeneratorPrompt()
-        elif content_type == "general":
-            self.prompts = GeneralAnswerGeneratorPrompt()
-        elif content_type == "diy":
-            self.prompts = DiyAnswerGeneratorPrompt(self.prompt_template)
+        self.prompts = prompt_template
+        self.llm_serving = llm_serving
         
     @staticmethod
     def get_desc(lang: str = "zh"):
@@ -74,7 +64,7 @@ class AnswerGenerator(OperatorABC):
         Reformat the prompts in the dataframe to generate questions.
         """
         questions = dataframe[self.input_key].tolist()
-        inputs = [self.prompts.Classic_COT_Prompt(question) for question in questions]
+        inputs = [self.prompts.build_prompt(question) for question in questions]
 
         return inputs
 

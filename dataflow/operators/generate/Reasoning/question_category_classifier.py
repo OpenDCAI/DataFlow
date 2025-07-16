@@ -1,4 +1,4 @@
-from dataflow.prompts.reasoning import QuestionCategoryPrompt
+from dataflow.prompts.reasoning.math import MathQuestionCategoryPrompt
 import pandas as pd
 import json
 import re
@@ -18,7 +18,7 @@ class QuestionCategoryClassifier(OperatorABC):
         Initialize the QuestionCategoryClassifier with the provided configuration.
         """
         self.logger = get_logger()
-        self.prompts = QuestionCategoryPrompt()
+        self.prompts = MathQuestionCategoryPrompt()
         self.llm_serving = llm_serving
 
     @staticmethod
@@ -67,7 +67,7 @@ class QuestionCategoryClassifier(OperatorABC):
         # Check if input_key is in the dataframe
         formatted_prompts = []
         for text in dataframe[self.input_key]:
-            used_prompt = self.prompts.question_synthesis_prompt(text)
+            used_prompt = self.prompts.build_prompt(text)
             formatted_prompts.append(used_prompt.strip())
 
         return formatted_prompts

@@ -5,7 +5,7 @@ import pandas as pd
 from dataflow.utils.storage import DataFlowStorage
 from dataflow.core import OperatorABC
 
-from dataflow.prompts.reasoning import AnswerGeneratorPrompt
+from dataflow.prompts.reasoning.math import MathAnswerGeneratorPrompt
 from dataflow.core import LLMServingABC
 from dataflow.utils.reasoning.AnswerExtraction import StringCleaner, UnitTextManager, AnswerExtractor
 
