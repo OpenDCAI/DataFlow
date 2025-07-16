@@ -26,7 +26,7 @@ class AgenticRAGEvalPipeline():
         llm_serving = APILLMServing_request(
             api_url="http://123.129.219.111:3000/v1/chat/completions",
             model_name="gpt-4o-mini",
-            max_workers=500
+            max_workers=100
         )
 
         self.task_step1 = AtomicTaskGenerator(
