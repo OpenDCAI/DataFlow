@@ -4,7 +4,7 @@ sys.path.append(str(Path(__file__).parent.parent))
 
 from dataflow.operators.generate import (
     CorpusTextSplitter,
-    KnowledgeExtractor,
+    FileOrURLToMarkdownConverter,
     KnowledgeCleaner,
     MultiHopQAGenerator,
 )
@@ -36,7 +36,7 @@ class KBCleaningPipeline():
             repetition_penalty=1.2
         )
 
-        self.knowledge_cleaning_step1 = KnowledgeExtractor(
+        self.knowledge_cleaning_step1 = FileOrURLToMarkdownConverter(
             intermediate_dir="dataflow/example/KBCleaningPipeline/raw/"
         )
 

@@ -25,7 +25,7 @@ if TYPE_CHECKING:
 
     # KnowledgeCleaning
     from .KnowledgeCleaning.corpus_text_splitter import CorpusTextSplitter
-    from .KnowledgeCleaning.knowledge_extractor import KnowledgeExtractor
+    from .KnowledgeCleaning.file_or_url_to_markdown_converter import FileOrURLToMarkdownConverter
     from .KnowledgeCleaning.pdf_extractor import PDFExtractor
     from .KnowledgeCleaning.knowledge_cleaner import KnowledgeCleaner
     from .KnowledgeCleaning.multihop_qa_generator import MultiHopQAGenerator

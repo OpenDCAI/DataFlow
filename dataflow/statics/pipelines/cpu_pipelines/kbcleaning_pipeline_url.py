@@ -1,6 +1,6 @@
 from dataflow.operators.generate import (
     CorpusTextSplitter,
-    KnowledgeExtractor,
+    FileOrURLToMarkdownConverter,
 )
 from dataflow.utils.storage import FileStorage
 class KBCleaningPipeline():
@@ -13,7 +13,7 @@ class KBCleaningPipeline():
             cache_type="json",
         )
 
-        self.knowledge_cleaning_step1 = KnowledgeExtractor(
+        self.knowledge_cleaning_step1 = FileOrURLToMarkdownConverter(
             intermediate_dir="../example_data/KBCleaningPipeline/raw/",
             lang="en",
         )

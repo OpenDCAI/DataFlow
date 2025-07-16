@@ -20,7 +20,7 @@ class PDFCleaningPipeline():
         self.knowledge_cleaning_step1 = PDFExtractor(
             intermediate_dir="../example_data/KBCleaningPipeline/raw/",
             lang="en",
-            MinerU_Backend="vlm-sglang-engine",
+            mineru_backend="vlm-sglang-engine",
         )
 
     def forward(self):

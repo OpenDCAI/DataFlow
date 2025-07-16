@@ -1,6 +1,6 @@
 from dataflow.operators.generate import (
     CorpusTextSplitter,
-    KnowledgeExtractor,
+    FileOrURLToMarkdownConverter,
     KnowledgeCleaner,
     MultiHopQAGenerator,
 )
@@ -17,10 +17,10 @@ class KBCleaningPipeline():
             cache_type="json",
         )
 
-        self.knowledge_cleaning_step1 = KnowledgeExtractor(
+        self.knowledge_cleaning_step1 = FileOrURLToMarkdownConverter(
             intermediate_dir="../example_data/KBCleaningPipeline/raw/",
             lang="en",
-            MinerU_Backend="vlm-sglang-engine",
+            mineru_backend="vlm-sglang-engine",
         )
 
         self.knowledge_cleaning_step2 = CorpusTextSplitter(

@@ -1,4 +1,5 @@
 import pandas as pd
+from typing import Literal
 from dataflow.utils.registry import OPERATOR_REGISTRY
 from dataflow import get_logger
 from dataflow.utils.storage import DataFlowStorage
@@ -6,21 +7,20 @@ from dataflow.core import OperatorABC
 import os
 from pathlib import Path
 from trafilatura import fetch_url, extract
-from termcolor import cprint
 
-def _parse_file_with_mineru(raw_file: str, output_file: str, MinerU_Backend: str = "vlm-sglang-engine") -> str:
+def _parse_file_with_mineru(raw_file: str, output_file: str, mineru_backend: Literal["vlm-sglang-engine", "pipeline"] = "vlm-sglang-engine") -> str:
     """
     Uses MinerU to parse PDF/image files (pdf/png/jpg/jpeg/webp/gif) into Markdown files.
 
     Internally, the parsed outputs for each item are stored in a structured directory:
-    'intermediate_dir/pdf_name/MinerU_Version[MinerU_Backend]'.
+    'intermediate_dir/pdf_name/MinerU_Version[mineru_backend]'.
     This directory stores various MinerU parsing outputs, and you can customize
     which content to extract based on your needs.
 
     Args:
         raw_file: Input file path, supports .pdf/.png/.jpg/.jpeg/.webp/.gif
         output_file: Full path for the output Markdown file
-        MinerU_Backend: Sets the backend engine for MinerU. Options include:
+        mineru_backend: Sets the backend engine for MinerU. Options include:
                         - "pipeline": Traditional pipeline processing (MinerU1)
                         - "vlm-sglang-engine": New engine based on multimodal language models (MinerU2) (default recommended)
                         Choose the appropriate backend based on your needs. Defaults to "vlm-sglang-engine".
@@ -53,7 +53,7 @@ Please make sure you have GPU on your machine.
     intermediate_dir = output_file
     try:
         return_code = os.system(
-            f"mineru -p {raw_file} -o {intermediate_dir} -b {MinerU_Backend} --source local"
+            f"mineru -p {raw_file} -o {intermediate_dir} -b {mineru_backend} --source local"
         )
         if return_code != 0:
             raise RuntimeError(f"MinerU execution failed with return code: {return_code}")
@@ -62,7 +62,7 @@ Please make sure you have GPU on your machine.
 
     # Directory for storing raw data, including various MinerU parsing outputs.
     # You can customize which content to extract based on your needs.
-    PerItemDir = os.path.join(intermediate_dir, pdf_name, MinerU_Version[MinerU_Backend])
+    PerItemDir = os.path.join(intermediate_dir, pdf_name, MinerU_Version[mineru_backend])
 
     output_file = os.path.join(PerItemDir, f"{pdf_name}.md")
 
@@ -114,20 +114,25 @@ def _parse_xml_to_md(raw_file:str=None, url:str=None, output_file:str=None):
     return output_file
 
 @OPERATOR_REGISTRY.register()
-class KnowledgeExtractor(OperatorABC):
+class FileOrURLToMarkdownConverter(OperatorABC):
     """
-    MinerU_Backend sets the backend engine for MinerU. Options include:
+    mineru_backend sets the backend engine for MinerU. Options include:
     - "pipeline": Traditional pipeline processing (MinerU1)
     - "vlm-sglang-engine": New engine based on multimodal language models (MinerU2) (default recommended)
     Choose the appropriate backend based on your needs.  Defaults to "vlm-sglang-engine".
     For more details, refer to the MinerU GitHub: https://github.com/opendatalab/MinerU.
     """
-    def __init__(self, intermediate_dir: str = "intermediate", lang: str = "en", MinerU_Backend: str = "vlm-sglang-engine"):
+    def __init__(
+        self, 
+        intermediate_dir: str = "intermediate", 
+        lang: str = "en", 
+        mineru_backend:  Literal["vlm-sglang-engine", "pipeline"] = "vlm-sglang-engine"
+        ):
         self.logger = get_logger()
         self.intermediate_dir=intermediate_dir
         os.makedirs(self.intermediate_dir, exist_ok=True)
         self.lang=lang
-        self.MinerU_Backend = MinerU_Backend
+        self.mineru_backend = mineru_backend
         
     @staticmethod
     def get_desc(lang: str = "zh"):
@@ -164,7 +169,7 @@ class KnowledgeExtractor(OperatorABC):
     def run(self, storage: DataFlowStorage, raw_file=None, url=None):
         self.logger.info("Starting extraction...")
         self.logger.info("If you're providing a URL or a large file, this may take a while. Please wait...")
-        self.logger.info(f"Using MinerU backend: {self.MinerU_Backend}")
+        self.logger.info(f"Using MinerU backend: {self.mineru_backend}")
 
         # Handle extraction from URL
         if url:
@@ -193,7 +198,7 @@ class KnowledgeExtractor(OperatorABC):
             output_file = _parse_file_with_mineru(
                 raw_file=raw_file,
                 output_file=self.intermediate_dir,
-                MinerU_Backend=self.MinerU_Backend
+                mineru_backend=self.mineru_backend
             )
 
         elif raw_file_suffix in [".doc", ".docx", ".ppt", ".pptx"]:
