@@ -1,5 +1,5 @@
 import pytest
-from test_reasoning import ReasoningPipeline
+from test_reasoning_math import ReasoningPipeline
 from test_reasoning_pretrain import ReasoningPipeline_Pretrain
 # from test_pt_filter import PTTextPipeline
 from test_agentic_rag import AgenticRAGPipeline
