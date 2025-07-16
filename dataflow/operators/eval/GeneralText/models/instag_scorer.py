@@ -30,6 +30,10 @@ class InstagScorer(OperatorABC):
         self.model.eval()
         self.score_name = 'InstagScore'
         self.logger.info(f'{self.__class__.__name__} initialized.')
+    
+    @staticmethod
+    def get_desc(lang: str = "zh"):
+        return "通过返回标签的数量来评估指令的内容多样性，标签越多表示内容多样性越大。" if lang == "zh" else "Measure instruction content diversity by number of tags."
 
     @staticmethod
     def get_desc(lang: str = "zh"):

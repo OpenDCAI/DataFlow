@@ -1,4 +1,0 @@
-input_file: ./pt_input.jsonl
-output_file: ./step_1_ngram_scorer.jsonl
-input_key: "raw_content"
-ngrams: 5

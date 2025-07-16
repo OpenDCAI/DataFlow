@@ -50,7 +50,12 @@ dependencies = {file = "requirements.txt"}
 
 
 [project.optional-dependencies]
-vllm = ["vllm<0.8"]
+vllm =["vllm<0.8", "numpy<2.0.0"]
+vllm07 = ["vllm<0.8", "numpy<2.0.0"]
+vllm08 = ["vllm<0.9"]
+# 要求numpy版本大于1.24小于2.0.0
+mineru = ["mineru[all]", "numpy>=1.24,<2.0.0"]
+
 kbc = ["vllm==0.6.3", "mineru[pipeline]==2.0.6"]
 myscale = ["clickhouse-driver"]
 sglang =["sglang[all]<=0.4.3"]

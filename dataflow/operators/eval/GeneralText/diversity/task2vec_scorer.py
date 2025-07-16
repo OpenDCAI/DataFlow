@@ -30,6 +30,10 @@ class Task2VecScorer(OperatorABC):
         self.device = torch.device(self.device if self.device and torch.cuda.is_available() else "cpu")
         self.probe_network = self.probe_network.to(self.device)
         self.logger.info(f'{self.__class__.__name__} initialized.')
+    
+    @staticmethod
+    def get_desc(lang: str = "zh"):
+        return "使用 Task2Vec 方法评估数据集的多样性，高分表示数据集具有较高的多样性。" if lang == "zh" else "Evaluate dataset diversity using Task2Vec; higher scores indicate more diversity."
 
     def preprocess(self, texts):
         self.tokenizer.pad_token = self.tokenizer.eos_token

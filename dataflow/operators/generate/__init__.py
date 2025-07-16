@@ -3,7 +3,8 @@ from typing import TYPE_CHECKING
 if TYPE_CHECKING:
     # GeneralText
     from .GeneralText.pretrain_generator import PretrainGenerator
-    from .GeneralText.sft_generator import SupervisedFinetuneGenerator
+    from .GeneralText.sft_generator_from_seed import SFTGeneratorSeed
+    from .GeneralText.condor_generator import CondorGenerator
     from .GeneralText.prompted_generator import PromptedGenerator
 
     # Reasoning
@@ -16,18 +17,16 @@ if TYPE_CHECKING:
     from .Reasoning.pretrain_format_converter import PretrainFormatConverter
 
     # Text2SQL
-    from .Text2SQL.DatabaseSchemaExtractor import DatabaseSchemaExtractor
-    from .Text2SQL.ExtraKnowledgeGenerator import ExtraKnowledgeGenerator
-    from .Text2SQL.PromptGenerator import PromptGenerator
-    from .Text2SQL.QuestionRefiner import QuestionRefiner
-    from .Text2SQL.SchemaLinking import SchemaLinking
-    from .Text2SQL.SQLDifficultyClassifier import SQLDifficultyClassifier
-    from .Text2SQL.SQLFilter import SQLFilter
-    from .Text2SQL.Text2SQLDifficultyClassifier import Text2SQLDifficultyClassifier
+    from .Text2SQL.text2sql_prompt_generator import PromptGenerator
+    from .Text2SQL.text2sql_question_generator import QuestionGeneration
+    from .Text2SQL.sql_variation_generator import SQLVariationGenerator
+    from .Text2SQL.sql_cot_generator import CoTGenerator
+    from .Text2SQL.sql_generator import SQLGenerator
 
     # KnowledgeCleaning
     from .KnowledgeCleaning.corpus_text_splitter import CorpusTextSplitter
     from .KnowledgeCleaning.knowledge_extractor import KnowledgeExtractor
+    from .KnowledgeCleaning.pdf_extractor import PDFExtractor
     from .KnowledgeCleaning.knowledge_cleaner import KnowledgeCleaner
     from .KnowledgeCleaning.multihop_qa_generator import MultiHopQAGenerator
 

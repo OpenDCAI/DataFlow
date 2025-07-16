@@ -14,6 +14,10 @@ class PresidioFilter(OperatorABC):
         self.max_score = max_score
         self.scorer = PresidioScorer(lang=lang, device=device, model_cache_dir=model_cache_dir)
         self.logger.info(f"Initializing {self.__class__.__name__} with min_score = {self.min_score} and max_score = {self.max_score}")
+    
+    @staticmethod
+    def get_desc(lang: str = "zh"):
+        return "基于PresidioScorer打分器的得分对数据进行过滤。使用Microsoft Presidio模型识别文本中的私人实体，返回PII信息个数。" if lang == "zh" else "Filter data using scores from the PresidioScorer. Detects PII entities using Microsoft Presidio; returns number of detected items."
         
     def run(self, storage: DataFlowStorage, input_key: str, output_key: str = 'PresidioScore'):
         self.input_key = input_key

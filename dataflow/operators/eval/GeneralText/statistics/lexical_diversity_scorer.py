@@ -100,7 +100,7 @@ class LexicalDiversityScorer(OperatorABC):
     
     @staticmethod
     def get_desc(lang: str = "zh"):
-        return NotImplementedError("The description of LexicalDiversityScorer is not implemented!")
+        return "使用MTLD和HDD方法计算词汇多样性，高分代表更丰富的词汇使用。" if lang == "zh" else "Measure lexical diversity using MTLD and HDD."
 
     def _score_func(self, sample):
         text = sample

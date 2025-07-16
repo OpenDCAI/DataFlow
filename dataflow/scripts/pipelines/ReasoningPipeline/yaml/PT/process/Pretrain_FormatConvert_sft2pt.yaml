@@ -1,5 +1,0 @@
-input_file: "demos/demos_result/math/pipeline_pretrain/pretrain_length_step5.jsonl"
-output_file: "demos/demos_result/math/pipeline_pretrain/pretrain_format_step6.jsonl"
-read_key_question: "instruction"
-read_key_answer: "output"
-output_key: "text"

@@ -25,6 +25,10 @@ class SpellingCorrectionRefiner(OperatorABC):
         if not self.sym_spell.load_dictionary(self.dictionary_path, term_index, count_index):
             self.logger.error(f"Error loading dictionary at {self.dictionary_path}")
         self.logger.info(f"Successfully loaded dictionary at {self.dictionary_path}")
+    
+    @staticmethod
+    def get_desc(lang: str = "zh"):
+        return "通过SymSpell对文本中的拼写错误进行纠正" if lang == "zh" else "Correct spelling errors in text using SymSpell."
 
     def run(self, storage: DataFlowStorage, input_key: str):
         self.input_key = input_key

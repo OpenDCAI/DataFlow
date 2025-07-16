@@ -17,6 +17,10 @@ class VendiScorer(OperatorABC):
         self.device = device
         self.score_name = 'VendiScore'
         self.logger.info(f'{self.__class__.__name__} initialized.')
+    
+    @staticmethod
+    def get_desc(lang: str = "zh"):
+        return "通过计算 VendiScore 来评估数据集的多样性，得分越高表示多样性越高。" if lang == "zh" else "Assess dataset diversity using VendiScore; higher scores mean more diversity."
 
     def get_score(self, sentences):
         result = {}

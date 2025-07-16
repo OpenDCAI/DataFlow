@@ -1,9 +1,0 @@
-input_file: "demos/demos_result/Corrected_step0_test.jsonl"
-output_file: demos/demos_result/Corrected_step0_test_gen.jsonl
-input_key: "instruction"
-output_key: "generated_cot"
-generator_type: "request"
-api_url: "your_api_url"
-max_workers: 100
-model_name: "gpt-4o"
-system_prompt: ""

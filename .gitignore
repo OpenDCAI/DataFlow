@@ -24,6 +24,7 @@ test/test_cli
 .vscode
 
 dist
+build
 
 
 

@@ -1,61 +1,112 @@
-from dataflow.operators.generate import *
+from dataflow.operators.generate import (
+    PromptGenerator
+)
+from dataflow.operators.filter import (
+    ExecutionFilter
+)
+from dataflow.operators.eval import (
+    ComponentClassifier
+)
 from dataflow.utils.storage import FileStorage
+from dataflow.utils.text2sql.database_manager import DatabaseManager
 
 
 class Text2SQLPipeline():
     def __init__(self):
 
         self.storage = FileStorage(
-            first_entry_file_name="../example_data/Text2SQLPipeline/pipeline.json",
+            first_entry_file_name="../example_data/Text2SQLPipeline/pipeline_refine.jsonl",
             cache_path="./cache",
             file_name_prefix="dataflow_cache_step",
             cache_type="jsonl",
         )
 
+        # You can customize the difficulty config here, but it must contain 'thresholds' and 'labels' keys
+        component_difficulty_config = {
+            'thresholds': [2, 4, 6],      
+            'labels': ['easy', 'medium', 'hard', 'extra']
+        }
+
+        # You can customize the prompt template here, but it must contain {schema} and {question} placeholders
+        prompt_template = '''Task Overview:
+            /* Given the following database schema: */
+            {schema}
+            /* Answer the following: {question} */
+            Let's think step by step'''
+
+        # You can customize the schema config here, but it must contain 'format' and 'use_example' keys
+        schema_config = {
+            'format': 'ddl',  # Optional: 'ddl', 'formatted_schema'
+            'use_example': True  # Whether to include example data
+        }
+
         # A demo database is provided. Download it from the following URL and update the path:  
         # https://huggingface.co/datasets/Open-Dataflow/dataflow-Text2SQL-database-example  
         db_root_path = ""  
-        table_info_file = "../example_data/Text2SQLPipeline/dev_tables.jsonl"
 
-        self.sql_difficulty_classifier_step1 = SQLDifficultyClassifier()
-
-        self.schema_linking_step2 = SchemaLinking(
-            table_info_file=table_info_file
+        # SQLite and MySQL are currently supported
+        # db_type can be sqlite or mysql, which must match your database type
+        # If sqlite is selected, root_path must be provided, this path must exist and contain database files
+        # If mysql is selected, host, user, password must be provided, these credentials must be correct and have access permissions
+        # MySQL example:
+        # database_manager = DatabaseManager(
+        #     db_type="mysql",
+        #     config={
+        #         "host": "localhost",
+        #         "user": "root",
+        #         "password": "your_password",
+        #         "database": "your_database_name"
+        #     }
+        # )
+        # SQLite example:
+        database_manager = DatabaseManager(
+            db_type="sqlite",
+            config={
+                "root_path": db_root_path
+            }
         )
 
-        self.database_schema_extractor_step3 = DatabaseSchemaExtractor(
-            table_info_file=table_info_file,
-            db_root_path=db_root_path,
+        self.sql_execution_filter_step1 = ExecutionFilter(
+            database_manager=database_manager
+        )
+
+        self.text2sql_prompt_generator_step2 = PromptGenerator(
+            database_manager=database_manager,
+            prompt_template=prompt_template,
+            schema_config=schema_config
+        )
+
+        self.sql_component_classifier_step3 = ComponentClassifier(
+            difficulty_config=component_difficulty_config
         )
         
         
     def forward(self):
 
-        input_sql_key = "SQL"
-        input_dbid_key = "db_id"
+        sql_key = "SQL"
+        db_id_key = "db_id"
+        question_key = "question"
 
-        self.sql_difficulty_classifier_step1.run(
+        self.sql_execution_filter_step1.run(
             storage=self.storage.step(),
-            input_sql_key=input_sql_key,
+            input_sql_key=sql_key,
+            input_db_id_key=db_id_key
+        )
+
+        self.text2sql_prompt_generator_step2.run(
+            storage=self.storage.step(),
+            input_question_key=question_key,
+            input_db_id_key=db_id_key,
+            output_prompt_key="prompt"
+        )
+
+        self.sql_component_classifier_step3.run(
+            storage=self.storage.step(),
+            input_sql_key=sql_key,
             output_difficulty_key="sql_component_difficulty"
         )
 
-        self.schema_linking_step2.run(
-            storage=self.storage.step(),
-            input_sql_key=input_sql_key,
-            input_dbid_key=input_dbid_key,
-            output_used_schema_key="selected_schema"        
-        )
 
-        self.database_schema_extractor_step3.run(
-            storage=self.storage.step(),
-            input_db_key=input_dbid_key,
-            table_schema_file_db_key="db_id",
-            output_raw_schema_key="whole_schema",
-            output_ddl_key="ddl",
-            output_whole_format_schema_key="whole_format_schema"
-        )
-        
 if __name__ == "__main__":
     model = Text2SQLPipeline()
     model.forward()

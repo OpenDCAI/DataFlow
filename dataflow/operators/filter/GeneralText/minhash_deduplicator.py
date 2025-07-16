@@ -19,7 +19,7 @@ class MinHashDeduplicator(OperatorABC):
 
     @staticmethod
     def get_desc(lang: str = "zh"):
-        return "使用MinHash算法进行文本去重" if lang == "zh" else "Deduplicate text using the MinHash algorithm."
+        return "结合MinHash与LSH实现高效近似去重" if lang == "zh" else "Efficient near-duplicate detection using MinHash and LSH."
 
     def create_minhash(self, data):
         minhash = MinHash(num_perm=self.num_perm)

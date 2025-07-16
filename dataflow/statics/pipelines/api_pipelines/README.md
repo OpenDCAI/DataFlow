@@ -2,7 +2,7 @@
 
 - Note that you have to export your api key to your environment variables before running the code:
 ```shell
-export API_KEY=sk-xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+export DF_API_KEY=sk-xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
 ```
 
 - Then you can modify the settings of the files in each pipeline files. Especially the parameters for `llm_serving` and `storage` 

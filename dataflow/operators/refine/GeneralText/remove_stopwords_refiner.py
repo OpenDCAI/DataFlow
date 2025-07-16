@@ -20,7 +20,10 @@ class RemoveStopwordsRefiner(OperatorABC):
         stopwords_list = set(stopwords.words('english'))
         refined_words = [word for word in words if word.lower() not in stopwords_list]
         return " ".join(refined_words)
-
+    
+    @staticmethod
+    def get_desc(lang: str = "zh"):
+        return "移除文本中的停用词（如“the”，“is”）" if lang == "zh" else "Remove stopwords from text (e.g., 'the', 'is')."
     
     def run(self, storage: DataFlowStorage, input_key: str):
         self.input_key = input_key

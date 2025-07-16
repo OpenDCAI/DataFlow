@@ -14,6 +14,10 @@ class TreeinstructFilter(OperatorABC):
         self.max_score = max_score
         self.scorer = TreeinstructScorer(llm_serving=llm_serving)
         self.logger.info(f"Initializing {self.__class__.__name__} with min_score = {min_score} and max_score = {max_score}")
+    
+    @staticmethod
+    def get_desc(lang: str = "zh"):
+        return "基于TreeinstructScore打分器的得分对数据进行过滤。通过生成语法树的节点数来衡量指令复杂性，节点越多表示指令越复杂。" if lang == "zh" else "Filter data using scores from the TreeinstructScore. Measure instruction complexity by syntax tree size; more nodes mean more complexity."
         
     def run(self, storage: DataFlowStorage, input_key: str, output_key: str = 'TreeinstructScore'):
         self.input_key = input_key

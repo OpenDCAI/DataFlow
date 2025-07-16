@@ -32,6 +32,10 @@ class TextbookScorer(OperatorABC):
             '__label__High': high_score
         }
         self.logger.info(f'{self.__class__.__name__} initialized.')
+    
+    @staticmethod
+    def get_desc(lang: str = "zh"):
+        return "基于 FastText 分类器的课本质量分类器，用于评估文本的教育价值。" if lang == "zh" else "Assess educational value using FastText textbook classifier."
 
     @staticmethod
     def replace_newlines(text: str) -> str:

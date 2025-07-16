@@ -10,10 +10,10 @@ class RemoveExtraSpacesRefiner(OperatorABC):
     def __init__(self):
         self.logger = get_logger()
         self.logger.info(f"Initializing {self.__class__.__name__} ...")
-
+    
     @staticmethod
     def get_desc(lang: str = "zh"):
-        return "去除文本中的多余空格" if lang == "zh" else "Remove extra spaces in the text."
+        return "移除文本中的多余空格，将连续的多个空格替换为单个空格，并去除文本前后空格" if lang == "zh" else "Remove extra spaces and trim leading/trailing whitespace."
 
     def run(self, storage: DataFlowStorage, input_key: str):
         self.input_key = input_key

@@ -15,6 +15,10 @@ class TreeinstructScorer(OperatorABC):
         self.score_name = 'TreeinstructScore'
         self.prompt = TreeinstructPrompt()
         self.logger.info(f'{self.__class__.__name__} initialized.')
+    
+    @staticmethod
+    def get_desc(lang: str = "zh"):
+        return "通过生成语法树的节点数来衡量指令复杂性，节点越多表示指令越复杂。" if lang == "zh" else "Measure instruction complexity by syntax tree size; more nodes mean more complexity."
 
     def get_score(self, samples, input_instruction_key):
         system_prompts = []

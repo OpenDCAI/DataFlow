@@ -34,7 +34,7 @@ class PairQualScorer(OperatorABC):
 
     @staticmethod
     def get_desc(lang: str = "zh"):
-        return "使用PairQual评分器评估文本质量" if lang == "zh" else "Evaluate text quality using the PairQual scorer."
+        return "基于bge模型，使用gpt对文本成对比较打分后训练而成。得分越高表示质量越高。" if lang == "zh" else "Pairwise quality scorer based on bge and GPT annotations; supports bilingual input."
 
     def inference(self, input_text):
         inputs = self.tokenizer(input_text, return_tensors='pt', padding=True, truncation=True, max_length=self.max_length).to(self.device)

@@ -22,7 +22,10 @@ class NgramHashDeduplicator(OperatorABC):
         if self.hash_func not in self.hash_func_dict:
             raise ValueError(f'Invalid hash function: {self.hash_func}')
         self.logger.info(f"Initializing {self.__class__.__name__} with n_gram = {self.n_gram}, hash_func = {self.hash_func}, diff_size = {self.diff_size}...")
-        
+    @staticmethod
+    def get_desc(lang: str = "zh"):
+        return "结合n-gram技术与哈希算法识别相似文本, 近似去重" if lang == "zh" else "Use n-gram and hashing to detect similar text. Near deduplication."
+
     def _compute_hash(self, text: str) -> str:
         return self.hash_func_dict[self.hash_func](text.encode('utf-8')).hexdigest()
 

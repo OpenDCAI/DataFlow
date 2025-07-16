@@ -18,6 +18,10 @@ class SimHashDeduplicator(OperatorABC):
         self.fingerprint_size = fingerprint_size
         self.bound = bound
         self.logger.info(f"Initializing {self.__class__.__name__} with fingerprint_size = {self.fingerprint_size}, bound = {self.bound}...")
+    
+    @staticmethod
+    def get_desc(lang: str = "zh"):
+        return "使用SimHash算法通过汉明距离识别相似文本, 做近似去重" if lang == "zh" else "Detect similar text via SimHash and Hamming distance. Near deduplication."
 
     def run(self, storage: DataFlowStorage, input_keys: list = None, input_key: str = None, output_key: str = 'minhash_deduplicated_label'):
         if input_keys is None and input_key is None:

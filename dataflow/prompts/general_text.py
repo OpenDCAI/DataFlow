@@ -22,7 +22,7 @@ class PretrainGeneratorPrompt:
         """
         return prompt.format(content=content)
     
-class SupervisedFinetuneGeneratorPrompt:
+class SFTGeneratorSeedPrompt:
     
     def __init__(self):
         pass
@@ -269,7 +269,27 @@ class ConsistentChatPrompt:
                 "Fixing a noisy air conditioning unit",
                 "Troubleshooting camera connectivity on a laptop",
                 "How to repair a broken headphone jack",
-                "Setting up a secure home Wi-Fi network"
+                "Setting up a secure home Wi-Fi network",
+                "Replacing a smartphone battery",
+                "Installing a wall-mounted TV safely",
+                "Calibrating a smart thermostat",
+                "Fixing screen flickering on a monitor",
+                "Diagnosing strange noises from a desktop computer",
+                "Solving Bluetooth connection problems",
+                "Repairing a jammed paper shredder",
+                "Troubleshooting slow smartphone performance",
+                "How to stop water leakage under a bathroom sink",
+                "Installing weather stripping on doors",
+                "Setting up parental controls on a router",
+                "Fixing a dishwasher that won’t drain",
+                "Repairing a damaged phone charging port",
+                "Replacing a worn-out windshield wiper",
+                "How to fix a garage light that keeps flickering",
+                "Solving battery drain issues in electric vehicles",
+                "Resetting a smart TV to factory settings",
+                "Troubleshooting a wireless keyboard that won't connect",
+                "How to install a backup camera in a car",
+                "Diagnosing a home circuit breaker that keeps tripping"
             ],
             "Educational Interaction": [
                 "Learning a new language online",
@@ -301,7 +321,27 @@ class ConsistentChatPrompt:
                 "Understanding cultural anthropology",
                 "Exploring human anatomy",
                 "Learning basic sign language",
-                "Intro to public speaking skills"
+                "Intro to public speaking skills",
+                "Introduction to ethical philosophy",
+                "Learning how to conduct scientific experiments",
+                "Studying global political systems",
+                "Understanding basic genetics and heredity",
+                "Learning how to analyze literature",
+                "Basics of entrepreneurship and starting a business",
+                "Studying ancient civilizations like Mesopotamia and Egypt",
+                "Introduction to psychology and behavior",
+                "Basics of digital citizenship and online safety",
+                "Understanding the water cycle and weather patterns",
+                "Learning how to write a research paper",
+                "Studying global religions and belief systems",
+                "Intro to logic and critical thinking",
+                "Understanding supply and demand in markets",
+                "Learning spreadsheet skills (e.g., Excel or Google Sheets)",
+                "Introduction to cybersecurity principles",
+                "Understanding different learning styles",
+                "Basics of health and nutrition science",
+                "Learning how to debate effectively",
+                "Introduction to robotics and automation"
             ],
             "Health Consultation Interaction": [
                 "Tips for maintaining a healthy diet",
@@ -333,7 +373,27 @@ class ConsistentChatPrompt:
                 "Recognizing early signs of burnout",
                 "How to manage asthma symptoms",
                 "The importance of hydration for brain function",
-                "Understanding the risks of sedentary lifestyles"
+                "Understanding the risks of sedentary lifestyles",
+                "Managing digestive issues like bloating or IBS",
+                "How to support bone health as you age",
+                "Tips for quitting alcohol or reducing intake",
+                "Understanding the benefits of mindfulness and meditation",
+                "Recognizing signs of vitamin deficiency",
+                "Safe stretching routines for flexibility",
+                "How to create a balanced meal plan",
+                "Managing migraines and chronic headaches",
+                "Supporting eye health in the digital age",
+                "Understanding how hormones affect mood and health",
+                "Caring for skin during seasonal changes",
+                "Understanding the basics of reproductive health",
+                "Dealing with minor injuries at home (cuts, sprains)",
+                "Tips for building mental resilience",
+                "Creating a daily self-care routine",
+                "Navigating food labels and nutrition facts",
+                "Identifying signs of eating disorders",
+                "How to stay active while traveling",
+                "The role of gut health in overall wellness",
+                "When to seek professional mental health support"
             ],
             "Exploratory Interaction": [
                 "Exploring the concept of time travel",
@@ -365,7 +425,27 @@ class ConsistentChatPrompt:
                 "How cultural identity evolves through migration",
                 "The role of philosophy in modern science",
                 "Unsolved mysteries in astrophysics",
-                "Exploring ancient astronomical observatories"
+                "Exploring ancient astronomical observatories",
+                "The influence of mythologies on modern storytelling",
+                "How ancient weather patterns affected human settlement",
+                "Exploring the idea of colonizing other planets",
+                "The rise and fall of legendary empires",
+                "The possibility of time dilation in deep space travel",
+                "The influence of alchemy on early science",
+                "Understanding cryptids and mythological creatures",
+                "Exploring the legends of Atlantis",
+                "How music evolved across civilizations",
+                "The significance of sacred geometry in ancient structures",
+                "How ancient calendars predicted celestial events",
+                "The philosophy of consciousness and existence",
+                "Exploring the science behind telepathy and ESP",
+                "The history of espionage and intelligence gathering",
+                "How plagues transformed the course of empires",
+                "The psychology behind conspiracy theories",
+                "Exploring the idea of digital immortality",
+                "How ancient seafaring changed the world map",
+                "The role of chaos theory in understanding the universe",
+                "How major inventions changed human history"
             ],
             "Entertainment Interaction": [
                 "Creating a video game character",
@@ -397,7 +477,27 @@ class ConsistentChatPrompt:
                 "Hosting an online trivia night",
                 "Analyzing what makes a sitcom successful",
                 "Creating viral content for social media",
-                "Building a digital art portfolio for entertainment"
+                "Building a digital art portfolio for entertainment",
+                "Learning how to voice act for animations or games",
+                "Creating an interactive story with branching choices",
+                "Reviewing and critiquing movies or TV shows",
+                "Designing merchandise for a fictional brand",
+                "Building a fictional world map for a fantasy series",
+                "Creating theme music for a character or story",
+                "Learning stage acting vs. screen acting",
+                "Writing and performing a comedy skit",
+                "Planning a virtual concert or talent show",
+                "Designing a puzzle game with narrative elements",
+                "Writing a parody song or video",
+                "Hosting a fictional radio show",
+                "Analyzing storytelling techniques in video games",
+                "Developing an ARG (Alternate Reality Game)",
+                "Creating concept art for a fantasy setting",
+                "Writing dialogue for an animated series",
+                "Planning a short film festival with friends",
+                "Exploring sound design for entertainment media",
+                "Building a fan community around fictional works",
+                "Creating a cinematic trailer for a book or game"
             ],
             "Simulation Interaction": [
                 "Business negotiations and decision-making",
@@ -429,7 +529,28 @@ class ConsistentChatPrompt:
                 "Language learning through role-playing simulation",
                 "Simulating diplomatic negotiations between countries",
                 "Astronaut survival training simulation",
-                "Simulating startup business pitch competitions"
+                "Simulating startup business pitch competitions",
+                "Simulating historical battles for education",
+                "Virtual restaurant management and customer flow simulation",
+                "Simulating the effects of social media algorithms",
+                "Driving public transportation in urban simulations",
+                "Simulating a courtroom debate in a mock trial",
+                "Disaster recovery planning for IT infrastructure",
+                "Simulating election outcomes based on real-time data",
+                "Simulation of water resource management in agriculture",
+                "Creating a theme park operations simulator",
+                "Simulating robotics navigation in dynamic environments",
+                "Simulated coaching for sports teams",
+                "Simulating ethical decision-making in journalism",
+                "Simulating airport ground operations and logistics",
+                "Simulating the development of a new pharmaceutical drug",
+                "Simulated investment portfolio risk management",
+                "Simulating refugee crisis response scenarios",
+                "Virtual museum curation and exhibition planning",
+                "Simulating interpersonal communication in therapy sessions",
+                "Simulating AI behavior in self-driving vehicles",
+                "Virtual internship simulation for workplace readiness",
+                "Simulating marine ecosystem conservation planning"
             ],
             "Emotional Support Interaction": [
                 "Coping with the death of a loved one",
@@ -461,7 +582,27 @@ class ConsistentChatPrompt:
                 "Helping someone through a panic attack",
                 "Coping with grief after a pet passes away",
                 "Facing loneliness during the holiday season",
-                "Balancing emotional vulnerability and self-protection"
+                "Balancing emotional vulnerability and self-protection",
+                "Processing emotions after a traumatic event",
+                "Helping teens deal with peer pressure",
+                "Managing jealousy in a relationship",
+                "Supporting an elderly parent with emotional needs",
+                "Navigating friendship breakups with maturity",
+                "Coping with fear of the future",
+                "Dealing with body image issues and self-worth",
+                "Handling emotional distance in long-term relationships",
+                "Managing stress related to academic pressure",
+                "Providing comfort to someone experiencing shame",
+                "Processing mixed emotions after a big achievement",
+                "Supporting someone with PTSD triggers",
+                "Coping with infertility and emotional distress",
+                "Rebuilding trust after betrayal",
+                "Helping a loved one experiencing suicidal thoughts",
+                "Dealing with emotional triggers in daily life",
+                "Finding peace with an unresolved conflict",
+                "Managing emotions after relocation or immigration",
+                "Coping with fear of abandonment",
+                "Practicing self-compassion during recovery"
             ],
             "Information Retrieval Interaction": [
                 "Finding the best tech product reviews online",
@@ -493,7 +634,28 @@ class ConsistentChatPrompt:
                 "Searching for consumer complaint databases",
                 "Finding educational videos on historical topics",
                 "Researching the genealogy of a family name",
-                "Looking up employment law information by state"
+                "Looking up employment law information by state",
+                "Finding patent information for a new invention",
+                "Researching cultural practices in different countries",
+                "Searching for reviews of online learning platforms",
+                "Finding data on renewable energy usage by country",
+                "Looking up public records on local property ownership",
+                "Finding historical weather data for a location",
+                "Searching for quotes and citations in classic literature",
+                "Finding nutrition information for restaurant meals",
+                "Researching ethical sourcing of fashion brands",
+                "Looking up vehicle recall history by VIN",
+                "Finding demographic data for a specific region",
+                "Researching nonprofit organization transparency reports",
+                "Searching for academic conference proceedings",
+                "Finding ratings and reviews of mobile apps",
+                "Looking up historical election results by district",
+                "Finding documentation on space exploration missions",
+                "Researching funding opportunities for small businesses",
+                "Searching for media coverage on social justice issues",
+                "Finding open data sets for machine learning training",
+                "Looking up safety information on household chemicals",
+                "Researching legal precedents in constitutional law"
             ],
             "Transaction Interaction": [
                 "Booking a flight online for a vacation",
@@ -525,7 +687,27 @@ class ConsistentChatPrompt:
                 "Sending money internationally via online banking",
                 "Registering a domain and hosting a website",
                 "Buying stocks or cryptocurrency through a trading platform",
-                "Purchasing travel insurance before a trip"
+                "Purchasing travel insurance before a trip",
+                "Ordering custom clothing or merchandise online",
+                "Buying a used car through an online marketplace",
+                "Paying for public transportation with a mobile wallet",
+                "Subscribing to a monthly subscription box service",
+                "Purchasing online advertising for a small business",
+                "Topping up a prepaid phone plan online",
+                "Paying for freelance services via a gig platform",
+                "Placing a mobile order for in-store pickup",
+                "Applying for a personal loan through a fintech app",
+                "Booking a guided tour or local experience online",
+                "Paying entry fees for a virtual event or webinar",
+                "Setting up automatic payments for monthly bills",
+                "Buying furniture or home goods with financing options",
+                "Purchasing digital game content or in-app items",
+                "Contributing to a crowdfunding campaign",
+                "Paying for parking through a mobile parking app",
+                "Ordering prescription medication online",
+                "Reserving coworking space for remote work",
+                "Paying for tutoring or online lessons",
+                "Booking professional photography or videography services"
             ]
         }
         
@@ -605,3 +787,449 @@ class ConsistentChatPrompt:
         {', '.join([f'User query: {query}' for query in queries])}
         """
         return prompt
+    
+
+class CondorPrompt:
+    def __init__(self):
+        self.tag = {
+            "Marriage and Relationships": {
+                "Dating and Friendship": ["Dating Platforms", "Dating Tips", "Dating Events"],
+                "Marriage Management": ["Marital Relationships", "Marriage Law", "Marriage Counseling"],
+                "Wedding Planning": ["Wedding Planning", "Wedding Photography", "Wedding Venues"],
+                "Relationship Psychology": ["Relationship Psychology", "Communication Skills in Relationships", "Relationship Maintenance"],
+                "Emotional Counseling": ["Solving Emotional Issues", "Emotional Repair", "Emotional Growth"],
+                "Pre-Marriage Education": ["Pre-Marriage Preparation", "Pre-Marriage Psychology", "Pre-Marriage Legal Knowledge"]
+            },
+            "Entertainment Gossip": {
+                "Celebrity News": ["Celebrity News", "Celebrity Interviews", "Celebrity Charity Events"],
+                "Variety Shows": ["Show Recommendations", "Behind the Scenes", "Show Interaction"],
+                "Film and TV Reviews": ["Movie Reviews", "TV Series Reviews", "Critics’ Opinions"],
+                "Entertainment News": ["Latest Entertainment News", "Entertainment Events", "Exclusive Interviews"],
+                "Fan Culture": ["Fan Activities", "Fan Support", "Fan Interactions"],
+                "Gossip": ["Celebrity Gossip", "Entertainment Industry Secrets", "Gossip Chasing"]
+            },
+            "Artificial Intelligence": {
+                "Machine Learning": ["Algorithm Principles", "Application Cases", "Learning Resources"],
+                "Deep Learning": ["Neural Networks", "Deep Learning Frameworks", "Deep Learning Applications"],
+                "Natural Language Processing": ["Language Models", "Text Analysis", "Dialogue Systems"],
+                "Computer Vision": ["Image Recognition", "Video Processing", "Vision Algorithms"],
+                "Intelligent Robotics": ["Robotics Technology", "Service Robots", "Industrial Robots"],
+                "Autonomous Driving": ["Autonomous Driving Technology", "Autonomous Driving Regulations", "Autonomous Driving Testing"]
+            },
+            "Healthcare": {
+                "Disease Prevention and Treatment": ["Common Diseases", "Preventive Measures", "Disease Treatment"],
+                "Health and Wellness": ["Dietary Wellness", "Exercise Wellness", "Traditional Chinese Medicine Wellness"],
+                "Psychological Counseling": ["Mental Health Issues", "Psychological Therapy", "Psychological Adjustment"],
+                "Medical Technology": ["Medical Equipment", "Medical Technology", "Medical Innovation"],
+                "Health Insurance": ["Types of Insurance", "Insurance Choices", "Insurance Claims"],
+                "Fitness": ["Fitness Methods", "Fitness Equipment", "Fitness Diet"]
+            },
+            "Pets": {
+                "Pet Care": ["Daily Pet Care", "Pet Nutrition", "Pet Behavior"],
+                "Pet Medical Care": ["Pet Diseases", "Pet First Aid", "Pet Hospitals"],
+                "Pet Training": ["Basic Training", "Behavior Correction", "Training Techniques"],
+                "Pet Supplies": ["Toys", "Food", "Care Products"],
+                "Pet Adoption": ["Adoption Procedures", "Adoption Conditions", "Adoption Events"],
+                "Pet Activities": ["Pet Competitions", "Pet Gatherings", "Pet Festivals"]
+            },
+            "Environment": {
+                "Environmental Protection": ["Ecological Protection", "Pollution Control", "Environmental Monitoring"],
+                "Sustainable Development": ["Green Energy", "Circular Economy", "Ecological Agriculture"],
+                "Energy Conservation and Emission Reduction": ["Energy-Saving Technology", "Emission Reduction Policies", "Low-Carbon Life"],
+                "Waste Sorting": ["Sorting Standards", "Sorting Methods", "Recycling"],
+                "Environmental Policies": ["Policy Regulations", "Policy Interpretation", "Policy Impact"],
+                "Green Living": ["Green Consumption", "Green Travel", "Green Buildings"]
+            },
+            "Technology": {
+                "Internet": ["Network Technology", "Cybersecurity", "Online Services"],
+                "5G Communication": ["5G Technology", "5G Applications", "5G Devices"],
+                "Blockchain": ["Blockchain Principles", "Blockchain Applications", "Digital Currency"],
+                "Artificial Intelligence": ["AI Technology", "AI Ethics", "AI Industry Applications"],
+                "Aerospace": ["Aerospace Technology", "Aircraft", "Space Exploration"],
+                "New Energy": ["Solar Energy", "Wind Energy", "New Energy Vehicles", "Energy Storage"]
+            },
+            "Education and Training": {
+                "Preschool Education": ["Choosing Kindergartens", "Early Childhood Education", "Preschool Education Policies"],
+                "K12 Education": ["Primary Education", "Secondary Education", "Family Education Guidance"],
+                "Higher Education": ["University Major Selection", "Graduate Education", "Higher Education Policies"],
+                "Vocational Training": ["Vocational Skills Training", "Professional Certifications", "Career Development Planning"],
+                "Online Education": ["Online Course Recommendations", "Distance Education", "Online Learning Tips"],
+                "Study Abroad and Immigration": ["Study Abroad Consultation", "Immigration Policies", "Overseas Living Guide"]
+            },
+            "Career Development": {
+                "Career Planning": ["Career Positioning", "Career Development Paths", "Career Transition Guidance"],
+                "Job Search Skills": ["Resume Writing", "Interview Skills", "Job Search Channels"],
+                "Career Advancement": ["Promotion Strategies", "Workplace Performance", "Leadership Development"],
+                "Interpersonal Relationships": ["Colleague Interaction", "Workplace Communication", "Workplace Etiquette"],
+                "Entrepreneurship Guidance": ["Entrepreneurship Plans", "Entrepreneurship Resources", "Entrepreneurship Risk Management"],
+                "Team Management": ["Team Building", "Team Collaboration", "Team Performance Management"]
+            },
+            "Finance and Investment": {
+                "Stocks": ["Stock Market Analysis", "Stock Investment Strategies", "Stock Research"],
+                "Funds": ["Fund Selection", "Systematic Investment Plans", "Fund Risk Management"],
+                "Futures": ["Futures Market", "Futures Trading Skills", "Futures Risk Control"],
+                "Foreign Exchange": ["Forex Trading", "Forex Market Analysis", "Forex Risk Management"],
+                "Insurance": ["Insurance Product Selection", "Insurance Planning", "Insurance Claims"],
+                "Financial Planning": ["Personal Finance", "Asset Allocation", "Retirement Planning"]
+            },
+            "Real Estate and Home Living": {
+                "Real Estate Market": ["Market Trends", "Property Price Analysis", "Real Estate Policy Interpretation"],
+                "Home Buying Guide": ["Home Selection Tips", "Home Buying Process", "Mortgage Application"],
+                "Interior Design": ["Decorating Styles", "Decorating Materials", "Decorating Budget"],
+                "Home Living": ["Home Arrangement", "Home Maintenance", "Smart Homes"],
+                "Real Estate Policies": ["Policy Updates", "Policy Interpretation", "Policy Impact"],
+                "Rental Market": ["Rental Process", "Rental Agreements", "Rental Tips"]
+            },
+            "Travel and Adventure": {
+                "Domestic Travel": ["Destination Recommendations", "Domestic Travel Guides", "Travel Safety"],
+                "International Travel": ["Visa Applications", "International Travel Guides", "Cultural Adaptation"],
+                "Outdoor Adventures": ["Hiking", "Mountain Climbing", "Wilderness Survival Skills"],
+                "Travel Guides": ["Travel Planning", "Travel Budget", "Travel Packing Lists"],
+                "Travel Equipment": ["Backpack Selection", "Outdoor Gear", "Travel Essentials"],
+                "Travel Photography": ["Photography Tips", "Travel Photography Works", "Photography Equipment Recommendations"]
+            },
+            "Food and Cooking": {
+                "Food Recommendations": ["Local Delicacies", "Food Rankings", "Restaurant Recommendations"],
+                "Cooking Skills": ["Basic Cooking", "Creative Cooking", "Cooking Tool Usage"],
+                "Ingredient Selection": ["Ingredient Selection Tips", "Seasonal Ingredients", "Organic Ingredients"],
+                "Food Culture": ["Food Culture", "Local Food Customs", "Dietary Health"],
+                "Healthy Eating": ["Balanced Nutrition", "Healthy Recipes", "Dietary Wellness"],
+                "Baking and Desserts": ["Dessert Making", "Baking Skills", "Dessert Ingredients"]
+            },
+            "Culture and Arts": {
+                "Literature": ["Literary Works", "Literary Criticism", "Creative Writing Skills"],
+                "Music": ["Music Styles", "Music Production", "Music Appreciation"],
+                "Painting": ["Painting Techniques", "Painting Schools", "Painting Appreciation"],
+                "Sculpture": ["Sculpture Art", "Sculpture Creation", "Sculpture Materials"],
+                "Theater": ["Theater Performance", "Theater Creation", "Theater History"],
+                "Film": ["Film Recommendations", "Film Reviews", "Film Production"]
+            },
+            "Sports and Fitness": {
+                "Sports Events": ["Event Broadcasts", "Event Analysis", "Event History"],
+                "Fitness Methods": ["Fitness Tutorials", "Fitness Plans", "Fitness Diet"],
+                "Sports Equipment": ["Equipment Recommendations", "Equipment Usage", "Equipment Maintenance"],
+                "Sports Celebrities": ["Celebrity Introductions", "Celebrity Interviews", "Celebrity Events"],
+                "Sports Policies": ["Policy Interpretation", "Policy Impact", "Policy Updates"],
+                "Sports Industry": ["Industry Trends", "Industry Investment", "Industry Cases"]
+            },
+            "Military and National Defense": {
+                "Military News": ["News Reports", "News Analysis", "Military Updates"],
+                "Defense Technology": ["Technology Advancements", "Technology Applications", "Innovative Technologies"],
+                "Weapons and Equipment": ["Equipment Introduction", "Equipment Comparison", "Equipment Maintenance"],
+                "Military History": ["Historical Events", "Historical Battles", "Historical Figures"],
+                "Military Service System": ["Service Regulations", "Enlistment Process", "Veterans' Policies"],
+                "National Security": ["Security Policies", "Security Education", "Security Awareness"]
+            },
+            "Social Welfare": {
+                "Charity Donations": ["Donation Channels", "Donation Impact", "Donation Stories"],
+                "Volunteer Services": ["Service Projects", "Service Training", "Volunteer Stories"],
+                "Public Welfare Activities": ["Activity Organization", "Activity Participation", "Activity Impact"],
+                "Public Welfare Organizations": ["Organization Introductions", "Organization Activities", "Organization Cooperation"],
+                "Social Assistance": ["Assistance Targets", "Assistance Methods", "Assistance Policies"],
+                "Spreading Love": ["Spreading Methods", "Spreading Activities", "Spreading Impact"]
+            },
+            "Automotive and Transportation": {
+                "Automotive News": ["New Car Releases", "Car Reviews", "Automotive Trends"],
+                "Driving Skills": ["Safe Driving", "Fuel-Efficient Driving", "Driver Training"],
+                "Vehicle Maintenance": ["Routine Maintenance", "Fault Diagnosis", "Repair Services"],
+                "Traffic Laws": ["Law Interpretation", "Safety Education", "Law Updates"],
+                "New Energy Vehicles": ["Technical Features", "Market Dynamics", "Policy Support"],
+                "Smart Transportation": ["Technology Applications", "Smart Systems", "Future Trends"]
+            },
+            "E-commerce": {
+                "Online Shopping": ["Shopping Guides", "User Reviews", "Promotions"],
+                "E-commerce Operations": ["Operations Management", "Market Analysis", "Customer Service"],
+                "Cross-border E-commerce": ["International Logistics", "Tariff Policies", "Market Analysis"],
+                "E-commerce Policies": ["Policy Interpretation", "Policy Impact", "Compliance Operations"],
+                "E-commerce Marketing": ["Marketing Strategies", "Advertising Placement", "User Analysis"],
+                "E-commerce Logistics": ["Logistics Delivery", "Inventory Management", "Logistics Technology"]
+            },
+            "Gaming and Animation": {
+                "Online Games": ["Popular Games", "Game Reviews", "Gaming Communities"],
+                "Single-player Games": ["Classic Games", "Game Guides", "Game Recommendations"],
+                "Animation Works": ["Popular Anime", "Anime Characters", "Anime Production"],
+                "Game Guides": ["Guide Sharing", "Skill Exchange", "Guide Videos"],
+                "Animation Industry": ["Industry Trends", "Market Analysis", "Industry Policies"],
+                "Game Merchandise": ["Merchandise Products", "Collecting Guides", "Merchandise Events"]
+            },
+            "Infant and Child Education": {
+                "Early Education": ["Educational Philosophy", "Educational Methods", "Educational Toys"],
+                "Maternal and Infant Care": ["Care Knowledge", "Care Skills", "Care Products"],
+                "Child Psychology": ["Psychological Development", "Emotion Management", "Psychological Counseling"],
+                "Parent-child Relationship": ["Parent-child Activities", "Parent-child Communication", "Parent-child Education"],
+                "Baby Products": ["Product Selection", "Safety Standards", "Product Recommendations"],
+                "Child Health": ["Healthy Growth", "Nutritional Diet", "Disease Prevention"]
+            },
+            "Senior Life": {
+                "Elderly Care Policies": ["Policy Interpretation", "Policy Consultation", "Policy Implementation"],
+                "Senior Health": ["Health Checkups", "Disease Prevention", "Healthy Eating"],
+                "Senior Activities": ["Cultural Activities", "Sports Activities", "Social Activities"],
+                "Senior Psychology": ["Psychological Adjustment", "Psychological Health", "Psychological Support"],
+                "Elderly Care Institutions": ["Institution Selection", "Service Quality", "Institution Evaluation"],
+                "Senior Products": ["Assistance Products", "Health Products", "Living Products"]
+            },
+            "Psychological Counseling": {
+                "Mental Health": ["Mental Maintenance", "Mental Problem Prevention", "Mental Health Education"],
+                "Psychological Disorders": ["Disorder Identification", "Disorder Treatment", "Disorder Management"],
+                "Counseling Skills": ["Counseling Methods", "Communication Skills", "Case Studies"],
+                "Psychological Tests": ["Test Types", "Test Applications", "Test Interpretation"],
+                "Psychological Research": ["Research Trends", "Research Methods", "Research Results"],
+                "Psychological Guidance": ["Guidance Strategies", "Guidance Cases", "Guidance Resources"]
+            },
+            "Religion and Belief": {
+                "Religious Culture": ["Cultural Traditions", "Cultural Festivals", "Cultural Influence"],
+                "Religious History": ["Historical Development", "Key Events", "Historical Figures"],
+                "Religious Art": ["Art Forms", "Art Works", "Art Value"],
+                "Religious Policies": ["Policy Regulations", "Policy Interpretation", "Policy Impact"],
+                "Religious Activities": ["Activity Organization", "Activity Participation", "Activity Significance"],
+                "Faith Discussions": ["Meaning of Faith", "Faith Conflicts", "Faith Diversity"]
+            },
+            "Agriculture and Rural Development": {
+                "Agricultural Technology": ["Technology Applications", "Technological Innovation", "Technology Promotion"],
+                "Rural Development": ["Development Planning", "Development Models", "Development Cases"],
+                "Farmer Life": ["Life Improvement", "Quality of Life", "Living Customs"],
+                "Agricultural Products Market": ["Market Analysis", "Market Trends", "Market Transactions"],
+                "Agricultural Policies": ["Policy Support", "Policy Interpretation", "Policy Implementation"],
+                "Rural Tourism": ["Tourism Development", "Tourism Projects", "Tourism Experience"]
+            },
+            "Urban Planning": {
+                "Urban Planning": ["Planning Philosophy", "Planning Methods", "Planning Cases"],
+                "Urban Design": ["Design Philosophy", "Design Elements", "Design Practice"],
+                "Infrastructure Development": ["Development Planning", "Development Management", "Development Technology"],
+                "Urban Transportation": ["Transportation Planning", "Transportation Management", "Transportation Tools"],
+                "Urban Greening": ["Greening Layout", "Greening Technology", "Greening Effects"],
+                "Protection of Historic Cities": ["Protection Policies", "Protection Measures", "Protection Cases"]
+            },
+            "Laws and Regulations": {
+                "Civil Law": ["General Principles", "Property Law", "Contract Law"],
+                "Criminal Law": ["General Principles", "Types of Crimes", "Punishment Systems"],
+                "Administrative Law": ["Administrative Regulations", "Administrative Litigation", "Administrative Reconsideration"],
+                "Economic Law": ["Corporate Law", "Tax Law", "Intellectual Property Law"],
+                "International Law": ["Public International Law", "Private International Law", "International Trade Law"],
+                "Legal Consultation": ["Consultation Services", "Legal Aid", "Legal Education"]
+            },
+            "Art": {
+                "Painting": ["Painting Techniques", "Painting Styles", "Painting Works"],
+                "Sculpture": ["Sculpture Materials", "Sculpture Styles", "Sculpture Creation"],
+                "Design": ["Design Philosophy", "Design Methods", "Design Works"],
+                "Photography": ["Photography Techniques", "Photography Themes", "Photography Works"],
+                "Calligraphy": ["Calligraphy Art", "Calligraphy Styles", "Calligraphy Works"],
+                "Handicrafts": ["Craft Making", "Craft Materials", "Craft Culture"]
+            },
+            "Marketing": {
+                "Market Research": ["Research Methods", "Research Tools", "Research Reports"],
+                "Marketing Strategies": ["Strategy Formulation", "Strategy Execution", "Strategy Evaluation"],
+                "Brand Management": ["Brand Positioning", "Brand Promotion", "Brand Maintenance"],
+                "Advertising": ["Creative Advertising", "Advertising Media", "Advertising Effectiveness"],
+                "Public Relations": ["Event Planning", "Event Execution", "Event Evaluation"],
+                "Channel Development": ["Channel Expansion", "Channel Management", "Channel Optimization"]
+            },
+            "Astronomy and Geography": {
+                "Astronomy": ["Astronomical Observations", "Astronomical Phenomena", "Astronomical Research"],
+                "Geography": ["Geographical Knowledge", "Geographical Exploration", "Geographical Education"],
+                "Geology": ["Geological Structure", "Geological Survey", "Geological Protection"],
+                "Meteorology": ["Weather Forecasting", "Weather Disasters", "Weather Services"],
+                "Space Exploration": ["Space Exploration", "Interstellar Travel", "Extraterrestrial Life"],
+                "Geographical Information Systems": ["GIS Technology", "GIS Applications", "GIS Development"]
+            },
+            "Education and Exams": {
+                "College Entrance Exam Coaching": ["Preparation Strategies", "Practice Tests", "Exam Policy Interpretation"],
+                "Graduate School Entrance Exam Coaching": ["Preparation Planning", "Specialty Coaching", "Psychological Adjustment"],
+                "Civil Service Exams": ["Exam Techniques", "Essay Writing Guidance", "Interview Preparation"],
+                "Teaching Qualification Exams": ["Exam Process", "Interview Skills", "Teaching Ability Improvement"],
+                "Foreign Language Exams": ["CET-4/CET-6", "IELTS/TOEFL", "Foreign Language Speaking Training"],
+                "Professional Qualification Exams": ["Exam Subjects", "Career Development", "Qualification Certification"]
+            },
+            "Cybersecurity": {
+                "Cybersecurity Protection": ["Protection Measures", "Security Tools", "Protection Strategies"],
+                "Hacker Attack and Defense": ["Attack and Defense Drills", "Security Vulnerabilities", "Hacking Techniques"],
+                "Data Encryption": ["Encryption Technology", "Data Protection", "Encryption Strategies"],
+                "Information Leak Prevention": ["Leakage Risks", "Prevention Measures", "Emergency Response"],
+                "Cybersecurity Policies": ["Policy Interpretation", "Regulations and Standards", "Policy Updates"],
+                "Cybersecurity Incidents": ["Incident Analysis", "Incident Tracking", "Incident Prevention"]
+            },
+            "Fashion and Trends": {
+                "Clothing Matching": ["Everyday Outfits", "Dressing for Occasions", "Fashion Trends"],
+                "Beauty and Skincare": ["Skincare Knowledge", "Makeup Skills", "Beauty Products"],
+                "Fashion Accessories": ["Jewelry Matching", "Accessory Selection", "Trendy Accessories"],
+                "Trend Analysis": ["Fashion Week", "Trend Analysis", "Trend Forecasting"],
+                "Fashion Bloggers": ["Blogger Recommendations", "Blogger Styles", "Blogger Influence"],
+                "Fashion Brands": ["Brand Stories", "Brand Series", "Brand Events"]
+            },
+            "Mental Health": {
+                "Emotion Management": ["Emotion Recognition", "Emotion Regulation", "Emotion Expression"],
+                "Stress Management": ["Stress Sources", "Stress Relief Techniques", "Stress Management"],
+                "Interpersonal Relationships": ["Communication Skills", "Conflict Resolution", "Social Skills"],
+                "Self-Awareness": ["Self-Exploration", "Self-Evaluation", "Personal Growth"],
+                "Psychological Adjustment": ["Adjustment Methods", "Psychological Balance", "Psychological Resilience"],
+                "Psychological Disorder Prevention": ["Disorder Knowledge", "Prevention Measures", "Health Promotion"]
+            },
+            "Agricultural Technology": {
+                "Smart Agriculture": ["Smart Technology", "Precision Agriculture", "Agricultural Big Data"],
+                "Agricultural Mechanization": ["Mechanization Applications", "Technological Innovation", "Mechanization Maintenance"],
+                "Agricultural Product Processing": ["Processing Technology", "Product Innovation", "Quality Control"],
+                "Agricultural Innovation": ["Innovation Cases", "Innovation Policies", "Innovation-Driven Development"],
+                "Agricultural Policies": ["Policy Support", "Policy Interpretation", "Policy Implementation"],
+                "Agricultural Market Analysis": ["Market Trends", "Demand Analysis", "Price Fluctuations"]
+            },
+            "Digital Products": {
+                "Smartphone Reviews": ["Performance Testing", "User Experience", "New Releases"],
+                "Computer Hardware": ["Hardware Configuration", "Hardware Upgrades", "Hardware Maintenance"],
+                "Digital Cameras": ["Camera Selection", "Photography Tips", "Camera Maintenance"],
+                "Wearable Devices": ["Device Functions", "Health Monitoring", "Smart Interactions"],
+                "Routers": ["Router Setup", "Signal Optimization", "Network Security"],
+                "Digital Accessories": ["Accessory Selection", "Device Protection", "Accessory Recommendations"]
+            },
+            "Home Decoration": {
+                "Decoration Styles": ["Modern Minimalism", "Classical Chinese Style", "Luxurious European Style"],
+                "Decoration Materials": ["Material Selection", "Material Environmental Protection", "Material Costs"],
+                "Interior Design": ["Space Planning", "Furniture Selection", "Color Matching"],
+                "Soft Decoration": ["Curtain Selection", "Bedding Matching", "Decorative Paintings"],
+                "Feng Shui": ["Feng Shui Layout", "Feng Shui Taboos", "Feng Shui Improvements"],
+                "Renovation Construction": ["Construction Process", "Construction Supervision", "Construction Safety"]
+            },
+            "History and Culture": {
+                "Chinese History": ["Ancient History", "Modern History", "History Education"],
+                "World History": ["Origins of Civilization", "Historical Events", "International Relations"],
+                "Archaeological Discoveries": ["Site Excavation", "Cultural Relic Protection", "Archaeological Techniques"],
+                "Historical Figures": ["Biographies", "Character Evaluations", "Historical Impact"],
+                "Cultural Heritage": ["Heritage Protection", "Heritage Value", "Heritage Inheritance"],
+                "Historical Research": ["Research Methods", "Academic Achievements", "Research Trends"]
+            },
+            "Travel Guides": {
+                "Independent Travel Guides": ["Destination Recommendations", "Itinerary Planning", "Accommodation Selection"],
+                "Group Travel Guides": ["Tour Agency Selection", "Group Activities", "Group Travel Advantages"],
+                "Tourism Route Planning": ["Route Design", "Special Routes", "Theme Travel"],
+                "Money-Saving Travel Tips": ["Budget Planning", "Spending Guides", "Discount Information"],
+                "Travel Safety": ["Safety Tips", "Emergency Handling", "Insurance Selection"],
+                "Travel Visas": ["Visa Applications", "Visa Policies", "Visa Documentation"]
+            },
+            "Food Sharing": {
+                "Recipe Sharing": ["Recipe Sharing", "Cooking Skills", "Ingredient Selection"],
+                "Food Recommendations": ["Special Dishes", "Local Snacks", "Restaurant Recommendations"],
+                "Food Exploration": ["Exploration Guides", "Shop Reviews", "Food Maps"],
+                "Food Photography": ["Photography Skills", "Food Presentation", "Visual Display"],
+                "Food Reviews": ["Dish Reviews", "Restaurant Reviews", "Ingredient Reviews"],
+                "Food Competitions": ["Competition Information", "Participation Guidelines", "Award-Winning Works"]
+            },
+            "Film and Entertainment": {
+                "Movie Recommendations": ["New Movie Alerts", "Classic Movies", "Movie Rankings"],
+                "TV Series Reviews": ["Popular Drama Reviews", "Series Recommendations", "Plot Analysis"],
+                "Variety Show Reviews": ["Program Highlights", "Guest Performances", "Program Creativity"],
+                "Online Series": ["Popular Online Series", "Online Series Production", "Online Series Trends"],
+                "Short Videos": ["Short Video Creation", "Short Video Platforms", "Short Video Marketing"],
+                "Film Production": ["Production Process", "Behind the Scenes", "Production Techniques"]
+            },
+            "Sports Activities": {
+                "Ball Sports": ["Football", "Basketball", "Volleyball"],
+                "Track and Field": ["Running", "Long Jump", "Throwing"],
+                "Water Sports": ["Swimming", "Rowing", "Surfing"],
+                "Winter Sports": ["Skiing", "Ice Skating", "Sledding"],
+                "Extreme Sports": ["Rock Climbing", "Skydiving", "Extreme Cycling"],
+                "Sports Events": ["International Events", "Domestic Events", "Local Events"]
+            },
+            "Entrepreneurship and Investment": {
+                "Entrepreneurship Guidance": ["Entrepreneurship Plans", "Market Analysis", "Entrepreneurship Mindset"],
+                "Investment and Finance": ["Investment Strategies", "Asset Management", "Risk Control"],
+                "Entrepreneurship Policies": ["Policy Interpretation", "Policy Support", "Policy Utilization"],
+                "Entrepreneurship Cases": ["Success Stories", "Lessons Learned", "Case Analysis"],
+                "Venture Capital": ["Investment Opportunities", "Investment Evaluation", "Investment Negotiation"],
+                "Entrepreneurship Financing": ["Financing Channels", "Financing Strategies", "Financing Agreements"]
+            },
+            "Music and Dance": {
+                "Music Appreciation": ["Music Styles", "Music Works", "Musicians"],
+                "Instrumental Performance": ["Instrument Selection", "Performance Techniques", "Instrument Maintenance"],
+                "Dance Performance": ["Dance Types", "Performance Techniques", "Performance Opportunities"],
+                "Music Production": ["Music Creation", "Music Recording", "Music Publishing"],
+                "Music Education": ["Education Methods", "Educational Resources", "Education Policies"],
+                "Dance Choreography": ["Choreography Techniques", "Choreography Creativity", "Choreography Practice"]
+            },
+            "National Defense and Military": {
+                "Military Strategy": ["Strategy Analysis", "Strategy Planning", "Strategy Implementation"],
+                "Military Training": ["Basic Training", "Tactical Training", "Special Forces Training"],
+                "Weapons Development": ["Equipment Introduction", "Research and Development Updates", "Technological Innovation"],
+                "Military History": ["Historical Battles", "Historical Figures", "Historical Events"],
+                "National Defense Education": ["Educational Content", "Educational Methods", "Educational Significance"],
+                "Military Exercises": ["Exercise Types", "Exercise Scale", "Exercise Objectives"]
+            }
+        }
+    
+    def get_question_prompt(self, theme, domain):
+        """
+        Generates the formatted prompt for LLM input based on the theme and domain.
+
+        Parameters:
+        theme (str): The main theme of the questions.
+        domain (str): The domain under the given theme.
+
+        Returns:
+        str: The formatted prompt for generating questions.
+        """
+        prompt = f"""
+Now we need to create high-quality SFT data for LLM training, so we need you to produce a batch of such data. You only
+need to create Questions. I will give you a theme for SFT data Questions. You need to create three
+Questions of different difficulty levels based on this new theme.\\
+Your Questions must meet the following requirements:\\
+1. You must strictly create only three Questions at a time. These three Questions must be in the domain of {domain}
+and the Questions should align with the given theme of {theme}.\\
+2. The Questions you create must have context and sufficient information; they should not be abrupt and directly ask the
+question.\\
+3. Your reply must strictly follow the format below. Your Questions need to be included between [Question Start] and
+[Question End], and the difficulty level should be indicated at the beginning, as in the following format:\\
+
+[Easy][Question Start]Question[Question End]
+
+[Medium][Question Start]Question[Question End]
+
+[Hard][Question Start]Question[Question End]
+
+4. Your Questions of different difficulty levels should be distinct and actually reflect the different levels of difficulty.\\
+\quad \\
+
+Now it's your turn. Please provide the three Questions of different difficulty levels you created about the theme of {theme} for {domain}, according to the requirements.
+"""
+        return prompt
+    
+    def create_critique_prompt(self, question, answer):
+        dialogue = [question, answer]
+        base_critique_prompt = f"""
+There is now a user’s question and a model’s response. You need to write a critique for this response, pointing out the
+strengths and weaknesses of the model’s answer to help the model improve its response.
+
+Your critique must strictly adhere to the following format:
+
+[Critique Start]
+
+[Strength Start]Strength[Strength End]
+
+[Weakness Start]Weakness[Weakness End]
+
+[Suggestion Start]Suggestion[Suggestion End]
+
+[Critique End]
+
+Here is the user’s question and the model’s response: {dialogue}
+
+Now it’s your turn. Please provide your Critique as required:
+        """
+        return base_critique_prompt.format(dialogue=dialogue)
+
+    def create_refine_prompt(self, question, answer, critique):
+        base_refine_prompt = """
+Now there is a user's question, a model's answer, and the user's feedback. Please help modify the model's answer based on the user's feedback to make it better.
+Your improved answer must strictly adhere to the following format:
+
+[Improved Answer Start]Your answer[Improved Answer End]
+
+Below is the user's question, the model's answer, and the feedback:
+[Question Start]{question}[Question End]
+[Answer Start]{answer}[Answer End]
+[Feedback Start]{critique}[Feedback End]
+
+Now it's your turn, please provide your improved answer as required:
+        """
+        return base_refine_prompt.format(question=question, answer=answer, critique=critique)
+
+
+
+        

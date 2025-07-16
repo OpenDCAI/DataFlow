@@ -18,6 +18,10 @@ class StemmingLemmatizationRefiner(OperatorABC):
         nltk.download('wordnet') 
         nltk.download('omw-1.4')  
 
+    @staticmethod
+    def get_desc(lang: str = "zh"):
+        return "对文本进行词干提取或词形还原" if lang == "zh" else "Apply stemming or lemmatization to text."
+
     def run(self, storage: DataFlowStorage, input_key: str):
         self.input_key = input_key
         self.logger.info(f"Running {self.__class__.__name__} with input_key = {self.input_key}...")

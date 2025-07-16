@@ -12,6 +12,8 @@
 
 <!-- [![](https://img.shields.io/github/last-commit/OpenDCAI/DataFlow)](https://github.com/OpenDCAI/DataFlow/commits/main/) -->
 
+🎉 如果你认可我们的项目，欢迎在 GitHub 上点个 ⭐ Star，关注项目最新进展。
+
 简体中文 | [English](./README.md)
 
 **[🚀 功能介绍](#功能介绍) • [⚡ 快速开始](#快速开始) • [📖 文档](https://OpenDCAI.github.io/DataFlow-Doc/) • [🧪 实验结果](#实验结果)**
@@ -63,7 +65,7 @@ DataFlow 是一个数据准备系统，旨在从噪声数据源（PDF、纯文�
 
 ### 🤖 3.3 Agent驱动的流水线自动编排
 
-- **DataFlow-Agent**：基于任务需求，自动编排现有算子并合成新的数据处理流程。
+- **DataFlow-Agent**：智能助手，可执行数据分析、编写自定义算子，并根据任务目标自动编排算子构建数据处理流水线。
   - ![](./static/images/dataflow_agent_pipeline.jpg)
   - [[HuggingFace🤗 示例数据]](https://huggingface.co/datasets/Open-Dataflow/dataflow-demo-Agent)
 

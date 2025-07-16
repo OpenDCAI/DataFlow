@@ -1,6 +1,0 @@
-output_file: "dataflow/example/ReasoningPipeline/pipeline_math_step10out_gt.jsonl"
-input_file: 'dataflow/example/ReasoningPipeline/pipeline_math_step9out_gt.jsonl'  # Local data path, supports json, jsonl, parquet formats
-formatter: "TextFormatter" # Data loader type
-compare_method: math_verify # exact or math_verify
-test_answer_key: "generated_cot"
-gt_answer_key: "golden_answer"

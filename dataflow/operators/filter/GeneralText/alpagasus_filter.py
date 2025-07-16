@@ -14,6 +14,11 @@ class AlpagasusFilter(OperatorABC):
         self.max_score = max_score
         self.logger.info(f"Initializing {self.__class__.__name__} with min_score = {self.min_score} and max_score = {self.max_score}...")
         self.scorer = AlpagasusScorer(llm_serving, dimension)
+    
+    @staticmethod
+    def get_desc(lang: str = "zh"):
+        return "基于AlpagasusScorer打分器的得分对数据进行过滤。通过调用 GPT 评估指令的质量，返回一个质量得分，得分越高表明指令的质量越高。" if lang == "zh" else "Filter data using scores from the AlpagasusScorer. Evaluate instruction quality using GPT; higher scores indicate better quality."
+
 
     def run(self, storage: DataFlowStorage, input_instruction_key: str, input_input_key: str, input_output_key: str, output_key: str='AlpagasusScore'):
         self.input_instruction_key = input_instruction_key

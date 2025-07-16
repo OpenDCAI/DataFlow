@@ -10,6 +10,10 @@ class RemoveContractionsRefiner(OperatorABC):
     def __init__(self):
         self.logger = get_logger()
         self.logger.info(f"Initializing {self.__class__.__name__} ...")
+    
+    @staticmethod
+    def get_desc(lang: str = "zh"):
+        return "扩展文本中的缩写词（例如将“can't”扩展为“cannot”）" if lang == "zh" else "Expand contractions in text (e.g., “can't” → “cannot”)."
 
     def run(self, storage: DataFlowStorage, input_key: str):
         self.input_key = input_key

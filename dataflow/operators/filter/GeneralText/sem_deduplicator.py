@@ -70,7 +70,11 @@ class SemDeduplicator(OperatorABC):
         self.model = BertModel.from_pretrained(self.model_name, cache_dir=model_cache_dir).to(self.device)
         self.tokenizer = BertTokenizer.from_pretrained(self.model_name, cache_dir=model_cache_dir)
         self.logger.info(f"Initializing {self.__class__.__name__} with eps = {self.eps}, model_name = {self.model_name}, model_cache_dir = {self.model_cache_dir}, device = {self.device}")
-        
+    
+    @staticmethod
+    def get_desc(lang: str = "zh"):
+        return "基于BERT语义相似度识别语义重复文本, 做近似去重" if lang == "zh" else "Use BERT embeddings to identify semantically duplicate content. Near deduplication."
+
     def _compute_hash(self, text: str) -> str:
         return self.hash_func_dict[self.hash_func](text.encode('utf-8')).hexdigest()
 

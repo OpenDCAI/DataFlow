@@ -1,7 +1,0 @@
-input_file: "demos/demos_result/math/pipeline_GT/ngramfilter_gt_step10.jsonl"
-output_file: ""
-read_key: "instruction"
-question_key: "question"
-answer_key: "generated_cot"
-primary_category_key: "question_category"
-difficulty_key: "question_difficulty"

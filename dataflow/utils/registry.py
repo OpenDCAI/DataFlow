@@ -156,6 +156,43 @@ class Registry():
         Get the object map of the registry.
         """
         return self._obj_map
+    
+    def get_type_of_operator(self):
+        """
+        Classify the operator type by its path of registration.
+        This is used to classify operators into different categories.
+        :return: A dictionary with operator type as keys and their name as values.
+        """
+        # eval operators
+        eval_operators = []
+        filter_operators = []
+        generate_operators = []
+        refine_operators = []
+        conversations_operators = []
+        db_operators = []
+
+        for name, obj in self._obj_map.items():
+            if 'eval' in obj.__module__:
+                eval_operators.append(name)
+            elif 'filter' in obj.__module__:
+                filter_operators.append(name)
+            elif 'generate' in obj.__module__:
+                generate_operators.append(name)
+            elif 'refine' in obj.__module__:
+                refine_operators.append(name)
+            elif 'conversations' in obj.__module__:
+                conversations_operators.append(name)
+            elif 'db' in obj.__module__:
+                db_operators.append(name)
+
+        return {
+            'eval': eval_operators,
+            'filter': filter_operators,
+            'generate': generate_operators,
+            'refine': refine_operators,
+            'conversations': conversations_operators,
+            'db': db_operators
+        }
 
 OPERATOR_REGISTRY = Registry(name='operators', sub_modules=['eval', 'filter', 'generate', 'refine', 'conversations'])
 class LazyLoader(types.ModuleType):
@@ -202,12 +239,26 @@ class LazyLoader(types.ModuleType):
         mod_name = '.'.join((*prefix_parts, *rel_parts))
         logger = get_logger()
         # 动态加载模块
+
         try:
+            parts = mod_name.split(".")
+            for i in range(1, len(parts)):
+                parent = ".".join(parts[:i])
+                if parent not in sys.modules:
+                    dummy_mod = importlib.util.module_from_spec(
+                        importlib.util.spec_from_loader(parent, loader=None)
+                    )
+                    dummy_mod.__path__ = [os.path.dirname(abs_file_path)]
+                    sys.modules[parent] = dummy_mod
+
             spec = importlib.util.spec_from_file_location(mod_name, abs_file_path)
             logger.debug(f"LazyLoader {self.__path__} successfully imported spec {spec.__str__()}")
             module = importlib.util.module_from_spec(spec)
             sys.modules[mod_name] = module
             logger.debug(f"LazyLoader {self.__path__} successfully imported module {module.__str__()} from spec {spec.__str__()}")
+            logger.debug(f"Module name: {module.__name__}")
+            logger.debug(f"Module file: {module.__file__}")
+            logger.debug(f"Module package: {module.__package__}")
             spec.loader.exec_module(module)
         except Exception as e:
             logger.error(f"{e.__str__()}")

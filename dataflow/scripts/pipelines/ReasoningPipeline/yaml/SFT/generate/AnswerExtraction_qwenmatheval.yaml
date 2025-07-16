@@ -1,6 +1,0 @@
-input_file: "demos/demos_result/length_step7.jsonl"
-output_file: "demos/demos_result/answer_extraction_step8.jsonl"
-response_key: "pseudo_correct_solution_example" #需要提取answer的response的key
-extraction_key: "extraction" #保存提取出来的answer的key
-
-vllm_used: False

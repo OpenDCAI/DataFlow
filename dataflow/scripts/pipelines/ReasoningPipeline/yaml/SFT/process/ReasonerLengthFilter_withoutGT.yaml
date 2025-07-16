@@ -1,5 +1,0 @@
-output_file: "dataflow/example/ReasoningPipeline/pipeline_math_step9out_no_gt.jsonl"
-input_file: 'dataflow/example/ReasoningPipeline/pipeline_math_step8out_no_gt.jsonl'  # Local data path, supports json, jsonl, parquet formats
-input_key: 'pseudo_correct_solution_example'
-max_answer_token_length: 8192
-tokenizer_dir: 'Qwen/Qwen2.5-0.5B-Instruct'

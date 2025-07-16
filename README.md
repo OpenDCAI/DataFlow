@@ -13,6 +13,8 @@
 
 <!-- [![](https://img.shields.io/github/last-commit/OpenDCAI/DataFlow)](https://github.com/OpenDCAI/DataFlow/commits/main/) -->
 
+🎉 If you like our project, please give us a star ⭐ on GitHub for the latest update.
+
 [简体中文](./README-zh.md) | English
 
 
@@ -63,7 +65,8 @@ In this framework, operators are categorized into Fundamental Operators, Generic
 
 ### 🤖 3.3 Agent Guided Pipelines
 <!-- Building on top of this, we also provide the -->
-- **DataFlow Agent**: Can arrange existing `operators` and automatically construct new pipelines based on task requirements.
+- **DataFlow Agent**: An intelligent assistant that performs data analysis, writes custom `operators`, and automatically orchestrates them into `pipelines` based on specific task objectives.
+
   - ![](./static/images/dataflow_agent_pipeline.jpg)
   - [[HuggingFace🤗 demo input & output for **DataFlow Agent**]](https://huggingface.co/datasets/Open-Dataflow/dataflow-demo-Agent)
 
