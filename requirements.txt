@@ -1,5 +1,4 @@
 datasets<=3.2
-numpy<2.0.0
 scipy
 torch
 torchvision
@@ -25,6 +24,7 @@ colorama
 # text2sql
 func_timeout
 sqlglot
+pymysql
 # general text
 fasttext-wheel
 kenlm

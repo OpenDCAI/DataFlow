@@ -66,6 +66,11 @@ if TYPE_CHECKING:
 
     # AgenticRAG
     from .AgenticRAG.content_chooser import ContentChooser
+
+    # Text2SQL
+    from .Text2SQL.sql_consistency_filter import ConsistencyFilter
+    from .Text2SQL.sql_execution_filter import ExecutionFilter
+    
 else:
     import sys
     from dataflow.utils.registry import LazyLoader, generate_import_structure_from_type_checking

@@ -105,6 +105,11 @@ class FileStorage(DataFlowStorage):
         Raises:
             ValueError: For unsupported file types or output types
         """
+        if self.operator_step == 0 and self.first_entry_file_name == "":
+            self.logger.info("first_entry_file_name is empty, returning empty dataframe")
+            empty_dataframe = pd.DataFrame()
+            return self._convert_output(empty_dataframe, output_type)
+
         file_path = self._get_cache_file_path(self.operator_step)
         self.logger.info(f"Reading data from {file_path} with type {output_type}")
 

@@ -1,11 +1,12 @@
 from dataflow.operators.generate import (
-    SQLGenerator,
+    SQLVariationGenerator,
     QuestionGeneration,
     PromptGenerator,
     CoTGenerator
 )
 from dataflow.operators.filter import (
-    ExecutionFilter
+    ExecutionFilter,
+    ConsistencyFilter
 )
 from dataflow.operators.eval import (
     ComponentClassifier,
@@ -20,27 +21,27 @@ class Text2SQLPipeline():
     def __init__(self):
 
         self.storage = FileStorage(
-            first_entry_file_name="../example_data/ReasoningPipeline/pipeline_gen.json",
-            cache_path="./cache",
+            first_entry_file_name="../example_data/Text2SQLPipeline/pipeline_refine.jsonl",
+            cache_path="./cache_local",
             file_name_prefix="dataflow_cache_step",
-            cache_type="jsonl",
+            cache_type="jsonl"
         )
 
         api_llm_serving = APILLMServing_request(
-            api_url="https://api.openai.com/v1/chat/completions",
+            api_url="http://api.openai.com/v1/chat/completions",
             model_name="gpt-4o",
             max_workers=100
         )
 
         # It is recommended to use better LLMs for the generation of Chain-of-Thought (CoT) reasoning process.
         cot_generation_api_llm_serving = APILLMServing_request(
-            api_url="https://api.openai.com/v1/chat/completions",
+            api_url="http://api.openai.com/v1/chat/completions",
             model_name="gpt-4o", # You can change to a more powerful model for CoT generation
             max_workers=100
         )
 
         embedding_api_llm_serving = APILLMServing_request(
-            api_url="https://api.openai.com/v1/embeddings",
+            api_url="http://api.openai.com/v1/embeddings",
             model_name="text-embedding-ada-002",
             max_workers=100
         )
@@ -66,7 +67,7 @@ class Text2SQLPipeline():
         # You can customize the schema config here, but it must contain 'format' and 'use_example' keys
         schema_config = {
             'format': 'ddl',  # Optional: 'ddl', 'formatted_schema'
-            'use_example': True  # Whether to include example data
+            'use_example': False  # Whether to include example data
         }
 
         # A demo database is provided. Download it from the following URL and update the path:  
@@ -95,30 +96,39 @@ class Text2SQLPipeline():
             }
         )
         
-        self.sql_generator_step1 = SQLGenerator(
-            llm_serving=api_llm_serving,
-            database_manager=database_manager,
-            generate_num=300
-        )
-
-        self.sql_execution_filter_step2 = ExecutionFilter(
+        self.sql_execution_filter_step1 = ExecutionFilter(
             database_manager=database_manager
         )
 
-        self.text2sql_question_generator_step3 = QuestionGeneration(
+        self.sql_consistency_filter_step2 = ConsistencyFilter(
+            llm_serving=api_llm_serving,
+            database_manager=database_manager
+        )
+
+        self.sql_variation_generator_step3 = SQLVariationGenerator(
+            llm_serving=api_llm_serving,
+            database_manager=database_manager,
+            num_variations=5
+        )
+
+        self.sql_execution_filter_step4 = ExecutionFilter(
+            database_manager=database_manager
+        )
+
+        self.text2sql_question_generator_step5 = QuestionGeneration(
             llm_serving=api_llm_serving,
             embedding_api_llm_serving=embedding_api_llm_serving,
             database_manager=database_manager,
             question_candidates_num=5
         )
 
-        self.text2sql_prompt_generator_step4 = PromptGenerator(
+        self.text2sql_prompt_generator_step6 = PromptGenerator(
             database_manager=database_manager,
             prompt_template=prompt_template,
             schema_config=schema_config
         )
 
-        self.sql_cot_generator_step5 = CoTGenerator(
+        self.sql_cot_generator_step7 = CoTGenerator(
             llm_serving=cot_generation_api_llm_serving,
             database_manager=database_manager,
             schema_config=schema_config,
@@ -126,11 +136,11 @@ class Text2SQLPipeline():
             enable_retry=True
         )
 
-        self.sql_component_classifier_step6 = ComponentClassifier(
+        self.sql_component_classifier_step8 = ComponentClassifier(
             difficulty_config=component_difficulty_config
         )
 
-        self.sql_execution_classifier_step7 = ExecutionClassifier(
+        self.sql_execution_classifier_step9 = ExecutionClassifier(
             llm_serving=api_llm_serving,
             database_manager=database_manager,
             difficulty_config=execution_difficulty_config,
@@ -144,33 +154,46 @@ class Text2SQLPipeline():
         db_id_key = "db_id"
         question_key = "question"
 
-        self.sql_generator_step1.run(
-            storage=self.storage.step(),
-            output_sql_key=sql_key,
-            output_db_id_key=db_id_key
-        )
-
-        self.sql_execution_filter_step2.run(
+        self.sql_execution_filter_step1.run(
             storage=self.storage.step(),
             input_sql_key=sql_key,
             input_db_id_key=db_id_key
         )
 
-        self.text2sql_question_generator_step3.run(
+        self.sql_consistency_filter_step2.run(
+            storage=self.storage.step(),   
+            input_sql_key=sql_key,
+            input_db_id_key=db_id_key,
+            input_question_key=question_key
+        )
+
+        self.sql_variation_generator_step3.run(
+            storage=self.storage.step(),
+            input_sql_key=sql_key,
+            input_db_id_key=db_id_key
+        )
+
+        self.sql_execution_filter_step4.run(
+            storage=self.storage.step(),
+            input_sql_key=sql_key,
+            input_db_id_key=db_id_key
+        )
+
+        self.text2sql_question_generator_step5.run(
             storage=self.storage.step(),
             input_sql_key=sql_key,
             input_db_id_key=db_id_key,
             output_question_key=question_key
         )
 
-        self.text2sql_prompt_generator_step4.run(
+        self.text2sql_prompt_generator_step6.run(
             storage=self.storage.step(),
             input_question_key=question_key,
             input_db_id_key=db_id_key,
             output_prompt_key="prompt"
         )
 
-        self.sql_cot_generator_step5.run(
+        self.sql_cot_generator_step7.run(
             storage=self.storage.step(),
             input_sql_key=sql_key,
             input_question_key=question_key,
@@ -178,13 +201,13 @@ class Text2SQLPipeline():
             output_cot_key="cot_reasoning"
         )
 
-        self.sql_component_classifier_step6.run(
+        self.sql_component_classifier_step8.run(
             storage=self.storage.step(),
             input_sql_key=sql_key,
             output_difficulty_key="sql_component_difficulty"
         )
 
-        self.sql_execution_classifier_step7.run(
+        self.sql_execution_classifier_step9.run(
             storage=self.storage.step(),
             input_sql_key=sql_key,
             input_db_id_key=db_id_key,

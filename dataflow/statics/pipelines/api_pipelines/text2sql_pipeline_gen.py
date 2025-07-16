@@ -20,27 +20,27 @@ class Text2SQLPipeline():
     def __init__(self):
 
         self.storage = FileStorage(
-            first_entry_file_name="../example_data/ReasoningPipeline/pipeline_gen.json",
+            first_entry_file_name="",
             cache_path="./cache",
             file_name_prefix="dataflow_cache_step",
             cache_type="jsonl",
         )
 
         api_llm_serving = APILLMServing_request(
-            api_url="https://api.openai.com/v1/chat/completions",
+            api_url="http://api.openai.com/v1/chat/completions",
             model_name="gpt-4o",
             max_workers=100
         )
 
         # It is recommended to use better LLMs for the generation of Chain-of-Thought (CoT) reasoning process.
         cot_generation_api_llm_serving = APILLMServing_request(
-            api_url="https://api.openai.com/v1/chat/completions",
+            api_url="http://api.openai.com/v1/chat/completions",
             model_name="gpt-4o", # You can change to a more powerful model for CoT generation
             max_workers=100
         )
 
         embedding_api_llm_serving = APILLMServing_request(
-            api_url="https://api.openai.com/v1/embeddings",
+            api_url="http://api.openai.com/v1/embeddings",
             model_name="text-embedding-ada-002",
             max_workers=100
         )
