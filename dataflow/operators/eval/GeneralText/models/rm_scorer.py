@@ -18,6 +18,10 @@ class RMScorer(OperatorABC):
         self.rank_model = AutoModelForSequenceClassification.from_pretrained(self.model_name, cache_dir=self.model_cache_dir).to(self.device)
         self.tokenizer = AutoTokenizer.from_pretrained(self.model_name, cache_dir=self.model_cache_dir)
         self.logger.info(f'{self.__class__.__name__} initialized.')
+    
+    @staticmethod
+    def get_desc(lang: str = "zh"):
+        return "基于人类价值判断的奖励模型打分，高分代表质量较高。" if lang == "zh" else "Quality scoring using reward model trained with human preference data."
 
     def eval(self, dataframe, input_instruction_key: str = 'instruction', input_output_key: str = 'output'):
         input_texts = dataframe.get(input_instruction_key, '').to_list()

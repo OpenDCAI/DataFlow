@@ -17,6 +17,10 @@ class AlpagasusScorer(OperatorABC):
         self.prompt = AlpagasusPrompt(dimension=self.dimension)
         self.logger.info(f'{self.__class__.__name__} initialized.')
 
+    @staticmethod
+    def get_desc(lang: str = "zh"):
+        return "通过调用 GPT 评估指令的质量，返回一个质量得分，得分越高表明指令的质量越高。" if lang == "zh" else "Evaluate instruction quality using GPT; higher scores indicate better quality."
+
     def get_score(self, samples, input_instruction_key, input_input_key, input_output_key):
         system_prompts = []
         user_prompts = []

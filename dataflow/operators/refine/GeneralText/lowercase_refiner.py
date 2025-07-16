@@ -10,6 +10,10 @@ class LowercaseRefiner(OperatorABC):
     def __init__(self):
         self.logger = get_logger()
         self.logger.info(f"Initializing {self.__class__.__name__} ...")
+
+    @staticmethod
+    def get_desc(lang: str = "zh"):
+        return "将文本字段中的内容转换为小写" if lang == "zh" else "Convert text fields to lowercase."
     
     def run(self, storage: DataFlowStorage, input_key: str):
         self.input_key = input_key

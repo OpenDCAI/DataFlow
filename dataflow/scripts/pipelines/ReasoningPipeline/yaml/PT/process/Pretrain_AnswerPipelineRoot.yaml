@@ -1,6 +1,0 @@
-input_file: "demos/demos_result/math/pipeline_pretrain/pretrain_generated_step1.jsonl"
-input_key: "data"
-input_answer_key: "output"
-input_gt_key: "golden_answer"
-output_file_with_gt: "demos/demos_result/math/pipeline_pretrain/pretrain_test_demo_with_gt.jsonl"
-output_file_without_gt: "demos/demos_result/math/pipeline_pretrain/pretrain_test_demo_without_gt.jsonl"

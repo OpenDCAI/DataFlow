@@ -18,7 +18,7 @@ class NgramScorer(OperatorABC):
     
     @staticmethod
     def get_desc(lang: str = "zh"):
-        return NotImplementedError("The description of NgramScorer is not implemented!")
+        return "计算文本中n-gram的重复比例，得分越高表示重复比例越低。" if lang == "zh" else "Evaluate text redundancy via n-gram repetition; higher score means lower repetition."
     
     def _score_func(self, sample):
         content = sample 

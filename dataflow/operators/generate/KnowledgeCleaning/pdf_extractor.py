@@ -19,16 +19,25 @@ def is_url(string):
 
 
 def _parse_file_with_mineru(raw_file: str, output_file: str, MinerU_Backend: str = "vlm-sglang-engine") -> str:
-
     """
-    使用 MinerU 将 PDF/图像类文件（pdf/png/jpg/jpeg/webp/gif）解析为 Markdown 文件。
-    
-    参数:
-        raw_file: 输入文件路径，支持 .pdf/.png/.jpg/.jpeg/.webp/.gif
-        output_file: 输出 Markdown 文件的完整路径
+    Uses MinerU to parse PDF/image files (pdf/png/jpg/jpeg/webp/gif) into Markdown files.
 
-    返回:
-        output_file: Markdown 文件路径
+    Internally, the parsed outputs for each item are stored in a structured directory:
+    'intermediate_dir/pdf_name/MinerU_Version[MinerU_Backend]'.
+    This directory stores various MinerU parsing outputs, and you can customize
+    which content to extract based on your needs.
+
+    Args:
+        raw_file: Input file path, supports .pdf/.png/.jpg/.jpeg/.webp/.gif
+        output_file: Full path for the output Markdown file
+        MinerU_Backend: Sets the backend engine for MinerU. Options include:
+                        - "pipeline": Traditional pipeline processing (MinerU1)
+                        - "vlm-sglang-engine": New engine based on multimodal language models (MinerU2) (default recommended)
+                        Choose the appropriate backend based on your needs. Defaults to "vlm-sglang-engine".
+                        For more details, refer to the MinerU GitHub: https://github.com/opendatalab/MinerU.
+
+    Returns:
+        output_file: Path to the Markdown file
     """
 
     try:
@@ -73,7 +82,11 @@ Please make sure you have GPU on your machine.
     except Exception as e:
         raise RuntimeError(f"Failed to process file with MinerU: {str(e)}")
 
-    output_file = os.path.join(intermediate_dir, pdf_name, MinerU_Version[MinerU_Backend], f"{pdf_name}.md")
+    # Directory for storing raw data, including various MinerU parsing outputs.
+    # You can customize which content to extract based on your needs.
+    PerItemDir = os.path.join(intermediate_dir, pdf_name, MinerU_Version[MinerU_Backend])
+
+    output_file = os.path.join(PerItemDir, f"{pdf_name}.md")
 
     logger.info(f"Markdown saved to: {output_file}")
     return output_file
@@ -101,15 +114,20 @@ def _parse_xml_to_md(raw_file:str=None, url:str=None, output_file:str=None):
 
 @OPERATOR_REGISTRY.register()
 class PDFExtractor(OperatorABC):
-    '''
-    Answer Generator is a class that generates answers for given questions.
-    '''
-    def __init__(self, intermediate_dir: str = "intermediate", lang: str = "en"):
+    """
+    MinerU_Backend sets the backend engine for MinerU. Options include:
+    - "pipeline": Traditional pipeline processing (MinerU1)
+    - "vlm-sglang-engine": New engine based on multimodal language models (MinerU2) (default recommended)
+    Choose the appropriate backend based on your needs.  Defaults to "vlm-sglang-engine".
+    For more details, refer to the MinerU GitHub: https://github.com/opendatalab/MinerU.
+    """
+    def __init__(self, intermediate_dir: str = "intermediate", lang: str = "en", MinerU_Backend: str = "vlm-sglang-engine"):
         self.logger = get_logger()
         self.intermediate_dir=intermediate_dir
         os.makedirs(self.intermediate_dir, exist_ok=True)
         self.lang=lang
-        
+        self.MinerU_Backend = MinerU_Backend
+
     @staticmethod
     def get_desc(lang: str = "zh"):
         """
@@ -145,6 +163,7 @@ class PDFExtractor(OperatorABC):
     def run(self, storage: DataFlowStorage, input_key: str = "raw_content", output_key: str = "text_path"):
         self.logger.info("Starting content extraction...")
         self.logger.info("If the input is a URL or a large file, this process might take some time. Please wait...")
+        self.logger.info(f"Using MinerU backend: {self.MinerU_Backend}")
 
         dataframe = storage.read("dataframe")
         self.logger.info(f"Loaded dataframe with {len(dataframe)} entries.")
@@ -187,7 +206,7 @@ class PDFExtractor(OperatorABC):
                     output_file = _parse_file_with_mineru(
                         raw_file=content,
                         output_file=self.intermediate_dir,
-                        MinerU_Backend="vlm-sglang-engine"
+                        MinerU_Backend=self.MinerU_Backend
                     )
                 elif ext in [".html", ".xml"]:
                     output_file = _parse_xml_to_md(raw_file=content, output_file=output_file)

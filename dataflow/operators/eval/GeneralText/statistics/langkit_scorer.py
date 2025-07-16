@@ -17,7 +17,7 @@ class LangkitScorer(OperatorABC):
 
     @staticmethod
     def get_desc(lang: str = "zh"):
-        return "使用Langkit评分器评估文本质量" if lang == "zh" else "Evaluate text quality using the Langkit scorer."
+        return "使用Langkit工具包计算文本统计信息，帮助评估文本结构复杂性和可读性。" if lang == "zh" else "Uses Langkit to extract stats for text structure and readability."
 
     def _score_func(self, sample):
         df = pd.DataFrame({'prompt': [sample]})

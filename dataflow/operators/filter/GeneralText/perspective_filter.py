@@ -15,6 +15,10 @@ class PerspectiveFilter(OperatorABC):
         self.max_score = max_score
         self.serving = PerspectiveAPIServing(max_workers=10)
         self.scorer = PerspectiveScorer(serving=self.serving)
+    
+    @staticmethod
+    def get_desc(lang: str = "zh"):
+        return "基于PerspectiveScorer打分器的得分对数据进行过滤。使用 PerspectiveAPI 评估文本的毒性，返回毒性概率，得分越高表明文本毒性越高。" if lang == "zh" else "Filter data using scores from the PerspectiveScorer. Assess text toxicity using PerspectiveAPI; higher scores indicate more toxicity."
         
     def run(self, storage: DataFlowStorage, input_key: str, output_key: str = 'PerspectiveScore'):
         self.input_key = input_key

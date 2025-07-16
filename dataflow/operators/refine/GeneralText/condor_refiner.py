@@ -16,6 +16,10 @@ class CondorRefiner(OperatorABC):
         self.llm_serving = llm_serving
         self.prompt = CondorPrompt()  # 创建 CondorPrompt 类的实例
         self.logger.info(f'{self.__class__.__name__} initialized.')
+    
+    @staticmethod
+    def get_desc(lang: str = "zh"):
+        return "第一阶段调用API生成对回复的评论，第二阶段利用评论调用API改写回复，提升指令对质量" if lang == "zh" else "The first stage calls the API to generate critique on the reply, and the second stage uses the critique to call the API to refine the reply, improving the quality of QA pairs"
 
     def generate_critique(self, question, answer):
         # 批量生成 Critique

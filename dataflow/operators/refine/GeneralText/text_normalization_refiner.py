@@ -12,6 +12,10 @@ class TextNormalizationRefiner(OperatorABC):
         self.logger = get_logger()
         self.logger.info(f"Initializing {self.__class__.__name__} ...")
     
+    @staticmethod
+    def get_desc(lang: str = "zh"):
+        return "规范化文本中的日期格式、货币格式等" if lang == "zh" else "Normalize date, currency, and other formats in text."
+    
     def run(self, storage: DataFlowStorage, input_key: str):
         self.input_key = input_key
         dataframe = storage.read("dataframe")

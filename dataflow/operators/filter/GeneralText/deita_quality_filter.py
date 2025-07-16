@@ -21,7 +21,7 @@ class DeitaQualityFilter(OperatorABC):
 
     @staticmethod
     def get_desc(lang: str = "zh"):
-        return "使用Deita指令质量分类器过滤掉低质量指令数据" if lang == "zh" else "Filter out low-quality instruction data using the Deita instruction quality classifier."
+        return "基于DeitaQualityScorer打分器的得分对数据进行过滤。基于 Llama 模型的 Deita 指令质量评估器，高分表示指令质量较高。" if lang == "zh" else "Filter data using scores from the DeitaQualityScorer. Evaluate instruction quality using Llama-based Deita model."
 
     def run(self, storage: DataFlowStorage, input_instruction_key: str = 'instruction', input_output_key : str = 'output', output_key: str = "DeitaQualityScore"):
         self.input_instruction_key = input_instruction_key

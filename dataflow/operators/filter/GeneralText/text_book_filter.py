@@ -13,6 +13,10 @@ class TextbookFilter(OperatorABC):
         self.max_score = max_score
         self.scorer = TextbookScorer(model_cache_dir=model_cache_dir)
         self.logger.info(f"Initializing {self.__class__.__name__} with min_score = {min_score} and max_score = {max_score}")
+    
+    @staticmethod
+    def get_desc(lang: str = "zh"):
+        return "基于TextbookScorer打分器的得分对数据进行过滤。基于 FastText 分类器的课本质量分类器，用于评估文本的教育价值。" if lang == "zh" else "Filter data using scores from the TextbookScorer. Assess educational value using FastText textbook classifier."
 
     def run(self, storage: DataFlowStorage, input_key: str, output_key: str='TextbookScore'):
         self.input_key = input_key

@@ -25,7 +25,8 @@ class KBCleaningPipeline():
 
         self.knowledge_cleaning_step1 = KnowledgeExtractor(
             intermediate_dir="../example_data/KBCleaningPipeline/raw/",
-            lang="en"
+            lang="en",
+            MinerU_Backend="vlm-sglang-engine",
         )
 
         self.knowledge_cleaning_step2 = CorpusTextSplitter(

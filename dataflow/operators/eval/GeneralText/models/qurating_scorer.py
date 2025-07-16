@@ -31,7 +31,7 @@ class QuratingScorer(OperatorABC):
 
     @staticmethod
     def get_desc(lang: str = "zh"):
-        return "使用Qurating评分器评估文本质量" if lang == "zh" else "Evaluate text quality using the Qurating scorer."
+        return "通过 Qurating 模型从 '写作风格'、'所需专业程度'、'事实与趣闻' 和 '教育价值' 四个维度评估文本质量。" if lang == "zh" else "Evaluate text quality across four dimensions using the Qurating model: 'writing_style', 'required_expertise', 'facts_and_trivia', and 'educational_value'."
 
     def _score_func(self, sample):
         """Process a single sample and return the score."""

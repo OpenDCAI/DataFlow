@@ -20,7 +20,12 @@ class HashDeduplicator(OperatorABC):
         if self.hash_func not in self.hash_func_dict:
             raise ValueError(f'Invalid hash function: {self.hash_func}')
         self.logger.info(f"Initializing {self.__class__.__name__} with hash_func = {self.hash_func}...")
-        
+    
+    @staticmethod
+    def get_desc(lang: str = "zh"):
+        return "使用多种哈希函数对文本进行精确去重，可选md5、sha256或xxh3。" if lang == "zh" else "Exact deduplication using multiple hash functions, chosen from md5、sha256 or xxh3."
+
+
     def _compute_hash(self, text: str) -> str:
         return self.hash_func_dict[self.hash_func](text.encode('utf-8')).hexdigest()
 

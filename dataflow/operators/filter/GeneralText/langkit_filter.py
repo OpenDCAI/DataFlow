@@ -68,6 +68,10 @@ class LangkitFilter(OperatorABC):
         self.logger = get_logger()
         self.scorer = LangkitScorer()
         self.logger.info(f"Initializing {self.__class__.__name__} with min_scores: {self.min_scores} and max_scores: {self.max_scores}...")
+    
+    @staticmethod
+    def get_desc(lang: str = "zh"):
+        return "基于LangkitScorer打分器的得分对数据进行过滤。使用Langkit工具包计算文本统计信息，帮助评估文本结构复杂性和可读性。" if lang == "zh" else "Filter data using scores from the LangkitScorer. Uses Langkit to extract stats for text structure and readability."
         
     def run(self, storage: DataFlowStorage, input_key: str, output_keys: list = ["flesch_reading_ease", "automated_readability_index", "aggregate_reading_level", "syllable_count", "lexicon_count", "sentence_count", "character_count", "letter_count", "polysyllable_count", "monosyllable_count", "difficult_words"]):
         self.input_key = input_key

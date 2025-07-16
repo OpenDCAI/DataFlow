@@ -16,6 +16,10 @@ class PerspectiveScorer(OperatorABC):
         self.serving = serving
         self.score_name = 'PerspectiveScore'
         self.logger.info(f"{self.__class__.__name__} initialized.")
+    
+    @staticmethod
+    def get_desc(lang: str = "zh"):
+        return "使用 PerspectiveAPI 评估文本的毒性，返回毒性概率，得分越高表明文本毒性越高。" if lang == "zh" else "Assess text toxicity using PerspectiveAPI; higher scores indicate more toxicity."
 
     def get_score(self, samples: list[dict], input_key: str) -> list[float]:
         # Extract texts, truncate if needed

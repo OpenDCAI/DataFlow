@@ -8,7 +8,6 @@ from dataflow.operators.eval import LexicalDiversityScorer
 
 @OPERATOR_REGISTRY.register()
 class LexicalDiversityFilter(OperatorABC):
-    
     def __init__(self, min_scores: dict = {'mtld': 50, 'hdd': 0.8}, max_scores: dict = {'mtld': 99999, 'hdd': 1.0}):
         
         self.min_scores = min_scores
@@ -22,6 +21,10 @@ class LexicalDiversityFilter(OperatorABC):
             'mtld': 'LexicalDiversityMTLDScore',
         }
         self.scorer = LexicalDiversityScorer()
+    
+    @staticmethod
+    def get_desc(lang: str = "zh"):
+        return "基于LexicalDiversityScorer打分器的得分对数据进行过滤。使用MTLD和HDD方法计算词汇多样性，高分代表更丰富的词汇使用。" if lang == "zh" else "Filter data using scores from the LexicalDiversityScorer. Measure lexical diversity using MTLD and HDD."
         
     def run(self, storage: DataFlowStorage, input_key: str, output_keys = ['mtld', 'hdd']):
         self.input_key = input_key

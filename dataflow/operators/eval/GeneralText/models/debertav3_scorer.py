@@ -22,6 +22,10 @@ class DebertaV3Scorer(OperatorABC):
         self.model = QualityModel.from_pretrained(self.model_name, cache_dir=self.model_cache_dir).to(self.device)
         self.model.eval()
         self.logger.info(f'{self.__class__.__name__} initialized.')
+    
+    @staticmethod
+    def get_desc(lang: str = "zh"):
+        return "基于 Nvidia Deberta V3 模型的质量分类器，用于评估文本质量。" if lang == "zh" else "Text quality classifier based on Nvidia Deberta V3."
 
     def _score_func(self, sample):
         inputs = self.tokenizer(

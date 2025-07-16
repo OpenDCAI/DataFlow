@@ -46,7 +46,11 @@ class CCNetDeduplicator(OperatorABC):
         self.logger = get_logger()
         self.bit_length = bit_length
         self.logger.info(f"Initializing {self.__class__.__name__} with bit length = {bit_length}...")
-        
+
+    @staticmethod
+    def get_desc(lang: str = "zh"):
+        return "CCNet方法，基于SHA-1哈希算法的前64位进行重复识别。精确去重" if lang == "zh" else "CCNet method. Deduplicate using first 64 bits of SHA-1. Exact deduplication."
+
     def _compute_hash(self, text: str) -> str:
         return sha1_hash(text, self.bit_length)
 

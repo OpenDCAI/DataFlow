@@ -32,6 +32,9 @@ class PresidioScorer(OperatorABC):
         self.score_name = 'PresidioScore'
         self.logger.info(f'{self.__class__.__name__} initialized.')
 
+    @staticmethod
+    def get_desc(lang: str = "zh"):
+        return "使用Microsoft Presidio模型识别文本中的私人实体，返回PII信息个数。" if lang == "zh" else "Detects PII entities using Microsoft Presidio; returns number of detected items."
 
     def eval(self, dataframe, input_key):
         input_texts = dataframe.get(input_key, '').to_list()

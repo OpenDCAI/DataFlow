@@ -21,6 +21,10 @@ class FineWebEduScorer(OperatorABC):
         self.model.eval()
         self.score_name = 'FineWebEduScore'
         self.logger.info(f'{self.__class__.__name__} initialized.')
+    
+    @staticmethod
+    def get_desc(lang: str = "zh"):
+        return "用于评估文本教育价值的Fineweb-Edu分类器，高分表示文本具有较高的教育价值。" if lang == "zh" else "Fineweb-Edu classifier for educational value; higher scores indicate more educational content."
 
     def _score_func(self, sample):
         tokenized_inputs = self.tokenizer(sample, return_tensors="pt", padding="longest", truncation=True).to(self.device)

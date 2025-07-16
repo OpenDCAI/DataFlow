@@ -1,7 +1,0 @@
-output_file: "dataflow/example/ReasoningPipeline/pipeline_math_step10out_no_gt.jsonl"
-input_file: 'dataflow/example/ReasoningPipeline/pipeline_math_step9out_no_gt.jsonl'  # Local data path, supports json, jsonl, parquet formats
-min_score: 0.1
-max_score: 1.0
-ngrams: 5
-question_key: "instruction"
-answer_key: "pseudo_correct_solution_example"
