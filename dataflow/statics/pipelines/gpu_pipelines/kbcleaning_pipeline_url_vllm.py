@@ -13,13 +13,14 @@ class KBCleaningPipeline():
         self.storage = FileStorage(
             first_entry_file_name="../example_data/KBCleaningPipeline/kbc_placeholder.json",
             cache_path="./.cache/gpu",
-            file_name_prefix="pdf_cleaning_step",
+            file_name_prefix="url_cleaning_step",
             cache_type="json",
         )
 
         self.knowledge_cleaning_step1 = KnowledgeExtractor(
             intermediate_dir="../example_data/KBCleaningPipeline/raw/",
             lang="en",
+            MinerU_Backend="vlm-sglang-engine",
         )
 
         self.knowledge_cleaning_step2 = CorpusTextSplitter(
@@ -43,7 +44,7 @@ class KBCleaningPipeline():
 
         local_llm_serving = LocalModelLLMServing_vllm(
             hf_model_name_or_path="Qwen/Qwen2.5-7B-Instruct",
-            vllm_max_tokens=1024,
+            vllm_max_tokens=2048,
             vllm_tensor_parallel_size=4,
             vllm_gpu_memory_utilization=0.6,
             vllm_repetition_penalty=1.2
@@ -72,4 +73,4 @@ class KBCleaningPipeline():
         
 if __name__ == "__main__":
     model = KBCleaningPipeline()
-    model.forward(raw_file="../example_data/KBCleaningPipeline/test.pdf")
+    model.forward(url="https://trafilatura.readthedocs.io/en/latest/quickstart.html")

@@ -172,7 +172,7 @@ class LocalModelLLMServing_sglang(LLMServingABC):
         self.sampling_params = {
             "temperature": sgl_temperature,
             "top_p": sgl_top_p,
-            # "max_tokens": sgl_max_tokens,
+            "max_new_tokens": sgl_max_tokens,
             # "top_k": sgl_top_k,
             # "repetition_penalty": sgl_repetition_penalty,
             # "seed": sgl_seed
