@@ -169,7 +169,6 @@ class FileOrURLToMarkdownConverter(OperatorABC):
     def run(self, storage: DataFlowStorage, raw_file=None, url=None):
         self.logger.info("Starting extraction...")
         self.logger.info("If you're providing a URL or a large file, this may take a while. Please wait...")
-        self.logger.info(f"Using MinerU backend: {self.mineru_backend}")
 
         # Handle extraction from URL
         if url:
@@ -181,19 +180,11 @@ class FileOrURLToMarkdownConverter(OperatorABC):
             self.logger.info(f"Primary extracted result written to: {output_file}")
             return output_file
 
-        # Extract file name and extension
-        raw_file_name = os.path.splitext(os.path.basename(raw_file))[0]
-        raw_file_suffix = os.path.splitext(raw_file)[1].lower()
-        raw_file_suffix_no_dot = raw_file_suffix.lstrip(".")
 
-        # Define default output path
-        output_file = os.path.join(
-            self.intermediate_dir,
-            f"{raw_file_name}_{raw_file_suffix_no_dot}.md"
-        )
 
         # Handle supported file types
         if raw_file_suffix in [".pdf", ".png", ".jpg", ".jpeg", ".webp", ".gif"]:
+            self.logger.info(f"Using MinerU backend: {self.mineru_backend}")
             # Use MinerU backend for PDF and image files
             output_file = _parse_file_with_mineru(
                 raw_file=raw_file,

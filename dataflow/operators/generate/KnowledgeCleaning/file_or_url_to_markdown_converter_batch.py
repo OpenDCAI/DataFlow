@@ -16,8 +16,6 @@ def is_url(string):
     except ValueError:
         return False
 
-
-
 def _parse_file_with_mineru(raw_file: str, output_file: str, mineru_backend: str = "vlm-sglang-engine") -> str:
     """
     Uses MinerU to parse PDF/image files (pdf/png/jpg/jpeg/webp/gif) into Markdown files.
@@ -62,6 +60,8 @@ Please make sure you have GPU on your machine.
     # import pdb; pdb.set_trace()
     pdf_name = Path(raw_file).stem
     intermediate_dir = output_file
+    intermediate_dir = os.path.join(intermediate_dir, "mineru")
+    
     import subprocess
 
     command = [
@@ -96,6 +96,12 @@ def _parse_xml_to_md(raw_file:str=None, url:str=None, output_file:str=None):
     logger=get_logger()
     if(url):
         downloaded=fetch_url(url)
+        if not downloaded:
+            downloaded = "fail to fetch this url. Please check your Internet Connection or URL correctness"
+            with open(output_file,"w", encoding="utf-8") as f:
+                f.write(downloaded)
+            return output_file
+
     elif(raw_file):
         with open(raw_file, "r", encoding='utf-8') as f:
             downloaded=f.read()
@@ -113,7 +119,7 @@ def _parse_xml_to_md(raw_file:str=None, url:str=None, output_file:str=None):
     return output_file
 
 @OPERATOR_REGISTRY.register()
-class PDFExtractor(OperatorABC):
+class FileOrURLToMarkdownConverterBatch(OperatorABC):
     """
     mineru_backend sets the backend engine for MinerU. Options include:
     - "pipeline": Traditional pipeline processing (MinerU1)
@@ -163,7 +169,6 @@ class PDFExtractor(OperatorABC):
     def run(self, storage: DataFlowStorage, input_key: str = "raw_content", output_key: str = "text_path"):
         self.logger.info("Starting content extraction...")
         self.logger.info("If the input is a URL or a large file, this process might take some time. Please wait...")
-        self.logger.info(f"Using MinerU backend: {self.mineru_backend}")
 
         dataframe = storage.read("dataframe")
         self.logger.info(f"Loaded dataframe with {len(dataframe)} entries.")
@@ -176,23 +181,29 @@ class PDFExtractor(OperatorABC):
 
             if is_url(content):
                 # Case: Input is a URL
-                local_file_path = f"./.cache/downloaded_{index}.xml"
 
-                try:
-                    with open(local_file_path, "w", encoding="utf-8") as f:
-                        f.write(fetch_url(content))
-                    self.logger.info(f"Successfully fetched URL content: {content}")
-                except Exception as e:
-                    self.logger.error(f"Failed to fetch URL: {content}, error: {e}")
-                    output_file_all.append("")
-                    continue
-
-                output_file = storage.first_entry_file_name.replace(".jsonl", f"_md_{index}.md")
-                output_file = _parse_xml_to_md(raw_file=local_file_path, output_file=output_file)
-                self.logger.info(f"Extracted content saved to: {output_file}")
+                output_file = os.path.join(
+                    os.path.dirname(storage.first_entry_file_name),
+                    f"raw/crawled/crawled_{index}.md"
+                )
+                os.makedirs(os.path.dirname(output_file),exist_ok=True)
+                output_file = _parse_xml_to_md(url=content, output_file=output_file)
+                self.logger.info(f"Primary extracted result written to: {output_file}")
                 output_file_all.append(output_file)
 
             else:
+                # Extract file name and extension
+                raw_file = content
+                raw_file_name = os.path.splitext(os.path.basename(raw_file))[0]
+                raw_file_suffix = os.path.splitext(raw_file)[1].lower()
+                raw_file_suffix_no_dot = raw_file_suffix.lstrip(".")
+
+                # Define default output path
+                output_file = os.path.join(
+                    self.intermediate_dir,
+                    f"{raw_file_name}_{raw_file_suffix_no_dot}.md"
+                )
+
                 # Case: Local file path
                 if not os.path.exists(content):
                     self.logger.error(f"File not found: Path {content} does not exist.")
@@ -203,6 +214,7 @@ class PDFExtractor(OperatorABC):
                 ext = ext.lower()
 
                 if ext in [".pdf", ".png", ".jpg", ".jpeg", ".webp", ".gif"]:
+                    self.logger.info(f"Using MinerU backend: {self.mineru_backend}")
                     output_file = _parse_file_with_mineru(
                         raw_file=content,
                         output_file=self.intermediate_dir,

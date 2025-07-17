@@ -46,8 +46,7 @@ class KBCleaningPipeline():
             hf_model_name_or_path="Qwen/Qwen2.5-7B-Instruct",
             sgl_dp_size=1, # data parallel size
             sgl_tp_size=1, # tensor parallel size
-            sgl_max_tokens=2048,
-            sgl_tensor_parallel_size=4
+            sgl_max_new_tokens=2048,
         )
 
         self.knowledge_cleaning_step3 = KnowledgeCleaner(
