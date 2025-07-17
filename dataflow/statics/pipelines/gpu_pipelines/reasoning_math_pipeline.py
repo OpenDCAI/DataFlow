@@ -13,6 +13,13 @@ from dataflow.operators.filter import (
     AnswerGroundTruthFilter,
     AnswerNgramFilter, 
 )
+
+from dataflow.prompts.reasoning.math import (
+    MathQuestionFilterPrompt,
+    MathAnswerGeneratorPrompt,
+    MathQuestionSynthesisPrompt
+)
+
 from dataflow.utils.storage import FileStorage
 from dataflow.serving import LocalModelLLMServing_vllm
 
@@ -34,15 +41,18 @@ class ReasoningPipeline():
 
         self.question_filter_step1 = QuestionFilter(
             system_prompt="You are an expert in evaluating mathematical problems. Follow the user's instructions strictly and output your final judgment in the required JSON format.",
-            llm_serving=llm_serving
+            llm_serving=llm_serving,
+            prompt_template=MathQuestionFilterPrompt()
         )
         self.question_gen_step2 =  QuestionGenerator(
             num_prompts=3,
-            llm_serving=llm_serving
+            llm_serving=llm_serving,
+            prompt_template=MathQuestionSynthesisPrompt()
         )
         self.question_filter_step3 = QuestionFilter(
             system_prompt="You are an expert in evaluating mathematical problems. Follow the user's instructions strictly and output your final judgment in the required JSON format.",
-            llm_serving=llm_serving
+            llm_serving=llm_serving,
+            prompt_template=MathQuestionFilterPrompt()
         )
         self.question_difficulty_classifier_step4 = QuestionDifficultyClassifier(
             llm_serving=llm_serving
@@ -54,7 +64,8 @@ class ReasoningPipeline():
         # self.answer_pipeline_root_step6 = AnswerPipelineRoot()
         ########################## answer ############################
         self.answer_generator_step7 = AnswerGenerator(
-            llm_serving=llm_serving
+            llm_serving=llm_serving,
+            prompt_template=MathAnswerGeneratorPrompt()
         )
         
         self.answer_format_filter_step8 = AnswerFormatterFilter()
