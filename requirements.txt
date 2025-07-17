@@ -46,6 +46,8 @@ simhash
 chonkie
 trafilatura
 lxml_html_clean
+pymupdf
+httpx[socks]
 
 # dataflow agent
 cloudpickle

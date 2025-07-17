@@ -37,6 +37,7 @@ if TYPE_CHECKING:
     from .AgenticRAG.atomic_task_generator import AtomicTaskGenerator
     from .AgenticRAG.depth_qa_generator import DepthQAGenerator
     from .AgenticRAG.width_qa_generator import WidthQAGenerator
+    from .KnowledgeCleaning.mathbook_question_extract import MathBookQuestionExtract
 
     # RARE
     from .RARE.doc_to_query import Doc2Query
