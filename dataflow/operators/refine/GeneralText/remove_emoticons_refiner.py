@@ -16,7 +16,7 @@ class RemoveEmoticonsRefiner(OperatorABC):
     def get_desc(lang: str = "zh"):
         if lang == "zh":
             return (
-                "该算子用于移除文本中的文本型表情符号，例如":-)"、":D"、":("等字符组合表情。\n"
+                "该算子用于移除文本中的文本型表情符号，例如':-)'、':D'、':('等字符组合表情。\n"
                 "基于预定义的表情符号字典进行匹配替换，支持多种常见文本表情模式。\n"
                 "输入参数：\n"
                 "- 无初始化参数\n"
@@ -28,7 +28,7 @@ class RemoveEmoticonsRefiner(OperatorABC):
             )
         elif lang == "en":
             return (
-                "This operator removes text-based emoticons from text, such as ":-)", ":D", ":(" and other character combination emoticons.\n"
+                "This operator removes text-based emoticons from text, such as ':-)'、':D'、':(' and other character combination emoticons.\n"
                 "Performs matching and replacement based on a predefined emoticon dictionary, supporting various common text emoticon patterns.\n"
                 "Input Parameters:\n"
                 "- No initialization parameters\n"
