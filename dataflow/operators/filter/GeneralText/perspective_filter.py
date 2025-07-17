@@ -18,7 +18,26 @@ class PerspectiveFilter(OperatorABC):
     
     @staticmethod
     def get_desc(lang: str = "zh"):
-        return "基于PerspectiveScorer打分器的得分对数据进行过滤。使用 PerspectiveAPI 评估文本的毒性，返回毒性概率，得分越高表明文本毒性越高。" if lang == "zh" else "Filter data using scores from the PerspectiveScorer. Assess text toxicity using PerspectiveAPI; higher scores indicate more toxicity."
+        if lang == "zh":
+            return (
+                "基于PerspectiveScorer打分器的得分对数据进行过滤使用Perspective API评估文本的毒性，返回毒性概率，得分越高表明文本毒性越高。\n"
+                "输入参数：\n"
+                "- min_score：最小毒性得分阈值\n"
+                "- max_score：最大毒性得分阈值\n"
+                "输出参数：\n"
+                "- 过滤后的DataFrame，仅保留毒性得分在指定范围内的文本\n"
+                "- 返回包含毒性得分字段名的列表"
+            )
+        else:
+            return (
+                "Filter data using scores from the PerspectiveScorer. Assess text toxicity using Perspective API; higher scores indicate more toxicity.\n"
+                "Input Parameters:\n"
+                "- min_score: Minimum toxicity score threshold\n"
+                "- max_score: Maximum toxicity score threshold\n\n"
+                "Output Parameters:\n"
+                "- Filtered DataFrame containing only texts with toxicity score within specified range\n"
+                "- List containing toxicity score field name"
+            )
         
     def run(self, storage: DataFlowStorage, input_key: str, output_key: str = 'PerspectiveScore'):
         self.input_key = input_key

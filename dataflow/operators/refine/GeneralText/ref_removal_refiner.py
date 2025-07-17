@@ -12,8 +12,30 @@ class ReferenceRemoverRefiner(OperatorABC):
         self.logger.info(f"Initializing {self.__class__.__name__}...")
 
     @staticmethod
-    def get_desc(lang):
-        return "删除文本中未闭合的引用标签和引用链接" if lang == "zh" else "Remove unclosed reference tags and citation links from the text."
+    def get_desc(lang: str = "zh"):
+        if lang == "zh":
+            return (
+                "删除文本中未闭合的引用标签和引用链接，包括<ref>标签和{{cite}}模板的各种完整和不完整形式。净化文本中的引用标记。"
+                "输入参数：\n"
+                "- input_key：输入文本字段名\n"
+                "输出参数：\n"
+                "- 包含移除引用标记后文本的DataFrame\n"
+                "- 返回输入字段名，用于后续算子引用"
+            )
+        elif lang == "en":
+            return (
+                "Remove unclosed reference tags and citation links from text, including various complete and incomplete forms of <ref> tags and {{cite}} templates. \n"
+                "Cleans reference markers from text.\n"
+                "Input Parameters:\n"
+                "- input_key: Field name for input text\n\n"
+                "Output Parameters:\n"
+                "- DataFrame containing text with reference markers removed\n"
+                "- Returns input field name for subsequent operator reference"
+            )
+        else:
+            return (
+                "ReferenceRemoverRefiner removes reference tags and citation links from text."
+            )
 
     def run(self, storage: DataFlowStorage, input_key: str):
         self.input_key = input_key

@@ -24,7 +24,42 @@ class QuratingFilter(OperatorABC):
 
     @staticmethod
     def get_desc(lang: str = "zh"):
-        return "基于QuratingScorer打分器的得分对数据进行过滤。通过 Qurating 模型评估文本的质量，得分越高表示质量越高。" if lang == "zh" else "Filter data using scores from the QuratingScorer. Evaluate quality and educational value of text using Qurating model."
+        if lang == "zh":
+            return (
+                "基于QuratingScorer打分器的得分对数据进行过滤。通过Qurating模型从四个维度评估文本质量：写作风格、所需专业知识、事实与 trivia 内容、教育价值。\n"
+                "每个维度评分范围为0-9分，综合判断文本质量，可用于筛选高质量教育类或知识类内容。\n"
+                "输入参数：\n"
+                "- min_scores：各维度保留样本的最小分数阈值，默认为{'writing_style':0,'required_expertise':0,'facts_and_trivia':0,'educational_value':0}\n"
+                "- max_scores：各维度保留样本的最大分数阈值，默认为{'writing_style':9,'required_expertise':9,'facts_and_trivia':9,'educational_value':9}\n"
+                "- map_batch_size：映射批次大小，默认为512\n"
+                "- num_workers：数据加载工作进程数，默认为1\n"
+                "- device_batch_size：设备批次大小，默认为16\n"
+                "- device：模型运行设备，默认为'cuda'\n"
+                "- labels：评估维度列表，默认为['writing_style', 'required_expertise', 'facts_and_trivia', 'educational_value']\n"
+                "- model_cache_dir：模型缓存目录，默认为'./dataflow_cache'\n"
+                "输出参数：\n"
+                "- 过滤后的DataFrame，仅保留所有维度分数均在对应阈值范围内的样本\n"
+                "- 返回包含各维度过滤结果字段名的列表，用于后续算子引用"
+            )
+        elif lang == "en":
+            return (
+                "Filter data using scores from the QuratingScorer. Evaluate text quality across four dimensions using Qurating model: writing style, required expertise, facts and trivia content, and educational value.\n"
+                "Each dimension is scored from 0-9, providing comprehensive quality assessment for filtering high-quality educational or knowledge-based content.\n"
+                "Input Parameters:\n"
+                "- min_scores: Minimum score thresholds for each dimension, default is {'writing_style':0,'required_expertise':0,'facts_and_trivia':0,'educational_value':0}\n"
+                "- max_scores: Maximum score thresholds for each dimension, default is {'writing_style':9,'required_expertise':9,'facts_and_trivia':9,'educational_value':9}\n"
+                "- map_batch_size: Mapping batch size, default is 512\n"
+                "- num_workers: Number of data loading workers, default is 1\n"
+                "- device_batch_size: Device batch size, default is 16\n"
+                "- device: Model running device, default is 'cuda'\n"
+                "- labels: List of evaluation dimensions, default is ['writing_style', 'required_expertise', 'facts_and_trivia', 'educational_value']\n"
+                "- model_cache_dir: Model cache directory, default is './dataflow_cache'\n"
+                "Output Parameters:\n"
+                "- Filtered DataFrame containing only samples with all dimension scores within corresponding threshold ranges\n"
+                "- List containing field names of each dimension's filtering results for subsequent operator reference"
+            )
+        else:
+            return "Filter data based on multi-dimensional quality assessment using Qurating model."
 
 
     def run(self, storage: DataFlowStorage, input_key: str):

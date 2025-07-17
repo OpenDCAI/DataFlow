@@ -18,8 +18,29 @@ class TreeinstructScorer(OperatorABC):
     
     @staticmethod
     def get_desc(lang: str = "zh"):
-        return "通过生成语法树的节点数来衡量指令复杂性，节点越多表示指令越复杂。" if lang == "zh" else "Measure instruction complexity by syntax tree size; more nodes mean more complexity."
-
+        if lang == "zh":
+            return (
+                "通过生成语法树的节点数来衡量指令复杂性，节点越多表示指令越复杂。\n"
+                "输入参数：\n"
+                "- llm_serving：LLM服务对象，需实现LLMServingABC接口\n"
+                "- input_instruction_key：指令字段名\n"
+                "- output_key：输出得分字段名，默认'TreeinstructScore'\n"
+                "输出参数：\n"
+                "- 包含指令复杂性得分的DataFrame"
+            )
+        elif lang == "en":
+            return (
+                "Measure instruction complexity by syntax tree size; more nodes mean more complexity.\n"
+                "Input Parameters:\n"
+                "- llm_serving: LLM serving object implementing LLMServingABC interface\n"
+                "- input_instruction_key: Field name for instruction\n"
+                "- output_key: Field name for output score, default 'TreeinstructScore'\n"
+                "Output Parameters:\n"
+                "- DataFrame containing instruction complexity scores"
+            )
+        else:
+            return "Measure instruction complexity by syntax tree size; more nodes mean more complexity."
+    
     def get_score(self, samples, input_instruction_key):
         system_prompts = []
         user_prompts = []

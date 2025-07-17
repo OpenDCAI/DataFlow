@@ -14,7 +14,32 @@ class RemovePunctuationRefiner(OperatorABC):
     
     @staticmethod
     def get_desc(lang: str = "zh"):
-        return "移除文本中的标点符号" if lang == "zh" else "Remove punctuation from text."
+        if lang == "zh":
+            return (
+                "该算子用于移除文本中的标点符号，包括英文标点符号集合中的所有符号。\n"
+                "使用string.punctuation定义的标点集合进行过滤，实现文本去标点处理。\n"
+                "输入参数：\n"
+                "- 无初始化参数\n"
+                "运行参数：\n"
+                "- input_key：输入文本字段名\n"
+                "输出参数：\n"
+                "- 处理后的DataFrame，包含去除标点的文本\n"
+                "- 返回包含输入字段名的列表，用于后续算子引用"
+            )
+        elif lang == "en":
+            return (
+                "This operator removes punctuation from text, including all symbols in the English punctuation set.\n"
+                "Uses the punctuation set defined by string.punctuation for filtering to achieve text punctuation removal.\n"
+                "Input Parameters:\n"
+                "- No initialization parameters\n"
+                "Runtime Parameters:\n"
+                "- input_key: Input text field name\n"
+                "Output Parameters:\n"
+                "- Processed DataFrame containing text with punctuation removed\n"
+                "- List containing input field name for subsequent operator reference"
+            )
+        else:
+            return "Removes punctuation from text using string.punctuation set."
         
     def run(self, storage: DataFlowStorage, input_key: str):
         self.input_key = input_key

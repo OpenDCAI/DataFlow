@@ -18,7 +18,22 @@ class NgramScorer(OperatorABC):
     
     @staticmethod
     def get_desc(lang: str = "zh"):
-        return "计算文本中n-gram的重复比例，得分越高表示重复比例越低。" if lang == "zh" else "Evaluate text redundancy via n-gram repetition; higher score means lower repetition."
+        if lang == "zh":
+            return (
+                "计算文本中n-gram的重复比例，评估文本冗余度。通过比较唯一n-gram数量与总n-gram数量的比值来衡量文本原创性。\n\n"
+                "初始化参数：\n"
+                "- ngrams: n-gram的长度，默认为5\n\n"
+                "输出参数：\n"
+                "- NgramScore: n-gram重复比例得分（0到1之间，得分越高表示重复比例越低）"
+            )
+        else:
+            return (
+                "Evaluates text redundancy by calculating n-gram repetition ratio. Measures text originality by comparing the ratio of unique n-grams to total n-grams.\n\n"
+                "Initialization Parameters:\n"
+                "- ngrams: Length of n-grams, default is 5\n\n"
+                "Output Parameters:\n"
+                "- NgramScore: N-gram repetition ratio score (0-1, higher = less repetition)"
+            )
     
     def _score_func(self, sample):
         content = sample 

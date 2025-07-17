@@ -18,7 +18,10 @@ class ColonEndFilter(OperatorABC):
 
     @staticmethod
     def get_desc(lang: str = "zh"):
-        return "检查文本是否以冒号结尾，过滤掉以冒号结尾的文本" if lang == "zh" else "Check if the text ends with a colon and filter out texts that end with a colon."
+        if lang == "zh":
+            return "检查文本是否以冒号结尾的过滤算子。过滤掉所有以冒号结尾的文本，常用于预处理步骤中清除不完整的句子或指令。"
+        else:
+            return "Filter operator that checks if text ends with a colon. Removes all texts ending with a colon, commonly used in preprocessing to clean incomplete sentences or instructions."
 
     def run(self, storage: DataFlowStorage, input_key: str, output_key: str = None):
         self.input_key = input_key
@@ -49,7 +52,10 @@ class WordNumberFilter(OperatorABC):
 
     @staticmethod
     def get_desc(lang: str = "zh"):
-        return "检查文本中的单词数量是否在指定范围内，过滤掉不符合条件的文本" if lang == "zh" else "Check if the number of words in the text is within a specified range and filter out texts that do not meet the criteria."
+        if lang == "zh":
+            return "基于单词数量的过滤算子。检查文本中的单词数量是否在指定范围内（min_words到max_words），过滤掉单词数过少或过多的文本。使用简单空格分割法计算单词数量。"
+        else:
+            return "Filter operator based on word count. Checks if the number of words in text is within the specified range (min_words to max_words), filtering out texts with too few or too many words. Uses simple space splitting to count words."
 
     def run(self, storage: DataFlowStorage, input_key: str, output_key: str='word_number_filter_label'):
         self.input_key = input_key
@@ -84,7 +90,10 @@ class SentenceNumberFilter(OperatorABC):
 
     @staticmethod
     def get_desc(lang: str = "zh"):
-        return "检查文本中的句子数量是否在指定范围内，过滤掉不符合条件的文本" if lang == "zh" else "Check if the number of sentences in the text is within a specified range and filter out texts that do not meet the criteria."
+        if lang == "zh":
+            return "基于句子数量的过滤算子。使用正则表达式匹配以.!?结尾的句子，检查文本中的句子数量是否在指定范围内（min_sentences到max_sentences），过滤掉句子数过少或过多的文本。"
+        else:
+            return "Filter operator based on sentence count. Uses regular expressions to match sentences ending with .!?, checking if the number of sentences is within the specified range (min_sentences to max_sentences), filtering out texts with too few or too many sentences."
 
     def run(self, storage: DataFlowStorage, input_key: str, output_key: str = 'sentence_number_filter_label'):
         self.input_key = input_key
@@ -175,7 +184,10 @@ class LineEndWithEllipsisFilter(OperatorABC):
 
     @staticmethod
     def get_desc(lang: str = "zh"):
-        return "检查文本行是否以省略号结尾，过滤掉以省略号结尾的文本行" if lang == "zh" else "Check if the lines in the text end with ellipsis and filter out lines that end with ellipsis."
+        if lang == "zh":
+            return "检查文本行是否以省略号结尾的过滤算子。计算以省略号(...)或(…)结尾的行数占总行数的比例，当比例超过阈值(threshold)时过滤该文本。支持多行文本检查。"
+        else:
+            return "Filter operator that checks if text lines end with ellipsis. Calculates the ratio of lines ending with ellipsis (...) or (…) to total lines, filtering texts when the ratio exceeds the threshold. Supports multi-line text checking."
 
     def run(self, storage: DataFlowStorage, input_key: str, output_key: str = 'line_end_with_ellipsis_filter_label'):
         self.input_key = input_key
@@ -220,7 +232,10 @@ class ContentNullFilter(OperatorABC):
 
     @staticmethod
     def get_desc(lang: str = "zh"):
-        return "检查文本内容是否为空，过滤掉空文本" if lang == "zh" else "Check if the text content is empty and filter out empty texts."
+        if lang == "zh":
+            return "检查文本内容是否为空的过滤算子。过滤掉值为None、空字符串或仅包含空白字符的文本，确保数据集中不包含无意义的空内容。"
+        else:
+            return "Filter operator that checks if text content is null. Removes texts that are None, empty strings, or contain only whitespace characters, ensuring no meaningless empty content in the dataset."
 
     def run(self, storage: DataFlowStorage, input_key: str, output_key: str='content_null_filter_label'):
         self.input_key = input_key
@@ -257,7 +272,10 @@ class SymbolWordRatioFilter(OperatorABC):
 
     @staticmethod
     def get_desc(lang: str = "zh"):
-        return "检查文本中的符号与单词的比例是否在指定范围内，过滤掉不符合条件的文本" if lang == "zh" else "Check if the ratio of symbols to words in the text is within a specified range and filter out texts that do not meet the criteria."
+        if lang == "zh":
+            return "检查符号与单词比例的过滤算子。计算指定符号（#、...、…）出现次数与单词总数的比例，当比例超过阈值(threshold)时过滤该文本，用于识别包含过多特殊符号的低质量文本。"
+        else:
+            return "Filter operator that checks symbol-to-word ratio. Calculates the ratio of specified symbols (#, ..., …) occurrences to total word count, filtering texts when the ratio exceeds the threshold, used to identify low-quality texts with excessive special symbols."
 
     def run(self, storage: DataFlowStorage, input_key: str, output_key: str='symbol_word_ratio_filter_label'):
         self.input_key = input_key
@@ -308,7 +326,10 @@ class AlphaWordsFilter(OperatorABC):
 
     @staticmethod
     def get_desc(lang: str = "zh"):
-        return "检查文本中包含字母字符的单词比例是否大于0.6，过滤掉不符合条件的文本" if lang == "zh" else "Check whether the ratio of words that contain at least one alphabetic character is greater than 0.6 and filter out texts that do not meet the criteria."
+        if lang == "zh":
+            return "检查字母单词比例的过滤算子。计算包含至少一个字母字符的单词占总单词数的比例，当比例不大于阈值(threshold)时过滤该文本。支持两种分词模式：NLTK分词器(use_tokenizer=True)或简单空格分割(use_tokenizer=False)。"
+        else:
+            return "Filter operator that checks alphabetic word ratio. Calculates the ratio of words containing at least one alphabetic character to total words, filtering texts when the ratio is not greater than the threshold. Supports two tokenization modes: NLTK tokenizer (use_tokenizer=True) or simple space splitting (use_tokenizer=False)."
 
     def run(self, storage: DataFlowStorage, input_key: str, output_key: str='alpha_words_filter_label'):
         self.input_key = input_key
@@ -352,7 +373,10 @@ class HtmlEntityFilter(OperatorABC):
 
     @staticmethod
     def get_desc(lang: str = "zh"):
-        return "检查文本中是否包含HTML实体，过滤掉包含HTML实体的文本" if lang == "zh" else "Check if the text contains HTML entities and filter out texts that contain HTML entities."
+        if lang == "zh":
+            return "检查文本中是否包含HTML实体的过滤算子。识别多种格式的HTML实体（如&nbsp;、&lt;、＆amp；等），过滤掉包含任何HTML实体的文本，用于数据清洗和去噪。"
+        else:
+            return "Filter operator that checks for HTML entities in text. Identifies various formats of HTML entities (e.g., &nbsp;, &lt;, ＆amp；, etc.), filtering out texts containing any HTML entities for data cleaning and denoising."
 
     def run(self, storage: DataFlowStorage, input_key: str, output_key: str='html_entity_filter_label'):
         self.input_key = input_key
@@ -401,7 +425,10 @@ class IDCardFilter(OperatorABC):
 
     @staticmethod
     def get_desc(lang: str = "zh"):
-        return "检查文本中是否包含身份证相关内容，过滤掉包含身份证相关内容的文本" if lang == "zh" else "Check if the text contains ID card related content and filter out texts that contain ID card related content."
+        if lang == "zh":
+            return "检查文本中是否包含身份证相关内容的过滤算子。使用正则表达式匹配身份证相关关键词（如'身份证'、'ID number'、'identification'等），当匹配次数超过阈值(threshold)时过滤该文本，用于保护个人敏感信息。"
+        else:
+            return "Filter operator that checks for ID card related content. Uses regular expressions to match ID-related keywords (e.g., '身份证', 'ID number', 'identification', etc.), filtering texts when matches exceed the threshold, used to protect personal sensitive information."
 
     def run(self, storage: DataFlowStorage, input_key: str, output_key: str='id_card_filter_label'):
         self.input_key = input_key
@@ -443,7 +470,10 @@ class NoPuncFilter(OperatorABC):
 
     @staticmethod
     def get_desc(lang: str = "zh"):
-        return "检查文本中是否不含标点符号，过滤掉不含标点符号的文本" if lang == "zh" else "Check if the text does not contain punctuation marks and filter out texts that do not contain punctuation marks."
+        if lang == "zh":
+            return "检查文本中是否不含标点符号的过滤算子。统计文本中的标点符号数量，当数量为0或低于阈值(threshold)时过滤该文本，确保保留具有合理标点使用的文本。"
+        else:
+            return "Filter operator that checks for absence of punctuation. Counts punctuation marks in text, filtering texts when count is 0 or below the threshold, ensuring retention of texts with reasonable punctuation usage."
 
     def run(self, storage: DataFlowStorage, input_key: str, output_key: str='no_punc_filter_label'):
         self.input_key = input_key

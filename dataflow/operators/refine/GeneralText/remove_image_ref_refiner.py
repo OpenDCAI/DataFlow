@@ -25,7 +25,32 @@ class RemoveImageRefsRefiner(OperatorABC):
 
     @staticmethod
     def get_desc(lang: str = "zh"):
-        return "去除文本中的图片引用" if lang == "zh" else "Remove image references in text."
+        if lang == "zh":
+            return (
+                "该算子用于去除文本中的图片引用格式，包括Markdown图片链接、图片编号、特殊符号组合等图像引用模式。\n"
+                "通过多模式正则表达式匹配，识别并移除多种图片引用格式。\n"
+                "输入参数：\n"
+                "- 无初始化参数\n"
+                "运行参数：\n"
+                "- input_key：输入文本字段名\n"
+                "输出参数：\n"
+                "- 处理后的DataFrame，包含去除图片引用的文本\n"
+                "- 返回包含输入字段名的列表，用于后续算子引用"
+            )
+        elif lang == "en":
+            return (
+                "This operator removes image reference formats from text, including Markdown image links, image numbers, special symbol combinations and other image reference patterns.\n"
+                "Identifies and removes multiple image reference formats through multi-pattern regular expression matching.\n"
+                "Input Parameters:\n"
+                "- No initialization parameters\n"
+                "Runtime Parameters:\n"
+                "- input_key: Input text field name\n"
+                "Output Parameters:\n"
+                "- Processed DataFrame containing text with image references removed\n"
+                "- List containing input field name for subsequent operator reference"
+            )
+        else:
+            return "Removes image reference formats from text using regular expressions."
 
     def run(self, storage: DataFlowStorage, input_key: str):
         self.input_key = input_key

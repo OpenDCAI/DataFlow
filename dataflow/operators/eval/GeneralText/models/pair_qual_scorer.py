@@ -34,7 +34,26 @@ class PairQualScorer(OperatorABC):
 
     @staticmethod
     def get_desc(lang: str = "zh"):
-        return "基于bge模型，使用gpt对文本成对比较打分后训练而成。得分越高表示质量越高。" if lang == "zh" else "Pairwise quality scorer based on bge and GPT annotations; supports bilingual input."
+        if lang == "zh":
+            return (
+                "基于BGE模型和GPT成对比较数据训练的文本质量评分器，支持中英文输入。通过对文本进行单样本评估，返回0-1之间的质量分数，" 
+                "分数越高表示文本质量越好。模型分为英文版本(zks2856/PairQual-Scorer-en)和中文版本(zks2856/PairQual-Scorer-zh)。\n" 
+                "输入参数：\n" 
+                "- text: 待评估的文本字符串\n" 
+                "- lang: 语言类型，可选'en'或'zh'\n" 
+                "输出参数：\n" 
+                "- float: 0-1之间的质量分数，越高表示质量越好"
+            )
+        else:
+            return (
+                "Text quality scorer trained on BGE model and GPT pairwise comparison data, supporting bilingual input. Evaluate text through single-sample assessment, " 
+                "returning a quality score between 0 and 1, where higher scores indicate better text quality. Models include English version (zks2856/PairQual-Scorer-en) and Chinese version (zks2856/PairQual-Scorer-zh).\n" 
+                "Input parameters:\n" 
+                "- text: Text string to be evaluated\n" 
+                "- lang: Language type, optional 'en' or 'zh'\n" 
+                "Output parameters:\n" 
+                "- float: Quality score between 0 and 1, higher values indicate better quality"
+            )
 
     def inference(self, input_text):
         inputs = self.tokenizer(input_text, return_tensors='pt', padding=True, truncation=True, max_length=self.max_length).to(self.device)

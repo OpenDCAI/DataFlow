@@ -24,7 +24,28 @@ class PerplexityScorer(OperatorABC):
         
     @staticmethod
     def get_desc(lang: str = "zh"):
-        return "基于 Kenlm 模型计算文本的困惑度，困惑度越低，文本的流畅性和可理解性越高。" if lang == "zh" else "Uses Kenlm to calculate perplexity; lower scores indicate better fluency."
+        if lang == "zh":
+            return (
+                "基于Kenlm语言模型计算文本的困惑度(Perplexity)，困惑度越低表示文本的流畅性和可理解性越高。支持多语言模型，" 
+                "默认使用维基百科训练的英文模型。需要先从HuggingFace下载模型文件(en.arpa.bin, en.sp.model和en.sp.vocab)。\n" 
+                "输入参数：\n" 
+                "- text: 待评估的文本字符串\n" 
+                "- lang: 语言类型，默认为'en'\n" 
+                "- model_name: 模型路径，默认为'dataflow/operators/eval/GeneralText/models/Kenlm/wikipedia'\n" 
+                "输出参数：\n" 
+                "- float: 困惑度值，越低表示文本流畅性越好"
+            )
+        else:
+            return (
+                "Calculate text perplexity using the Kenlm language model. Lower perplexity indicates better fluency and comprehensibility. Supports multilingual models, " 
+                "defaulting to an English model trained on Wikipedia. Requires downloading model files (en.arpa.bin, en.sp.model, and en.sp.vocab) from HuggingFace first.\n" 
+                "Input parameters:\n" 
+                "- text: Text string to be evaluated\n" 
+                "- lang: Language type, default 'en'\n" 
+                "- model_name: Model path, default 'dataflow/operators/eval/GeneralText/models/Kenlm/wikipedia'\n" 
+                "Output parameters:\n" 
+                "- float: Perplexity value, lower values indicate better text fluency"
+            )
 
     def eval(self, dataframe, input_key):
         input_texts = dataframe.get(input_key, '').to_list()

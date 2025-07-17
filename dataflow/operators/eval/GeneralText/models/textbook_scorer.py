@@ -35,7 +35,24 @@ class TextbookScorer(OperatorABC):
     
     @staticmethod
     def get_desc(lang: str = "zh"):
-        return "基于 FastText 分类器的课本质量分类器，用于评估文本的教育价值。" if lang == "zh" else "Assess educational value using FastText textbook classifier."
+        if lang == "zh":
+            return (
+                "基于FastText分类器(kenhktsui/llm-data-textbook-quality-fasttext-classifer-v2)评估文本的教育价值，将文本分为低(Low)、中(Mid)、高(High)三个等级，" 
+                "并映射为1.0、3.0、5.0的分数。适用于筛选适合作为教材的高质量文本内容。\n" 
+                "输入参数：\n" 
+                "- text: 待评估的文本字符串\n" 
+                "输出参数：\n" 
+                "- float: 教育价值分数，可能值为1.0(低)、3.0(中)、5.0(高)"
+            )
+        else:
+            return (
+                "Assess the educational value of text using a FastText classifier (kenhktsui/llm-data-textbook-quality-fasttext-classifer-v2), categorizing text into Low, Mid, and High levels, " 
+                "mapped to scores of 1.0, 3.0, and 5.0 respectively. Suitable for filtering high-quality text content suitable as teaching materials.\n" 
+                "Input parameters:\n" 
+                "- text: Text string to be evaluated\n" 
+                "Output parameters:\n" 
+                "- float: Educational value score, possible values 1.0 (Low), 3.0 (Mid), 5.0 (High)"
+            )
 
     @staticmethod
     def replace_newlines(text: str) -> str:
@@ -69,4 +86,4 @@ class TextbookScorer(OperatorABC):
         scores = self.eval(dataframe, input_key, output_key) 
         for i, score_list in enumerate(scores):
             dataframe[output_key] = score_list 
-        storage.write(dataframe) 
+        storage.write(dataframe)

@@ -23,7 +23,32 @@ class RemoveStopwordsRefiner(OperatorABC):
     
     @staticmethod
     def get_desc(lang: str = "zh"):
-        return "移除文本中的停用词（如“the”，“is”）" if lang == "zh" else "Remove stopwords from text (e.g., 'the', 'is')."
+        if lang == "zh":
+            return (
+                "该算子用于移除文本中的英语停用词（如\"the\"，\"is\"，\"in\"等无实际意义的高频词汇）。\n"
+                "使用NLTK库的stopwords语料库进行停用词过滤，提高文本特征密度。\n"
+                "输入参数：\n"
+                "- model_cache_dir：模型缓存目录，默认为'./dataflow_cache'\n"
+                "运行参数：\n"
+                "- input_key：输入文本字段名\n"
+                "输出参数：\n"
+                "- 处理后的DataFrame，包含去除停用词的文本\n"
+                "- 返回包含输入字段名的列表，用于后续算子引用"
+            )
+        elif lang == "en":
+            return (
+                "This operator removes English stopwords from text (e.g., high-frequency words with little meaning like \"the\", \"is\", \"in\").\n"
+                "Uses NLTK library's stopwords corpus for stopword filtering to improve text feature density.\n"
+                "Input Parameters:\n"
+                "- model_cache_dir: Model cache directory, default is './dataflow_cache'\n"
+                "Runtime Parameters:\n"
+                "- input_key: Input text field name\n"
+                "Output Parameters:\n"
+                "- Processed DataFrame containing text with stopwords removed\n"
+                "- List containing input field name for subsequent operator reference"
+            )
+        else:
+            return "Removes English stopwords from text using NLTK's stopwords corpus."
     
     def run(self, storage: DataFlowStorage, input_key: str):
         self.input_key = input_key

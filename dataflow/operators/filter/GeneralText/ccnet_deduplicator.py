@@ -49,7 +49,28 @@ class CCNetDeduplicator(OperatorABC):
 
     @staticmethod
     def get_desc(lang: str = "zh"):
-        return "CCNet方法，基于SHA-1哈希算法的前64位进行重复识别。精确去重" if lang == "zh" else "CCNet method. Deduplicate using first 64 bits of SHA-1. Exact deduplication."
+        if lang == "zh":
+            return (
+                "CCNet去重方法，基于SHA-1哈希算法的前N位进行重复识别，实现精确去重。\n\n"
+                "初始化参数：\n"
+                "- bit_length: 哈希值的位数，默认为64位\n\n"
+                "运行参数：\n"
+                "- input_keys: 用于计算哈希的多个字段列表（与input_key二选一）\n"
+                "- input_key: 用于计算哈希的单个字段名（与input_keys二选一）\n"
+                "- output_key: 去重标记字段名，默认为'minhash_deduplicated_label'\n\n"
+                "输出说明：标记为1的数据表示首次出现，标记为0的数据表示重复数据"
+            )
+        else:
+            return (
+                "CCNet deduplication method. Identify duplicates using first N bits of SHA-1 hash for exact deduplication.\n\n"
+                "Initialization Parameters:\n"
+                "- bit_length: Number of bits for hash value, default is 64\n\n"
+                "Run Parameters:\n"
+                "- input_keys: List of multiple fields for hash calculation (alternative to input_key)\n"
+                "- input_key: Single field name for hash calculation (alternative to input_keys)\n"
+                "- output_key: Deduplication label field name, default is 'minhash_deduplicated_label'\n\n"
+                "Output Description: Data marked as 1 indicates first occurrence, 0 indicates duplicate"
+            )
 
     def _compute_hash(self, text: str) -> str:
         return sha1_hash(text, self.bit_length)

@@ -23,7 +23,36 @@ class HashDeduplicator(OperatorABC):
     
     @staticmethod
     def get_desc(lang: str = "zh"):
-        return "使用多种哈希函数对文本进行精确去重，可选md5、sha256或xxh3。" if lang == "zh" else "Exact deduplication using multiple hash functions, chosen from md5、sha256 or xxh3."
+        if lang == "zh":
+            return (
+                "使用多种哈希函数对文本进行精确去重，支持md5、sha256或xxh3算法。通过计算文本的哈希值识别重复数据。\n\n"
+                "初始化参数：\n"
+                "- hash_func: 哈希函数名称，可选'md5'、'sha256'或'xxh3'，默认为'md5'\n\n"
+                "运行参数：\n"
+                "- input_keys: 用于计算哈希的多个字段列表（与input_key二选一）\n"
+                "- input_key: 用于计算哈希的单个字段名（与input_keys二选一）\n"
+                "- output_key: 去重标记字段名，默认为'minhash_deduplicated_label'\n\n"
+                "输出说明：标记为1的数据表示首次出现，标记为0的数据表示重复数据\n"
+                "算法特点：\n"
+                "- md5: 128位哈希值，平衡速度和唯一性\n"
+                "- sha256: 256位哈希值，更高安全性，速度较慢\n"
+                "- xxh3: 128位哈希值，最快的哈希算法"
+            )
+        else:
+            return (
+                "Exact deduplication using multiple hash functions, chosen from md5, sha256 or xxh3. Identify duplicate data by calculating text hash values.\n\n"
+                "Initialization Parameters:\n"
+                "- hash_func: Hash function name, options are 'md5', 'sha256' or 'xxh3', default is 'md5'\n\n"
+                "Run Parameters:\n"
+                "- input_keys: List of multiple fields for hash calculation (alternative to input_key)\n"
+                "- input_key: Single field name for hash calculation (alternative to input_keys)\n"
+                "- output_key: Deduplication label field name, default is 'minhash_deduplicated_label'\n\n"
+                "Output Description: Data marked as 1 indicates first occurrence, 0 indicates duplicate\n"
+                "Algorithm Characteristics:\n"
+                "- md5: 128-bit hash, balances speed and uniqueness\n"
+                "- sha256: 256-bit hash, higher security, slower speed\n"
+                "- xxh3: 128-bit hash, fastest hashing algorithm"
+            )
 
 
     def _compute_hash(self, text: str) -> str:

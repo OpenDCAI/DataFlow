@@ -26,6 +26,29 @@ class MetaScorer(OperatorABC):
             "Content Accuracy & Effectiveness"
         ]
 
+    @staticmethod
+    def get_desc(lang: str = "zh"):
+        if lang == "zh":
+            return (
+                "通过LLM评估文本的多个元属性，包括文本结构、多样性与复杂性、流畅性与可理解性、安全性、教育价值以及内容准确性与有效性。\n"
+                "输入参数：\n"
+                "- llm_serving：LLM服务对象，需实现LLMServingABC接口\n"
+                "- input_key：输入文本字段名\n"
+                "输出参数：\n"
+                "- 包含6个评估维度得分的DataFrame，列名为：Text Structure, Diversity & Complexity, Fluency & Understandability, Safety, Educational Value, Content Accuracy & Effectiveness"
+            )
+        elif lang == "en":
+            return (
+                "Evaluate multiple meta attributes of text using LLM, including Text Structure, Diversity & Complexity, Fluency & Understandability, Safety, Educational Value, and Content Accuracy & Effectiveness.\n"
+                "Input Parameters:\n"
+                "- llm_serving: LLM serving object implementing LLMServingABC interface\n"
+                "- input_key: Field name for input text\n"
+                "Output Parameters:\n"
+                "- DataFrame containing scores for 6 evaluation dimensions with columns: Text Structure, Diversity & Complexity, Fluency & Understandability, Safety, Educational Value, Content Accuracy & Effectiveness"
+            )
+        else:
+            return "Evaluate multiple meta attributes of text using LLM."
+    
     def get_score(self, samples, input_key):
         system_prompt = self.prompt.build_system_prompt()
         user_prompts = []

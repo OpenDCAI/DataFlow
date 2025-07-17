@@ -19,7 +19,34 @@ class AlpagasusScorer(OperatorABC):
 
     @staticmethod
     def get_desc(lang: str = "zh"):
-        return "通过调用 GPT 评估指令的质量，返回一个质量得分，得分越高表明指令的质量越高。" if lang == "zh" else "Evaluate instruction quality using GPT; higher scores indicate better quality."
+        if lang == "zh":
+            return (
+                "通过调用GPT评估指令的质量，返回一个质量得分，得分越高表明指令的质量越高。\n"
+                "输入参数：\n"
+                "- llm_serving：LLM服务对象，需实现LLMServingABC接口\n"
+                "- dimension：评估维度，默认为'quality'\n"
+                "- input_instruction_key：指令字段名\n"
+                "- input_input_key：输入文本字段名\n"
+                "- input_output_key：输出文本字段名\n"
+                "- output_key：输出得分字段名，默认'AlpagasusScore'\n"
+                "输出参数：\n"
+                "- 包含评估得分的DataFrame"
+            )
+        elif lang == "en":
+            return (
+                "Evaluate instruction quality using GPT; higher scores indicate better quality.\n"
+                "Input Parameters:\n"
+                "- llm_serving: LLM serving object implementing LLMServingABC interface\n"
+                "- dimension: Evaluation dimension, default 'quality'\n"
+                "- input_instruction_key: Field name for instruction\n"
+                "- input_input_key: Field name for input text\n"
+                "- input_output_key: Field name for output text\n"
+                "- output_key: Field name for output score, default 'AlpagasusScore'\n"
+                "Output Parameters:\n"
+                "- DataFrame containing evaluation scores"
+            )
+        else:
+            return "Evaluate instruction quality using GPT; higher scores indicate better quality."
 
     def get_score(self, samples, input_instruction_key, input_input_key, input_output_key):
         system_prompts = []

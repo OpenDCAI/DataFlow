@@ -37,8 +37,32 @@ class HtmlEntityRefiner(OperatorABC):
         self.html_entity_regex = re.compile('|'.join(entity_patterns))
 
     @staticmethod
-    def get_desc(lang):
-        return "去除文本中的HTML实体" if lang == "zh" else "Remove HTML entities from the text."
+    def get_desc(lang: str = "zh"):
+        if lang == "zh":
+            return (
+                "去除文本中的HTML实体，包括标准实体（如&nbsp;、&lt;）和各种变体形式（全角符号、中文分号等）。支持自定义需要移除的HTML实体列表。"
+                "输入参数：\n"
+                "- html_entities：需要移除的HTML实体列表，默认为包含常见实体的列表\n"
+                "- input_key：输入文本字段名\n"
+                "输出参数：\n"
+                "- 包含移除HTML实体后文本的DataFrame\n"
+                "- 返回输入字段名，用于后续算子引用"
+            )
+        elif lang == "en":
+            return (
+                "Remove HTML entities from text, including standard entities (e.g., &nbsp;, &lt;) and various variants (full-width symbols, Chinese semicolons, etc.). \n"
+                "Supports custom list of HTML entities to be removed.\n"
+                "Input Parameters:\n"
+                "- html_entities: List of HTML entities to remove, default contains common entities\n"
+                "- input_key: Field name for input text\n\n"
+                "Output Parameters:\n"
+                "- DataFrame containing text with HTML entities removed\n"
+                "- Returns input field name for subsequent operator reference"
+            )
+        else:
+            return (
+                "HtmlEntityRefiner removes HTML entities and their variants from text."
+            )
 
     def run(self, storage: DataFlowStorage, input_key: str):
         self.input_key = input_key
