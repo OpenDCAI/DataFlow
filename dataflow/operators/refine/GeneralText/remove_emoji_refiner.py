@@ -21,7 +21,6 @@ class RemoveEmojiRefiner(OperatorABC):
             u"\U0001F680-\U0001F6FF"  # Transport and map symbols
             u"\U0001F1E0-\U0001F1FF"  # Flags
             u"\U00002702-\U000027B0"  # Dingbats
-            u"\U000024C2-\U0001F251"  # Enclosed characters
             "]+", 
             flags=re.UNICODE
         )
