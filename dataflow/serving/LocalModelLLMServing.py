@@ -106,14 +106,14 @@ class LocalModelLLMServing_vllm(LLMServingABC):
             {"role": "user", "content": system_prompt},
             {"role": "user", "content": question}
         ]
-            template = self.tokenizer.apply_chat_template(
-                messages,
-                tokenize=False,
-                add_generation_prompt=True,
-                enable_thinking=True,  # Set to False to strictly disable thinking
-            )
-            full_prompts.append(template)
-        responses = self.llm.generate(full_prompts, self.sampling_params)
+            full_prompts.append(messages)
+        full_template = self.tokenizer.apply_chat_template(
+            full_prompts,
+            tokenize=False,
+            add_generation_prompt=True,
+            enable_thinking=True,  # Set to False to strictly disable thinking
+        )
+        responses = self.llm.generate(full_template, self.sampling_params)
         return [output.outputs[0].text for output in responses]
 
     def generate_embedding_from_input(self, texts: list[str]) -> list[list[float]]:
