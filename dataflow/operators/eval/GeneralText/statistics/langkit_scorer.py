@@ -17,7 +17,26 @@ class LangkitScorer(OperatorABC):
 
     @staticmethod
     def get_desc(lang: str = "zh"):
-        return "使用Langkit工具包计算文本统计信息，帮助评估文本结构复杂性和可读性。" if lang == "zh" else "Uses Langkit to extract stats for text structure and readability."
+        if lang == "zh":
+            return (
+                "使用Langkit工具包计算文本统计信息，帮助评估文本结构复杂性和可读性。提取多种语言特征，包括句子长度、词汇多样性、情感倾向等。\n\n"
+                "输出参数：\n"
+                "- LangkitNumSentencesScore: 句子数量\n"
+                "- LangkitNumWordsScore: 单词数量\n"
+                "- LangkitAvgWordLengthScore: 平均单词长度\n"
+                "- LangkitFleschReadingEaseScore: 可读性评分（Flesch公式）\n"
+                "- LangkitSentimentScore: 情感倾向（-1到1之间）"
+            )
+        else:
+            return (
+                "Uses Langkit toolkit to calculate text statistics for evaluating structural complexity and readability. Extracts multiple linguistic features including sentence length, lexical diversity, and sentiment.\n\n"
+                "Output Parameters:\n"
+                "- LangkitNumSentencesScore: Number of sentences\n"
+                "- LangkitNumWordsScore: Number of words\n"
+                "- LangkitAvgWordLengthScore: Average word length\n"
+                "- LangkitFleschReadingEaseScore: Readability score (Flesch formula)\n"
+                "- LangkitSentimentScore: Sentiment polarity (between -1 and 1)"
+            )
 
     def _score_func(self, sample):
         df = pd.DataFrame({'prompt': [sample]})

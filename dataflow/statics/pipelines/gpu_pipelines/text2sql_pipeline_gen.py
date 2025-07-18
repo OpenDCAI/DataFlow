@@ -12,7 +12,7 @@ from dataflow.operators.eval import (
     ExecutionClassifier
 )
 from dataflow.utils.storage import FileStorage
-from dataflow.serving import APILLMServing_request, LocalModelLLMServing_vllm
+from dataflow.serving import LocalModelLLMServing_vllm, LocalModelLLMServing_sglang
 from dataflow.utils.text2sql.database_manager import DatabaseManager
 
 
@@ -32,12 +32,23 @@ class Text2SQLPipeline():
             vllm_max_tokens=8192,
         )
 
+        # use SGLang as LLM serving
+        # llm_serving = LocalModelLLMServing_sglang(
+        #     hf_model_name_or_path="Qwen/Qwen2.5-7B-Instruct",
+        #     sgl_dp_size=1, # data parallel size
+        #     sgl_tp_size=1, # tensor parallel size
+        #     sgl_max_tokens=1024,
+        #     sgl_tensor_parallel_size=4
+        # )
+
         # It is recommended to use better LLMs for the generation of Chain-of-Thought (CoT) reasoning process.
         cot_generation_llm_serving = LocalModelLLMServing_vllm(
             hf_model_name_or_path="Qwen/Qwen2.5-7B-Instruct", # set to your own model path
             vllm_tensor_parallel_size=1,
             vllm_max_tokens=8192,
         )
+
+
 
         embedding_serving = LocalModelLLMServing_vllm(hf_model_name_or_path="Alibaba-NLP/gte-Qwen2-7B-instruct", vllm_max_tokens=8192)
 

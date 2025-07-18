@@ -19,7 +19,30 @@ class MinHashDeduplicator(OperatorABC):
 
     @staticmethod
     def get_desc(lang: str = "zh"):
-        return "结合MinHash与LSH实现高效近似去重" if lang == "zh" else "Efficient near-duplicate detection using MinHash and LSH."
+        if lang == "zh":
+            return (
+                "结合MinHash与LSH（局部敏感哈希）实现高效近似去重。将文本转换为MinHash签名，使用LSH快速查找相似文本，实现大规模数据集的近似去重。\n"
+                "输入参数：\n"
+                "- num_perm：生成MinHash签名的排列数\n"
+                "- threshold：相似度阈值，超过此阈值判定为相似文本\n"
+                "- use_n_gram：是否使用n-gram分词\n"
+                "- ngram：n-gram的n值\n"
+                "输出参数：\n"
+                "- 去重后的DataFrame，仅保留唯一文本\n"
+                "- 返回包含去重标签字段名的列表"
+            )
+        else:
+            return (
+                "Efficient near-duplicate detection using MinHash and LSH (Locality-Sensitive Hashing). Converts texts to MinHash signatures and uses LSH to quickly find similar texts, enabling near-deduplication for large-scale datasets.\n"
+                "Input Parameters:\n"
+                "- num_perm: Number of permutations for generating MinHash signatures\n"
+                "- threshold: Similarity threshold above which texts are considered duplicates\n"
+                "- use_n_gram: Whether to use n-gram tokenization\n"
+                "- ngram: n value for n-gram\n\n"
+                "Output Parameters:\n"
+                "- Deduplicated DataFrame containing only unique texts\n"
+                "- List containing deduplication label field name"
+            )
 
     def create_minhash(self, data):
         minhash = MinHash(num_perm=self.num_perm)

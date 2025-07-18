@@ -34,7 +34,26 @@ class PresidioScorer(OperatorABC):
 
     @staticmethod
     def get_desc(lang: str = "zh"):
-        return "使用Microsoft Presidio模型识别文本中的私人实体，返回PII信息个数。" if lang == "zh" else "Detects PII entities using Microsoft Presidio; returns number of detected items."
+        if lang == "zh":
+            return (
+                "使用Microsoft Presidio模型识别文本中的个人身份信息(PII)，返回检测到的PII实体数量。支持多种实体类型如姓名、邮箱、电话号码等，" 
+                "基于dslim/bert-base-NER模型实现。适用于评估文本的隐私安全风险。\n" 
+                "输入参数：\n" 
+                "- text: 待检测的文本字符串\n" 
+                "- lang: 语言类型，默认为'en'\n" 
+                "输出参数：\n" 
+                "- int: 检测到的PII实体数量"
+            )
+        else:
+            return (
+                "Detect personally identifiable information (PII) in text using the Microsoft Presidio model and return the count of detected PII entities. " 
+                "Supports various entity types such as names, emails, phone numbers, etc., implemented based on the dslim/bert-base-NER model. Suitable for assessing text privacy and security risks.\n" 
+                "Input parameters:\n" 
+                "- text: Text string to be detected\n" 
+                "- lang: Language type, default 'en'\n" 
+                "Output parameters:\n" 
+                "- int: Count of detected PII entities"
+            )
 
     def eval(self, dataframe, input_key):
         input_texts = dataframe.get(input_key, '').to_list()

@@ -20,7 +20,32 @@ class StemmingLemmatizationRefiner(OperatorABC):
 
     @staticmethod
     def get_desc(lang: str = "zh"):
-        return "对文本进行词干提取或词形还原" if lang == "zh" else "Apply stemming or lemmatization to text."
+        if lang == "zh":
+            return (
+                "该算子用于对文本进行词干提取或词形还原处理，将词语转换为其基本形式。\n"
+                "支持两种处理方式：Porter词干提取(stemming)和WordNet词形还原(lemmatization)，可通过参数选择。\n"
+                "输入参数：\n"
+                "- method：处理方法，可选'stemming'或'lemmatization'，默认为'stemming'\n"
+                "运行参数：\n"
+                "- input_key：输入文本字段名\n"
+                "输出参数：\n"
+                "- 处理后的DataFrame，包含词干/词形还原后的文本\n"
+                "- 返回包含输入字段名的列表，用于后续算子引用"
+            )
+        elif lang == "en":
+            return (
+                "This operator applies stemming or lemmatization to text, converting words to their base forms.\n"
+                "Supports two processing methods: Porter stemming and WordNet lemmatization, selectable via parameter.\n"
+                "Input Parameters:\n"
+                "- method: Processing method, optional 'stemming' or 'lemmatization', default is 'stemming'\n"
+                "Runtime Parameters:\n"
+                "- input_key: Input text field name\n"
+                "Output Parameters:\n"
+                "- Processed DataFrame containing text with stemming/lemmatization applied\n"
+                "- List containing input field name for subsequent operator reference"
+            )
+        else:
+            return "Applies stemming or lemmatization to text using NLTK's PorterStemmer or WordNetLemmatizer."
 
     def run(self, storage: DataFlowStorage, input_key: str):
         self.input_key = input_key

@@ -16,7 +16,34 @@ class ScenarioExtractor(OperatorABC):
         self.prompt = FuncCallPrompt()
         self.llm_serving = llm_serving
         self.logger.info(f"Initializing {self.__class__.__name__}...")
-
+    
+    @staticmethod
+    def get_desc(lang: str = "zh"):
+        if lang == "zh":
+            return (
+                "从对话内容中提取场景信息，使用LLM服务分析对话并生成场景描述。\n"
+                "输入参数：\n"
+                "- llm_serving：LLM服务对象，需实现LLMServingABC接口\n"
+                "- input_chat_key：对话内容字段名\n"
+                "- output_key：输出场景字段名，默认'scenario'\n"
+                "输出参数：\n"
+                "- 包含提取场景信息的DataFrame\n"
+                "- 包含输出字段名的列表"
+            )
+        elif lang == "en":
+            return (
+                "Extract scenario information from conversation content using LLM service to analyze dialogues and generate scenario descriptions.\n"
+                "Input Parameters:\n"
+                "- llm_serving: LLM serving object implementing LLMServingABC interface\n"
+                "- input_chat_key: Field name for conversation content\n"
+                "- output_key: Field name for output scenario, default 'scenario'\n"
+                "Output Parameters:\n"
+                "- DataFrame containing extracted scenario information\n"
+                "- List containing output field name"
+            )
+        else:
+            return "Extract scenario information from conversation content using LLM service."
+    
     def _reformat_prompt(self, dataframe: pd.DataFrame):
         formatted_prompts = [self.prompt.extract_scenario_prompt(conversation=item) for item in tqdm(dataframe[self.input_chat_key], desc=f"Reformatting prompts...")]
 

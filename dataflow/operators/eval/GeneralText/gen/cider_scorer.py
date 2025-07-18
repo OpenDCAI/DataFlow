@@ -30,6 +30,39 @@ class CiderScorer(OperatorABC):
             self.idf = None  # No need to load IDF for 'corpus' mode
         self.logger.info(f'{self.__class__.__name__} initialized.')
     
+    @staticmethod
+    def get_desc(lang: str = "zh"):
+        if lang == "zh":
+            return (
+                "使用CIDEr指标评估生成文本与参考文本的相似度，基于TF-IDF加权的n-gram重叠度。\n"
+                "输入参数：\n"
+                "- n：最大n-gram长度，默认为4\n"
+                "- sigma：高斯惩罚参数，默认为6.0\n"
+                "- df_mode：文档频率模式，默认为'coco-val-df'\n"
+                "- idf_path：IDF文件路径，默认为预训练COCO数据集IDF\n"
+                "- input_key：生成文本字段名\n"
+                "- reference_key：参考文本字段名\n"
+                "- output_key：输出得分字段名，默认为'CiderScore'\n"
+                "输出参数：\n"
+                "- 包含CIDEr得分的DataFrame"
+            )
+        elif lang == "en":
+            return (
+                "Evaluate text similarity using CIDEr metric with TF-IDF weighted n-gram overlap.\n"
+                "Input Parameters:\n"
+                "- n: Maximum n-gram length, default 4\n"
+                "- sigma: Gaussian penalty parameter, default 6.0\n"
+                "- df_mode: Document frequency mode, default 'coco-val-df'\n"
+                "- idf_path: Path to IDF file, default pre-trained COCO dataset IDF\n"
+                "- input_key: Field name for generated text\n"
+                "- reference_key: Field name for reference text\n"
+                "- output_key: Field name for output score, default 'CiderScore'\n"
+                "Output Parameters:\n"
+                "- DataFrame containing CIDEr scores"
+            )
+        else:
+            return "Evaluate text similarity using CIDEr metric."
+    
     def _score_func(self, eval_text, ref_text):
         cider_scorer = Cider(
             test=eval_text,

@@ -4,7 +4,7 @@ from dataflow.operators.generate import (
     ReasonDistill,
 )
 from dataflow.utils.storage import FileStorage
-from dataflow.serving import LocalModelLLMServing_vllm
+from dataflow.serving import LocalModelLLMServing_vllm, LocalModelLLMServing_sglang
 
 class RAREPipeline():
     def __init__(self):
@@ -16,13 +16,22 @@ class RAREPipeline():
             cache_type="json",
         )
 
-        # use local model as LLM serving
+        # use vllm as LLM serving
         llm_serving = LocalModelLLMServing_vllm(
             hf_model_name_or_path="LLama3.1-70B-Instruct", # set to your own model path
             vllm_tensor_parallel_size=1,
             vllm_max_tokens=1024*8,
             vllm_max_model_len=1024*24,
         )
+        # use SGLang as LLM serving
+        # llm_serving = LocalModelLLMServing_sglang(
+        #     hf_model_name_or_path="Qwen/Qwen2.5-7B-Instruct",
+        #     sgl_dp_size=1, # data parallel size
+        #     sgl_tp_size=1, # tensor parallel size
+        #     sgl_max_tokens=1024,
+        #     sgl_tensor_parallel_size=4
+        # )
+
 
         self.doc2query_step1 = Doc2Query(llm_serving)
 

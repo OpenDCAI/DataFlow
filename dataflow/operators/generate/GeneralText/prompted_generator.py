@@ -18,7 +18,34 @@ class PromptedGenerator(OperatorABC):
     
     @staticmethod
     def get_desc(lang: str = "zh"):
-        return "基于prompt生成数据" if lang == "zh" else "Generate data from prompt."
+        if lang == "zh":
+            return (
+                "基于用户提供的提示词（prompt）生成数据。结合系统提示词和输入内容生成符合要求的输出文本。"
+                "输入参数：\n"
+                "- llm_serving：LLM服务对象，需实现LLMServingABC接口\n"
+                "- system_prompt：系统提示词，定义模型行为，默认为'You are a helpful agent.'\n"
+                "- input_key：输入内容字段名，默认为'raw_content'\n"
+                "- output_key：输出生成内容字段名，默认为'generated_content'\n"
+                "输出参数：\n"
+                "- 包含生成内容的DataFrame\n"
+                "- 返回输出字段名，用于后续算子引用"
+            )
+        elif lang == "en":
+            return (
+                "Generate data from user-provided prompts. Combines system prompt and input content to generate desired output text.\n"
+                "Input Parameters:\n"
+                "- llm_serving: LLM serving object implementing LLMServingABC interface\n"
+                "- system_prompt: System prompt to define model behavior, default is 'You are a helpful agent.'\n"
+                "- input_key: Field name for input content, default is 'raw_content'\n"
+                "- output_key: Field name for output generated content, default is 'generated_content'\n\n"
+                "Output Parameters:\n"
+                "- DataFrame containing generated content\n"
+                "- Returns output field name for subsequent operator reference"
+            )
+        else:
+            return (
+                "PromptedGenerator generates text based on system prompt and input content."
+            )
 
     def run(self, storage: DataFlowStorage, input_key: str = "raw_content", output_key: str = "generated_content"):
         self.input_key, self.output_key = input_key, output_key

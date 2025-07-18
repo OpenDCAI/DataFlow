@@ -18,6 +18,35 @@ class BERTScorer(OperatorABC):
         self.bertscore = evaluate.load("bertscore", cache_dir=model_cache_dir)
         self.logger.info(f'{self.__class__.__name__} initialized.')
 
+    @staticmethod
+    def get_desc(lang: str = "zh"):
+        if lang == "zh":
+            return (
+                "使用BERTScore评估生成文本与参考文本的相似度，基于上下文嵌入计算P/R/F1分数。\n"
+                "输入参数：\n"
+                "- lang：语言类型，默认为'en'\n"
+                "- model_cache_dir：模型缓存目录，默认为'./dataflow_cache'\n"
+                "- input_key：生成文本字段名\n"
+                "- reference_key：参考文本字段名\n"
+                "- output_key：输出得分字段名，默认为'BertScore'\n"
+                "输出参数：\n"
+                "- 包含F1相似度得分的DataFrame"
+            )
+        elif lang == "en":
+            return (
+                "Evaluate similarity between generated and reference text using BERTScore with contextual embeddings.\n"
+                "Input Parameters:\n"
+                "- lang: Language type, default 'en'\n"
+                "- model_cache_dir: Model cache directory, default './dataflow_cache'\n"
+                "- input_key: Field name for generated text\n"
+                "- reference_key: Field name for reference text\n"
+                "- output_key: Field name for output score, default 'BertScore'\n"
+                "Output Parameters:\n"
+                "- DataFrame containing F1 similarity scores"
+            )
+        else:
+            return "Evaluate text similarity using BERTScore."
+    
     def eval(self, dataframe, input_key, reference_key):
         eval_data = dataframe[input_key].to_list()
         ref_data = dataframe[reference_key].to_list()

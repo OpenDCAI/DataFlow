@@ -28,7 +28,36 @@ class SpellingCorrectionRefiner(OperatorABC):
     
     @staticmethod
     def get_desc(lang: str = "zh"):
-        return "通过SymSpell对文本中的拼写错误进行纠正" if lang == "zh" else "Correct spelling errors in text using SymSpell."
+        if lang == "zh":
+            return (
+                "该算子用于通过SymSpell算法对文本中的拼写错误进行纠正，支持自定义编辑距离和词典路径。\n"
+                "若本地词典不存在则自动下载，使用近似字符串匹配实现拼写纠错功能。\n"
+                "输入参数：\n"
+                "- max_edit_distance：最大编辑距离，默认为2\n"
+                "- prefix_length：前缀长度，默认为7\n"
+                "- dictionary_path：词典路径，默认为'frequency_dictionary_en_82_765.txt'\n"
+                "运行参数：\n"
+                "- input_key：输入文本字段名\n"
+                "输出参数：\n"
+                "- 处理后的DataFrame，包含纠正拼写错误的文本\n"
+                "- 返回包含输入字段名的列表，用于后续算子引用"
+            )
+        elif lang == "en":
+            return (
+                "This operator corrects spelling errors in text using the SymSpell algorithm, supporting custom edit distance and dictionary path.\n"
+                "Automatically downloads dictionary if not locally available, using approximate string matching for spelling correction.\n"
+                "Input Parameters:\n"
+                "- max_edit_distance: Maximum edit distance, default is 2\n"
+                "- prefix_length: Prefix length, default is 7\n"
+                "- dictionary_path: Dictionary path, default is 'frequency_dictionary_en_82_765.txt'\n"
+                "Runtime Parameters:\n"
+                "- input_key: Input text field name\n"
+                "Output Parameters:\n"
+                "- Processed DataFrame containing text with corrected spelling\n"
+                "- List containing input field name for subsequent operator reference"
+            )
+        else:
+            return "Corrects spelling errors in text using the SymSpell algorithm with configurable parameters."
 
     def run(self, storage: DataFlowStorage, input_key: str):
         self.input_key = input_key

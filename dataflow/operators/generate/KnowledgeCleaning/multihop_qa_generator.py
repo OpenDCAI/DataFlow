@@ -261,7 +261,7 @@ class ExampleConstructor:
             processed_text = self._preprocess_text(data.get('text', ''))
             if not processed_text:
                 example = {
-                    'text': processed_text,
+                    # 'text': processed_text,
                     'qa_pairs': [],
                     'metadata': {
                         'source': data.get('source', 'unknown'),

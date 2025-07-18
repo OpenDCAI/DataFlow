@@ -120,7 +120,9 @@ class LocalModelLLMServing_sglang(LLMServingABC):
         hf_model_name_or_path: str = None,
         hf_cache_dir: str = None,
         hf_local_dir: str = None,
-        sgl_max_new_tokens: int = 2048,
+        sgl_tp_size: int = 1, # tensor parallel size
+        sgl_dp_size: int = 1, # data parallel size
+        sgl_max_new_tokens: int = 2048, # maximum number of new tokens to generate
         sgl_stop: Optional[Union[str, List[str]]] = None,
         sgl_stop_token_ids: Optional[List[int]] = None,
         sgl_temperature: float = 1.0,
@@ -149,6 +151,8 @@ class LocalModelLLMServing_sglang(LLMServingABC):
             hf_model_name_or_path=hf_model_name_or_path,
             hf_cache_dir=hf_cache_dir,
             hf_local_dir=hf_local_dir,
+            sgl_tp_size=sgl_tp_size,
+            sgl_dp_size=sgl_dp_size,
             sgl_max_new_tokens=sgl_max_new_tokens,
             sgl_stop=sgl_stop,
             sgl_stop_token_ids=sgl_stop_token_ids,
@@ -179,7 +183,9 @@ class LocalModelLLMServing_sglang(LLMServingABC):
         hf_model_name_or_path,
         hf_cache_dir,
         hf_local_dir,
-        sgl_max_new_tokens: int = 128,
+        sgl_tp_size: int,
+        sgl_dp_size: int,
+        sgl_max_new_tokens: int,
         sgl_stop: Optional[Union[str, List[str]]] = None,
         sgl_stop_token_ids: Optional[List[int]] = None,
         sgl_temperature: float = 1.0,
@@ -225,6 +231,8 @@ class LocalModelLLMServing_sglang(LLMServingABC):
             raise ImportError("please install sglang first like 'pip install open-dataflow[sglang]'")
         self.llm = sgl.Engine(
             model_path=self.real_model_path,
+            tp_size=sgl_tp_size,
+            dp_size=sgl_dp_size,
         )
         self.sampling_params = {
             "max_new_tokens": sgl_max_new_tokens,
@@ -247,11 +255,14 @@ class LocalModelLLMServing_sglang(LLMServingABC):
             "skip_special_tokens": sgl_skip_special_tokens,
             "spaces_between_special_tokens": sgl_spaces_between_special_tokens,
             "no_stop_trim": sgl_no_stop_trim,
-            "custom_params": sgl_custom_params or {},
-            "stream_interval": sgl_stream_interval or 0.1,  # default to 100ms
-            "logit_bias": sgl_logit_bias or {},
+            "custom_params": sgl_custom_params,
+            "stream_interval": sgl_stream_interval,
+            "logit_bias": sgl_logit_bias,
             **kwargs
         }
+        # remove all keys equal to None
+        self.sampling_params = {k: v for k, v in self.sampling_params.items() if v is not None}
+
         self.tokenizer = AutoTokenizer.from_pretrained(self.real_model_path, cache_dir=hf_cache_dir)
         self.logger.success(f"Model loaded from {self.real_model_path} by SGLang backend")
 

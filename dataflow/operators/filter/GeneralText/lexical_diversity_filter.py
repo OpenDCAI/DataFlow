@@ -24,7 +24,26 @@ class LexicalDiversityFilter(OperatorABC):
     
     @staticmethod
     def get_desc(lang: str = "zh"):
-        return "基于LexicalDiversityScorer打分器的得分对数据进行过滤。使用MTLD和HDD方法计算词汇多样性，高分代表更丰富的词汇使用。" if lang == "zh" else "Filter data using scores from the LexicalDiversityScorer. Measure lexical diversity using MTLD and HDD."
+        if lang == "zh":
+            return (
+                "基于LexicalDiversityScorer打分器的得分对数据进行过滤。使用MTLD（移动平均类型-令牌比）和HDD（超几何分布多样性）两种方法计算词汇多样性，高分代表更丰富的词汇使用。\n"
+                "输入参数：\n"
+                "- min_scores：各指标的最小阈值字典，包含'mtld'和'hdd'\n"
+                "- max_scores：各指标的最大阈值字典，包含'mtld'和'hdd'\n"
+                "输出参数：\n"
+                "- 过滤后的DataFrame，仅保留词汇多样性在指定范围内的文本\n"
+                "- 返回包含各指标标签字段名的列表"
+            )
+        else:
+            return (
+                "Filter data using scores from the LexicalDiversityScorer. Measure lexical diversity using MTLD (Moving-Average Type-Token Ratio) and HDD (Hypergeometric Distribution Diversity) methods; higher scores indicate more diverse vocabulary usage.\n"
+                "Input Parameters:\n"
+                "- min_scores: Dictionary of minimum thresholds for each metric, containing 'mtld' and 'hdd'\n"
+                "- max_scores: Dictionary of maximum thresholds for each metric, containing 'mtld' and 'hdd'\n\n"
+                "Output Parameters:\n"
+                "- Filtered DataFrame containing only texts with lexical diversity within specified range\n"
+                "- List containing label field names for each metric"
+            )
         
     def run(self, storage: DataFlowStorage, input_key: str, output_keys = ['mtld', 'hdd']):
         self.input_key = input_key

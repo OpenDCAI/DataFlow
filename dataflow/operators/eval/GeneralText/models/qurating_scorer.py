@@ -31,7 +31,26 @@ class QuratingScorer(OperatorABC):
 
     @staticmethod
     def get_desc(lang: str = "zh"):
-        return "通过 Qurating 模型从 '写作风格'、'所需专业程度'、'事实与趣闻' 和 '教育价值' 四个维度评估文本质量。" if lang == "zh" else "Evaluate text quality across four dimensions using the Qurating model: 'writing_style', 'required_expertise', 'facts_and_trivia', and 'educational_value'."
+        if lang == "zh":
+            return (
+                "通过Qurating模型(princeton-nlp/QuRater-1.3B)从四个维度评估文本质量：写作风格(writing_style)、所需专业程度(required_expertise)、" 
+                "事实与趣闻(facts_and_trivia)和教育价值(educational_value)。每个维度返回0-1之间的分数，综合评估文本的整体质量。\n" 
+                "输入参数：\n" 
+                "- text: 待评估的文本字符串\n" 
+                "- labels: 评估维度列表，默认为['writing_style', 'required_expertise', 'facts_and_trivia', 'educational_value']\n" 
+                "输出参数：\n" 
+                "- dict: 包含各维度分数的字典，键为维度名称，值为0-1之间的分数"
+            )
+        else:
+            return (
+                "Evaluate text quality across four dimensions using the Qurating model (princeton-nlp/QuRater-1.3B): writing_style, required_expertise, " 
+                "facts_and_trivia, and educational_value. Each dimension returns a score between 0 and 1, providing a comprehensive assessment of overall text quality.\n" 
+                "Input parameters:\n" 
+                "- text: Text string to be evaluated\n" 
+                "- labels: List of evaluation dimensions, default ['writing_style', 'required_expertise', 'facts_and_trivia', 'educational_value']\n" 
+                "Output parameters:\n" 
+                "- dict: Dictionary containing scores for each dimension, with keys as dimension names and values as scores between 0 and 1"
+            )
 
     def _score_func(self, sample):
         """Process a single sample and return the score."""

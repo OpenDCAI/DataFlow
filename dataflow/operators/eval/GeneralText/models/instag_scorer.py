@@ -33,11 +33,26 @@ class InstagScorer(OperatorABC):
     
     @staticmethod
     def get_desc(lang: str = "zh"):
-        return "通过返回标签的数量来评估指令的内容多样性，标签越多表示内容多样性越大。" if lang == "zh" else "Measure instruction content diversity by number of tags."
-
-    @staticmethod
-    def get_desc(lang: str = "zh"):
-        return "使用Instag评分器评估指令意图标签" if lang == "zh" else "Evaluate instruction intention tags using the Instag scorer."
+        if lang == "zh":
+            return (
+                "使用Instag评分器评估指令的内容多样性和意图标签。通过分析指令文本生成相关标签，标签数量越多表示内容多样性越大，" 
+                "同时返回标签的详细解释。基于OFA-Sys/InsTagger模型实现。\n" 
+                "输入参数：\n" 
+                "- query: 待评估的指令文本\n" 
+                "输出参数：\n" 
+                "- int: 标签数量（内容多样性指标）\n" 
+                "- list: 包含标签和解释的字典列表"
+            )
+        else:
+            return (
+                "Evaluate instruction content diversity and intention tags using the Instag scorer. Generate relevant tags by analyzing instruction text, " 
+                "with more tags indicating greater content diversity, while returning detailed explanations of tags. Implemented based on OFA-Sys/InsTagger model.\n" 
+                "Input parameters:\n" 
+                "- query: Instruction text to be evaluated\n" 
+                "Output parameters:\n" 
+                "- int: Number of tags (content diversity indicator)\n" 
+                "- list: List of dictionaries containing tags and explanations"
+            )
 
     def make_prompt(self, query):
         prompt = f"Please identify tags of user intentions in the following user query and provide an explanation for each tag. Please respond in the JSON format {{\"tag\": str, \"explanation\": str}}.\nUser query: {query}"

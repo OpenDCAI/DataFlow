@@ -24,7 +24,24 @@ class FineWebEduScorer(OperatorABC):
     
     @staticmethod
     def get_desc(lang: str = "zh"):
-        return "用于评估文本教育价值的Fineweb-Edu分类器，高分表示文本具有较高的教育价值。" if lang == "zh" else "Fineweb-Edu classifier for educational value; higher scores indicate more educational content."
+        if lang == "zh":
+            return (
+                "基于Fineweb-Edu分类器评估文本的教育价值。该分类器使用预训练的序列分类模型对文本进行评估，返回0-1之间的分数，" 
+                "分数越高表示文本的教育价值越高。适用于筛选具有教育意义的文本内容。\n" 
+                "输入参数：\n" 
+                "- text: 待评估的文本字符串\n" 
+                "输出参数：\n" 
+                "- float: 0-1之间的教育价值分数，越高表示教育价值越大"
+            )
+        else:
+            return (
+                "Evaluate the educational value of text using the Fineweb-Edu classifier. This classifier uses a pre-trained sequence classification model " 
+                "to assess text and returns a score between 0 and 1, where higher scores indicate greater educational value. Suitable for filtering educational content.\n" 
+                "Input parameters:\n" 
+                "- text: Text string to be evaluated\n" 
+                "Output parameters:\n" 
+                "- float: Educational value score between 0 and 1, higher values indicate greater educational value"
+            )
 
     def _score_func(self, sample):
         tokenized_inputs = self.tokenizer(sample, return_tensors="pt", padding="longest", truncation=True).to(self.device)

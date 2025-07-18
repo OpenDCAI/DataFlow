@@ -13,7 +13,7 @@ from dataflow.operators.eval import (
     ExecutionClassifier
 )
 from dataflow.utils.storage import FileStorage
-from dataflow.serving import APILLMServing_request, LocalModelLLMServing_vllm
+from dataflow.serving import LocalModelLLMServing_vllm, LocalModelLLMServing_sglang
 from dataflow.utils.text2sql.database_manager import DatabaseManager
 
 

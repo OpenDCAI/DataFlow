@@ -73,7 +73,40 @@ class SemDeduplicator(OperatorABC):
     
     @staticmethod
     def get_desc(lang: str = "zh"):
-        return "基于BERT语义相似度识别语义重复文本, 做近似去重" if lang == "zh" else "Use BERT embeddings to identify semantically duplicate content. Near deduplication."
+        if lang == "zh":
+            return (
+                "基于BERT语义相似度识别语义重复文本，执行近似去重操作。通过计算文本嵌入向量间的余弦相似度，识别语义相似的文本并保留唯一样本。\n"
+                "支持多字段组合作为去重依据，可有效去除内容相似但表述不同的重复数据，提高数据集多样性。\n"
+                "输入参数：\n"
+                "- eps：相似度阈值，值越小表示允许的相似度越低，默认为0.05（即余弦相似度大于0.95视为重复）\n"
+                "- model_name：预训练模型名称，默认为'sentence-transformers/all-MiniLM-L6-v2'\n"
+                "- model_cache_dir：模型缓存目录，默认为'./dataflow_cache'\n"
+                "- device：模型运行设备，默认为'cuda'\n"
+                "- input_keys：多个输入字段名列表，与input_key二选一\n"
+                "- input_key：单个输入字段名，与input_keys二选一\n"
+                "- output_key：去重结果字段名，默认为'minhash_deduplicated_label'\n"
+                "输出参数：\n"
+                "- 过滤后的DataFrame，仅保留语义不重复的样本（标记为1的样本）\n"
+                "- 返回包含去重结果字段名的列表，用于后续算子引用"
+            )
+        elif lang == "en":
+            return (
+                "Identify semantically duplicate text using BERT embeddings for near deduplication. Calculate cosine similarity between text embedding vectors to detect semantically similar texts and retain unique samples.\n"
+                "Supports multiple field combinations as deduplication criteria, effectively removing duplicate data with similar content but different expressions to improve dataset diversity.\n"
+                "Input Parameters:\n"
+                "- eps: Similarity threshold, smaller values allow lower similarity, default is 0.05 (cosine similarity > 0.95 is considered duplicate)\n"
+                "- model_name: Pretrained model name, default is 'sentence-transformers/all-MiniLM-L6-v2'\n"
+                "- model_cache_dir: Model cache directory, default is './dataflow_cache'\n"
+                "- device: Model running device, default is 'cuda'\n"
+                "- input_keys: List of multiple input field names, alternative to input_key\n"
+                "- input_key: Single input field name, alternative to input_keys\n"
+                "- output_key: Deduplication result field name, default is 'minhash_deduplicated_label'\n"
+                "Output Parameters:\n"
+                "- Filtered DataFrame containing only semantically unique samples (samples marked as 1)\n"
+                "- List containing deduplication result field name for subsequent operator reference"
+            )
+        else:
+            return "Near deduplication by identifying semantically similar content using BERT embeddings."
 
     def _compute_hash(self, text: str) -> str:
         return self.hash_func_dict[self.hash_func](text.encode('utf-8')).hexdigest()

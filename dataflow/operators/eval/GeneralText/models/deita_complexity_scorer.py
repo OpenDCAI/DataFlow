@@ -24,7 +24,34 @@ class DeitaComplexityScorer(OperatorABC):
 
     @staticmethod
     def get_desc(lang: str = "zh"):
-        return "基于 Llama 模型的 Deita 指令复杂性评估器，高分表示指令复杂性较高。" if lang == "zh" else "Measure instruction complexity using Llama-based Deita model."
+        if lang == "zh":
+            return (
+                "基于Llama模型的Deita指令复杂性评估器，通过生成1-6分的复杂性评分评估指令难度。\n"
+                "输入参数：\n"
+                "- device：计算设备，默认为'cuda'\n"
+                "- model_cache_dir：模型缓存目录，默认为'./dataflow_cache'\n"
+                "- max_length：最大序列长度，默认为512\n"
+                "- input_instruction_key：指令文本字段名，默认为'instruction'\n"
+                "- input_output_key：输出文本字段名，默认为'output'\n"
+                "- output_key：输出得分字段名，默认为'DeitaComplexityScore'\n"
+                "输出参数：\n"
+                "- 包含指令复杂性评分的DataFrame（1-6分）"
+            )
+        elif lang == "en":
+            return (
+                "Llama-based Deita instruction complexity evaluator generating 1-6 complexity scores.\n"
+                "Input Parameters:\n"
+                "- device: Computing device, default 'cuda'\n"
+                "- model_cache_dir: Model cache directory, default './dataflow_cache'\n"
+                "- max_length: Maximum sequence length, default 512\n"
+                "- input_instruction_key: Field name for instruction text, default 'instruction'\n"
+                "- input_output_key: Field name for output text, default 'output'\n"
+                "- output_key: Field name for output score, default 'DeitaComplexityScore'\n"
+                "Output Parameters:\n"
+                "- DataFrame containing instruction complexity scores (1-6)"
+            )
+        else:
+            return "Measure instruction complexity using Llama-based Deita model."
 
     def infer_complexity(self, input_text):
         complexity_template = ("You are a helpful assistant. Please identify the complexity score of the following user query. \n##Query: {instruction}\n##Complexity: ")

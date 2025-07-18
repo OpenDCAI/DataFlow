@@ -21,7 +21,7 @@ from dataflow.prompts.reasoning.math import (
 )
 
 from dataflow.utils.storage import FileStorage
-from dataflow.serving import LocalModelLLMServing_vllm
+from dataflow.serving import LocalModelLLMServing_vllm, LocalModelLLMServing_sglang
 
 class ReasoningPipeline():
     def __init__(self):
@@ -32,12 +32,20 @@ class ReasoningPipeline():
             file_name_prefix="dataflow_cache_step",
             cache_type="jsonl",
         )
-
+        # use vllm as LLM serving
         llm_serving = LocalModelLLMServing_vllm(
             hf_model_name_or_path="Qwen/Qwen2.5-7B-Instruct", # set to your own model path
             vllm_tensor_parallel_size=1,
             vllm_max_tokens=8192,
         )
+        # use SGLang as LLM serving
+        # llm_serving = LocalModelLLMServing_sglang(
+        #     hf_model_name_or_path="Qwen/Qwen2.5-7B-Instruct",
+        #     sgl_dp_size=1, # data parallel size
+        #     sgl_tp_size=1, # tensor parallel size
+        #     sgl_max_tokens=1024,
+        #     sgl_tensor_parallel_size=4
+        # )
 
         self.question_filter_step1 = QuestionFilter(
             system_prompt="You are an expert in evaluating mathematical problems. Follow the user's instructions strictly and output your final judgment in the required JSON format.",

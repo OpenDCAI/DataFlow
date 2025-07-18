@@ -9,7 +9,7 @@ from dataflow.operators.filter import (
 )
 
 from dataflow.utils.storage import FileStorage
-from dataflow.serving import LocalModelLLMServing_vllm
+from dataflow.serving import LocalModelLLMServing_vllm, LocalModelLLMServing_sglang
 
 
 class AgenticRAGPipeline():
@@ -22,12 +22,21 @@ class AgenticRAGPipeline():
             cache_type="json",
         )
 
-        # use API server as LLM serving
+        # use vllm as LLM serving
         llm_serving = LocalModelLLMServing_vllm(
             hf_model_name_or_path="Qwen2.5-7B-Instruct", # set to your own model path
             vllm_tensor_parallel_size=4,
             vllm_max_tokens=8192,
         )
+
+        # use SGLang as LLM serving
+        # llm_serving = LocalModelLLMServing_sglang(
+        #     hf_model_name_or_path="Qwen/Qwen2.5-7B-Instruct",
+        #     sgl_dp_size=1, # data parallel size
+        #     sgl_tp_size=1, # tensor parallel size
+        #     sgl_max_tokens=1024,
+        #     sgl_tensor_parallel_size=4
+        # )
 
         embedding_serving = LocalModelLLMServing_vllm(hf_model_name_or_path="Alibaba-NLP/gte-Qwen2-7B-instruct", vllm_max_tokens=8192)
         self.content_chooser_step1 = ContentChooser(embedding_serving=embedding_serving, num_samples=5, method="random")

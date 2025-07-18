@@ -23,7 +23,10 @@ class InstagFilter(OperatorABC):
 
     @staticmethod
     def get_desc(lang: str = "zh"):
-        return "基于InstagScorer打分器的得分对数据进行过滤。通过返回标签的数量来评估指令的内容多样性，标签越多表示内容多样性越大。" if lang == "zh" else "Filter data using scores from the InstagScorer. Measure instruction content diversity by number of tags."
+        if lang == "zh":
+            return "基于InstagScorer打分器的过滤算子。使用预训练的Instag模型对指令进行分析，返回标签的数量来评估指令的内容多样性。参数包括模型缓存目录(model_cache_dir)、计算设备(device)和最大新生成标记数(max_new_tokens)。过滤范围由min_score和max_score参数控制，标签越多表示内容多样性越大。"
+        else:
+            return "Filter operator based on InstagScorer. Uses pre-trained Instag model to analyze instructions, returning the number of tags to evaluate content diversity. Parameters include model cache directory (model_cache_dir), computing device (device), and maximum new tokens (max_new_tokens). Filter range is controlled by min_score and max_score parameters, with more tags indicating greater content diversity."
 
     def run(self, storage: DataFlowStorage, input_instruction_key: str = 'instruction', output_key: str = 'InstagScore'):
         self.input_instruction_key = input_instruction_key

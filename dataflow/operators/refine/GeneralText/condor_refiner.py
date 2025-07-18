@@ -19,7 +19,33 @@ class CondorRefiner(OperatorABC):
     
     @staticmethod
     def get_desc(lang: str = "zh"):
-        return "第一阶段调用API生成对回复的评论，第二阶段利用评论调用API改写回复，提升指令对质量" if lang == "zh" else "The first stage calls the API to generate critique on the reply, and the second stage uses the critique to call the API to refine the reply, improving the quality of QA pairs"
+        if lang == "zh":
+            return (
+                "两阶段优化指令回复质量：第一阶段调用API生成对回复的评论，第二阶段利用评论调用API改写回复，提升指令对质量。通过迭代优化提高问答对的整体质量。"
+                "输入参数：\n"
+                "- llm_serving：LLM服务对象，需实现LLMServingABC接口\n"
+                "- input_instruction_key：输入指令字段名，默认为'instruction'\n"
+                "- input_output_key：输入回复字段名，默认为'output'\n"
+                "输出参数：\n"
+                "- 包含优化后回复的DataFrame\n"
+                "- 返回包含优化后回复字段名的列表，用于后续算子引用"
+            )
+        elif lang == "en":
+            return (
+                "Two-stage optimization of instruction-response quality: First stage calls API to generate critique on responses, \n"
+                "second stage uses critique to call API to refine responses, improving the quality of QA pairs through iterative optimization.\n"
+                "Input Parameters:\n"
+                "- llm_serving: LLM serving object implementing LLMServingABC interface\n"
+                "- input_instruction_key: Field name for input instructions, default is 'instruction'\n"
+                "- input_output_key: Field name for input responses, default is 'output'\n\n"
+                "Output Parameters:\n"
+                "- DataFrame containing refined responses\n"
+                "- List containing refined response field name for subsequent operator reference"
+            )
+        else:
+            return (
+                "CondorRefiner improves QA pair quality through two-stage critique and refinement process."
+            )
 
     def generate_critique(self, question, answer):
         # 批量生成 Critique

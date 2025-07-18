@@ -14,7 +14,32 @@ class TextNormalizationRefiner(OperatorABC):
     
     @staticmethod
     def get_desc(lang: str = "zh"):
-        return "规范化文本中的日期格式、货币格式等" if lang == "zh" else "Normalize date, currency, and other formats in text."
+        if lang == "zh":
+            return (
+                "该算子用于规范化文本中的日期格式和货币格式，统一为标准表示形式。\n"
+                "日期格式统一转换为'YYYY-MM-DD'形式，货币格式转换为'金额 USD'形式，提高数据一致性。\n"
+                "输入参数：\n"
+                "- 无初始化参数\n"
+                "运行参数：\n"
+                "- input_key：输入文本字段名\n"
+                "输出参数：\n"
+                "- 处理后的DataFrame，包含格式规范化的文本\n"
+                "- 返回包含输入字段名的列表，用于后续算子引用"
+            )
+        elif lang == "en":
+            return (
+                "This operator normalizes date formats and currency formats in text to standard representations.\n"
+                "Unifies date formats to 'YYYY-MM-DD' and currency formats to 'amount USD' to improve data consistency.\n"
+                "Input Parameters:\n"
+                "- No initialization parameters\n"
+                "Runtime Parameters:\n"
+                "- input_key: Input text field name\n"
+                "Output Parameters:\n"
+                "- Processed DataFrame containing text with normalized formats\n"
+                "- List containing input field name for subsequent operator reference"
+            )
+        else:
+            return "Normalizes date and currency formats in text to standard representations."
     
     def run(self, storage: DataFlowStorage, input_key: str):
         self.input_key = input_key
