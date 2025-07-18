@@ -22,16 +22,62 @@ class DataFlowStorage(ABC):
     def write(self, data: Any) -> Any:
         pass
 
+class DummyStorage(DataFlowStorage):
+    def __init__(
+        self,
+        cache_path:str=None,
+        file_name_prefix:str=None,  
+        cache_type: Literal["json", "jsonl", "csv", "parquet", "pickle", None] = None
+    ):
+        self._data = None
+        self.cache_path = cache_path
+        self.file_name_prefix = file_name_prefix
+        self.cache_type = cache_type
+        
+    def set_data(self, data: Any):
+        """
+        Set data to be written later.
+        """
+        self._data = data
+        
+    def set_file_name_prefix(self, file_name_prefix: str):
+        """
+        Set the file name prefix for cache files.
+        """
+        self.file_name_prefix = file_name_prefix
+            
+    def read(self, output_type: Literal["dataframe", "dict"] = "dataframe") -> Any:
+        return self._data
+
+    def write(self, data):
+        self._data = data
+        if self.cache_type != None:
+            cache_file_path = os.path.join(self.cache_path, f"{self.file_name_prefix}.{self.cache_type}")
+            os.makedirs(os.path.dirname(cache_file_path), exist_ok=True)
+            if self.cache_type == "json":
+                data.to_json(cache_file_path, orient="records", force_ascii=False, indent=2)
+            elif self.cache_type == "jsonl":
+                data.to_json(cache_file_path, orient="records", lines=True, force_ascii=False)  
+            elif self.cache_type == "csv":
+                data.to_csv(cache_file_path, index=False)
+            elif self.cache_type == "parquet":  
+                data.to_parquet(cache_file_path)
+            elif self.cache_type == "pickle":
+                data.to_pickle(cache_file_path)
+            else:
+                raise ValueError(f"Unsupported file type: {self.cache_type}, output file should end with json, jsonl, csv, parquet, pickle")
+
 class FileStorage(DataFlowStorage):
     """
     Storage for file system.
     """
-    def __init__(self, 
-                 first_entry_file_name: str,
-                 cache_path:str="./cache",
-                 file_name_prefix:str="dataflow_cache_step",
-                 cache_type:Literal["json", "jsonl", "csv", "parquet", "pickle"] = "jsonl"
-                 ):
+    def __init__(
+        self, 
+        first_entry_file_name: str,
+        cache_path:str="./cache",
+        file_name_prefix:str="dataflow_cache_step",
+        cache_type:Literal["json", "jsonl", "csv", "parquet", "pickle"] = "jsonl"
+    ):
         self.first_entry_file_name = first_entry_file_name
         self.cache_path = cache_path
         self.file_name_prefix = file_name_prefix
@@ -47,7 +93,7 @@ class FileStorage(DataFlowStorage):
             # If it's the first step, use the first entry file name
             return os.path.join(self.first_entry_file_name)
         else:
-            return os.path.join(self.cache_path, f"{self.file_name_prefix}_{step}.{self.cache_type}")
+            return os.path.join(self.cache_path, f"{self.file_name_prefix}_step{step}.{self.cache_type}")
 
     def step(self):
         self.operator_step += 1
@@ -87,7 +133,7 @@ class FileStorage(DataFlowStorage):
             return dataframe.to_dict(orient="records")
         raise ValueError(f"Unsupported output type: {output_type}")
 
-    def read(self, output_type: Literal["dataframe", "dict"]) -> Any:
+    def read(self, output_type: Literal["dataframe", "dict"]="dataframe") -> Any:
         """
         Read data from current file managed by storage.
         

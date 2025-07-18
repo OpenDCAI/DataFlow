@@ -122,6 +122,7 @@ class LocalModelLLMServing_sglang(LLMServingABC):
         hf_local_dir: str = None,
         sgl_tp_size: int = 1, # tensor parallel size
         sgl_dp_size: int = 1, # data parallel size
+        sgl_mem_fraction_static: float = 0.9,  # memory fraction for static memory allocation
         sgl_max_new_tokens: int = 2048, # maximum number of new tokens to generate
         sgl_stop: Optional[Union[str, List[str]]] = None,
         sgl_stop_token_ids: Optional[List[int]] = None,
@@ -153,6 +154,7 @@ class LocalModelLLMServing_sglang(LLMServingABC):
             hf_local_dir=hf_local_dir,
             sgl_tp_size=sgl_tp_size,
             sgl_dp_size=sgl_dp_size,
+            sgl_mem_fraction_static=sgl_mem_fraction_static,  # memory fraction for static
             sgl_max_new_tokens=sgl_max_new_tokens,
             sgl_stop=sgl_stop,
             sgl_stop_token_ids=sgl_stop_token_ids,
@@ -185,6 +187,7 @@ class LocalModelLLMServing_sglang(LLMServingABC):
         hf_local_dir,
         sgl_tp_size: int,
         sgl_dp_size: int,
+        sgl_mem_fraction_static: float,  # memory fraction for static memory allocation
         sgl_max_new_tokens: int,
         sgl_stop: Optional[Union[str, List[str]]] = None,
         sgl_stop_token_ids: Optional[List[int]] = None,
@@ -233,6 +236,7 @@ class LocalModelLLMServing_sglang(LLMServingABC):
             model_path=self.real_model_path,
             tp_size=sgl_tp_size,
             dp_size=sgl_dp_size,
+            mem_fraction_static=sgl_mem_fraction_static,  # memory fraction for static memory allocation
         )
         self.sampling_params = {
             "max_new_tokens": sgl_max_new_tokens,
