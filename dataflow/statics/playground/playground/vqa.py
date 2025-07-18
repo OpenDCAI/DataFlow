@@ -4,6 +4,7 @@ from dataflow.utils.storage import FileStorage
 
 class Vqa_generator():
     def __init__(self):
+        self.prompt = "Describe the image in detail."
         self.storage = FileStorage(
             first_entry_file_name="dataflow/example/Vqa/pic_path.json",
             cache_path="./cache",
@@ -15,7 +16,10 @@ class Vqa_generator():
             api_url="https://api.openai.com/v1", # openai api url
             key_name_of_api_key="DF_API_KEY",
         )
-        self.vqa_generate = PromptedVQAGenerator(self.llm_serving)
+        self.vqa_generate = PromptedVQAGenerator(
+            self.llm_serving,
+            self.prompt
+            )
 
     def forward(self):
         self.vqa_generate.run(
