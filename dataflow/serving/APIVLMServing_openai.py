@@ -20,7 +20,7 @@ class APIVLMServing_openai(LLMServingABC):
 
     def __init__(
         self,
-        api_url: str = "http://123.129.219.111:3000/v1",
+        api_url: str = "https://api.openai.com/v1",
         key_name_of_api_key: str = "DF_API_KEY",
         model_name: str = "o4-mini",
         max_workers: int = 10,
@@ -173,7 +173,7 @@ class APIVLMServing_openai(LLMServingABC):
 
         model = model or self.model_name
         prompts = [f"{system_prompt}\n{p}" for p in text_prompts]
-        responses: List[str] = [None] * len(image_paths)
+        responses = [None] * len(image_paths)
 
         with ThreadPoolExecutor(max_workers=self.max_workers) as executor:
             futures = {
@@ -286,7 +286,7 @@ class APIVLMServing_openai(LLMServingABC):
             )
 
         model = model or self.model_name
-        responses: List[str] = [None] * len(list_of_image_paths)
+        responses = [None] * len(list_of_image_paths)
 
         with ThreadPoolExecutor(max_workers=self.max_workers) as executor:
             futures = {

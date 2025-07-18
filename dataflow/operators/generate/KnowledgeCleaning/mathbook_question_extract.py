@@ -12,20 +12,23 @@ from dataflow.prompts.kbcleaning import KnowledgeCleanerPrompt
 import re
 from openai import OpenAI
 import base64
-from typing import List
+from typing import List, Literal
 from concurrent.futures import ThreadPoolExecutor, as_completed
+from dataflow.core import LLMServingABC
+from dataflow.serving.APIVLMServing_openai import APIVLMServing_openai
 
 
 
 @OPERATOR_REGISTRY.register()
 class MathBookQuestionExtract(OperatorABC):
-    def __init__(self):
+    def __init__(self, llm_serving: APIVLMServing_openai):
         self.logger = get_logger()
+        self.llm_serving = llm_serving
     
     def mineru2_runner(self,
                         pdf_file_path:str,
                         output_folder:str,
-                        MinerU_Backend: str = "vlm-sglang-engine"
+                        mineru_backend: Literal["vlm-sglang-engine", "pipeline"] = "vlm-sglang-engine"
                         ):
 
         try:
@@ -50,15 +53,15 @@ Please make sure you have GPU on your machine.
         intermediate_dir = output_folder
         try:
             return_code = os.system(
-                f"mineru -p {raw_file} -o {intermediate_dir} -b {MinerU_Backend} --source local"
+                f"mineru -p {raw_file} -o {intermediate_dir} -b {mineru_backend} --source local"
             )
             if return_code != 0:
                 raise RuntimeError(f"MinerU execution failed with return code: {return_code}")
         except Exception as e:
             raise RuntimeError(f"Failed to process file with MinerU: {str(e)}")
 
-        output_file = os.path.join(intermediate_dir, pdf_name, MinerU_Version[MinerU_Backend], f"{pdf_name}_content_list.json")
-        output_pic_folder = os.path.join(intermediate_dir, pdf_name, MinerU_Version[MinerU_Backend], "images")
+        output_file = os.path.join(intermediate_dir, pdf_name, MinerU_Version[mineru_backend], f"{pdf_name}_content_list.json")
+        output_pic_folder = os.path.join(intermediate_dir, pdf_name, MinerU_Version[mineru_backend], "images")
         self.logger.info(f"MinerU json file has been saved to {output_file}")
         return output_file, output_pic_folder
     
@@ -134,47 +137,6 @@ Please make sure you have GPU on your machine.
     def encode_image_to_base64(self, image_path: str) -> str:
         with open(image_path, "rb") as f:
             return base64.b64encode(f.read()).decode("utf-8")
-
-
-    def analyze_images_with_gpt_with_id(self, 
-                                image_paths: List[str],
-                                image_labels: List[str],
-                                id,
-                                api_key, 
-                                prompt, 
-                                custom_url,
-                                model="o4-mini"):
-        client = OpenAI(
-            api_key=api_key,
-            base_url=custom_url
-        )
-        
-        content = []
-        # 插入总体prompt：
-        content.append({"type": "text", "text": prompt})
-        for idx, img_path in enumerate(image_paths):
-            label = image_labels[idx]
-            b64 = self.encode_image_to_base64(img_path)
-            image_format = img_path.split(".")[-1]
-            if image_format == "jpg":
-                image_format = "jpeg"
-            elif image_format == "png":
-                image_format = "png"
-            else:
-                raise ValueError(f"Unsupported image format: {image_format}")
-            content.append({"type": "text", "text": label + "："})
-            content.append({"type": "image_url", "image_url": {"url": f"data:image/{image_format};base64,{b64}"}})
-        msg = [
-            {"role": "user", "content": content}
-        ]
-        resp = client.chat.completions.create(
-            model=model,
-            messages=msg,
-            timeout=1800
-        )
-        self.logger.info(f"{id} request done")
-        txt = resp.choices[0].message.content
-        return id,txt
 
     def process_input(self,
                     page_folder: str,
@@ -300,22 +262,13 @@ Please make sure you have GPU on your machine.
 
         # 5. init server and generate
         system_prompt = KnowledgeCleanerPrompt().mathbook_question_extract_prompt()
-        futures = []
-        result_text_list = [None] * len(full_input_image_list)
-        with ThreadPoolExecutor(max_workers=max_workers) as executor:
-            for idx,image_list,label_list in zip(range(len(full_input_image_list)),full_input_image_list,full_input_label_list):
-                futures.append(executor.submit(self.analyze_images_with_gpt_with_id,
-                                               image_list,
-                                               label_list,
-                                               idx,
-                                               api_key,
-                                               system_prompt,
-                                               api_url,
-                                               model_name
-                                               ))
-        for future in as_completed(futures):
-            id,txt = future.result()
-            result_text_list[id] = txt
+        result_text_list = self.llm_serving.generate_from_input_multi_images(
+            list_of_image_paths=full_input_image_list,
+            list_of_image_labels=full_input_label_list,
+            system_prompt=system_prompt,
+            model=model_name,
+            timeout=1800
+        )
 
         # 6. save responses
         self.analyze_and_save(result_text_list, output_folder, output_image_folder, output_file_name)

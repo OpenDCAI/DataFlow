@@ -6,7 +6,7 @@ from dataflow.core import OperatorABC
 from dataflow.core import LLMServingABC
 
 @OPERATOR_REGISTRY.register()
-class VqaGenerate(OperatorABC):
+class PromptedVQAGenerator(OperatorABC):
     def __init__(self, llm_serving: LLMServingABC, system_prompt: str = "You are a helpful assistant."):
         self.logger = get_logger()
         self.llm_serving = llm_serving
@@ -14,7 +14,7 @@ class VqaGenerate(OperatorABC):
     
     def run(self, storage: DataFlowStorage, input_key: str = "raw_content", output_key: str = "generated_content"):
         self.input_key, self.output_key = input_key, output_key
-        self.logger.info("Running VqaGenerate...")
+        self.logger.info("Running Prompted VQA Generator...")
 
         dataframe = storage.read('dataframe')
         self.logger.info(f"Loading, number of rows: {len(dataframe)}")
@@ -30,5 +30,5 @@ class VqaGenerate(OperatorABC):
         dataframe[self.output_key] = llm_outputs
         output_file = storage.write(dataframe)
         self.logger.info(f"Saving to {output_file}")
-        self.logger.info("VqaGenerate done")
+        self.logger.info("Prompted VQA Generator done")
         return output_key
