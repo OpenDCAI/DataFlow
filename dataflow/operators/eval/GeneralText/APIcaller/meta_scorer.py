@@ -101,14 +101,38 @@ class MetaScorer(OperatorABC):
                  dimensions: list[dict] = example_dimensions,
                 ):
         
-        """Operator that evaluate the quality of the text based on the given dimensions."""
+        """
+        Operator that evaluate the quality of the text based on the given dimensions.
+        Argument Dimensions should be list of dict, each dict should contain:
+        {
+            "dimension_name": "Dimension Name",
+            "description": "Description of the dimension",
+            "example_list": [ // a list of example text and score
+                {
+                    "text": "example1 text to be evaluated",
+                    "score": "the score of this dimension of the text above"
+                },
+                {
+                    "text": "example2 text to be evaluated",
+                    "score": "the score of this dimension of the text above"
+                }            
+            ]
+        }
+        You can refer to dataflow/operators/eval/GeneralText/APIcaller/meta_scorer.py for an example.
+        """
         self.logger = get_logger()
         self.logger.info(f'Initializing {self.__class__.__name__}...')
         self.llm_serving = llm_serving
         self.score_name = 'MetaScore'
         self.prompt = MetaPrompt(dimensions=dimensions)
         self.logger.info(f'{self.__class__.__name__} initialized.')
-
+        self.dimensions = dimensions
+        for item in dimensions:
+            if 'dimension_name' not in item or 'description' not in item or 'example_list' not in item:
+                raise ValueError('Invalid dimension format. Refer to the docstring for the correct format.')
+            for example in item['example_list']:
+                if 'text' not in example or 'score' not in example:
+                    raise ValueError('Invalid example format. Refer to the docstring for the correct format.')
         self.output_columns = [item['dimension_name'] for item in dimensions]
 
     @staticmethod
@@ -118,7 +142,10 @@ class MetaScorer(OperatorABC):
                 "通过LLM评估文本的多个元属性，包括文本结构、多样性与复杂性、流畅性与可理解性、安全性、教育价值以及内容准确性与有效性。\n"
                 "输入参数：\n"
                 "- llm_serving：LLM服务对象，需实现LLMServingABC接口\n"
-                "- dimensions：评估维度列表，每个维度对应的字典中包含dimension_name，description，和示例字段"
+                "- dimensions：评估维度列表，每个维度对应的字典中包含dimension_name，description，和示例字段：\n"
+                "   * dimension_name：维度名称\n"
+                "   * description：维度的描述\n"
+                "   * example_list：包含示例文本和得分的列表\n"
                 "- input_key：输入文本字段名\n"
                 "输出参数：\n"
                 "- 包含6个评估维度得分的DataFrame，列名为：Text Structure, Diversity & Complexity, Fluency & Understandability, Safety, Educational Value, Content Accuracy & Effectiveness"
@@ -128,7 +155,10 @@ class MetaScorer(OperatorABC):
                 "Evaluate multiple meta attributes of text using LLM, including Text Structure, Diversity & Complexity, Fluency & Understandability, Safety, Educational Value, and Content Accuracy & Effectiveness.\n"
                 "Input Parameters:\n"
                 "- llm_serving: LLM serving object implementing LLMServingABC interface\n"
-                "- dimensions: List of evaluation dimensions, each dimension corresponding to a dictionary containing dimension_name, description, and example field\n"
+                "- dimensions: List of evaluation dimensions, each dimension corresponding to a dictionary containing dimension_name, description, and example field:\n"
+                "   * dimension_name: Name of the dimension\n"
+                "   * description: Description of the dimension\n"
+                "   * example_list: List containing example texts and scores\n"
                 "- input_key: Field name for input text\n"
                 "Output Parameters:\n"
                 "- DataFrame containing scores for 6 evaluation dimensions with columns: Text Structure, Diversity & Complexity, Fluency & Understandability, Safety, Educational Value, Content Accuracy & Effectiveness"
