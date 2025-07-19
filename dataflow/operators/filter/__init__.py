@@ -6,6 +6,7 @@ if TYPE_CHECKING:
     # GeneralText - Primary filters
     from .GeneralText.ngram_filter import NgramFilter
     from .GeneralText.language_filter import LanguageFilter
+    from .GeneralText.llm_language_filter import LLMLanguageFilter
     from .GeneralText.deita_quality_filter import DeitaQualityFilter
     from .GeneralText.deita_complexity_filter import DeitaComplexityFilter
     from .GeneralText.instag_filter import InstagFilter
