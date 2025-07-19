@@ -7,24 +7,107 @@ from dataflow.core import LLMServingABC
 from dataflow.prompts.general_text import MetaPrompt  
 import ast
 
+example_dimensions = [
+    {
+        "dimension_name": "Text Structure",
+        "description": "Evaluate the surface-level quality of the text, including spelling accuracy, grammar, vocabulary richness, and sentence structure.",
+        "example_list": [
+            {
+                "text": "The experimental procedure was meticulously documented, with each variable clearly defined.",
+                "score": "5"
+            },
+            {
+                "text": "teh data was wrong and we dont no why it happen like that",
+                "score": "3"
+            }
+        ]
+    },
+    {
+        "dimension_name": "Diversity and Complexity",
+        "description": "Assess how rich and conceptually varied the content is, and whether it requires expert or deep reasoning to understand.",
+        "example_list": [
+            {
+                "text": "This article compares Bayesian inference and frequentist approaches in statistical modeling, highlighting theoretical and practical trade-offs.",
+                "score": "5"
+            },
+            {
+                "text": "Dogs are pets. They bark. They are friendly.",
+                "score": "3"
+            }
+        ]
+    },
+    {
+        "dimension_name": "Fluency and Understandability",
+        "description": "Evaluate whether the text flows naturally, is easy to follow, and avoids awkward or disjointed phrasing.",
+        "example_list": [
+            {
+                "text": "Despite initial challenges, the team successfully completed the deployment by adhering to a revised strategy.",
+                "score": "5"
+            },
+            {
+                "text": "The problem was and then fixed by something happens deployment successful maybe.",
+                "score": "3"
+            }
+        ]
+    },
+    {
+        "dimension_name": "Safety",
+        "description": "Identify whether the text contains profanities, hate speech, or excessive personally identifiable information (PII).",
+        "example_list": [
+            {
+                "text": "The software collects anonymous usage data to improve performance.",
+                "score": "5"
+            },
+            {
+                "text": "You idiot, your address 123 Main St will be posted online.",
+                "score": "3"
+            }
+        ]
+    },
+    {
+        "dimension_name": "Educational Value",
+        "description": "Determine whether the text provides insight, stimulates thinking, or offers meaningful learning potential.",
+        "example_list": [
+            {
+                "text": "Understanding the principles of thermodynamics allows engineers to design more efficient engines.",
+                "score": "5"
+            },
+            {
+                "text": "The sky is blue. Water is wet. This is how it is.",
+                "score": "3"
+            }
+        ]
+    },
+    {
+        "dimension_name": "Content Accuracy and Effectiveness",
+        "description": "Assess the truthfulness, relevance, and practical usefulness of the content.",
+        "example_list": [
+            {
+                "text": "Newton's second law states that F = ma, which explains the relationship between force, mass, and acceleration.",
+                "score": "5"
+            },
+            {
+                "text": "The Earth is flat and doesn't rotate around the Sun.",
+                "score": "3"
+            }
+        ]
+    }
+]
+
 @OPERATOR_REGISTRY.register()
 class MetaScorer(OperatorABC):
-    def __init__(self, llm_serving: LLMServingABC = None):
+    def __init__(self, 
+                 llm_serving: LLMServingABC = None,
+                 dimensions: list[dict] = example_dimensions,
+                ):
         self.logger = get_logger()
         self.logger.info(f'Initializing {self.__class__.__name__}...')
         self.llm_serving = llm_serving
         self.score_name = 'MetaScore'
-        self.prompt = MetaPrompt()
+        self.prompt = MetaPrompt(dimensions=dimensions)
         self.logger.info(f'{self.__class__.__name__} initialized.')
 
-        self.output_columns = [
-            "Text Structure",
-            "Diversity & Complexity",
-            "Fluency & Understandability",
-            "Safety",
-            "Educational Value",
-            "Content Accuracy & Effectiveness"
-        ]
+        self.output_columns = [item['dimension_name'] for item in dimensions]
 
     @staticmethod
     def get_desc(lang: str = "zh"):
