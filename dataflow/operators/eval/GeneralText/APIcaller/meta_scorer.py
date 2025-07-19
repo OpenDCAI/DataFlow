@@ -100,6 +100,8 @@ class MetaScorer(OperatorABC):
                  llm_serving: LLMServingABC = None,
                  dimensions: list[dict] = example_dimensions,
                 ):
+        
+        """Operator that evaluate the quality of the text based on the given dimensions."""
         self.logger = get_logger()
         self.logger.info(f'Initializing {self.__class__.__name__}...')
         self.llm_serving = llm_serving
@@ -116,6 +118,7 @@ class MetaScorer(OperatorABC):
                 "通过LLM评估文本的多个元属性，包括文本结构、多样性与复杂性、流畅性与可理解性、安全性、教育价值以及内容准确性与有效性。\n"
                 "输入参数：\n"
                 "- llm_serving：LLM服务对象，需实现LLMServingABC接口\n"
+                "- dimensions：评估维度列表，每个维度对应的字典中包含dimension_name，description，和示例字段"
                 "- input_key：输入文本字段名\n"
                 "输出参数：\n"
                 "- 包含6个评估维度得分的DataFrame，列名为：Text Structure, Diversity & Complexity, Fluency & Understandability, Safety, Educational Value, Content Accuracy & Effectiveness"
@@ -125,6 +128,7 @@ class MetaScorer(OperatorABC):
                 "Evaluate multiple meta attributes of text using LLM, including Text Structure, Diversity & Complexity, Fluency & Understandability, Safety, Educational Value, and Content Accuracy & Effectiveness.\n"
                 "Input Parameters:\n"
                 "- llm_serving: LLM serving object implementing LLMServingABC interface\n"
+                "- dimensions: List of evaluation dimensions, each dimension corresponding to a dictionary containing dimension_name, description, and example field\n"
                 "- input_key: Field name for input text\n"
                 "Output Parameters:\n"
                 "- DataFrame containing scores for 6 evaluation dimensions with columns: Text Structure, Diversity & Complexity, Fluency & Understandability, Safety, Educational Value, Content Accuracy & Effectiveness"

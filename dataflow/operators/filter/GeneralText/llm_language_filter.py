@@ -8,6 +8,7 @@ from dataflow.utils.storage import DataFlowStorage
 
 @OPERATOR_REGISTRY.register()
 class LLMLanguageFilter(OperatorABC):
+    """Operator for filtering text based on language using LLM"""
     def __init__(self, llm_serving: LLMServingABC = None, allowed_languages: list[str] = ['en']):
         self.logger = get_logger()
         self.prompt = LanguageFilterPrompt()
