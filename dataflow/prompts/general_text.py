@@ -71,49 +71,12 @@ import textwrap
 import textwrap
 
 class MetaPrompt:
-    def __init__(self):
-        self.dimensions = [
-            """1. Text Structure: Evaluate the surface-level quality of the text, including spelling accuracy, grammar, vocabulary richness, and sentence structure.
-
-Good example: "The experimental procedure was meticulously documented, with each variable clearly defined."
-Bad example: "teh data was wrong and we dont no why it happen like that"
-
-""",
-            """2. Diversity and Complexity: Assess how rich and conceptually varied the content is, and whether it requires expert or deep reasoning to understand.
-
-Good example: "This article compares Bayesian inference and frequentist approaches in statistical modeling, highlighting theoretical and practical trade-offs."
-Bad example: "Dogs are pets. They bark. They are friendly."
-
-""",
-            """3. Fluency and Understandability: Evaluate whether the text flows naturally, is easy to follow, and avoids awkward or disjointed phrasing.
-
-Good example: "Despite initial challenges, the team successfully completed the deployment by adhering to a revised strategy."
-Bad example: "The problem was and then fixed by something happens deployment successful maybe."
-
-""",
-            """4. Safety: Identify whether the text contains profanities, hate speech, or excessive personally identifiable information (PII).
-
-Good example: "The software collects anonymous usage data to improve performance."
-Bad example: "You idiot, your address 123 Main St will be posted online."
-
-""",
-            """5. Educational Value: Determine whether the text provides insight, stimulates thinking, or offers meaningful learning potential.
-
-Good example: "Understanding the principles of thermodynamics allows engineers to design more efficient engines."
-Bad example: "The sky is blue. Water is wet. This is how it is."
-
-""",
-            """6. Content Accuracy and Effectiveness: Assess the truthfulness, relevance, and practical usefulness of the content.
-
-Good example: "Newton's second law states that F = ma, which explains the relationship between force, mass, and acceleration."
-Bad example: "The Earth is flat and doesn’t rotate around the Sun."
-
-"""
-        ]
+    
+    def __init__(self, dimensions):
+        self.dimensions = self.format_dimensions(dimensions=dimensions)
 
         self.system_prompt_template = textwrap.dedent("""\
-            You are an expert evaluator of text content. You will be given a single piece of text and must evaluate it across six specific dimensions listed below. Each dimension includes a description and two concrete examples: one high-quality ("Good example") and one low-quality ("Bad example").
-
+You are an expert evaluator of text content. You will be given a single piece of text and must evaluate it across six specific dimensions listed below. Each dimension includes a description and a list of concrete examples (example_list), each labeled with a quality score. Higher scores indicate better quality. Use these examples to guide your assessment.
 {dimensions_list}
 
 Instructions:
@@ -141,6 +104,22 @@ Your output should include:
 - A final line with your scores in this exact format:
   [score1, score2, score3, score4, score5, score6]
         """)
+        
+    def format_dimensions(self, dimensions):
+        formatted_list = []
+
+        for i, item in enumerate(dimensions, 1):
+            
+            examples_str = "\n".join([
+                f'Example (Score: {ex["score"]}):\n"{ex["text"]}"\n'
+                for ex in item["example_list"]
+            ])
+            block = f"""\"\"\"{i}. {item["dimension_name"]}: {item["description"]}
+
+{examples_str}\"\"\""""
+            formatted_list.append(block)
+        return formatted_list
+
 
     def build_system_prompt(self):
         dimensions_text = "\n".join(self.dimensions)
@@ -1237,6 +1216,58 @@ Now it's your turn, please provide your improved answer as required:
         """
         return base_refine_prompt.format(question=question, answer=answer, critique=critique)
 
+class LanguageFilterPrompt:
+    
+    def __init__(self):
+        pass
+    
+    def language_filter_prompt(self, text):
+        prompt='''You are a language identification expert. Your task is to identify the language of the given text input.
 
+        Follow these rules:You are a language identification expert. Your task is to identify the language of the given text input.
 
-        
+    - Respond with the ISO 639-1 two-letter language code (e.g., "en", "fr", "zh", "ar").
+        - If the text contains multiple languages, identify the dominant one.
+        - If the language is not identifiable, respond with "Unknown".
+        - Do not translate or explain. Output only the language name.
+
+        Here are some examples:
+
+        Example 1:
+        Text: "Hello, how are you?"
+        Language: en
+
+        Example 2:
+        Text: "Je suis très heureux de vous rencontrer."
+        Language: fr
+
+        Example 3:
+        Text: "これは日本語の文です。"
+        Language: ja
+
+        Example 4:
+        Text: "¿Dónde está la estación de tren?"
+        Language: es
+
+        Example 5:
+        Text: "مرحبا، كيف حالك؟"
+        Language: ar
+
+        Example 6:
+        Text: "Guten Morgen! Wie geht's dir?"
+        Language: de
+
+        Example 7:
+        Text: "你好，我是一个程序员。"
+        Language: zh
+
+        Example 8:
+        Text: "Привет, как дела?"
+        Language: ru
+
+        Now, identify the language of the following text:
+
+        Text: "{text}"
+        Language:
+        '''
+        return prompt.format(text=text)
