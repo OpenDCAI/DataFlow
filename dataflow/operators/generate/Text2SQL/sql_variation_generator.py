@@ -5,11 +5,12 @@ import re
 from dataflow.prompts.text2sql import SQLVariationPrompt
 from tqdm import tqdm
 from dataflow.utils.registry import OPERATOR_REGISTRY
+from dataflow.utils.storage import (DataFlowStorage, RESERVED_SYS_FIELD_LIST, RESERVED_USER_FIELD_LIST,
+                                    SYS_FIELD_PREFIX, USER_FIELD_PREFIX)
+from dataflow.utils.text2sql.database_manager import DatabaseManager
 from dataflow import get_logger
 from dataflow.core import OperatorABC
 from dataflow.core import LLMServingABC
-from dataflow.utils.storage import DataFlowStorage
-from dataflow.utils.text2sql.database_manager import DatabaseManager
 
 
 @OPERATOR_REGISTRY.register()
@@ -80,8 +81,9 @@ class SQLVariationGenerator(OperatorABC):
         self.check_column(dataframe)
         original_count = len(dataframe)
         prompts_and_metadata = []
+        original_row_indices = []
         
-        for _, row in tqdm(dataframe.iterrows(), total=len(dataframe), desc="Generating SQL Variations"):
+        for row_idx, row in tqdm(dataframe.iterrows(), total=len(dataframe), desc="Generating SQL Variations"):
             try:
                 table_names, create_statements = self.obtain_db_schema(
                     self.database_manager, row[self.input_db_id_key]
@@ -124,6 +126,7 @@ class SQLVariationGenerator(OperatorABC):
                         prompt, 
                         row[self.input_db_id_key]
                     ))
+                    original_row_indices.append(row_idx)
                     
             except Exception as e:
                 self.logger.error(f"Error processing database {row[self.input_db_id_key]}: {e}")
@@ -133,18 +136,36 @@ class SQLVariationGenerator(OperatorABC):
             try:
                 prompts = [prompt for prompt, db_id in prompts_and_metadata]
                 responses = self.llm_serving.generate_from_input(prompts, system_prompt="")
-                
-                for (prompt, db_id), response in zip(prompts_and_metadata, responses):
+                for i, ((prompt, db_id), response) in enumerate(zip(prompts_and_metadata, responses)):
                     sql = self.parse_response(response)
                     if sql:
+                        # 获取原始行数据
+                        original_row_idx = original_row_indices[i]
+                        original_row = dataframe.iloc[original_row_idx]
+
+                        # 新建全 None 的新行
                         new_row = {col: None for col in dataframe.columns}
+
+                        # 设置 db_id 和 sql
                         new_row[self.input_db_id_key] = db_id
                         new_row[self.input_sql_key] = sql
+
+                        # 处理保留字段
+                        for sys_field in RESERVED_SYS_FIELD_LIST:
+                            sys_col = f"{SYS_FIELD_PREFIX}{sys_field}"
+                            if sys_col in dataframe.columns and sys_col in original_row:
+                                new_row[sys_col] = original_row[sys_col]
+                        for user_field in RESERVED_USER_FIELD_LIST:
+                            user_col = f"{USER_FIELD_PREFIX}{user_field}"
+                            if user_col in dataframe.columns and user_col in original_row:
+                                new_row[user_col] = original_row[user_col]
+
+                        # 将新行添加到dataframe中
                         dataframe = pd.concat([dataframe, pd.DataFrame([new_row])], ignore_index=True)
-                        
+
             except Exception as e:
                 self.logger.error(f"Error generating SQL variations: {e}")
-                
+
         output_file = storage.write(dataframe)
         self.logger.info(f"Generated {len(dataframe)} records (original: {original_count}, variations: {len(dataframe) - original_count})")
         return []

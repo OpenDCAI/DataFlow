@@ -114,7 +114,7 @@ class Text2SQLPipeline():
 
         self.text2sql_question_generator_step3 = QuestionGeneration(
             llm_serving=llm_serving,
-            embedding_api_llm_serving=embedding_serving,
+            embedding_serving=embedding_serving,
             database_manager=database_manager,
             question_candidates_num=5
         )

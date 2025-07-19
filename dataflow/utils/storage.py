@@ -241,6 +241,10 @@ _clickhouse_clients_lock = Lock()
 SYS_FIELD_PREFIX = 'sys:'
 USER_FIELD_PREFIX = 'user:'
 
+# 保留字段列表
+RESERVED_SYS_FIELD_LIST=["raw_data_id"]
+RESERVED_USER_FIELD_LIST=[]
+
 # 获取 ClickHouse Client 实例
 def get_clickhouse_client(db_config):
     key = (

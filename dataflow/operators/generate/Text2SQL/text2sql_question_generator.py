@@ -18,12 +18,12 @@ from dataflow.utils.text2sql.database_manager import DatabaseManager
 class QuestionGeneration(OperatorABC):
     def __init__(self, 
                 llm_serving: LLMServingABC, 
-                embedding_api_llm_serving: LLMServingABC, 
+                embedding_serving: LLMServingABC, 
                 database_manager: DatabaseManager, 
                 question_candidates_num: int = 5):
 
         self.llm_serving = llm_serving
-        self.embedding_api_llm_serving = embedding_api_llm_serving
+        self.embedding_serving = embedding_serving
         self.database_manager = database_manager
         self.prompt = QuestionGenerationPrompt()
         self.logger = get_logger()
@@ -197,7 +197,7 @@ class QuestionGeneration(OperatorABC):
         
         self.logger.info("Generating embeddings for all question candidates...")
         if embedding_texts:
-            embeddings = self.embedding_api_llm_serving.generate_embedding_from_input(embedding_texts)
+            embeddings = self.embedding_serving.generate_embedding_from_input(embedding_texts)
         else:
             embeddings = []
         
