@@ -4,7 +4,8 @@ import pandas as pd
 import json
 from typing import Any, Literal
 import os
-
+import inspect
+from dataflow.core import OperatorABC
 
 class DataFlowStorage(ABC):
     """
@@ -66,7 +67,67 @@ class DummyStorage(DataFlowStorage):
                 data.to_pickle(cache_file_path)
             else:
                 raise ValueError(f"Unsupported file type: {self.cache_type}, output file should end with json, jsonl, csv, parquet, pickle")
+            
+class GraphStorage(DataFlowStorage):
+    """
+    Storage for graph data.
+    """
+    def __init__(self):
+        self.graph_list = []
+        self.data_frame = pd.DataFrame()
+        # insert a key name of 'instruction' to the dataframe
+        self.data_frame['instruction'] = pd.Series(dtype='object')
+        self.data_frame['golden_answer'] = pd.Series(dtype='object')
+        
+    def step(self):
+        return self
+    
+    def read(self, output_type: Literal["dataframe", "dict"] = "dataframe") -> Any:
+        import inspect
+        from pprint import pprint
+        stack = inspect.stack()
 
+        operator_dict = {}
+        for frame_info in stack[1:]:
+            frame = frame_info.frame
+            local_vars = frame.f_locals
+
+            for var in local_vars.values():
+                # 找到最近的 OperatorABC 子类实例
+                if isinstance(var, OperatorABC):
+                    operator_instance = var
+
+                    # 判断是否当前帧在执行这个实例的 run 方法
+                    if frame.f_code.co_name == 'run' and frame.f_locals.get('self') is operator_instance:
+                        # 抽取参数名和传入值
+                        code = frame.f_code
+                        argcount = code.co_argcount + code.co_kwonlyargcount
+                        arg_names = code.co_varnames[:argcount]
+                        arg_values = {name: frame.f_locals.get(name, '<not passed>') for name in arg_names}
+                        arg_values.pop('self', None)  # 移除 'self' 参数
+
+                        operator_dict["name"] = operator_instance.__class__.__name__
+                        operator_dict['operator'] = operator_instance
+                        operator_dict['args'] = arg_values # key-value pairs of arguments, is a dict
+                        
+                        # operator_dict['arg_names'] = arg_names
+                        self.graph_list.append(operator_dict)
+                        pprint(f"Found Operator: {operator_instance.__class__.__name__}")
+                        pprint(f"run() 参数: {arg_names}")
+                        pprint(f"run() 参数值: {arg_values}")
+                        
+                        break  # 只找最近一个
+
+        return self.data_frame
+    def write(self, data: Any) -> Any:
+        # self.graph_data = data
+        return self.data_frame
+
+    def get_graph_list(self):
+        """
+        Get the list of operators in the graph.
+        """
+        return self.graph_list
 class FileStorage(DataFlowStorage):
     """
     Storage for file system.
