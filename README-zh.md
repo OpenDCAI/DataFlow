@@ -146,14 +146,14 @@ You are using the latest version: 1.0.0.
 我们团队已发表以下论文，并作为构成DataFlow系统的核心组件：
 
 | 论文标题 | DataFlow组件 | 会议 | 年份 |
-|---------|-------------|------|------|
+|---------|-------------|:------:|------|
 | [MM-Verify: Enhancing Multimodal Reasoning with Chain-of-Thought Verification](https://arxiv.org/pdf/2502.13383) | 多模态推理验证框架，用于数据处理和评估 | ACL | 2025 |
 | [Efficient Pretraining Data Selection for Language Models via Multi-Actor Collaboration](https://arxiv.org/pdf/2410.08102) | 多智能体协作数据选择机制，增强数据筛选和处理能力 | ACL | 2025 |
 
 **合作机构**: 
 <img src="./static/logo/pku.png" alt="PKU" height="30"/> 
 <img src="./static/logo/hkust.png" alt="HKUST" height="30"/> 
-<img src="./static/logo/CAS.png" alt="CAS" height="30"/> 
+<img src="./static/logo/CAS.png" alt="CAS" height="28"/> 
 <img src="./static/logo/shanghai_ailab.png" alt="Shanghai AI Lab" height="30"/> 
 <img src="./static/logo/baichuan.png" alt="Baichuan" height="30"/> 
 <img src="./static/logo/ant_group.png" alt="Ant Group" height="30"/>
