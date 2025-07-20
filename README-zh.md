@@ -147,8 +147,8 @@ You are using the latest version: 1.0.0.
 
 | 论文标题 | DataFlow组件 | 会议 | 年份 |
 |---------|-------------|------|------|
-| [MM-Verify: Enhancing Multimodal Reasoning with Chain-of-Thought Verification](./static/paper/mm_verify.pdf) | 多模态推理验证框架，用于数据处理和评估 | ACL | 2025 |
-| [Efficient Pretraining Data Selection for Language Models via Multi-Actor Collaboration](./static/paper/multi_actor_data_selection.pdf) | 多智能体协作数据选择机制，增强数据筛选和处理能力 | ACL | 2025 |
+| [MM-Verify: Enhancing Multimodal Reasoning with Chain-of-Thought Verification](https://arxiv.org/pdf/2502.13383) | 多模态推理验证框架，用于数据处理和评估 | ACL | 2025 |
+| [Efficient Pretraining Data Selection for Language Models via Multi-Actor Collaboration](https://arxiv.org/pdf/2410.08102) | 多智能体协作数据选择机制，增强数据筛选和处理能力 | ACL | 2025 |
 
 **合作机构**: 
 <img src="./static/logo/pku.png" alt="PKU" height="30"/> 

@@ -147,13 +147,13 @@ Our team has published the following papers that form core components of the Dat
 
 | Paper Title | DataFlow Component | Venue | Year |
 |-------------|-------------------|-------|------|
-| [MM-Verify: Enhancing Multimodal Reasoning with Chain-of-Thought Verification](./static/paper/mm_verify.pdf) | Multimodal reasoning verification framework for data processing and evaluation | ACL | 2025 |
-| [Efficient Pretraining Data Selection for Language Models via Multi-Actor Collaboration](./static/paper/multi_actor_data_selection.pdf) | Multi-actor collaborative data selection mechanism for enhanced data filtering and processing | ACL | 2025 |
+| [MM-Verify: Enhancing Multimodal Reasoning with Chain-of-Thought Verification](https://arxiv.org/pdf/2502.13383) | Multimodal reasoning verification framework for data processing and evaluation | ACL | 2025 |
+| [Efficient Pretraining Data Selection for Language Models via Multi-Actor Collaboration](https://arxiv.org/pdf/2410.08102) | Multi-actor collaborative data selection mechanism for enhanced data filtering and processing | ACL | 2025 |
 
 **Contributing Institutions**: 
 <img src="./static/logo/pku.png" alt="PKU" height="30"/> 
 <img src="./static/logo/hkust.png" alt="HKUST" height="30"/> 
-<img src="./static/logo/CAS.png" alt="CAS" height="30"/> 
+<img src="./static/logo/CAS.png" alt="CAS" height="28"/> 
 <img src="./static/logo/shanghai_ailab.png" alt="Shanghai AI Lab" height="30"/> 
 <img src="./static/logo/baichuan.png" alt="Baichuan" height="30"/> 
 <img src="./static/logo/ant_group.png" alt="Ant Group" height="30"/>
