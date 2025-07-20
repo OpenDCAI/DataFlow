@@ -153,7 +153,7 @@ You are using the latest version: 1.0.0.
 **合作机构**: 
 <img src="./static/logo/pku.png" alt="PKU" height="30"/> 
 <img src="./static/logo/hkust.png" alt="HKUST" height="30"/> 
-<img src="./static/logo/CAS.png" alt="CAS" height="28"/> 
+<img src="./static/logo/CAS.png" alt="CAS" height="30"/> 
 <img src="./static/logo/shanghai_ailab.png" alt="Shanghai AI Lab" height="30"/> 
 <img src="./static/logo/baichuan.png" alt="Baichuan" height="30"/> 
 <img src="./static/logo/ant_group.png" alt="Ant Group" height="30"/>
