@@ -16,40 +16,33 @@ class GeneralFilter(OperatorABC):
     def get_desc(lang: str = "zh"):
         if lang == "zh":
             return (
-                "该算子支持多种过滤条件，可对DataFrame中的字段进行灵活筛选，包括数值区间、相等比较、集合包含、字符串匹配、缺失值判断等，还支持通过自定义函数实现更复杂的过滤逻辑。\n\n"
-                "初始化参数：\n"
-                "- filter_rules：一个包含多个过滤规则的列表。每条规则需包含以下字段：\n"
-                "  - key：要过滤的字段名（custom操作时可不指定）\n"
-                "  - op：过滤操作符，如'==', '>=', 'in', 'range', 'custom'等\n"
-                "  - value：用于比较的值或范围（如[0.8, 1.0]），custom操作时为一个接受DataFrame并返回布尔Series的函数\n\n"
-                "支持的操作符：\n"
-                "- 比较操作：==, !=, >, >=, <, <=\n"
-                "- 集合操作：in, not in\n"
-                "- 字符串操作：contains, startswith, endswith\n"
-                "- 空值操作：isna, notna\n"
-                "- 范围操作：range（需提供[min, max]列表）\n"
-                "- 自定义操作：custom（需提供自定义过滤函数）\n\n"
-                "过滤逻辑：所有规则之间为AND关系，需同时满足所有规则"
+<<<<<<< HEAD
+                "该算子支持通过多个自定义函数对 DataFrame 进行灵活过滤。\n\n"
+                "每条过滤规则是一个函数（例如 lambda 表达式），接受一个 DataFrame 并返回一个布尔类型的 Series，"
+                "用于指定保留哪些行。\n\n"
+                "输入参数：\n"
+                "- filter_rules：一个函数列表，每个函数形式为 lambda df: ...，"
+                "需返回一个与 df 长度一致的布尔 Series。所有规则之间采用与（AND）关系组合。\n\n"
+                "示例：\n"
+                "  - lambda df: df['score'] > 0.5\n"
+                "  - lambda df: df['label'].isin(['A', 'B'])"
             )
         elif lang == "en":
             return (
-                "This operator applies flexible filtering rules to DataFrame fields, supporting numeric ranges, comparisons, set inclusion, string matching, missing value checks, and custom functions for complex logic.\n\n"
-                "Initialization Parameters:\n"
-                "- filter_rules: A list of filter rules. Each rule must include:\n"
-                "  - key: The field name to filter on (optional for 'custom' op)\n"
-                "  - op: The operator, such as '==', '>=', 'in', 'range', 'custom', etc.\n"
-                "  - value: The comparison value or range (e.g., [0.8, 1.0]). For 'custom' op, a function that takes a DataFrame and returns a boolean Series\n\n"
-                "Supported Operators:\n"
-                "- Comparison: ==, !=, >, >=, <, <=\n"
-                "- Set: in, not in\n"
-                "- String: contains, startswith, endswith\n"
-                "- Null: isna, notna\n"
-                "- Range: range (requires [min, max] list)\n"
-                "- Custom: custom (requires custom filter function)\n\n"
-                "Filter Logic: All rules are in AND relationship, must satisfy all rules simultaneously"
+                "This operator applies custom filtering functions to a DataFrame.\n\n"
+                "Each filter rule is a function (e.g., lambda expression) that takes a DataFrame "
+                "and returns a boolean Series indicating which rows to retain.\n\n"
+                "Input Parameters:\n"
+                "- filter_rules: A list of functions, each in the form of lambda df: ..., "
+                "returning a boolean Series of the same length as the DataFrame. "
+                "All rules are combined using logical AND.\n\n"
+                "Examples:\n"
+                "  - lambda df: df['score'] > 0.5\n"
+                "  - lambda df: df['label'].isin(['A', 'B'])"
             )
         else:
-            return "FlexibleFilter applies advanced filtering rules on DataFrame columns using a variety of operations, including custom functions."
+            return "GeneralFilter filters DataFrame rows using a list of functions returning boolean Series."
+
         
     def _validate_dataframe(self, dataframe: pd.DataFrame):
         required_keys = [self.input_key]
@@ -69,56 +62,19 @@ class GeneralFilter(OperatorABC):
         df = storage.read("dataframe")
         mask = pd.Series(True, index=df.index)
 
-        for rule in self.filter_rules:
-            key = rule.get("key")
-            op = rule.get("op")
-            val = rule.get("value")
-            if op == "custom":
-                if not callable(val):
-                    raise ValueError("For 'custom' op, 'value' must be callable")
-                cond = val(df)
-                if not isinstance(cond, pd.Series) or cond.dtype != bool:
-                    raise ValueError("Custom function must return a boolean pandas Series")
-            else:
-                if key not in df.columns:
-                    raise ValueError(f"Column '{key}' not found in DataFrame.")
-
-                if op == "==":
-                    cond = df[key] == val
-                elif op == "!=":
-                    cond = df[key] != val
-                elif op == ">":
-                    cond = df[key] > val
-                elif op == ">=":
-                    cond = df[key] >= val
-                elif op == "<":
-                    cond = df[key] < val
-                elif op == "<=":
-                    cond = df[key] <= val
-                elif op == "in":
-                    cond = df[key].isin(val)
-                elif op == "not in":
-                    cond = ~df[key].isin(val)
-                elif op == "contains":
-                    cond = df[key].astype(str).str.contains(val)
-                elif op == "startswith":
-                    cond = df[key].astype(str).str.startswith(val)
-                elif op == "endswith":
-                    cond = df[key].astype(str).str.endswith(val)
-                elif op == "isna":
-                    cond = df[key].isna()
-                elif op == "notna":
-                    cond = df[key].notna()
-                elif op == "range":
-                    if not (isinstance(val, (list, tuple)) and len(val) == 2):
-                        raise ValueError(f"Invalid value for 'range': {val}")
-                    cond = (df[key] >= val[0]) & (df[key] <= val[1])
-                else:
-                    raise ValueError(f"Unsupported operator: {op}")
-
+        for rule_fn in self.filter_rules:
+            if not callable(rule_fn):
+                raise ValueError("Each filter rule must be a callable(e.g., lambda df: ...)")
+            cond = rule_fn(df)
+            if not isinstance(cond, pd.Series) or cond.dtype != bool:
+                raise ValueError("Each filter function must return a boolean Series")
             mask &= cond
+            
         filtered_df = df[mask]
         self.logger.info(f"Filtering complete. Remaining rows: {len(filtered_df)}")
         storage.write(filtered_df)
         self.logger.info(f"Filtering completed. Total records passing filter: {len(filtered_df)}.")
         return ""
+
+
+

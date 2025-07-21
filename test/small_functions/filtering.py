@@ -11,23 +11,25 @@ class Dataframe_Filter():
         )
 
         self.dataframe_filter = GeneralFilter([
-                                {"op": "custom", "value": lambda df: (df["score"] > 0.8) & df["comment"].str.contains("excellent", na=False)},
-                                # { "key": "score", "op": "==", "value": 0.9 },
-                                # { "key": "score", "op": "!=", "value": 1.0 },
-                                # { "key": "score", "op": ">", "value": 0.7 },
-                                # { "key": "score", "op": ">=", "value": 0.75 },
-                                # { "key": "score", "op": "<", "value": 1.1 },
-                                # { "key": "score", "op": "<=", "value": 1.0 },
-                                # { "key": "score", "op": "range", "value": [0.8, 1.0] },
+                                lambda df: df["score"] > 0.8,
+                                ### Some lambda examples:
+                                # lambda df: df["score"] == 0.9,
+                                # lambda df: df["score"] != 1.0,
+                                # lambda df: df["score"] > 0.7,
+                                # lambda df: df["score"] >= 0.75,
+                                # lambda df: df["score"] < 1.1,
+                                # lambda df: df["score"] <= 1.0,
+                                # lambda df: (df["score"] >= 0.8) & (df["score"] <= 1.0),
 
-                                # { "key": "status", "op": "in", "value": ["valid", "reviewed"] },
-                                # { "key": "status", "op": "not in", "value": ["pending", "rejected"] },
+                                # lambda df: df["status"].isin(["valid", "reviewed"]),
+                                # lambda df: ~df["status"].isin(["pending", "rejected"]),
+                                # lambda df: df["comment"].str.contains("excellent", na=False),
 
-                                # { "key": "comment", "op": "contains", "value": "excellent" },
-                                # { "key": "comment", "op": "startswith", "value": "Good" },
-                                # { "key": "comment", "op": "endswith", "value": "done" },
-                                # { "key": "remark", "op": "isna"},
-                                # { "key": "remark", "op": "notna"}
+                                # lambda df: df["comment"].str.startswith("Good", na=False),
+                                # lambda df: df["comment"].str.endswith("done", na=False),
+
+                                # lambda df: df["remark"].isna(),
+                                # lambda df: df["remark"].notna(),
                             ])             
 
     def forward(self):
