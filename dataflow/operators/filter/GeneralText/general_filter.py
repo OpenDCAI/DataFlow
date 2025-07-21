@@ -16,7 +16,6 @@ class GeneralFilter(OperatorABC):
     def get_desc(lang: str = "zh"):
         if lang == "zh":
             return (
-<<<<<<< HEAD
                 "该算子支持通过多个自定义函数对 DataFrame 进行灵活过滤。\n\n"
                 "每条过滤规则是一个函数（例如 lambda 表达式），接受一个 DataFrame 并返回一个布尔类型的 Series，"
                 "用于指定保留哪些行。\n\n"
