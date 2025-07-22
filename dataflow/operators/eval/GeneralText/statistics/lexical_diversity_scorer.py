@@ -100,7 +100,28 @@ class LexicalDiversityScorer(OperatorABC):
     
     @staticmethod
     def get_desc(lang: str = "zh"):
-        return "使用MTLD和HDD方法计算词汇多样性，高分代表更丰富的词汇使用。" if lang == "zh" else "Measure lexical diversity using MTLD and HDD."
+        if lang == "zh":
+            return (
+                "使用MTLD（词汇多样性测量）和HDD（移动平均类型-标记比）方法计算文本词汇多样性。\n\n"
+                "功能说明：\n"
+                "- MTLD（词汇多样性测量）：通过计算维持特定TTR阈值所需的单词数量来评估词汇多样性\n"
+                "- HDD（移动平均类型-标记比）：基于样本的词汇丰富度估计\n\n"
+                "输入要求：文本长度需大于50个单词\n\n"
+                "输出参数：\n"
+                "- LexicalDiversityMTLDScore: MTLD多样性得分（值越高表示多样性越好）\n"
+                "- LexicalDiversityHD-DScore: HDD多样性得分（值越高表示多样性越好）"
+            )
+        else:
+            return (
+                "Measures text lexical diversity using MTLD (Measure of Textual Lexical Diversity) and HDD (Hypergeometric Distribution Diversity) methods.\n\n"
+                "Features:\n"
+                "- MTLD: Evaluates lexical diversity by calculating the number of words needed to maintain a specific TTR threshold\n"
+                "- HDD: Estimates vocabulary richness based on sampling\n\n"
+                "Input Requirement: Text length must exceed 50 words\n\n"
+                "Output Parameters:\n"
+                "- LexicalDiversityMTLDScore: MTLD diversity score (higher = more diverse)\n"
+                "- LexicalDiversityHD-DScore: HDD diversity score (higher = more diverse)"
+            )
 
     def _score_func(self, sample):
         text = sample

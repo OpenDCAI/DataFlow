@@ -12,7 +12,7 @@ from dataflow.utils.storage import FileStorage
 from dataflow.serving import APILLMServing_request
 from dataflow.serving import LocalModelLLMServing_vllm
 
-class AgenticRAGPipeline():
+class AgenticRAG_APIPipeline():
     def __init__(self):
 
         self.storage = FileStorage(
@@ -23,7 +23,7 @@ class AgenticRAGPipeline():
         )
 
         # use API server as LLM serving
-        llm_serving = APILLMServing_request(
+        self.llm_serving = APILLMServing_request(
                 api_url="https://api.openai.com/v1/chat/completions",
                 model_name="gpt-4o",
                 max_workers=1
@@ -37,11 +37,11 @@ class AgenticRAGPipeline():
 
         self.content_chooser_step1 = ContentChooser(embedding_serving=embedding_serving, num_samples=5, method="random")
 
-        self.prompt_generator_step2 = AutoPromptGenerator(llm_serving)
+        self.prompt_generator_step2 = AutoPromptGenerator(self.llm_serving)
 
-        self.qa_generator_step3 = QAGenerator(llm_serving)
+        self.qa_generator_step3 = QAGenerator(self.llm_serving)
 
-        self.qa_scorer_step4 = QAScorer(llm_serving)
+        self.qa_scorer_step4 = QAScorer(self.llm_serving)
         
     def forward(self):
 
@@ -75,5 +75,5 @@ class AgenticRAGPipeline():
         )
         
 if __name__ == "__main__":
-    model = AgenticRAGPipeline()
+    model = AgenticRAG_APIPipeline()
     model.forward()

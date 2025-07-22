@@ -13,7 +13,28 @@ class HtmlUrlRemoverRefiner(OperatorABC):
     
     @staticmethod
     def get_desc(lang: str = "zh"):
-        return "去除文本中的URL和HTML标签" if lang == "zh" else "Remove URLs and HTML tags from the text."
+        if lang == "zh":
+            return (
+                "去除文本中的URL链接和HTML标签，净化文本内容。使用正则表达式匹配并移除各种形式的URL和HTML标签。"
+                "输入参数：\n"
+                "- input_key：输入文本字段名\n"
+                "输出参数：\n"
+                "- 包含净化后文本的DataFrame\n"
+                "- 返回输入字段名，用于后续算子引用"
+            )
+        elif lang == "en":
+            return (
+                "Remove URL links and HTML tags from text to clean content. Uses regular expressions to match and remove various forms of URLs and HTML tags.\n"
+                "Input Parameters:\n"
+                "- input_key: Field name for input text\n\n"
+                "Output Parameters:\n"
+                "- DataFrame containing cleaned text\n"
+                "- Returns input field name for subsequent operator reference"
+            )
+        else:
+            return (
+                "HtmlUrlRemoverRefiner cleans text by removing URLs and HTML tags."
+            )
 
     def run(self, storage: DataFlowStorage, input_key: str):
         self.input_key = input_key

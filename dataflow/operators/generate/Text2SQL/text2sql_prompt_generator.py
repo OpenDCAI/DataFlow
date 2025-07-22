@@ -53,7 +53,7 @@ class PromptGenerator(OperatorABC):
     def get_desc(lang):
         if lang == "zh":
             return (
-                "该算子从数据库提取Schema信息并生成Text2SQL的prompt。\n\n"
+                "从数据库提取Schema信息，结合自然语言问题生成提示词。其中提示词模版支持自定义。\n\n"
                 "输入参数：\n"
                 "- input_question_key: 问题列名\n"
                 "- input_db_id_key: 数据库ID列名\n"
@@ -63,7 +63,7 @@ class PromptGenerator(OperatorABC):
             )
         elif lang == "en":
             return (
-                "This operator extracts schema information from databases and generates Text2SQL prompts.\n\n"
+                "This operator generates prompts for Text2SQL tasks by extracting schema information from databases and combining it with natural language questions. The prompt template can be customized.\n\n"
                 "Input parameters:\n"
                 "- input_question_key: The name of the question column\n"
                 "- input_db_id_key: The name of the database ID column\n"
@@ -72,7 +72,7 @@ class PromptGenerator(OperatorABC):
                 "- output_prompt_key: The generated prompt"
             )
         else:
-            return "Database schema extractor and prompt generator for Text2SQL tasks."
+            return "Prompt generator for Text2SQL tasks."
 
     def get_schema_for_db(self, db_id: str) -> Dict:
         return self.database_manager.get_database_schema(db_id)

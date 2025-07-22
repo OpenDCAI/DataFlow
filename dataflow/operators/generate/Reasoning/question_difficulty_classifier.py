@@ -1,4 +1,4 @@
-from dataflow.prompts.reasoning import QuestionDifficultyPrompt
+from dataflow.prompts.reasoning.math import MathQuestionDifficultyPrompt
 import pandas as pd
 import re
 from dataflow.utils.registry import OPERATOR_REGISTRY
@@ -15,7 +15,7 @@ class QuestionDifficultyClassifier(OperatorABC):
         Initialize the QuestionCategoryClassifier with the provided configuration.
         """
         self.logger = get_logger()
-        self.prompts = QuestionDifficultyPrompt()
+        self.prompts = MathQuestionDifficultyPrompt()
         self.llm_serving = llm_serving
 
     
@@ -64,7 +64,7 @@ class QuestionDifficultyClassifier(OperatorABC):
         formatted_prompts = []
         for i, text in enumerate(dataframe[input_key]):
             if text is not None:
-                used_prompt = self.prompts.question_synthesis_prompt(text)
+                used_prompt = self.prompts.build_prompt(text)
             else:
                 used_prompt = None
             formatted_prompts.append(used_prompt.strip())

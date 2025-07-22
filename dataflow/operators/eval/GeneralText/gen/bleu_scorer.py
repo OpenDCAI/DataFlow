@@ -19,6 +19,37 @@ class BleuScorer(OperatorABC):
         self.special_reflen = special_reflen  # Special reference length if specified
         self.logger.info(f'{self.__class__.__name__} initialized.')
     
+    @staticmethod
+    def get_desc(lang: str = "zh"):
+        if lang == "zh":
+            return (
+                "计算BLEU分数评估生成文本与参考文本的n-gram重叠度，支持1-4元语法分析。\n"
+                "输入参数：\n"
+                "- n：最大n-gram长度，默认为4\n"
+                "- eff：参考长度计算方式，可选'shortest'/'average'/'longest'，默认为'average'\n"
+                "- special_reflen：特殊参考长度，默认为None\n"
+                "- input_key：生成文本字段名\n"
+                "- reference_key：参考文本字段名\n"
+                "- output_key：输出得分字段名，默认为'BleuScore'\n"
+                "输出参数：\n"
+                "- 包含BLEU得分的DataFrame"
+            )
+        elif lang == "en":
+            return (
+                "Evaluate n-gram overlap between generated and reference text using BLEU score (1-4 grams supported).\n"
+                "Input Parameters:\n"
+                "- n: Maximum n-gram length, default 4\n"
+                "- eff: Reference length calculation method, 'shortest'/'average'/'longest', default 'average'\n"
+                "- special_reflen: Special reference length, default None\n"
+                "- input_key: Field name for generated text\n"
+                "- reference_key: Field name for reference text\n"
+                "- output_key: Field name for output score, default 'BleuScore'\n"
+                "Output Parameters:\n"
+                "- DataFrame containing BLEU scores"
+            )
+        else:
+            return "Evaluate text similarity using BLEU score."
+    
     def _score_func(self, eval_text, ref_text):
         bleu_scorer = Bleu(
             test=eval_text,

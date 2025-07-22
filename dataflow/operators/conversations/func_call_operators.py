@@ -16,7 +16,34 @@ class ScenarioExtractor(OperatorABC):
         self.prompt = FuncCallPrompt()
         self.llm_serving = llm_serving
         self.logger.info(f"Initializing {self.__class__.__name__}...")
-
+    
+    @staticmethod
+    def get_desc(lang: str = "zh"):
+        if lang == "zh":
+            return (
+                "从对话内容中提取场景信息，使用LLM服务分析对话并生成场景描述。\n"
+                "输入参数：\n"
+                "- llm_serving：LLM服务对象，需实现LLMServingABC接口\n"
+                "- input_chat_key：对话内容字段名\n"
+                "- output_key：输出场景字段名，默认'scenario'\n"
+                "输出参数：\n"
+                "- 包含提取场景信息的DataFrame\n"
+                "- 包含输出字段名的列表"
+            )
+        elif lang == "en":
+            return (
+                "Extract scenario information from conversation content using LLM service to analyze dialogues and generate scenario descriptions.\n"
+                "Input Parameters:\n"
+                "- llm_serving: LLM serving object implementing LLMServingABC interface\n"
+                "- input_chat_key: Field name for conversation content\n"
+                "- output_key: Field name for output scenario, default 'scenario'\n"
+                "Output Parameters:\n"
+                "- DataFrame containing extracted scenario information\n"
+                "- List containing output field name"
+            )
+        else:
+            return "Extract scenario information from conversation content using LLM service."
+    
     def _reformat_prompt(self, dataframe: pd.DataFrame):
         formatted_prompts = [self.prompt.extract_scenario_prompt(conversation=item) for item in tqdm(dataframe[self.input_chat_key], desc=f"Reformatting prompts...")]
 
@@ -43,6 +70,33 @@ class ScenarioExpander(OperatorABC):
         self.llm_serving = llm_serving
         self.logger.info(f"Initializing {self.__class__.__name__}...")
 
+    @staticmethod  
+    def get_desc(lang: str = "zh"):
+        if lang == "zh":
+            return (
+                "基于原始场景生成新的替代场景，使用LLM服务重写或改写原有场景内容。\n"
+                "输入参数：\n"
+                "- llm_serving：LLM服务对象，需实现LLMServingABC接口\n"
+                "- input_scenario_key：原始场景字段名\n"
+                "- output_key：生成的新场景字段名，默认'modified_scenario'\n"
+                "输出参数：\n"
+                "- 包含生成新场景的DataFrame\n"
+                "- 包含输出字段名的列表"
+            )
+        elif lang == "en":
+            return (
+                "Generate new or alternative scenarios based on the original scenario using LLM service. The original content is rewritten or reimagined to create a different version.\n"
+                "Input Parameters:\n"
+                "- llm_serving: LLM serving object implementing LLMServingABC interface\n"
+                "- input_scenario_key: Field name for the original scenario\n"
+                "- output_key: Field name for the new scenario, default 'modified_scenario'\n"
+                "Output Parameters:\n"
+                "- DataFrame containing newly generated scenarios\n"
+                "- List containing output field name"
+            )
+        else:
+            return "Generate new scenarios using LLM service based on original inputs."
+
     def _reformat_prompt(self, dataframe: pd.DataFrame):
         formatted_prompts = [self.prompt.expand_scenario_prompt(scenario=item) for item in tqdm(dataframe[self.input_scenario_key], desc=f"Reformatting prompts...")]
         return formatted_prompts
@@ -67,6 +121,33 @@ class AtomTaskGenerator(OperatorABC):
         self.llm_serving = llm_serving
         self.logger.info(f"Initializing {self.__class__.__name__}...")
 
+    @staticmethod  
+    def get_desc(lang: str = "zh"):
+        if lang == "zh":
+            return (
+                "根据输入的场景信息，使用LLM服务生成对应的原子任务。\n"
+                "输入参数：\n"
+                "- llm_serving：LLM服务对象，需实现LLMServingABC接口\n"
+                "- input_scenario_key：场景字段名\n"
+                "- output_key：原子任务的输出字段名，默认'atom_task'\n"
+                "输出参数：\n"
+                "- 包含原子任务的DataFrame\n"
+                "- 包含输出字段名的列表"
+            )
+        elif lang == "en":
+            return (
+                "Generate atomic task based on the input scenario using an LLM service.\n"
+                "Input Parameters:\n"
+                "- llm_serving: LLM serving object implementing LLMServingABC interface\n"
+                "- input_scenario_key: Field name for the scenario\n"
+                "- output_key: Field name for the atomic task output, default 'atom_task'\n"
+                "Output Parameters:\n"
+                "- DataFrame containing the atomic tasks\n"
+                "- List containing output field name"
+            )
+        else:
+            return "Generate atomic tasks from scenario using LLM service."
+        
     def _reformat_prompt(self, dataframe: pd.DataFrame):
         formatted_prompts = [self.prompt.atomic_task_generate_prompt(scenario=item) for item in tqdm(dataframe[self.input_scenario_key], desc=f"Reformatting prompts...")]
         return formatted_prompts
@@ -94,6 +175,35 @@ class SequentialTaskGenerator(OperatorABC):
     def _reformat_prompt(self, dataframe: pd.DataFrame):
         formatted_prompts = [self.prompt.sequential_task_generate_prompt(task=item) for item in tqdm(dataframe[self.input_task_key], desc=f"Reformatting prompts...")]
         return formatted_prompts
+
+    @staticmethod  
+    def get_desc(lang: str = "zh"):
+        if lang == "zh":
+            return (
+                "根据输入的原子任务，使用LLM服务生成该任务的后继任务和两者的组合任务。\n"
+                "输入参数：\n"
+                "- llm_serving：LLM服务对象，需实现LLMServingABC接口\n"
+                "- input_task_key：原子任务字段名\n"
+                "- output_subsequent_task_key：后继任务输出字段名，默认'subsequent_task'\n"
+                "- output_composition_task_key：组合任务输出字段名，默认'composition_task'\n"
+                "输出参数：\n"
+                "- 包含后继任务和组合任务的DataFrame\n"
+                "- 输出字段名的列表（后继任务字段和组合任务字段）"
+            )
+        elif lang == "en":
+            return (
+                "Generate the subsequent task and a composition task based on the input atomic task using an LLM service.\n"
+                "Input Parameters:\n"
+                "- llm_serving: LLM serving object implementing LLMServingABC interface\n"
+                "- input_task_key: Field name for the atomic task\n"
+                "- output_subsequent_task_key: Field name for the subsequent task output, default 'subsequent_task'\n"
+                "- output_composition_task_key: Field name for the composition task output, default 'composition_task'\n"
+                "Output Parameters:\n"
+                "- DataFrame containing both subsequent and composition tasks\n"
+                "- List containing the names of the output fields"
+            )
+        else:
+            return "Generate subsequent and composition tasks from atomic task using LLM service."
 
     def run(self, storage: DataFlowStorage, input_task_key: str, output_subsequent_task_key: str = "subsequent_task", output_composition_task_key: str = "composition_task"):
         self.input_task_key = input_task_key
@@ -132,6 +242,38 @@ class ParaSeqTaskGenerator(OperatorABC):
         self.prompt = FuncCallPrompt()
         self.llm_serving = llm_serving
         self.logger.info(f"Initializing {self.__class__.__name__}...")
+
+    @staticmethod  
+    def get_desc(lang: str = "zh"):
+        if lang == "zh":
+            return (
+                "基于原子任务，使用LLM服务生成三个任务类型：并行任务、后继任务以及这三者的组合任务。\n"
+                "输入参数：\n"
+                "- llm_serving：LLM服务对象，需实现LLMServingABC接口\n"
+                "- input_task_key：原子任务字段名\n"
+                "- output_parallel_task_key：并行任务输出字段名，默认'parallel_task'\n"
+                "- output_subsequent_task_key：后继任务输出字段名，默认'subsequent_task'\n"
+                "- output_composition_task_key：组合任务输出字段名，默认'composition_task'\n"
+                "输出参数：\n"
+                "- 包含并行任务、后继任务与组合任务的DataFrame\n"
+                "- 输出字段名列表（并行任务、后继任务、组合任务）"
+            )
+        elif lang == "en":
+            return (
+                "Based on a given atomic task, this operator uses an LLM service to generate three task types: "
+                "a parallel task, a subsequent task, and a composition task combining them.\n"
+                "Input Parameters:\n"
+                "- llm_serving: LLM serving object implementing LLMServingABC interface\n"
+                "- input_task_key: Field name for the atomic task\n"
+                "- output_parallel_task_key: Field name for the parallel task, default 'parallel_task'\n"
+                "- output_subsequent_task_key: Field name for the subsequent task, default 'subsequent_task'\n"
+                "- output_composition_task_key: Field name for the composition task, default 'composition_task'\n"
+                "Output Parameters:\n"
+                "- DataFrame containing parallel, subsequent, and composition tasks\n"
+                "- List containing the output field names"
+            )
+        else:
+            return "Generate parallel, subsequent, and composition tasks based on an atomic task using LLM service."
 
     def _reformat_prompt(self, dataframe: pd.DataFrame):
         formatted_prompts = [self.prompt.parallel_then_sequential_task_generate_prompt(task=item) for item in tqdm(dataframe[self.input_task_key], desc=f"Reformatting prompts...")]
@@ -181,6 +323,36 @@ class CompositionTaskFilter(OperatorABC):
         self.llm_serving = llm_serving
         self.logger.info(f"Initializing {self.__class__.__name__}...")
 
+    @staticmethod  
+    def get_desc(lang: str = "zh"):
+        if lang == "zh":
+            return (
+                "根据组合任务及其子任务，使用LLM服务判断组合任务是否具备可行性与完备性，从而进行可运行任务的筛选。\n"
+                "输入参数：\n"
+                "- llm_serving：LLM服务对象，需实现LLMServingABC接口\n"
+                "- input_composition_task_key：组合任务字段名\n"
+                "- input_sub_tasks_keys：子任务字段名列表（如原子任务、并行任务、后继任务等）\n"
+                "- output_key：可运行标签的输出字段名，默认'runable_label'\n"
+                "输出参数：\n"
+                "- 仅包含可运行组合任务的数据DataFrame\n"
+                "- 包含输出字段名的列表（可运行标签字段）"
+            )
+        elif lang == "en":
+            return (
+                "Evaluate the feasibility and completeness of a composition task based on its sub-tasks using an LLM service, and filter out unexecutable tasks.\n"
+                "Input Parameters:\n"
+                "- llm_serving: LLM serving object implementing LLMServingABC interface\n"
+                "- input_composition_task_key: Field name for the composition task\n"
+                "- input_sub_tasks_keys: List of field names for sub-tasks (e.g., atomic, parallel, subsequent tasks)\n"
+                "- output_key: Field name for the executability label, default 'runable_label'\n"
+                "Output Parameters:\n"
+                "- DataFrame containing only executable composition tasks\n"
+                "- List containing the output field name (executability label)"
+            )
+        else:
+            return "Filter composition tasks for feasibility and completeness using LLM service."
+
+
     def _reformat_prompt(self, dataframe: pd.DataFrame):
         formatted_prompts = []
         for task, sub_tasks in tqdm(zip(dataframe[self.input_composition_task_key], dataframe[self.input_sub_tasks_keys].to_dict(orient='records')), desc="Reformatting prompts..."):
@@ -219,6 +391,35 @@ class FunctionGenerator(OperatorABC):
         self.llm_serving = llm_serving
         self.logger.info(f"Initializing {self.__class__.__name__}...")
 
+    @staticmethod  
+    def get_desc(lang: str = "zh"):
+        if lang == "zh":
+            return (
+                "基于组合任务及其相关子任务，使用LLM服务生成对应的函数列表。"
+                "输入参数：\n"
+                "- llm_serving：LLM服务对象，需实现LLMServingABC接口\n"
+                "- input_composition_task_key：组合任务字段名\n"
+                "- input_sub_tasks_keys：子任务字段名列表（如原子任务、并行任务、后继任务等）\n"
+                "- output_key：函数列表输出字段名，默认'functions'\n"
+                "输出参数：\n"
+                "- 包含函数定义或函数列表的DataFrame\n"
+                "- 输出字段名的列表（函数列表字段）"
+            )
+        elif lang == "en":
+            return (
+                "Generate a list of functions based on a composition task and its associated sub-tasks using an LLM service. "
+                "Input Parameters:\n"
+                "- llm_serving: LLM serving object implementing LLMServingABC interface\n"
+                "- input_composition_task_key: Field name for the composition task\n"
+                "- input_sub_tasks_keys: List of field names for sub-tasks (e.g., atomic, parallel, subsequent tasks)\n"
+                "- output_key: Field name for the generated functions, default 'functions'\n"
+                "Output Parameters:\n"
+                "- DataFrame containing the generated functions or function list\n"
+                "- List containing the output field name"
+            )
+        else:
+            return "Generate functions from composition and sub-tasks using LLM service."
+        
     def _reformat_prompt(self, dataframe: pd.DataFrame):
         formatted_prompts = []
         for task, sub_tasks in tqdm(zip(dataframe[self.input_composition_task_key], dataframe[self.input_sub_tasks_keys].to_dict(orient='records')), desc="Reformatting prompts..."):
@@ -232,9 +433,9 @@ class FunctionGenerator(OperatorABC):
         self.output_key = output_key
         dataframe = storage.read("dataframe")
         llm_inputs = self._reformat_prompt(dataframe)
-        self.logger.info(f"One of formatted prompts: {llm_inputs[0]}")
+        # self.logger.info(f"One of formatted prompts: {llm_inputs[0]}")
         llm_outputs = self.llm_serving.generate_from_input(llm_inputs)
-        self.logger.info(f"One of LLM outputs: {llm_outputs[0]}")
+        # self.logger.info(f"One of LLM outputs: {llm_outputs[0]}")
         dataframe[self.output_key] = llm_outputs
         storage.write(dataframe)
         output_file = storage.write(dataframe)
@@ -242,11 +443,44 @@ class FunctionGenerator(OperatorABC):
         return [self.output_key]
     
 @OPERATOR_REGISTRY.register()
-class MultiTurnDialogueGenerator(OperatorABC):
+class MultiTurnConversationGenerator(OperatorABC):
     def __init__(self, llm_serving: LLMServingABC):
         self.llm_serving = llm_serving
         self.prompt = FuncCallPrompt()
         self.logger = get_logger()
+        
+    @staticmethod
+    def get_desc(lang: str = "zh"):
+        if lang == "zh":
+            return (
+                "根据组合任务及其子任务函数，使用LLM服务模拟多轮对话过程，"
+                "由User、Assistant和Tool三个Agent协同生成完整的对话数据。\n"
+                "输入参数：\n"
+                "- llm_serving：LLM服务对象，需实现LLMServingABC接口\n"
+                "- input_task_key：任务字段名（组合任务）\n"
+                "- input_sub_tasks_keys：子任务字段名列表\n"
+                "- input_functions_key：子任务函数字段名\n"
+                "- output_conversations_key：输出对话字段名，默认'conversations'\n"
+                "输出参数：\n"
+                "- 包含已完成的多轮对话记录的DataFrame\n"
+                "- 输出字段名（对话字段名）"
+            )
+        elif lang == "en":
+            return (
+                "Simulate multi-turn conversations based on composition tasks and their sub-task functions using an LLM service.\n"
+                "The process involves three agents: User, Assistant, and Tool, interacting to complete the conversation.\n"
+                "Input Parameters:\n"
+                "- llm_serving: LLM serving object implementing LLMServingABC interface\n"
+                "- input_task_key: Field name for the main task (composition task)\n"
+                "- input_sub_tasks_keys: List of field names for sub-tasks\n"
+                "- input_functions_key: Field name containing sub-task functions\n"
+                "- output_conversations_key: Field name for storing the generated conversations, default 'conversations'\n"
+                "Output Parameters:\n"
+                "- DataFrame containing multi-turn conversations with completed sessions\n"
+                "- Output field name for the conversation content"
+            )
+        else:
+            return "Generate multi-turn dialogues from composition tasks and functions using user, assistant, and tool agents."
         
     def _reformat_user_agent_prompt(self, dataframe: pd.DataFrame):
         user_agent_prompts = []
@@ -300,7 +534,7 @@ class MultiTurnDialogueGenerator(OperatorABC):
                 if isinstance(text, str):
                     final_match = re.search(final_answer_pattern, text, re.DOTALL)
                 else:
-                    print("Warning: 'text' is not a string:", text)
+                    self.logger.warning("Warning: 'text' is not a string:", text)
                     final_match = None
                     valid_label[idx] = 1
                     continue

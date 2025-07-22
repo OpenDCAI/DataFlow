@@ -1,0 +1,32 @@
+[
+  {
+    "score": 0.9,
+    "status": "valid",
+    "comment": "Good and excellent effort done",
+    "remark": null
+  },
+  {
+    "score": 1.0,
+    "status": "pending",
+    "comment": "Needs review",
+    "remark": "note"
+  },
+  {
+    "score": 0.75,
+    "status": "reviewed",
+    "comment": "excellent review completed",
+    "remark": "confirmed"
+  },
+  {
+    "score": 1.1,
+    "status": "rejected",
+    "comment": "all done",
+    "remark": null
+  },
+  {
+    "score": 0.7,
+    "status": "unknown",
+    "comment": null,
+    "remark": "okay"
+  }
+]

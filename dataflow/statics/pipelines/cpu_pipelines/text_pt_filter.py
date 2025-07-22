@@ -29,7 +29,7 @@ from dataflow.operators.refine import (
 
 from dataflow.utils.storage import FileStorage
 
-class PTTextPipeline():
+class PTTextFilter_CPUPipeline():
     def __init__(self):
         self.storage = FileStorage(
             first_entry_file_name="../example_data/GeneralTextPipeline/pt_input.jsonl",
@@ -161,5 +161,5 @@ class PTTextPipeline():
         )
 if __name__ == "__main__":
     # This is the entry point for the pipeline
-    model = PTTextPipeline()
+    model = PTTextFilter_CPUPipeline()
     model.forward()

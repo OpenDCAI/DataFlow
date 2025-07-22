@@ -22,7 +22,31 @@ class CondorGenerator(OperatorABC):
     
     @staticmethod
     def get_desc(lang: str = "zh"):
-        return "根据预置知识树标签，两阶段从0合成SFT格式数据（合成数量大于5000时建议增加标签数量）" if lang == "zh" else "Two-stage generation of SFT-style data from scratch based on predefined knowledge tree tags (for over 5000 samples, consider increasing the number of tags)."
+        if lang == "zh":
+            return (
+                "基于预置知识树标签，两阶段从0合成SFT格式数据（合成数量大于5000时建议增加标签数量）。第一阶段生成不同难度级别的问题，第二阶段为每个问题生成对应的答案。"
+                "输入参数：\n"
+                "- llm_serving：LLM服务对象，需实现LLMServingABC接口\n"
+                "- num_samples：生成样本总数，建议小于5000，默认值为15\n"
+                "输出参数：\n"
+                "- 包含'difficulty'、'instruction'和'output'字段的DataFrame\n"
+                "- 返回生成的DataFrame用于后续处理"
+            )
+        elif lang == "en":
+            return (
+                "Two-stage generation of SFT-style data from scratch based on predefined knowledge tree tags (for over 5000 samples, consider increasing the number of tags). \n"
+                "First stage generates questions of varying difficulty levels, second stage generates answers for each question.\n"
+                "Input Parameters:\n"
+                "- llm_serving: LLM serving object implementing LLMServingABC interface\n"
+                "- num_samples: Total number of samples to generate, recommended to be less than 5000, default is 15\n\n"
+                "Output Parameters:\n"
+                "- DataFrame containing 'difficulty', 'instruction', and 'output' fields\n"
+                "- Returns generated DataFrame for subsequent processing"
+            )
+        else:
+            return (
+                "CondorGenerator generates SFT-style data through two-stage LLM generation based on predefined knowledge tree tags."
+            )
 
     
     def parse_generated_responses(self, questions_responses):

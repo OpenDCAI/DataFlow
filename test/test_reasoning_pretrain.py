@@ -1,5 +1,14 @@
-from dataflow.operators.generate import *
-from dataflow.operators.filter import *
+from dataflow.operators.generate import (
+    QuestionGenerator,
+    AnswerGenerator,
+    PretrainFormatConverter
+)
+from dataflow.prompts.reasoning.math import (
+    MathQuestionFilterPrompt,
+    MathQuestionSynthesisPrompt,
+    MathAnswerGeneratorPrompt
+)
+from dataflow.operators.filter import QuestionFilter, AnswerNgramFilter, AnswerPipelineRoot
 from dataflow.utils.storage import FileStorage
 from dataflow.serving import APILLMServing_request, LocalModelLLMServing
 
@@ -32,18 +41,21 @@ class ReasoningPipeline_Pretrain():
         
         self.question_filter_step1 = QuestionFilter(
             system_prompt="You are an expert in evaluating mathematical problems. Follow the user's instructions strictly and output your final judgment in the required JSON format.",
-            llm_serving=llm_serving
+            llm_serving=llm_serving,
+            prompt_template=MathQuestionFilterPrompt()
         )
         self.question_gen_step2 =  QuestionGenerator(
             num_prompts=3,
-            llm_serving=llm_serving
+            llm_serving=llm_serving,
+            prompt_template=MathQuestionSynthesisPrompt()
         )
         
         ########################## branch ############################
         self.answer_pipeline_root_step3 = AnswerPipelineRoot()
         ########################## answer ############################
         self.answer_generator_step4 = AnswerGenerator(
-            llm_serving=llm_serving
+            llm_serving=llm_serving,
+            prompt_template=MathAnswerGeneratorPrompt()
         )
         
         self.answer_ngram_filter_step5 = AnswerNgramFilter(
@@ -92,7 +104,6 @@ class ReasoningPipeline_Pretrain():
             )
 
 if __name__ == "__main__":
-    # For testing the ReasoningPipeline_Pretrain
     pipeline = ReasoningPipeline_Pretrain()
     pipeline.forward()
 

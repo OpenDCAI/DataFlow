@@ -10,7 +10,7 @@ class PDFCleaningPipeline():
     def __init__(self):
 
         self.storage = FileStorage(
-            first_entry_file_name="../example_data/KBCleaningPipeline/kbc_test_pdf.jsonl",
+            first_entry_file_name="../example_data/KBCleaningPipeline/kbc_test.jsonl",
             #first_entry_file_name="../example_data/GeneralTextPipeline/translation.jsonl",
             cache_path="./.cache/gpu",
             file_name_prefix="pdf_cleaning_step",
@@ -20,6 +20,7 @@ class PDFCleaningPipeline():
         self.knowledge_cleaning_step1 = PDFExtractor(
             intermediate_dir="../example_data/KBCleaningPipeline/raw/",
             lang="en",
+            mineru_backend="vlm-sglang-engine",
         )
 
     def forward(self):

@@ -1,11 +1,10 @@
 datasets<=3.2
-numpy<2.0.0
 scipy
 torch
 torchvision
 torchaudio
 tqdm
-transformers<=4.51.3
+transformers
 aisuite
 math_verify
 word2number
@@ -22,6 +21,8 @@ docstring_parser
 pydantic
 nltk
 colorama
+gradio>5
+
 # text2sql
 func_timeout
 sqlglot
@@ -47,6 +48,8 @@ simhash
 chonkie
 trafilatura
 lxml_html_clean
+pymupdf
+httpx[socks]
 
 # dataflow agent
 cloudpickle

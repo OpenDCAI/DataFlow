@@ -24,7 +24,28 @@ class NgramHashDeduplicator(OperatorABC):
         self.logger.info(f"Initializing {self.__class__.__name__} with n_gram = {self.n_gram}, hash_func = {self.hash_func}, diff_size = {self.diff_size}...")
     @staticmethod
     def get_desc(lang: str = "zh"):
-        return "结合n-gram技术与哈希算法识别相似文本, 近似去重" if lang == "zh" else "Use n-gram and hashing to detect similar text. Near deduplication."
+        if lang == "zh":
+            return (
+                "结合n-gram技术与哈希算法识别相似文本，实现近似去重。将文本分割为多个n-gram片段，计算每个片段的哈希值，通过比较哈希集合的相似度来判断文本相似性。\n"
+                "输入参数：\n"
+                "- n_gram：将文本分割的片段数量\n"
+                "- hash_func：哈希函数类型，支持'md5'、'sha256'和'xxh3'\n"
+                "- diff_size：哈希集合差异阈值，小于此值判定为相似文本\n"
+                "输出参数：\n"
+                "- 去重后的DataFrame，仅保留唯一文本\n"
+                "- 返回包含去重标签字段名的列表"
+            )
+        else:
+            return (
+                "Detect similar text using n-gram technology and hashing algorithm for near deduplication. Splits text into multiple n-gram segments, computes hash values for each segment, and judges text similarity by comparing hash set similarity.\n"
+                "Input Parameters:\n"
+                "- n_gram: Number of segments to split text into\n"
+                "- hash_func: Hash function type, supporting 'md5', 'sha256', and 'xxh3'\n"
+                "- diff_size: Hash set difference threshold below which texts are considered similar\n\n"
+                "Output Parameters:\n"
+                "- Deduplicated DataFrame containing only unique texts\n"
+                "- List containing deduplication label field name"
+            )
 
     def _compute_hash(self, text: str) -> str:
         return self.hash_func_dict[self.hash_func](text.encode('utf-8')).hexdigest()

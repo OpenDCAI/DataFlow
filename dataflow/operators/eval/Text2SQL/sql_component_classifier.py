@@ -718,7 +718,7 @@ class ComponentClassifier(OperatorABC):
     def get_desc(lang):
         if lang == "zh":
             return (
-                "该算子评估SQL的组件难度。\n\n"
+                "根据SQL的组件数量和复杂度，评估SQL的难度。\n\n"
                 "输入参数：\n"
                 "- input_sql_key: 输入SQL列名\n\n"
                 "输出参数：\n"
@@ -726,7 +726,7 @@ class ComponentClassifier(OperatorABC):
             )
         elif lang == "en":
             return (
-                "This operator evaluates the difficulty of SQL components.\n\n"
+                "This operator evaluates the difficulty of SQL components based on the number and complexity of components.\n\n"
                 "Input parameters:\n"
                 "- input_sql_key: The name of the input SQL column\n\n"
                 "Output parameters:\n"

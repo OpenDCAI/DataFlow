@@ -19,7 +19,30 @@ class PairQualFilter(OperatorABC):
 
     @staticmethod
     def get_desc(lang: str = "zh"):
-        return "基于PairQualScorer打分器的得分对数据进行过滤。基于bge模型，使用gpt对文本成对比较打分后训练而成。得分越高表示质量越高。" if lang == "zh" else "Filter data using scores from the PairQualScorer. Pairwise quality scorer based on bge and GPT annotations; supports bilingual input."
+        if lang == "zh":
+            return (
+                "基于PairQualScorer打分器的得分对数据进行过滤。基于BGE模型，使用GPT对文本成对比较打分后训练而成的双语文本质量评分器，得分越高表示质量越高。\n"
+                "输入参数：\n"
+                "- min_score：最小质量得分阈值\n"
+                "- max_score：最大质量得分阈值\n"
+                "- model_cache_dir：模型缓存目录路径\n"
+                "- lang：文本语言类型\n"
+                "输出参数：\n"
+                "- 过滤后的DataFrame，仅保留质量得分在指定范围内的文本\n"
+                "- 返回包含质量得分字段名的列表"
+            )
+        else:
+            return (
+                "Filter data using scores from the PairQualScorer. Bilingual text quality scorer trained on GPT pairwise comparison annotations using BGE model; higher scores indicate better quality.\n"
+                "Input Parameters:\n"
+                "- min_score: Minimum quality score threshold\n"
+                "- max_score: Maximum quality score threshold\n"
+                "- model_cache_dir: Model cache directory path\n"
+                "- lang: Text language type\n\n"
+                "Output Parameters:\n"
+                "- Filtered DataFrame containing only texts with quality score within specified range\n"
+                "- List containing quality score field name"
+            )
 
     def eval(self, dataframe, input_key):
         self.logger.info(f"Start evaluating {self.filter_name}...")

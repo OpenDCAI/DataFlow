@@ -22,7 +22,7 @@ class ConsistencyFilter(OperatorABC):
     def get_desc(lang):
         if lang == "zh":
             return (
-                "该算子过滤SQL的一致性。\n\n"
+                "对条目进行过滤，检测SQL和自然语言问题是否对应，即判断SQL是否能解决该问题。\n\n"
                 "输入参数：\n"
                 "- input_sql_key: 输入SQL列名\n"
                 "- input_db_id_key: 输入数据库ID列名\n"
@@ -30,7 +30,7 @@ class ConsistencyFilter(OperatorABC):
             )
         elif lang == "en":
             return (
-                "This operator filters SQL consistency.\n\n"
+                "This operator filters items based on whether the SQL can solve the question.\n\n"
                 "Input parameters:\n"
                 "- input_sql_key: The name of the input SQL column\n"
                 "- input_db_id_key: The name of the input database ID column\n"

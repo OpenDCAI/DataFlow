@@ -5,7 +5,7 @@ from dataflow.operators.filter import (
 )
 from dataflow.utils.storage import FileStorage
 
-class ReasoningPipeline():
+class Reasoning_CPUPipeline():
     def __init__(self):
 
         self.storage = FileStorage(
@@ -44,5 +44,5 @@ class ReasoningPipeline():
         )
 
 if __name__ == "__main__":
-    model = ReasoningPipeline()
+    model = Reasoning_CPUPipeline()
     model.forward()

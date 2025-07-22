@@ -78,13 +78,13 @@ if __name__ == "__main__":
         "timeout": 3600,
         "max_debug_round": 5
     }
-
+# /mnt/h_h_public/lh/lz/DataFlow/dataflow/example/DataflowAgent/mq_test_data.jsonl
     operator_write_params = {
-        "json_file": f"{DATAFLOW_DIR}/dataflow/example/ReasoningPipeline/pipeline_math_short.json",
-        "py_path": f"{DATAFLOW_DIR}/test/operator_sentiment.py",
+        "json_file": f"{DATAFLOW_DIR}/dataflow/example/DataflowAgent/mq_test_data.jsonl",
+        "py_path": f"{DATAFLOW_DIR}/test/Q-PARA.py",
         "api_key": api_key,
         "chat_api_url": chat_api_url,
-        "execute_the_operator": False,
+        "execute_the_operator": True,
         "use_local_model": False,
         "local_model_name_or_path": "/mnt/public/model/huggingface/Qwen2.5-7B-Instruct",
         "timeout": 3600,
@@ -105,7 +105,7 @@ if __name__ == "__main__":
     if len(sys.argv) == 2 and sys.argv[1] == "write":
         test_req = ChatAgentRequest(
             language="zh",
-            target="我需要一个算子，能够对用户评论进行情感分析并输出积极/消极标签。",
+            target="我需要一个算子，使用LLMServing对医疗场景的原始题干进行同义改写，生成语义一致但表达不同的新问题，有效增加训练样本多样性，并且输入key是question，输出key是questionPARA,就在原数据上新加入key，不要生成新的行。",
             model="deepseek-v3",
             sessionKEY="dataflow_demo",
             ** operator_write_params
@@ -127,3 +127,8 @@ if __name__ == "__main__":
     # 我需要一个算子，直接使用LLMservinf进行总结，能够对输入的长文本自动生成摘要。
     # 我需要一个算子，能够根据给定主题或关键词自动生成新文本。
 
+
+# 医学："我需要一个算子，使用LLMServing对医疗场景的原始题干进行同义改写，生成语义一致但表达不同的新问题，有效增加训练样本多样性，并且输入key是question，输出key是questionPARA,就在原数据上新加入key，不要生成新的行。",
+# 我需要一个算子，使用LLMServing对医疗场景的原始题干进行临床细节扩充，在不影响考点的前提下，插入合理的病史、体格检查或辅助检查结果，增强问题的真实性，并可灵活调节题目难度。输入key是question，输出key是questionCONTEXT。
+# 我需要一个算子，使用LLMServing针对医疗选择题，自动生成从题干到标准答案的推理过程（思维链/Chain-of-Thought），以提升模型的推理能力和可解释性。输入key是question，输出key是questionCOT，内容为详细的推理步骤。
+# 我需要一个算子，使用LLMServing针对医疗多项选择题，自动生成具有医学迷惑性的干扰选项（错误选项），让错误选项更“像真”，提升模型判别难度。需依据常见临床误区或相近伦理概念设计，输入key是options，输出key是distractorGEN。

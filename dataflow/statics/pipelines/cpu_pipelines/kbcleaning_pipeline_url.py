@@ -1,9 +1,9 @@
 from dataflow.operators.generate import (
     CorpusTextSplitter,
-    KnowledgeExtractor,
+    FileOrURLToMarkdownConverter,
 )
 from dataflow.utils.storage import FileStorage
-class KBCleaningPipeline():
+class KBCleaning_CPUPipeline():
     def __init__(self):
 
         self.storage = FileStorage(
@@ -13,7 +13,7 @@ class KBCleaningPipeline():
             cache_type="json",
         )
 
-        self.knowledge_cleaning_step1 = KnowledgeExtractor(
+        self.knowledge_cleaning_step1 = FileOrURLToMarkdownConverter(
             intermediate_dir="../example_data/KBCleaningPipeline/raw/",
             lang="en",
         )
@@ -38,6 +38,6 @@ class KBCleaningPipeline():
         )
 
 if __name__ == "__main__":
-    model = KBCleaningPipeline()
+    model = KBCleaning_CPUPipeline()
     model.forward(url="https://trafilatura.readthedocs.io/en/latest/quickstart.html")
 

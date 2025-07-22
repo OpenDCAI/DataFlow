@@ -37,14 +37,14 @@ class SQLGenerator(OperatorABC):
     def get_desc(lang):
         if lang == "zh":
             return (
-                "该算子基于数据库信息合成SQL。\n\n"
+                "基于数据库信息，合成SQL，覆盖不同的难度、数据库Schema、函数和风格。\n\n"
                 "输出参数：\n"
                 "- output_sql_key: 输出SQL列名\n"
                 "- output_db_id_key: 数据库ID列名\n\n"
             )
         elif lang == "en":
             return (
-                "This operator synthesizes SQL based on database information.\n\n"
+                "This operator synthesizes SQL based on database information, covering different complexities, schemas, functions, and styles.\n\n"
                 "Output parameters:\n"
                 "- output_sql_key: The name of the output SQL column\n"
                 "- output_db_id_key: The name of the database ID column\n\n"

@@ -71,7 +71,28 @@ class LangkitFilter(OperatorABC):
     
     @staticmethod
     def get_desc(lang: str = "zh"):
-        return "基于LangkitScorer打分器的得分对数据进行过滤。使用Langkit工具包计算文本统计信息，帮助评估文本结构复杂性和可读性。" if lang == "zh" else "Filter data using scores from the LangkitScorer. Uses Langkit to extract stats for text structure and readability."
+        if lang == "zh":
+            return (
+                "基于LangkitScorer打分器的得分对数据进行过滤。使用Langkit工具包计算11种文本统计信息，帮助评估文本结构复杂性和可读性。\n"
+                "输入参数：\n"
+                "- min_scores：各指标的最小阈值字典，包含11个语言统计指标\n"
+                "- max_scores：各指标的最大阈值字典，包含11个语言统计指标\n"
+                "- metrics_to_keep：需要保留的评估指标列表\n"
+                "输出参数：\n"
+                "- 过滤后的DataFrame，仅保留所有指标都在指定范围内的文本\n"
+                "- 返回包含各指标标签字段名的列表"
+            )
+        else:
+            return (
+                "Filter data using scores from the LangkitScorer. Uses Langkit to extract 11 types of text statistics for evaluating text structure complexity and readability.\n"
+                "Input Parameters:\n"
+                "- min_scores: Dictionary of minimum thresholds for each metric, containing 11 language statistics\n"
+                "- max_scores: Dictionary of maximum thresholds for each metric, containing 11 language statistics\n"
+                "- metrics_to_keep: List of evaluation metrics to keep\n\n"
+                "Output Parameters:\n"
+                "- Filtered DataFrame containing only texts with all metrics within specified ranges\n"
+                "- List containing label field names for each metric"
+            )
         
     def run(self, storage: DataFlowStorage, input_key: str, output_keys: list = ["flesch_reading_ease", "automated_readability_index", "aggregate_reading_level", "syllable_count", "lexicon_count", "sentence_count", "character_count", "letter_count", "polysyllable_count", "monosyllable_count", "difficult_words"]):
         self.input_key = input_key

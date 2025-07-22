@@ -18,7 +18,7 @@
 [简体中文](./README-zh.md) | English
 
 
-**[🚀 Features](#Features) • [⚡ Quick Start](#Quick_Start) • [📖 Documentation](https://OpenDCAI.github.io/DataFlow-Doc/) • [🧪 Experiments](#Experiments)**
+**[🚀 Features](#-3-pipelines-functionality) • [⚡ Quick Start](#-4-quick-start) • [📖 Documentation](https://OpenDCAI.github.io/DataFlow-Doc/) • [🧪 Experiments](#-5-experimental-results)**
 
 </div>
 
@@ -102,6 +102,16 @@ open-dataflow codebase version: 1.0.0
 You are using the latest version: 1.0.0.
 ```
 
+### Using Gradio to Test DataFlow Operators
+
+You can quickly launch a Gradio-based interface to test DataFlow operators with the following command:
+
+```bash
+dataflow webui
+```
+
+This will start an interactive web UI, allowing you to visualize all operators seamlessly.
+
 For **Quick-Start** and **Guide**, please visit our [Documentation](https://OpenDCAI.github.io/DataFlow-Doc/). 
 
 [![Documents](https://img.shields.io/badge/Documents-Click_here-brightgreen?logo=read-the-docs)](https://OpenDCAI.github.io/DataFlow-Doc/)
@@ -142,10 +152,26 @@ We fine-tuned the Qwen2.5-Coder-14B model on the Bird dataset using both Supervi
   <img src="./static/images/text2sql.png" width="60%">
 </div>
 
-## 💐 6. Acknowledgements
+## 📄 6. Publications
+Our team has published the following papers that form core components of the DataFlow system:
+
+| Paper Title | DataFlow Component | Venue | Year |
+|-------------|-------------------|-------|------|
+| [MM-Verify: Enhancing Multimodal Reasoning with Chain-of-Thought Verification](https://arxiv.org/pdf/2502.13383) | Multimodal reasoning verification framework for data processing and evaluation | ACL | 2025 |
+| [Efficient Pretraining Data Selection for Language Models via Multi-Actor Collaboration](https://arxiv.org/pdf/2410.08102) | Multi-actor collaborative data selection mechanism for enhanced data filtering and processing | ACL | 2025 |
+
+**Contributing Institutions**: 
+<img src="./static/logo/pku.png" alt="PKU" height="30"/> 
+<img src="./static/logo/hkust.png" alt="HKUST" height="30"/> 
+<img src="./static/logo/CAS.png" alt="CAS" height="30"/> 
+<img src="./static/logo/shanghai_ailab.png" alt="Shanghai AI Lab" height="30"/> 
+<img src="./static/logo/baichuan.png" alt="Baichuan" height="30"/> 
+<img src="./static/logo/ant_group.png" alt="Ant Group" height="30"/>
+
+## 💐 7. Acknowledgements
 We sincerely appreciate [MinerU](https://github.com/opendatalab/MinerU)'s outstanding contribution, particularly its robust text extraction capabilities from PDFs and documents, which greatly facilitates data loading.
 
-## 🤝 7. Community & Support
+## 🤝 8. Community & Support
 Join the DataFlow open-source community to ask questions, share ideas, and collaborate with other developers!
 
 •	📮 [GitHub Issues](../../issues): Report bugs or suggest features
@@ -158,7 +184,7 @@ Join the DataFlow open-source community to ask questions, share ideas, and colla
   <img src="./static/images/community_en.jpg" width="60%">
 </div>
 
-## 📜 8. Citation
+## 📜 9. Citation
 If you use DataFlow in your research, feel free to give us a cite.
 ```bibtex
 @misc{dataflow2025,
@@ -170,7 +196,7 @@ If you use DataFlow in your research, feel free to give us a cite.
 }
 ```
 
-## 📊 9. Statistics
+## 📊 10. Statistics
 <div align="center">
   <a href="https://star-history.com/#OpenDCAI/DataFlow&Date">
     <picture>

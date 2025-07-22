@@ -17,6 +17,7 @@ class AnswerTokenLengthFilter(OperatorABC):
         self.tokenizer_dir = tokenizer_dir
         self.tokenizer = AutoTokenizer.from_pretrained(self.tokenizer_dir)
         self.logger = get_logger()
+        self.empty_count = 0  # 添加空值计数器
        
     @staticmethod
     def get_desc(lang: str = "zh"):
@@ -73,8 +74,17 @@ class AnswerTokenLengthFilter(OperatorABC):
         self._validate_dataframe(dataframe)
 
         def get_token_count(input_string):
-            tokens = self.tokenizer.encode(input_string, add_special_tokens=False)
-            return len(tokens)
+            # 检查None或空字符串
+            if input_string is None or (isinstance(input_string, str) and input_string.strip() == ''):
+                self.empty_count += 1
+                return self.max_answer_token_length + 1  # 确保被过滤
+            try:
+                tokens = self.tokenizer.encode(input_string, add_special_tokens=False)
+                return len(tokens)
+            except Exception as e:
+                self.logger.error(f"Token encoding error: {e}")
+                self.empty_count += 1
+                return self.max_answer_token_length + 1
 
         output = []
         for i, text in tqdm(enumerate(dataframe[self.input_key]), desc="Checking token lengths"):
@@ -86,3 +96,10 @@ class AnswerTokenLengthFilter(OperatorABC):
 
         output_file = storage.write(dataframe)
         self.logger.info(f"Saved {len(dataframe)} filtered rows to {output_file}")
+        
+        # 记录空值数量并重置计数器
+        if self.empty_count > 0:
+            self.logger.warning(f"Found {self.empty_count} empty or invalid entries during filtering")
+        self.empty_count = 0
+        
+        return [self.input_key]

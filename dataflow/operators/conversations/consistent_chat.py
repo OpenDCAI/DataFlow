@@ -22,7 +22,30 @@ class ConsistentChatGenerator(OperatorABC):
     
     @staticmethod
     def get_desc(lang: str = "zh"):
-        return "根据预置主题和人类意图，两阶段从0合成多轮对话格式数据（合成数量大于9000时建议增加标签数量）" if lang == "zh" else "Two-stage generation of multi-turn dialogue data from scratch based on predefined topics and human intents (for over 9000 samples, consider increasing the number of tags)."
+        if lang == "zh":
+            return (
+                "根据预置主题和人类意图，两阶段从0合成多轮对话格式数据（合成数量大于9000时建议增加标签数量）。\n"
+                "输入参数：\n"
+                "- llm_serving：LLM服务对象，需实现LLMServingABC接口\n"
+                "- num_dialogs_per_intent：每个意图生成的对话数量，默认20\n"
+                "- num_turns_per_dialog：每个对话的轮次数量，默认6\n"
+                "- temperature：生成温度，控制输出随机性，默认0.9\n"
+                "输出参数：\n"
+                "- 包含category和conversation字段的DataFrame，其中conversation为多轮对话列表"
+            )
+        elif lang == "en":
+            return (
+                "Two-stage generation of multi-turn dialogue data from scratch based on predefined topics and human intents (for over 9000 samples, consider increasing the number of tags).\n"
+                "Input Parameters:\n"
+                "- llm_serving: LLM serving object implementing LLMServingABC interface\n"
+                "- num_dialogs_per_intent: Number of dialogs generated per intent, default 20\n"
+                "- num_turns_per_dialog: Number of turns per dialog, default 6\n"
+                "- temperature: Sampling temperature for generation, default 0.9\n"
+                "Output Parameters:\n"
+                "- DataFrame containing 'category' and 'conversation' fields, where conversation is a list of multi-turn dialogues"
+            )
+        else:
+            return "Two-stage generation of multi-turn dialogue data from scratch based on predefined topics and human intents."
 
     def run(self, storage: DataFlowStorage):
         all_query_prompts = []

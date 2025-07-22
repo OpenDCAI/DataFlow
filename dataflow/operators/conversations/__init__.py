@@ -9,7 +9,7 @@ if TYPE_CHECKING:
         ParaSeqTaskGenerator,
         CompositionTaskFilter,
         FunctionGenerator,
-        MultiTurnDialogueGenerator,
+        MultiTurnConversationGenerator,
     )
     from .consistent_chat import ConsistentChatGenerator
 else:

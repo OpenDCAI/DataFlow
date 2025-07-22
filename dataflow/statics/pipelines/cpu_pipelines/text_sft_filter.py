@@ -2,7 +2,7 @@ from dataflow.operators.filter import WordNumberFilter
 from dataflow.utils.storage import FileStorage
 
 
-class SFTTextPipeline():
+class SFTTextFilter_CPUPipeline():
     
     def __init__(self):
         
@@ -28,5 +28,5 @@ class SFTTextPipeline():
 
 if __name__ == "__main__":
     # This is the entry point for the pipeline
-    pipeline = SFTTextPipeline()
+    pipeline = SFTTextFilter_CPUPipeline()
     pipeline.forward()

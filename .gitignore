@@ -16,6 +16,7 @@ test/example
 cache
 cache_local
 .cache
+cache*
 dataflow_cache/
 dataflow/operators/eval/GeneralText/gen/cider/coco-val-df.p
 test_mineru

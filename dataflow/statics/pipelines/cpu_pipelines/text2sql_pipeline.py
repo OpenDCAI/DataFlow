@@ -11,7 +11,7 @@ from dataflow.utils.storage import FileStorage
 from dataflow.utils.text2sql.database_manager import DatabaseManager
 
 
-class Text2SQLPipeline():
+class Text2SQL_CPUPipeline():
     def __init__(self):
 
         self.storage = FileStorage(
@@ -108,6 +108,6 @@ class Text2SQLPipeline():
 
 
 if __name__ == "__main__":
-    model = Text2SQLPipeline()
+    model = Text2SQL_CPUPipeline()
     model.forward()
 

@@ -18,14 +18,14 @@ class ExecutionFilter(OperatorABC):
     def get_desc(lang):
         if lang == "zh":
             return (
-                "该算子过滤SQL的执行。\n\n"
+                "对条目进行过滤，在数据库中执行SQL，筛选掉不可执行的条目。\n\n"
                 "输入参数：\n"
                 "- input_sql_key: 输入SQL列名\n"
                 "- input_db_id_key: 输入数据库ID列名\n\n"
             )
         elif lang == "en":
             return (
-                "This operator filters SQL execution.\n\n"
+                "This operator filters items based on whether the SQL can be executed in the database.\n\n"
                 "Input parameters:\n"
                 "- input_sql_key: The name of the input SQL column\n"
                 "- input_db_id_key: The name of the input database ID column\n\n"

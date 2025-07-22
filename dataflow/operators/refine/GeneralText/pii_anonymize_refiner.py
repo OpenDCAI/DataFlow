@@ -34,7 +34,36 @@ class PIIAnonymizeRefiner(OperatorABC):
 
     @staticmethod
     def get_desc(lang: str = "zh"):
-        return "去除文本中的URL和HTML标签" if lang == "zh" else "Remove URLs and HTML tags from the text."
+        if lang == "zh":
+            return (
+                "使用Presidio和BERT-NER模型识别并匿名化文本中的个人身份信息（PII）。支持多种PII类型的检测和匿名化处理。"
+                "输入参数：\n"
+                "- lang：语言代码，默认为'en'\n"
+                "- device：运行设备，默认为'cuda'\n"
+                "- model_cache_dir：模型缓存目录，默认为'./dataflow_cache'\n"
+                "- model_name：NER模型名称，默认为'dslim/bert-base-NER'\n"
+                "- input_key：输入文本字段名\n"
+                "输出参数：\n"
+                "- 包含匿名化后文本的DataFrame\n"
+                "- 返回输入字段名，用于后续算子引用"
+            )
+        elif lang == "en":
+            return (
+                "Identify and anonymize Personally Identifiable Information (PII) in text using Presidio and BERT-NER models. Supports detection and anonymization of various PII types.\n"
+                "Input Parameters:\n"
+                "- lang: Language code, default is 'en'\n"
+                "- device: Running device, default is 'cuda'\n"
+                "- model_cache_dir: Model cache directory, default is './dataflow_cache'\n"
+                "- model_name: NER model name, default is 'dslim/bert-base-NER'\n"
+                "- input_key: Field name for input text\n\n"
+                "Output Parameters:\n"
+                "- DataFrame containing anonymized text\n"
+                "- Returns input field name for subsequent operator reference"
+            )
+        else:
+            return (
+                "PIIAnonymizeRefiner identifies and anonymizes PII in text using NLP models."
+            )
 
     def run(self, storage: DataFlowStorage, input_key: str):
         self.input_key = input_key

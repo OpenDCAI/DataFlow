@@ -22,16 +22,62 @@ class DataFlowStorage(ABC):
     def write(self, data: Any) -> Any:
         pass
 
+class DummyStorage(DataFlowStorage):
+    def __init__(
+        self,
+        cache_path:str=None,
+        file_name_prefix:str=None,  
+        cache_type: Literal["json", "jsonl", "csv", "parquet", "pickle", None] = None
+    ):
+        self._data = None
+        self.cache_path = cache_path
+        self.file_name_prefix = file_name_prefix
+        self.cache_type = cache_type
+        
+    def set_data(self, data: Any):
+        """
+        Set data to be written later.
+        """
+        self._data = data
+        
+    def set_file_name_prefix(self, file_name_prefix: str):
+        """
+        Set the file name prefix for cache files.
+        """
+        self.file_name_prefix = file_name_prefix
+            
+    def read(self, output_type: Literal["dataframe", "dict"] = "dataframe") -> Any:
+        return self._data
+
+    def write(self, data):
+        self._data = data
+        if self.cache_type != None:
+            cache_file_path = os.path.join(self.cache_path, f"{self.file_name_prefix}.{self.cache_type}")
+            os.makedirs(os.path.dirname(cache_file_path), exist_ok=True)
+            if self.cache_type == "json":
+                data.to_json(cache_file_path, orient="records", force_ascii=False, indent=2)
+            elif self.cache_type == "jsonl":
+                data.to_json(cache_file_path, orient="records", lines=True, force_ascii=False)  
+            elif self.cache_type == "csv":
+                data.to_csv(cache_file_path, index=False)
+            elif self.cache_type == "parquet":  
+                data.to_parquet(cache_file_path)
+            elif self.cache_type == "pickle":
+                data.to_pickle(cache_file_path)
+            else:
+                raise ValueError(f"Unsupported file type: {self.cache_type}, output file should end with json, jsonl, csv, parquet, pickle")
+
 class FileStorage(DataFlowStorage):
     """
     Storage for file system.
     """
-    def __init__(self, 
-                 first_entry_file_name: str,
-                 cache_path:str="./cache",
-                 file_name_prefix:str="dataflow_cache_step",
-                 cache_type:Literal["json", "jsonl", "csv", "parquet", "pickle"] = "jsonl"
-                 ):
+    def __init__(
+        self, 
+        first_entry_file_name: str,
+        cache_path:str="./cache",
+        file_name_prefix:str="dataflow_cache_step",
+        cache_type:Literal["json", "jsonl", "csv", "parquet", "pickle"] = "jsonl"
+    ):
         self.first_entry_file_name = first_entry_file_name
         self.cache_path = cache_path
         self.file_name_prefix = file_name_prefix
@@ -47,7 +93,7 @@ class FileStorage(DataFlowStorage):
             # If it's the first step, use the first entry file name
             return os.path.join(self.first_entry_file_name)
         else:
-            return os.path.join(self.cache_path, f"{self.file_name_prefix}_{step}.{self.cache_type}")
+            return os.path.join(self.cache_path, f"{self.file_name_prefix}_step{step}.{self.cache_type}")
 
     def step(self):
         self.operator_step += 1
@@ -87,7 +133,7 @@ class FileStorage(DataFlowStorage):
             return dataframe.to_dict(orient="records")
         raise ValueError(f"Unsupported output type: {output_type}")
 
-    def read(self, output_type: Literal["dataframe", "dict"]) -> Any:
+    def read(self, output_type: Literal["dataframe", "dict"]="dataframe") -> Any:
         """
         Read data from current file managed by storage.
         
@@ -186,6 +232,7 @@ class FileStorage(DataFlowStorage):
         return file_path
 
 from threading import Lock
+import math
 
 _clickhouse_clients = {}
 _clickhouse_clients_lock = Lock()
@@ -194,7 +241,11 @@ _clickhouse_clients_lock = Lock()
 SYS_FIELD_PREFIX = 'sys:'
 USER_FIELD_PREFIX = 'user:'
 
-# 获取ClickHouse Client单例
+# 保留字段列表
+RESERVED_SYS_FIELD_LIST=["raw_data_id"]
+RESERVED_USER_FIELD_LIST=[]
+
+# 获取 ClickHouse Client 实例
 def get_clickhouse_client(db_config):
     key = (
         db_config['host'],
@@ -214,11 +265,11 @@ def get_clickhouse_client(db_config):
                 user=db_config.get('user', 'default'),
                 password=db_config.get('password', ''),
                 database=db_config.get('database', 'default'),
-                settings={"use_numpy": True}
+                # settings={"use_numpy": True}
             )
         return _clickhouse_clients[key]
 
-# 安全加载json数据
+# 安全加载 json 数据
 def safe_json_loads(x):
         if isinstance(x, dict):
             return x
@@ -231,8 +282,15 @@ def safe_json_loads(x):
             return None
         return x  # 其它类型原样返回
 
-# 预定义min_hashes计算方法，当前全部返回[0]
-def _default_min_hashes(self, data_dict):
+# 安全合并列到 data 字段
+def safe_merge(row, col):
+    val = row[col]
+    if isinstance(val, float) and math.isnan(val):
+        return row['data']
+    return {**row['data'], col: val}
+
+# 预定义 min_hashes 计算方法，当前全部返回[0]
+def _default_min_hashes(data_dict):
     return [0]
 
 class MyScaleDBStorage(DataFlowStorage):
@@ -241,10 +299,10 @@ class MyScaleDBStorage(DataFlowStorage):
     """
     def validate_required_params(self):
         """
-        校验MyScaleDBStorage实例的关键参数有效性：
+        校验 MyScaleDBStorage 实例的关键参数有效性：
         - pipeline_id, input_task_id, output_task_id 必须非空，否则抛出异常。
         - page_size, page_num 若未设置则赋默认值（page_size=10000, page_num=0）。
-        所有算子在使用storage前应调用本方法。
+        所有算子在使用 storage 前应调用本方法。
         """
         missing = []
         if not self.pipeline_id:
@@ -321,10 +379,14 @@ class MyScaleDBStorage(DataFlowStorage):
 
         # 只保留 data 字段
         data_series = df['data'].apply(safe_json_loads)
-
         if output_type == "dataframe":
-            # 返回只有 data 一列的 DataFrame
-            return pd.DataFrame({'data': data_series})
+            # 提取 data 一列并自动展开为多列（如果 data 是 dict）
+            result_df = pd.DataFrame({'data': data_series})
+            if not data_series.empty and isinstance(data_series.iloc[0], dict):
+                expanded = data_series.apply(pd.Series)
+                # 合并展开列和原始 data 列
+                result_df = pd.concat([result_df, expanded], axis=1)
+            return result_df
         elif output_type == "dict":
             # 返回 data 字段的 dict 列表
             return list(data_series)
@@ -342,18 +404,24 @@ class MyScaleDBStorage(DataFlowStorage):
             df = data
         else:
             raise ValueError(f"Unsupported data type: {type(data)}")
-        # data字段本身就是每行的内容
+        # data 字段本身就是每行的内容
         if 'data' not in df.columns:
-            # 兼容直接传入dict列表的情况
+            # 兼容直接传入 dict 列表的情况
             df['data'] = df.apply(lambda row: row.to_dict(), axis=1)
-        # 统一处理data列
+        # 统一处理 data 列
         df['data'] = df['data'].apply(lambda x: x if isinstance(x, dict) else (json.loads(x) if isinstance(x, str) else {}))
-        # 自动填充pipeline_id, task_id, raw_data_id, min_hashes
+        # 合并所有非系统字段到 data 字段并删除原列
+        system_cols = {'pipeline_id', 'task_id', 'raw_data_id', 'min_hashes', 'data'}
+        for col in df.columns:
+            if col not in system_cols:
+                df['data'] = df.apply(lambda row: safe_merge(row, col), axis=1)
+                df = df.drop(columns=[col])
+        # 自动填充 pipeline_id, task_id, raw_data_id, min_hashes
         df['pipeline_id'] = self.pipeline_id
         df['task_id'] = self.output_task_id
         df['raw_data_id'] = df['data'].apply(lambda d: d.get(SYS_FIELD_PREFIX + 'raw_data_id', 0) if isinstance(d, dict) else 0)
         df['min_hashes'] = df['data'].apply(lambda d: _default_min_hashes(d) if isinstance(d, dict) else [0])
-        # data字段转为JSON字符串
+        # data 字段转为 JSON 字符串
         df['data'] = df['data'].apply(lambda x: json.dumps(x, ensure_ascii=False) if not isinstance(x, str) else x)
         # 只保留必需字段
         required_cols = ['pipeline_id', 'task_id', 'raw_data_id', 'min_hashes', 'data']

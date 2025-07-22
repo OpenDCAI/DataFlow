@@ -30,7 +30,26 @@ class LanguageFilter(OperatorABC):
 
     @staticmethod
     def get_desc(lang: str = "zh"):
-        return "使用FastText语言识别模型过滤数据" if lang == "zh" else "Filter data using FastText language identification model."
+        if lang == "zh":
+            return (
+                "使用FastText语言识别模型过滤数据。下载并加载预训练的FastText语言识别模型，检查文本的语言是否在允许的语言列表中。\n"
+                "输入参数：\n"
+                "- allowed_languages：允许的语言标签列表\n"
+                "- model_cache_dir：模型缓存目录路径\n"
+                "输出参数：\n"
+                "- 过滤后的DataFrame，仅保留语言在允许列表中的文本\n"
+                "- 返回包含语言标签字段名的列表"
+            )
+        else:
+            return (
+                "Filter data using FastText language identification model. Downloads and loads pre-trained FastText language identification model to check if text language is in allowed list.\n"
+                "Input Parameters:\n"
+                "- allowed_languages: List of allowed language labels\n"
+                "- model_cache_dir: Model cache directory path\n\n"
+                "Output Parameters:\n"
+                "- Filtered DataFrame containing only texts with language in allowed list\n"
+                "- List containing language label field name"
+            )
 
     def eval(self, dataframe, input_key):
         self.logger.info(f"Start evaluating {self.filter_name}...")

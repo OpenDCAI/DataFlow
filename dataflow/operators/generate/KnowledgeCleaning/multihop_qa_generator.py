@@ -40,29 +40,75 @@ class MultiHopQAGenerator(OperatorABC):
     @staticmethod
     def get_desc(lang: str = "zh") -> tuple:
         """Returns a description of the processor's functionality.
-        
+
         Args:
-            lang (str, optional): Language for description ('zh' or 'en'). 
-                Defaults to None (uses instance language).
-                
+            lang (str, optional): Language for description ('zh' or 'en').
+
         Returns:
-            tuple: Description strings in specified language
+            tuple: Description strings in specified language, including format example
         """
-        
         if lang == "zh":
             return (
-                "MultiHopQAGenerator 是多跳问答对生成处理器",
-                "支持从文本数据自动生成需要多步推理的问题-答案对",
-                "包含文本预处理、信息抽取和智能问答生成全流程",
-                "支持配置语言模型服务及多种生成参数"
+                "MultiHopQAGenerator 是多跳问答对生成处理器，支持从文本中自动生成需要多步推理的问题与答案。",
+                "处理流程包括：文本预处理、信息抽取、问题生成与回答生成，支持自定义语言模型后端和参数。",
+                "输出格式如下：",
+                "输入：\n"
+                "text: <原始上下文文本>",
+                "输出：\n"
+                "{\n"
+                "  \"text\": <处理后的文本字符串>,\n"
+                "  \"qa_pairs\": [\n"
+                "    {\n"
+                "      \"question\": <字符串：生成的问题>,\n"
+                "      \"reasoning_steps\": [\n"
+                "        {\"step\": <推理过程的步骤 1>},\n"
+                "        {\"step\": <步骤 2>} ...\n"
+                "      ],\n"
+                "      \"answer\": <字符串：最终答案>,\n"
+                "      \"supporting_facts\": [<支持该答案的事实 1>, <事实 2>, ...],\n"
+                "      \"type\": <可选：问题类型，如“生物学”、“历史”等>\n"
+                "    },\n"
+                "    ...\n"
+                "  ],\n"
+                "  \"metadata\": {\n"
+                "    \"source\": <数据来源>,\n"
+                "    \"timestamp\": <时间戳字符串>,\n"
+                "    \"complexity\": <整数：问题复杂度标记>\n"
+                "  }\n"
+                "}"
             )
-        else:  # Default to English
+        else:
             return (
-                "MultiHopQAGenerator processes text to create multi-hop QA pairs",
-                "Automatically generates questions requiring multi-step reasoning",
-                "Handles full pipeline: text preprocessing, information extraction",
-                "and intelligent QA generation with configurable LLM backend"
+                "MultiHopQAGenerator is a processor for generating multi-hop question-answer pairs from raw text.",
+                "It includes preprocessing, information extraction, and reasoning-based QA generation, with configurable LLM backends.",
+                "Expected output format:",
+                "Input:\n"
+                "text: <raw input context>",
+                "Output:\n"
+                "{\n"
+                "  \"text\": <processed input text>,\n"
+                "  \"qa_pairs\": [\n"
+                "    {\n"
+                "      \"question\": <string: generated question>,\n"
+                "      \"reasoning_steps\": [\n"
+                "        {\"step\": <inference step 1>},\n"
+                "        {\"step\": <inference step 2>} ...\n"
+                "      ],\n"
+                "      \"answer\": <string: final answer>,\n"
+                "      \"supporting_facts\": [<fact 1>, <fact 2>, ...],\n"
+                "      \"type\": <optional string: QA category>\n"
+                "    },\n"
+                "    ...\n"
+                "  ],\n"
+                "  \"metadata\": {\n"
+                "    \"source\": <source string>,\n"
+                "    \"timestamp\": <timestamp string>,\n"
+                "    \"complexity\": <integer: reasoning complexity>\n"
+                "  }\n"
+                "}"
             )
+
+
         
     def process_text(
         self, text: str, source: str = "user_input"
@@ -215,7 +261,7 @@ class ExampleConstructor:
             processed_text = self._preprocess_text(data.get('text', ''))
             if not processed_text:
                 example = {
-                    'text': processed_text,
+                    # 'text': processed_text,
                     'qa_pairs': [],
                     'metadata': {
                         'source': data.get('source', 'unknown'),

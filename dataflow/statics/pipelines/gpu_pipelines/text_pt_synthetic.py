@@ -30,10 +30,10 @@ from dataflow.operators.refine import (
     RemoveExtraSpacesRefiner
 )
 from dataflow.operators.generate import PretrainGenerator
-from dataflow.serving import LocalModelLLMServing_vllm
+from dataflow.serving import LocalModelLLMServing_vllm, LocalModelLLMServing_sglang
 from dataflow.utils.storage import FileStorage
 
-class PTTextSynPipeline():
+class PTTextSynthetic_GPUPipeline():
     def __init__(self):
         self.storage = FileStorage(
             first_entry_file_name="../example_data/GeneralTextPipeline/pt_input.jsonl",
@@ -44,11 +44,21 @@ class PTTextSynPipeline():
         
         
         self.model_cache_dir = './dataflow_cache'
+        # use local model as LLM serving
         self.llm_serving = LocalModelLLMServing_vllm(
             hf_model_name_or_path='Qwen/Qwen2.5-7B-Instruct',
             vllm_tensor_parallel_size=1,
             vllm_max_tokens=8192,
         )
+        # use SGLang as LLM serving
+        # self.llm_serving = LocalModelLLMServing_sglang(
+        #     hf_model_name_or_path="Qwen/Qwen2.5-7B-Instruct",
+        #     sgl_dp_size=1, # data parallel size
+        #     sgl_tp_size=1, # tensor parallel size
+        #     sgl_max_tokens=1024,
+        #     sgl_tensor_parallel_size=4
+        # )
+
         self.language_filter = LanguageFilter(allowed_languages = '__label__eng_Latn', model_cache_dir = self.model_cache_dir)        
         self.remove_extra_spaces_refiner = RemoveExtraSpacesRefiner()
         self.remove_emoji_refiner = RemoveEmojiRefiner()
@@ -199,5 +209,5 @@ class PTTextSynPipeline():
             input_key='generated_content'
         )
 if __name__ == "__main__":
-    model = PTTextSynPipeline()
+    model = PTTextSynthetic_GPUPipeline()
     model.forward()

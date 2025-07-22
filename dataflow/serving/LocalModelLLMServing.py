@@ -1,5 +1,6 @@
 import os
 import torch
+from typing import Optional, Union, List, Dict, Any
 from dataflow import get_logger
 from huggingface_hub import snapshot_download
 from dataflow.core import LLMServingABC
@@ -19,7 +20,7 @@ class LocalModelLLMServing_vllm(LLMServingABC):
                  vllm_max_tokens: int = 1024,
                  vllm_top_k: int = 40,
                  vllm_repetition_penalty: float = 1.0,
-                 vllm_seed: int = 42,
+                 vllm_seed: int = None,
                  vllm_max_model_len: int = None,
                  vllm_gpu_memory_utilization: float=0.9,
                  ):
@@ -99,8 +100,20 @@ class LocalModelLLMServing_vllm(LLMServingABC):
                             user_inputs: list[str], 
                             system_prompt: str = "You are a helpful assistant"
                             ) -> list[str]:
-        full_prompts = [system_prompt + '\n' + question for question in user_inputs]
-        responses = self.llm.generate(full_prompts, self.sampling_params)
+        full_prompts = []
+        for question in user_inputs:
+            messages = [
+            {"role": "system", "content": system_prompt},
+            {"role": "user", "content": question}
+        ]
+            full_prompts.append(messages)
+        full_template = self.tokenizer.apply_chat_template(
+            full_prompts,
+            tokenize=False,
+            add_generation_prompt=True,
+            enable_thinking=True,  # Set to False to strictly disable thinking
+        )
+        responses = self.llm.generate(full_template, self.sampling_params)
         return [output.outputs[0].text for output in responses]
 
     def generate_embedding_from_input(self, texts: list[str]) -> list[list[float]]:
@@ -114,39 +127,104 @@ class LocalModelLLMServing_vllm(LLMServingABC):
         torch.cuda.empty_cache()
     
 class LocalModelLLMServing_sglang(LLMServingABC):
-    def __init__(self,
-                 hf_model_name_or_path: str = None,
-                 hf_cache_dir: str = None,
-                 hf_local_dir: str = None,
-                 sgl_tensor_parallel_size: int = 1,
-                 sgl_max_tokens: int = 1024,
-                 sgl_temperature: float = 0.7,
-                 sgl_top_p: float = 0.9,
-                 sgl_top_k: int = 40,
-                 sgl_repetition_penalty: float = 1.0,
-                 sgl_seed: int = 42):
+    def __init__(
+        self, 
+        hf_model_name_or_path: str = None,
+        hf_cache_dir: str = None,
+        hf_local_dir: str = None,
+        sgl_tp_size: int = 1, # tensor parallel size
+        sgl_dp_size: int = 1, # data parallel size
+        sgl_mem_fraction_static: float = 0.9,  # memory fraction for static memory allocation
+        sgl_max_new_tokens: int = 2048, # maximum number of new tokens to generate
+        sgl_stop: Optional[Union[str, List[str]]] = None,
+        sgl_stop_token_ids: Optional[List[int]] = None,
+        sgl_temperature: float = 1.0,
+        sgl_top_p: float = 1.0,
+        sgl_top_k: int = -1,
+        sgl_min_p: float = 0.0,
+        sgl_frequency_penalty: float = 0.0,
+        sgl_presence_penalty: float = 0.0,
+        sgl_repetition_penalty: float = 1.0,
+        sgl_min_new_tokens: int = 0,
+        sgl_n: int = 1,
+        sgl_json_schema: Optional[str] = None,
+        sgl_regex: Optional[str] = None,
+        sgl_ebnf: Optional[str] = None,
+        sgl_structural_tag: Optional[str] = None,
+        sgl_ignore_eos: bool = False,
+        sgl_skip_special_tokens: bool = True,
+        sgl_spaces_between_special_tokens: bool = True,
+        sgl_no_stop_trim: bool = False,
+        sgl_custom_params: Optional[Dict[str, Any]] = None,
+        sgl_stream_interval: Optional[int] = None,
+        sgl_logit_bias: Optional[Dict[str, float]] = None,
+        **kwargs
+    ):
         self.load_model(
             hf_model_name_or_path=hf_model_name_or_path,
             hf_cache_dir=hf_cache_dir,
             hf_local_dir=hf_local_dir,
-            sgl_tensor_parallel_size=sgl_tensor_parallel_size,
-            sgl_max_tokens=sgl_max_tokens,
-            sgl_temperature=sgl_temperature, 
+            sgl_tp_size=sgl_tp_size,
+            sgl_dp_size=sgl_dp_size,
+            sgl_mem_fraction_static=sgl_mem_fraction_static,  # memory fraction for static
+            sgl_max_new_tokens=sgl_max_new_tokens,
+            sgl_stop=sgl_stop,
+            sgl_stop_token_ids=sgl_stop_token_ids,
+            sgl_temperature=sgl_temperature,
             sgl_top_p=sgl_top_p,
             sgl_top_k=sgl_top_k,
+            sgl_min_p=sgl_min_p,
+            sgl_frequency_penalty=sgl_frequency_penalty,
+            sgl_presence_penalty=sgl_presence_penalty,
             sgl_repetition_penalty=sgl_repetition_penalty,
-            sgl_seed=sgl_seed
+            sgl_min_new_tokens=sgl_min_new_tokens,
+            sgl_n=sgl_n,
+            sgl_json_schema=sgl_json_schema,
+            sgl_regex=sgl_regex,
+            sgl_ebnf=sgl_ebnf,
+            sgl_structural_tag=sgl_structural_tag,
+            sgl_ignore_eos=sgl_ignore_eos,
+            sgl_skip_special_tokens=sgl_skip_special_tokens,
+            sgl_spaces_between_special_tokens=sgl_spaces_between_special_tokens,
+            sgl_no_stop_trim=sgl_no_stop_trim,
+            sgl_custom_params=sgl_custom_params,
+            sgl_stream_interval=sgl_stream_interval,
+            sgl_logit_bias=sgl_logit_bias,
+            **kwargs
         )
-    def load_model(self, hf_model_name_or_path,
-            hf_cache_dir,
-            hf_local_dir,
-            sgl_tensor_parallel_size,
-            sgl_max_tokens,
-            sgl_temperature, 
-            sgl_top_p,
-            sgl_top_k,
-            sgl_repetition_penalty,
-            sgl_seed):
+    def load_model(
+        self, 
+        hf_model_name_or_path,
+        hf_cache_dir,
+        hf_local_dir,
+        sgl_tp_size: int,
+        sgl_dp_size: int,
+        sgl_mem_fraction_static: float,  # memory fraction for static memory allocation
+        sgl_max_new_tokens: int,
+        sgl_stop: Optional[Union[str, List[str]]] = None,
+        sgl_stop_token_ids: Optional[List[int]] = None,
+        sgl_temperature: float = 1.0,
+        sgl_top_p: float = 1.0,
+        sgl_top_k: int = -1,
+        sgl_min_p: float = 0.0,
+        sgl_frequency_penalty: float = 0.0,
+        sgl_presence_penalty: float = 0.0,
+        sgl_repetition_penalty: float = 1.0,
+        sgl_min_new_tokens: int = 0,
+        sgl_n: int = 1,
+        sgl_json_schema: Optional[str] = None,
+        sgl_regex: Optional[str] = None,
+        sgl_ebnf: Optional[str] = None,
+        sgl_structural_tag: Optional[str] = None,
+        sgl_ignore_eos: bool = False,
+        sgl_skip_special_tokens: bool = True,
+        sgl_spaces_between_special_tokens: bool = True,
+        sgl_no_stop_trim: bool = False,
+        sgl_custom_params: Optional[Dict[str, Any]] = None,
+        sgl_stream_interval: Optional[int] = None,
+        sgl_logit_bias: Optional[Dict[str, float]] = None,
+        **kwargs
+    ):
         self.logger = get_logger()
         if hf_model_name_or_path is None:
             raise ValueError("hf_model_name_or_path is required") 
@@ -168,15 +246,39 @@ class LocalModelLLMServing_sglang(LLMServingABC):
             raise ImportError("please install sglang first like 'pip install open-dataflow[sglang]'")
         self.llm = sgl.Engine(
             model_path=self.real_model_path,
+            tp_size=sgl_tp_size,
+            dp_size=sgl_dp_size,
+            mem_fraction_static=sgl_mem_fraction_static,  # memory fraction for static memory allocation
         )
         self.sampling_params = {
+            "max_new_tokens": sgl_max_new_tokens,
+            "stop": sgl_stop,
+            "stop_token_ids": sgl_stop_token_ids,
             "temperature": sgl_temperature,
             "top_p": sgl_top_p,
-            # "max_tokens": sgl_max_tokens,
-            # "top_k": sgl_top_k,
-            # "repetition_penalty": sgl_repetition_penalty,
-            # "seed": sgl_seed
+            "top_k": sgl_top_k,
+            "min_p": sgl_min_p,
+            "frequency_penalty": sgl_frequency_penalty,
+            "presence_penalty": sgl_presence_penalty,
+            "repetition_penalty": sgl_repetition_penalty,
+            "min_new_tokens": sgl_min_new_tokens,
+            "n": sgl_n,
+            "json_schema": sgl_json_schema,
+            "regex": sgl_regex,
+            "ebnf": sgl_ebnf,
+            "structural_tag": sgl_structural_tag,
+            "ignore_eos": sgl_ignore_eos,
+            "skip_special_tokens": sgl_skip_special_tokens,
+            "spaces_between_special_tokens": sgl_spaces_between_special_tokens,
+            "no_stop_trim": sgl_no_stop_trim,
+            "custom_params": sgl_custom_params,
+            "stream_interval": sgl_stream_interval,
+            "logit_bias": sgl_logit_bias,
+            **kwargs
         }
+        # remove all keys equal to None
+        self.sampling_params = {k: v for k, v in self.sampling_params.items() if v is not None}
+
         self.tokenizer = AutoTokenizer.from_pretrained(self.real_model_path, cache_dir=hf_cache_dir)
         self.logger.success(f"Model loaded from {self.real_model_path} by SGLang backend")
 
@@ -184,8 +286,25 @@ class LocalModelLLMServing_sglang(LLMServingABC):
                             user_inputs: list[str], 
                             system_prompt: str = "You are a helpful assistant"
                             ) -> list[str]:
-        full_prompts = [system_prompt + '\n' + question for question in user_inputs]
-        responses = self.llm.generate(full_prompts, self.sampling_params)
+        
+        full_prompts = []
+        for question in user_inputs:
+            messages = [
+            {"role": "system", "content": system_prompt},
+            {"role": "user", "content": question}
+        ]
+            full_prompts.append(messages)
+        full_template = self.tokenizer.apply_chat_template(
+            full_prompts,
+            tokenize=False,
+            add_generation_prompt=True,
+            enable_thinking=True,  # Set to False to strictly disable thinking
+        )
+        try: 
+            responses = self.llm.generate(full_template, self.sampling_params)
+        except Exception as e:
+            self.logger.error(f"Error during Sglang Backend generation, please check your parameters.: {e}")
+            raise e
 
         return [output['text'] for output in responses]
     
@@ -195,3 +314,4 @@ class LocalModelLLMServing_sglang(LLMServingABC):
         import gc;
         gc.collect()
         torch.cuda.empty_cache()
+        

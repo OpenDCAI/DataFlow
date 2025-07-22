@@ -31,7 +31,28 @@ class SuperfilteringScorer(OperatorABC):
 
     @staticmethod
     def get_desc(lang: str = "zh"):
-        return "使用 Superfiltering 方法评估指令的跟随难度，得分越高表示指令越难跟随。" if lang == "zh" else "Evaluate follow difficulty of instructions using Superfiltering."
+        if lang == "zh":
+            return (
+                "使用Superfiltering方法评估指令的跟随难度，基于GPT-2模型计算条件困惑度与独立困惑度的比值，得分越高表示指令越难跟随。" 
+                "该方法通过比较指令条件下的响应困惑度与独立响应困惑度，评估指令的清晰度和跟随难度。\n" 
+                "输入参数：\n" 
+                "- instruction: 指令文本\n" 
+                "- input_text: 输入文本（可选）\n" 
+                "- output: 响应文本\n" 
+                "输出参数：\n" 
+                "- float: 困惑度比值，越高表示指令跟随难度越大"
+            )
+        else:
+            return (
+                "Evaluate the follow difficulty of instructions using the Superfiltering method, which calculates the ratio of conditional perplexity to independent perplexity based on the GPT-2 model. " 
+                "Higher scores indicate greater difficulty in following the instruction. This method assesses instruction clarity and follow difficulty by comparing response perplexity under instruction conditions with independent response perplexity.\n" 
+                "Input parameters:\n" 
+                "- instruction: Instruction text\n" 
+                "- input_text: Input text (optional)\n" 
+                "- output: Response text\n" 
+                "Output parameters:\n" 
+                "- float: Perplexity ratio, higher values indicate greater instruction following difficulty"
+            )
 
     def inference(self, instruction, input_text, output):
         PROMPT_DICT_NONE = {
@@ -100,4 +121,4 @@ class SuperfilteringScorer(OperatorABC):
         dataframe = storage.read("dataframe") 
         scores = self.eval(dataframe, input_instruction_key, input_input_key, input_output_key)
         dataframe[output_key] = scores
-        storage.write(dataframe) 
+        storage.write(dataframe)

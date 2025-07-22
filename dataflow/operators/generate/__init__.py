@@ -25,10 +25,13 @@ if TYPE_CHECKING:
 
     # KnowledgeCleaning
     from .KnowledgeCleaning.corpus_text_splitter import CorpusTextSplitter
-    from .KnowledgeCleaning.knowledge_extractor import KnowledgeExtractor
-    from .KnowledgeCleaning.pdf_extractor import PDFExtractor
+    from .KnowledgeCleaning.corpus_text_splitter_batch import CorpusTextSplitterBatch
+    from .KnowledgeCleaning.file_or_url_to_markdown_converter import FileOrURLToMarkdownConverter
+    from .KnowledgeCleaning.file_or_url_to_markdown_converter_batch import FileOrURLToMarkdownConverterBatch
     from .KnowledgeCleaning.knowledge_cleaner import KnowledgeCleaner
+    from .KnowledgeCleaning.knowledge_cleaner_batch import KnowledgeCleanerBatch
     from .KnowledgeCleaning.multihop_qa_generator import MultiHopQAGenerator
+    from .KnowledgeCleaning.multihop_qa_generator_batch import MultiHopQAGeneratorBatch
 
     # AgenticRAG
     from .AgenticRAG.auto_prompt_generator import AutoPromptGenerator
@@ -37,6 +40,7 @@ if TYPE_CHECKING:
     from .AgenticRAG.atomic_task_generator import AtomicTaskGenerator
     from .AgenticRAG.depth_qa_generator import DepthQAGenerator
     from .AgenticRAG.width_qa_generator import WidthQAGenerator
+    from .KnowledgeCleaning.mathbook_question_extract import MathBookQuestionExtract
 
     # RARE
     from .RARE.doc_to_query import Doc2Query

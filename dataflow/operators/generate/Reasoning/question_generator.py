@@ -1,56 +1,66 @@
-from dataflow.prompts.reasoning import QuestionSynthesisPrompt
-import pandas as pd
-import random
+from dataflow.prompts.reasoning.diy import DiyQuestionSynthesisPrompt
 from dataflow.utils.registry import OPERATOR_REGISTRY
 from dataflow import get_logger
-
 from dataflow.utils.storage import DataFlowStorage
 from dataflow.core import OperatorABC
 from dataflow.core import LLMServingABC
+import pandas as pd
+import random
+from dataflow.prompts.reasoning.math import MathQuestionSynthesisPrompt
 
 @OPERATOR_REGISTRY.register()
 class QuestionGenerator(OperatorABC):
-    def __init__(self, 
-                 num_prompts: int = 1,
-                 llm_serving: LLMServingABC = None
+    def __init__(self,
+                num_prompts: int = 1,
+                llm_serving: LLMServingABC = None,
+                prompt_template = None,
                 ):
         """
         Initialize the QuestionGenerator with the provided configuration.
         """
         self.logger = get_logger()
-        self.prompts = QuestionSynthesisPrompt()
+        
+        if prompt_template is None:
+            prompt_template = MathQuestionSynthesisPrompt()
+        self.prompts = prompt_template
         self.num_prompts = num_prompts
         self.llm_serving = llm_serving
 
         if self.num_prompts not in range(1,6):
-            raise ValueError("num_prompts must be an integer between 1 and 5 (inclusive)")
-
-    def check_config(self, config: dict) -> None:
-        required_keys = ['input_file', 'output_file', 'generator_type']
-        missing_keys = [key for key in required_keys if key not in config]
-        if missing_keys:
-            raise ValueError(f"Missing required config keys: {missing_keys}")
+            self.logger.debug("num_prompts must be an integer between 1 and 5 (inclusive)")
 
     @staticmethod
     def get_desc(lang: str = "zh"):
         if lang == "zh":
             return (
-                "该算子用于基于现有问题生成新问题。\n\n"
+                "该算子用于基于现有问题生成新问题。\n"
                 "输入参数：\n"
-                "- eval_stage：评估阶段标识\n"
-                "- read_min/max_score：分数过滤阈值\n"
-                "- 其他参数同基础分类器\n\n"
+                "- num_prompts：生成问题的数量，整数，范围1-5（含），默认1\n"
+                "- llm_serving：LLM服务实例，用于生成问题\n"
+                "- prompt_template：提示模板对象，用于构建生成提示词\n"
                 "输出参数：\n"
-                "- generated_questions：生成的新问题列表（每个原问题生成1-5个）"
+                "- 原始输入列（由input_key指定）：新增生成的问题\n"
+                "- Synth_or_Input：标识问题来源，'input'表示原始问题，'synth'表示生成的新问题"
+            )
+        elif lang == "en":
+            return (
+                "Generates new questions based on existing ones. \n"
+                "Input Parameters:\n"
+                "- num_prompts: Number of questions to generate per input, integer between 1-5 (inclusive), default 1\n"
+                "- llm_serving: LLM serving instance for question generation\n"
+                "- prompt_template: Prompt template object for constructing generation prompts\n"
+                "Output Parameters:\n"
+                "- Original input column (specified by input_key): Contains newly generated questions\n"
+                "- Synth_or_Input: Indicates question source, 'input' for original questions, 'synth' for generated questions"
             )
         elif lang == "en":
             return (
                 "Generates new questions based on existing ones. "
-                "Produces 1-5 new questions per original question.\n\n"
+                "Produces 1-5 new questions per original question.\n"
                 "Input Parameters:\n"
                 "- eval_stage: Evaluation stage identifier\n"
                 "- read_min/max_score: Score filtering thresholds\n"
-                "- Other params same as base classifier\n\n"
+                "- Other params same as base classifier\n"
                 "Output Parameters:\n"
                 "- generated_questions: List of newly generated questions"
             )
@@ -81,15 +91,23 @@ class QuestionGenerator(OperatorABC):
         ]
 
         formatted_prompts = []
+
         for question in dataframe[self.input_key]:
             if self.num_prompts == 0:
                 formatted_prompts.append("")  # Skip generating for this question
             else:
+                if not isinstance(self.prompts, DiyQuestionSynthesisPrompt):
                 # Randomly choose the required number of transformations from diversity_mode
-                selected_items = random.sample(diversity_mode, self.num_prompts)
-                for selected_item in selected_items:
-                    used_prompt = self.prompts.question_synthesis_prompt(selected_item, question)
-                    formatted_prompts.append(used_prompt.strip())
+                    selected_items = random.sample(diversity_mode, self.num_prompts)
+                    for selected_item in selected_items:
+                        used_prompt = self.prompts.build_prompt(selected_item, question)
+                        formatted_prompts.append(used_prompt.strip())
+                else: ### diy prompt
+                    try:
+                        used_prompt = self.prompts.build_prompt(question=question)
+                        formatted_prompts.append(used_prompt.strip())
+                    except:
+                        self.logger.debug(f"Please check if the symbol {{question}} in prompt is missing.")
 
         return formatted_prompts
 

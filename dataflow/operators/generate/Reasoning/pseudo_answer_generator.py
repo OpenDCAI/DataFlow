@@ -5,7 +5,7 @@ import pandas as pd
 from dataflow.utils.storage import DataFlowStorage
 from dataflow.core import OperatorABC
 
-from dataflow.prompts.reasoning import AnswerGeneratorPrompt
+from dataflow.prompts.reasoning.math import MathAnswerGeneratorPrompt
 from dataflow.core import LLMServingABC
 from dataflow.utils.reasoning.AnswerExtraction import StringCleaner, UnitTextManager, AnswerExtractor
 
@@ -16,7 +16,7 @@ class PseudoAnswerGenerator(OperatorABC):
     '''
     def __init__(self, llm_serving: LLMServingABC = None, max_times: int = 3):
         self.logger = get_logger()
-        self.prompts = AnswerGeneratorPrompt()
+        self.prompts = MathAnswerGeneratorPrompt()
         self.llm_serving = llm_serving
         self.max_times = max_times
         

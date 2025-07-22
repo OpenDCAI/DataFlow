@@ -37,7 +37,7 @@ class CoTGenerator(OperatorABC):
     def get_desc(lang):
         if lang == "zh":
             return (
-                "该算子生成SQL的CoT长链路推理过程。\n\n"
+                "对于每个条目，生成从自然语言问题和数据库Schema到SQL的CoT长链路推理过程。\n\n"
                 "输入参数：\n"
                 "- input_sql_key: 输入SQL列名\n"
                 "- input_question_key: 输入问题列名\n"
@@ -47,7 +47,7 @@ class CoTGenerator(OperatorABC):
             )
         elif lang == "en":
             return (
-                "This operator generates CoT for SQL with long chain reasoning.\n\n"
+                "This operator generates CoT for SQL with long chain reasoning from natural language questions and database schemas.\n\n"
                 "Input parameters:\n"
                 "- input_sql_key: The name of the input SQL column\n"
                 "- input_question_key: The name of the input question column\n"

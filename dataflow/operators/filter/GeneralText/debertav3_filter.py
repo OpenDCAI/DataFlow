@@ -21,7 +21,34 @@ class DebertaV3Filter(OperatorABC):
     
     @staticmethod
     def get_desc(lang: str = "zh"):
-        return "基于DebertaV3Scorer打分器的得分对数据进行过滤。基于 Nvidia Deberta V3 模型的质量分类器，用于评估文本质量。" if lang == "zh" else "Filter data using scores from the DebertaV3Scorer. Text quality classifier based on Nvidia Deberta V3."
+        if lang == "zh":
+            return (
+                "基于DebertaV3Scorer打分器的得分对数据进行过滤。使用Nvidia Deberta V3模型的质量分类器评估文本质量。\n\n"
+                "初始化参数：\n"
+                "- allowed_scores: 允许通过的分数列表，默认为['Medium', 'High']\n"
+                "- model_name: 模型名称，默认为'nvidia/quality-classifier-deberta'\n"
+                "- model_cache_dir: 模型缓存目录，默认为'./dataflow_cache'\n"
+                "- device: 运行设备，默认为'cuda'\n"
+                "- batch_size: 批处理大小，默认为16\n\n"
+                "运行参数：\n"
+                "- input_key: 输入文本字段名\n"
+                "- output_key: 输出分数字段名，默认为'Debertav3Score'\n\n"
+                "过滤逻辑：保留分类结果在allowed_scores列表中的数据"
+            )
+        else:
+            return (
+                "Filter data using scores from the DebertaV3Scorer. Evaluate text quality using Nvidia Deberta V3 model-based quality classifier.\n\n"
+                "Initialization Parameters:\n"
+                "- allowed_scores: List of allowed scores, default is ['Medium', 'High']\n"
+                "- model_name: Model name, default is 'nvidia/quality-classifier-deberta'\n"
+                "- model_cache_dir: Model cache directory, default is './dataflow_cache'\n"
+                "- device: Running device, default is 'cuda'\n"
+                "- batch_size: Batch size, default is 16\n\n"
+                "Run Parameters:\n"
+                "- input_key: Input text field name\n"
+                "- output_key: Output score field name, default is 'Debertav3Score'\n\n"
+                "Filter Logic: Keep data with classification results in allowed_scores list"
+            )
         
     def run(self, storage: DataFlowStorage, input_key: str, output_key: str = 'Debertav3Score'):
         self.input_key = input_key

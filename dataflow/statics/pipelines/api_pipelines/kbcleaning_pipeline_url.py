@@ -1,13 +1,13 @@
 from dataflow.operators.generate import (
     CorpusTextSplitter,
-    KnowledgeExtractor,
+    FileOrURLToMarkdownConverter,
     KnowledgeCleaner,
     MultiHopQAGenerator,
 )
 from dataflow.utils.storage import FileStorage
 from dataflow.serving import APILLMServing_request
 
-class KBCleaningPipeline():
+class KBCleaningURL_APIPipeline():
     def __init__(self):
 
         self.storage = FileStorage(
@@ -17,15 +17,16 @@ class KBCleaningPipeline():
             cache_type="json",
         )
 
-        api_llm_serving = APILLMServing_request(
+        self.llm_serving = APILLMServing_request(
                 api_url="https://api.openai.com/v1/chat/completions",
                 model_name="gpt-4o",
                 max_workers=100
         )
 
-        self.knowledge_cleaning_step1 = KnowledgeExtractor(
+        self.knowledge_cleaning_step1 = FileOrURLToMarkdownConverter(
             intermediate_dir="../example_data/KBCleaningPipeline/raw/",
-            lang="en"
+            lang="en",
+            mineru_backend="vlm-sglang-engine",
         )
 
         self.knowledge_cleaning_step2 = CorpusTextSplitter(
@@ -35,12 +36,12 @@ class KBCleaningPipeline():
         )
 
         self.knowledge_cleaning_step3 = KnowledgeCleaner(
-            llm_serving=api_llm_serving,
+            llm_serving=self.llm_serving,
             lang="en"
         )
 
         self.knowledge_cleaning_step4 = MultiHopQAGenerator(
-            llm_serving=api_llm_serving,
+            llm_serving=self.llm_serving,
             lang="en"
         )
 
@@ -70,6 +71,6 @@ class KBCleaningPipeline():
         )
 
 if __name__ == "__main__":
-    model = KBCleaningPipeline()
+    model = KBCleaningURL_APIPipeline()
     model.forward(url="https://trafilatura.readthedocs.io/en/latest/quickstart.html")
 

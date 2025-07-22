@@ -33,7 +33,7 @@ class ExecutionClassifier(OperatorABC):
     def get_desc(lang):
         if lang == "zh":
             return (
-                "该算子评估SQL的执行难度。\n\n"
+                "让模型根据自然语言问题、数据库Schema和提示词，多次生成SQL，通过生成SQL的准确率，评估该问题对于模型的难度。\n\n"
                 "输入参数：\n"
                 "- input_db_id_key: 输入数据库ID列名\n"
                 "- input_sql_key: 输入SQL列名\n"
@@ -43,7 +43,7 @@ class ExecutionClassifier(OperatorABC):
             )
         elif lang == "en":
             return (
-                "This operator evaluates the execution difficulty of SQL.\n\n"
+                "This operator evaluates the difficulty of SQL generation for a question based on the accuracy of generated SQLs.\n\n"
                 "Input parameters:\n"
                 "- input_db_id_key: The name of the input database ID column\n"
                 "- input_sql_key: The name of the input SQL column\n"
