@@ -262,7 +262,7 @@ async def chatagent_stream(req: ChatAgentRequest):
 
                 # ⑤ 心跳
                 if now - last_ping > 2:
-                    yield b'data: {"event":"ping","message":"processing"}\n\n'
+                    yield b'data: {"event":"ping","message":"processing......"}\n\n'
                     last_ping = now
 
                 await asyncio.sleep(0.2)   # 主循环节拍
