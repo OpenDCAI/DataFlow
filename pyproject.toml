@@ -71,4 +71,5 @@ agent = [
     "requests",
     "termcolor",
     "uvicorn",
+    "sseclient-py",
 ]

@@ -62,3 +62,4 @@ pyyaml
 requests
 termcolor
 uvicorn
+sseclient-py

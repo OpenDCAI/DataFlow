@@ -43,17 +43,32 @@ import json
 from .tools import get_operator_content,get_operator_descriptions
 from .tools import ChatAgentRequest
  
-def post_process_save_op_code(request: ChatAgentRequest,
-                              last_result: Dict[str, Any],
-                              **kwargs) -> None:
+def post_process_save_op_code(
+    request: ChatAgentRequest,
+    last_result: Dict[str, Any],
+    **kwargs
+) -> Dict[str, Union[str, int]]:
     try:
         code: str = last_result["code"]
-    except KeyError: 
-        raise ValueError("The `last_result` dictionary is missing the 'code' key; unable to save the code.")
-    py_path = Path(request.py_path)     
-    py_path.parent.mkdir(parents=True, exist_ok=True)  # Ensure the parent directory exists
-    py_path.write_text(code, encoding="utf-8")         # Write the code to the specified file path
-    
+        py_path = Path(request.py_path).expanduser().resolve()
+        py_path.parent.mkdir(parents=True, exist_ok=True)
+        bytes_written = py_path.write_text(code, encoding="utf-8")
+
+        return {
+            "status": "success",
+            "path": str(py_path),
+            "size": bytes_written,
+        }
+    except KeyError:
+        return {
+            "status": "error",
+            "message": "The `last_result` dictionary is missing the 'code' key; unable to save the code."
+        }
+    except Exception as e:
+        return {
+            "status": "error",
+            "message": f"Failed to save code: {repr(e)}"
+        }
 
 def post_process_combine_pipeline_result(
         last_result: Dict[str, Any],

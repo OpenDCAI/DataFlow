@@ -15,7 +15,7 @@ from dataflow.utils.text2sql.database_manager import DatabaseManager
 
 
 @OPERATOR_REGISTRY.register()
-class QuestionGeneration(OperatorABC):
+class Text2SQLQuestionGenerator(OperatorABC):
     def __init__(self, 
                 llm_serving: LLMServingABC, 
                 embedding_serving: LLMServingABC, 
@@ -118,7 +118,7 @@ class QuestionGeneration(OperatorABC):
         raw_data = []
         
         if self.output_question_key in raw_dataframe.columns:
-            for idx, row in raw_dataframe.iterrows():
+            for _, row in raw_dataframe.iterrows():
                 if pd.notna(row.get(self.output_question_key)) and row.get(self.output_question_key) is not None:
                     existing_data.append(row.to_dict())
                 else:

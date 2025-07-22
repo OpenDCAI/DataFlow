@@ -17,10 +17,10 @@ if TYPE_CHECKING:
     from .Reasoning.pretrain_format_converter import PretrainFormatConverter
 
     # Text2SQL
-    from .Text2SQL.text2sql_prompt_generator import PromptGenerator
-    from .Text2SQL.text2sql_question_generator import QuestionGeneration
+    from .Text2SQL.text2sql_prompt_generator import Text2SQLPromptGenerator
+    from .Text2SQL.text2sql_question_generator import Text2SQLQuestionGenerator
+    from .Text2SQL.text2sql_cot_generator import Text2SQLCoTGenerator
     from .Text2SQL.sql_variation_generator import SQLVariationGenerator
-    from .Text2SQL.sql_cot_generator import CoTGenerator
     from .Text2SQL.sql_generator import SQLGenerator
 
     # KnowledgeCleaning

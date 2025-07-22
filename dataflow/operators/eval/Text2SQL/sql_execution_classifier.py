@@ -13,8 +13,13 @@ from dataflow.utils.text2sql.database_manager import DatabaseManager
 
 
 @OPERATOR_REGISTRY.register()
-class ExecutionClassifier(OperatorABC):
-    def __init__(self, llm_serving: LLMServingABC, database_manager: DatabaseManager, difficulty_config: dict | None = None, num_generations: int = 10):
+class SQLExecutionClassifier(OperatorABC):
+    def __init__(self, 
+                llm_serving: LLMServingABC, 
+                database_manager: DatabaseManager, 
+                difficulty_config: dict | None = None, 
+                num_generations: int = 10,
+                timeout: float = 5.0):
         self.llm_serving = llm_serving     
         self.database_manager = database_manager
         if difficulty_config is None:
@@ -25,6 +30,7 @@ class ExecutionClassifier(OperatorABC):
         else:
             self.difficulty_config = difficulty_config
         self.num_generations = num_generations
+        self.timeout = timeout
         self.logger = get_logger()
         if len(self.difficulty_config['thresholds']) != len(self.difficulty_config['labels']) - 1:
             raise ValueError("Thresholds and labels configuration mismatch")
@@ -73,65 +79,121 @@ class ExecutionClassifier(OperatorABC):
             return ""
 
     @staticmethod
-    def execute_model(predicted_sqls, ground_truth, database_manager, db_id, idx, meta_time_out, logger):
-        results = []
-        cnt_true = 0
+    def execute_model_batch(predicted_sqls_list, ground_truth_list, database_manager, db_ids, idxs, meta_time_out, logger):
+        comparisons = []
+        sql_mapping = {}
+        
+        comparison_idx = 0
+        for i, (predicted_sqls, ground_truth, db_id, idx) in enumerate(zip(predicted_sqls_list, ground_truth_list, db_ids, idxs)):
+            for j, predicted_sql in enumerate(predicted_sqls):
+                comparison = {
+                    'db_id': db_id,
+                    'sql1': predicted_sql,
+                    'sql2': ground_truth,
+                    'timeout': meta_time_out,
+                    'operation_id': f"compare_{comparison_idx}"
+                }
+                comparisons.append(comparison)
+                sql_mapping[comparison_idx] = {
+                    'original_idx': i,
+                    'sql_idx': j,
+                    'idx': idx,
+                    'sql': predicted_sql
+                }
+                comparison_idx += 1
+        
         try:
-            for predicted_sql in predicted_sqls:
-                res = 0
-                try:
-                    ans = database_manager.compare_sql(db_id, predicted_sql, ground_truth, meta_time_out)
-                        
-                    if ans:
-                        res = 1
-                        cnt_true += 1
-                    result = {'res': res, 'sql': predicted_sql}
-                except KeyboardInterrupt:
-                    sys.exit(0)
-                except Exception as e:
-                    result = {'res': 0, 'sql': predicted_sql, 'error': str(e)}
-                    
-                results.append(result)
-
-        except KeyboardInterrupt:
-            logger.info("KeyboardInterrupt")
-            sys.exit(0)
+            batch_results = database_manager.batch_compare_sql(comparisons)
         except Exception as e:
-            logger.warning(f"Unexpected error when processing question {idx}: {e}")
-            cnt_true = -1
-            for predicted_sql in predicted_sqls:
-                result = {'res': 0, 'sql': predicted_sql, 'error': 'unexpected_error'}
-                results.append(result)
+            logger.error(f"Batch comparison failed: {e}")
+            results = []
+            for i, (predicted_sqls, _, _, idx) in enumerate(zip(predicted_sqls_list, ground_truth_list, db_ids, idxs)):
+                result_data = []
+                for predicted_sql in predicted_sqls:
+                    result_data.append({'res': 0, 'sql': predicted_sql, 'error': 'batch_execution_failed'})
+                results.append({"idx": idx, "cnt_true": -1, "results": result_data})
+            return results
+        
+        results = {}
+        for i, (predicted_sqls, _, _, idx) in enumerate(zip(predicted_sqls_list, ground_truth_list, db_ids, idxs)):
+            results[i] = {
+                "idx": idx,
+                "cnt_true": 0,
+                "results": [None] * len(predicted_sqls)
+            }
+        
+        for batch_idx, batch_result in enumerate(batch_results):
+            if batch_idx in sql_mapping:
+                mapping = sql_mapping[batch_idx]
+                original_idx = mapping['original_idx']
+                sql_idx = mapping['sql_idx']
+                
+                if batch_result.success:
+                    res = 1 if batch_result.data else 0
+                    if res == 1:
+                        results[original_idx]["cnt_true"] += 1
+                    result_item = {'res': res, 'sql': mapping['sql']}
+                else:
+                    result_item = {'res': 0, 'sql': mapping['sql'], 'error': batch_result.error or 'unknown_error'}
+                
+                results[original_idx]["results"][sql_idx] = result_item
+        
+        return [results[i] for i in sorted(results.keys())]
 
-        return {"idx": idx, "cnt_true": cnt_true, "results": results}
-    
     def run_sqls_parallel(self, datas, database_manager, num_cpus, meta_time_out):
-        pbar = tqdm(total=len(datas), desc="Executing SQLs")
+        # pbar = tqdm(total=len(datas), desc="Executing SQLs")
         exec_result = []
 
-        def wrap_task(data_pair, idx):
+        predicted_sqls_list = []
+        ground_truth_list = []
+        db_ids = []
+        idxs = []
+        
+        for i, data_pair in enumerate(datas):
             predicted_sqls = data_pair[self.output_predicted_sqls_key]
             ground_truth = data_pair[self.input_sql_key]
             db_id = data_pair[self.input_db_id_key].replace('\n', '')
             db_id = re.sub(r'[^A-Za-z0-9_]', '', db_id)
-            return ExecutionClassifier.execute_model(predicted_sqls, ground_truth, database_manager, db_id, idx, meta_time_out, self.logger)
-
+            
+            predicted_sqls_list.append(predicted_sqls)
+            ground_truth_list.append(ground_truth)
+            db_ids.append(db_id)
+            idxs.append(i)
+        
+        # batch_size = max(1, len(datas) // num_cpus) if num_cpus > 1 else len(datas)
+        batch_size = len(datas)
+        
+        def process_batch(batch_data):
+            batch_predicted_sqls, batch_ground_truth, batch_db_ids, batch_idxs = batch_data
+            return SQLExecutionClassifier.execute_model_batch(
+                batch_predicted_sqls, batch_ground_truth, database_manager, 
+                batch_db_ids, batch_idxs, self.timeout, self.logger
+            )
+        
+        batches = []
+        for i in range(0, len(datas), batch_size):
+            end_idx = min(i + batch_size, len(datas))
+            batch = (
+                predicted_sqls_list[i:end_idx],
+                ground_truth_list[i:end_idx],
+                db_ids[i:end_idx],
+                idxs[i:end_idx]
+            )
+            batches.append(batch)
+        
         with ThreadPoolExecutor(max_workers=num_cpus) as executor:
-            futures = [
-                executor.submit(wrap_task, data_pair, i)
-                for i, data_pair in enumerate(datas)
-            ]
-
+            futures = [executor.submit(process_batch, batch) for batch in batches]
+            
             for future in as_completed(futures):
                 try:
-                    result = future.result()
-                    exec_result.append(result)
+                    batch_results = future.result()
+                    exec_result.extend(batch_results)
+                    # pbar.update(len(batch_results))
                 except Exception as e:
-                    self.logger.error(f"Error in SQL execution: {e}")
-                    exec_result.append(None)
-                pbar.update()
+                    self.logger.warning(f"Error in batch SQL execution: {e}")
+                    # pbar.update(batch_size)
 
-        pbar.close()
+        # pbar.close()
         return exec_result
 
     def sort_results(self, list_of_dicts):

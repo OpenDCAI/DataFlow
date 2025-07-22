@@ -11,12 +11,13 @@ from dataflow.utils.text2sql.database_manager import DatabaseManager
 
 
 @OPERATOR_REGISTRY.register()
-class CoTGenerator(OperatorABC):
+class Text2SQLCoTGenerator(OperatorABC):
     def __init__(self, llm_serving: LLMServingABC, 
                 database_manager: DatabaseManager,
                 schema_config: Optional[Dict] = None,
                 max_retries: int = 3,
-                enable_retry: bool = True
+                enable_retry: bool = True,
+                timeout: int = 5
                  ):
         self.llm_serving = llm_serving
         self.database_manager = database_manager
@@ -31,6 +32,7 @@ class CoTGenerator(OperatorABC):
             self.schema_config = schema_config
         self.max_retries = max_retries
         self.enable_retry = enable_retry
+        self.timeout = timeout
         self._validate_config()
 
     @staticmethod
@@ -144,20 +146,65 @@ class CoTGenerator(OperatorABC):
             
             cot_responses = self.llm_serving.generate_from_input(prompts, "")
             
-            current_round_failed = []
+            comparisons = []
+            valid_items_with_responses = []
+            
             for item, response in zip(failed_items, cot_responses):
                 db_id = item.get(self.input_db_id_key)
                 gold_sql = item.get(self.input_sql_key)
-                parsed_response, success = self._parse_response(response, gold_sql, db_id)
+                generated_sql = self.extract_sql(response)
                 
-                if success and parsed_response:
-                    results.append({
-                        **item,
-                        self.output_cot_key: response
+                if generated_sql:
+                    comparisons.append({
+                        'db_id': db_id,
+                        'sql1': generated_sql,
+                        'sql2': gold_sql,
+                        'timeout': self.timeout,
+                        'operation_id': f"{db_id}_{len(valid_items_with_responses)}"
                     })
-                    self.logger.debug(f"Successfully processed {db_id} (Round {retry_round + 1})")
-                else:
-                    current_round_failed.append(item)
+                    valid_items_with_responses.append((item, response, generated_sql))
+            
+            if comparisons:
+                try:
+                    batch_results = self.database_manager.batch_compare_sql(comparisons)
+                    
+                    current_round_failed = []
+                    for (item, response, generated_sql), batch_result in zip(valid_items_with_responses, batch_results):
+                        db_id = item.get(self.input_db_id_key)
+                        
+                        if batch_result.success and batch_result.data:
+                            results.append({
+                                **item,
+                                self.output_cot_key: response
+                            })
+                            self.logger.debug(f"Successfully processed {db_id} (Round {retry_round + 1})")
+                        else:
+                            current_round_failed.append(item)
+                            if batch_result.error:
+                                self.logger.debug(f"SQL comparison failed for {db_id}: {batch_result.error}")
+                    
+                    for item, response in zip(failed_items, cot_responses):
+                        if item not in [valid_item for valid_item, _, _ in valid_items_with_responses]:
+                            current_round_failed.append(item)
+                            
+                except Exception as e:
+                    self.logger.error(f"Batch SQL comparison failed: {e}")
+                    current_round_failed = []
+                    for item, response in zip(failed_items, cot_responses):
+                        db_id = item.get(self.input_db_id_key)
+                        gold_sql = item.get(self.input_sql_key)
+                        parsed_response, success = self._parse_response(response, gold_sql, db_id)
+                        
+                        if success and parsed_response:
+                            results.append({
+                                **item,
+                                self.output_cot_key: response
+                            })
+                            self.logger.debug(f"Successfully processed {db_id} (Round {retry_round + 1})")
+                        else:
+                            current_round_failed.append(item)
+            else:
+                current_round_failed = failed_items
             
             failed_items = current_round_failed
             self.logger.info(f"Text2SQL CoT Generation: Round {retry_round + 1} completed, Success: {len(results)}, Failed: {len(failed_items)}")

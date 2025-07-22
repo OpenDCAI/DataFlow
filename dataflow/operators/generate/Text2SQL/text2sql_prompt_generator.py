@@ -10,7 +10,7 @@ from dataflow.utils.text2sql.database_manager import DatabaseManager
 
 
 @OPERATOR_REGISTRY.register()
-class PromptGenerator(OperatorABC):
+class Text2SQLPromptGenerator(OperatorABC):
     def __init__(self, 
                 database_manager: DatabaseManager,
                 prompt_template: str = "",

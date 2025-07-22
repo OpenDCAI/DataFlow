@@ -174,6 +174,7 @@ class AnalysisService:
                     valid_tasks = self.cfg.operator_tasks
                 self.tasks = [t for t in self.tasks if t.task_name in valid_tasks]
                 self.memory.set_session_data(session_id, "intent_router", formatted_context)
+                self.memory.set_session_data(session_id, "_actual_tasks",[t.task_name for t in self.tasks])
                 idx = 0 
                 continue
             # ---------- end router ----------
@@ -181,11 +182,12 @@ class AnalysisService:
                 last_result = task.task_result_processor(**self.post_porcess_args)
             idx += 1
             logger.info(f"[The final execution result (the result passed to the next task)]:{last_result}")
-            self.memory.set_session_data(session_id,f'{task.task_name}',last_result)
+            self.memory.set_session_data(session_id, task.task_name, last_result)
+            logger.info(f'mem.get:{self.memory.get_session_data(session_id, task.task_name)}')
         self.memory.add_messages(session_id, [{"role": "user", "content": request.target}])
         # self.memory.add_response(session_id, {"role": "assistant", "content": last_result})
         self.memory.set_session_data(session_id, 'last_result', last_result)
-        self.memory.set_session_data(session_id, 'task_results', self.task_results)
+        # self.memory.set_session_data(session_id, 'task_results', self.task_results)
         payload = self._build_final_chain_payload(request, last_result)
         info = await self._call_llm_api(payload)
         self.memory.add_response(session_id, {"role": "assistant", "content": info})

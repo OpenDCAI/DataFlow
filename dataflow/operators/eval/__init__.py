@@ -36,8 +36,8 @@ if TYPE_CHECKING:
 
     from .AgenticRAG.f1_scorer import F1Scorer
 
-    from .Text2SQL.sql_component_classifier import ComponentClassifier
-    from .Text2SQL.sql_execution_classifier import ExecutionClassifier
+    from .Text2SQL.sql_component_classifier import SQLComponentClassifier
+    from .Text2SQL.sql_execution_classifier import SQLExecutionClassifier
 
 else:
     import sys

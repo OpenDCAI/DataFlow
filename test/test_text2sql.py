@@ -1,15 +1,15 @@
 from dataflow.operators.generate import (
     SQLGenerator,
-    QuestionGeneration,
-    PromptGenerator,
-    CoTGenerator
+    Text2SQLQuestionGenerator,
+    Text2SQLPromptGenerator,
+    Text2SQLCoTGenerator
 )
 from dataflow.operators.filter import (
-    ExecutionFilter
+    SQLExecutionFilter
 )
 from dataflow.operators.eval import (
-    ComponentClassifier,
-    ExecutionClassifier
+    SQLComponentClassifier,
+    SQLExecutionClassifier
 )
 from dataflow.utils.storage import FileStorage
 from dataflow.serving import APILLMServing_request, LocalModelLLMServing_vllm
@@ -20,27 +20,27 @@ class Text2SQLPipeline():
     def __init__(self):
 
         self.storage = FileStorage(
-            first_entry_file_name="../example_data/ReasoningPipeline/pipeline_gen.json",
+            first_entry_file_name="",
             cache_path="./cache",
             file_name_prefix="dataflow_cache_step",
             cache_type="jsonl",
         )
 
-        api_llm_serving = APILLMServing_request(
-            api_url="https://api.openai.com/v1/chat/completions",
+        self.llm_serving = APILLMServing_request(
+            api_url="http://api.openai.com/v1/chat/completions",
             model_name="gpt-4o",
             max_workers=100
         )
 
         # It is recommended to use better LLMs for the generation of Chain-of-Thought (CoT) reasoning process.
         cot_generation_api_llm_serving = APILLMServing_request(
-            api_url="https://api.openai.com/v1/chat/completions",
+            api_url="http://api.openai.com/v1/chat/completions",
             model_name="gpt-4o", # You can change to a more powerful model for CoT generation
             max_workers=100
         )
 
         embedding_serving = APILLMServing_request(
-            api_url="https://api.openai.com/v1/embeddings",
+            api_url="http://api.openai.com/v1/embeddings",
             model_name="text-embedding-ada-002",
             max_workers=100
         )
@@ -71,7 +71,10 @@ class Text2SQLPipeline():
 
         # A demo database is provided. Download it from the following URL and update the path:  
         # https://huggingface.co/datasets/Open-Dataflow/dataflow-Text2SQL-database-example  
-        db_root_path = ""  
+        db_root_path = ""
+
+        # SQL execution timeout. Generated SQL execution time should be less than this value.
+        sql_execution_timeout = 3
 
         # SQLite and MySQL are currently supported
         # db_type can be sqlite or mysql, which must match your database type
@@ -92,49 +95,55 @@ class Text2SQLPipeline():
             db_type="sqlite",
             config={
                 "root_path": db_root_path
-            }
+            },
+            logger=None,
+            max_connections_per_db=100,
+            max_workers=100
         )
         
         self.sql_generator_step1 = SQLGenerator(
-            llm_serving=api_llm_serving,
+            llm_serving=self.llm_serving,
             database_manager=database_manager,
             generate_num=300
         )
 
-        self.sql_execution_filter_step2 = ExecutionFilter(
-            database_manager=database_manager
+        self.sql_execution_filter_step2 = SQLExecutionFilter(
+            database_manager=database_manager,
+            timeout=sql_execution_timeout
         )
 
-        self.text2sql_question_generator_step3 = QuestionGeneration(
-            llm_serving=api_llm_serving,
+        self.text2sql_question_generator_step3 = Text2SQLQuestionGenerator(
+            llm_serving=self.llm_serving,
             embedding_serving=embedding_serving,
             database_manager=database_manager,
             question_candidates_num=5
         )
 
-        self.text2sql_prompt_generator_step4 = PromptGenerator(
+        self.text2sql_prompt_generator_step4 = Text2SQLPromptGenerator(
             database_manager=database_manager,
             prompt_template=prompt_template,
             schema_config=schema_config
         )
 
-        self.sql_cot_generator_step5 = CoTGenerator(
+        self.sql_cot_generator_step5 = Text2SQLCoTGenerator(
             llm_serving=cot_generation_api_llm_serving,
             database_manager=database_manager,
             schema_config=schema_config,
             max_retries=3,
-            enable_retry=True
+            enable_retry=True,
+            timeout=sql_execution_timeout
         )
 
-        self.sql_component_classifier_step6 = ComponentClassifier(
+        self.sql_component_classifier_step6 = SQLComponentClassifier(
             difficulty_config=component_difficulty_config
         )
 
-        self.sql_execution_classifier_step7 = ExecutionClassifier(
-            llm_serving=api_llm_serving,
+        self.sql_execution_classifier_step7 = SQLExecutionClassifier(
+            llm_serving=self.llm_serving,
             database_manager=database_manager,
             difficulty_config=execution_difficulty_config,
-            num_generations=5
+            num_generations=5,
+            timeout=sql_execution_timeout
         )
         
         

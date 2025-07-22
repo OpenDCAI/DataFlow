@@ -63,20 +63,20 @@ class ReasoningMath_APIPipeline():
         )
         self.question_filter_step3 = QuestionFilter(
             system_prompt="You are an expert in evaluating mathematical problems. Follow the user's instructions strictly and output your final judgment in the required JSON format.",
-            llm_serving=llm_serving,
+            llm_serving=self.llm_serving,
             prompt_template=MathQuestionFilterPrompt()
         )
         self.question_difficulty_classifier_step4 = QuestionDifficultyClassifier(
-            llm_serving=llm_serving
+            llm_serving=self.llm_serving
         )
         self.question_category_classifier_step5 = QuestionCategoryClassifier(
-            llm_serving=llm_serving
+            llm_serving=self.llm_serving
         )
         ########################## branch ############################
         # self.answer_pipeline_root_step6 = AnswerPipelineRoot()
         ########################## answer ############################
         self.answer_generator_step7 = AnswerGenerator(
-            llm_serving=llm_serving,
+            llm_serving=self.llm_serving,
             prompt_template=MathAnswerGeneratorPrompt()
         )
         

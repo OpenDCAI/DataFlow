@@ -71,8 +71,8 @@ if TYPE_CHECKING:
     from .AgenticRAG.content_chooser import ContentChooser
 
     # Text2SQL
-    from .Text2SQL.sql_consistency_filter import ConsistencyFilter
-    from .Text2SQL.sql_execution_filter import ExecutionFilter
+    from .Text2SQL.sql_consistency_filter import SQLConsistencyFilter
+    from .Text2SQL.sql_execution_filter import SQLExecutionFilter
     
 else:
     import sys

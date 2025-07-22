@@ -146,7 +146,7 @@ We verify our reasoning pipeline by SFT on a Qwen2.5-32B-Instruct with Reasoning
 </div>
 
 ### 🗃️ 5.3 Text2SQL PipeLine
-We fine-tuned the Qwen2.5-Coder-14B model on the Bird dataset using both Supervised Fine-tuning (SFT) and Reinforcement Learning (RL), with data constructed via the DataFlow-Text2SQL Pipeline. Results are:
+We fine-tuned the Qwen2.5-Coder-7B-Instruct model using both Supervised Fine-tuning (SFT) and Reinforcement Learning (RL), with data constructed via the DataFlow-Text2SQL Pipeline. Results are:
 
 <div align="center">
   <img src="./static/images/text2sql.png" width="60%">

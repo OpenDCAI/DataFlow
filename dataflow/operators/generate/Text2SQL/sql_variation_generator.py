@@ -139,7 +139,6 @@ class SQLVariationGenerator(OperatorABC):
                 for i, ((prompt, db_id), response) in enumerate(zip(prompts_and_metadata, responses)):
                     sql = self.parse_response(response)
                     if sql:
-                        # 获取原始行数据
                         original_row_idx = original_row_indices[i]
                         original_row = dataframe.iloc[original_row_idx]
 

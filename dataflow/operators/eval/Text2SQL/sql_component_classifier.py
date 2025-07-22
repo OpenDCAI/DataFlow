@@ -695,7 +695,7 @@ class EvalHardnessLite:
 
 
 @OPERATOR_REGISTRY.register()
-class ComponentClassifier(OperatorABC):
+class SQLComponentClassifier(OperatorABC):
     def __init__(self, difficulty_config: dict | None = None):
         if difficulty_config is None:
             self.difficulty_config = {
