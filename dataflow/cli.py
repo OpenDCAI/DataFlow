@@ -1,108 +1,113 @@
-import os
-import argparse
-import requests
+#!/usr/bin/env python3
+# dataflow/cli.py
+# ===============================================================
+# DataFlow 命令行入口
+#   dataflow -v                         查看版本并检查更新
+#   dataflow init [...]                初始化脚本/配置
+#   dataflow env                       查看环境
+#   dataflow webui operators [opts]    启动算子/管线 UI
+#   dataflow webui agent     [opts]    启动 DataFlow-Agent UI（已整合后端）
+# ===============================================================
 
-from colorama import init, Fore, Style
+import os, argparse, requests, sys
+from colorama import init as color_init, Fore, Style
 
-# from dataflow.utils.paths import BencoPath
-from dataflow.cli_funcs import cli_env, cli_init
-import importlib.metadata
+from dataflow.cli_funcs import cli_env, cli_init       # 项目已有工具
+from dataflow.version import __version__               # 版本号
 
-PYPI_API_URL = 'https://pypi.org/pypi/open-dataflow/json'
-from dataflow.version import __version__
+color_init(autoreset=True)
+PYPI_API_URL = "https://pypi.org/pypi/open-dataflow/json"
 
-def version_and_check_for_updates():
-    # print a bar by the length of the shell width
-    print(Fore.BLUE + "=" * os.get_terminal_size().columns + Style.RESET_ALL)
-    print(f'open-dataflow codebase version: {__version__}')
+
+# ---------------- 版本检查 ----------------
+def version_and_check_for_updates() -> None:
+    width = os.get_terminal_size().columns
+    print(Fore.BLUE + "=" * width + Style.RESET_ALL)
+    print(f"open-dataflow codebase version: {__version__}")
+
     try:
-        response = requests.get(PYPI_API_URL, timeout=5)
-        response.raise_for_status()  # 如果响应码不是200，则抛出异常
-        pypi_data = response.json()
-        cloud_version = pypi_data['info']['version']  # 获取最新版本号
+        r = requests.get(PYPI_API_URL, timeout=5)
+        r.raise_for_status()
+        remote = r.json()["info"]["version"]
         print("\tChecking for updates...")
-        print("\tLocal version: ", __version__)
-        print("\tPyPI newest version: ", cloud_version)
-
-        local_version = __version__  # 通过 importlib.metadata 获取当前安装版本
-
-        if cloud_version != local_version:
-            print(Fore.YELLOW + f"New version available: {cloud_version}. Your version: {local_version}." + Style.RESET_ALL)
-            print("Run 'pip install --upgrade open-dataflow' to upgrade.")
+        print(f"\tLocal version : {__version__}")
+        print(f"\tPyPI  version : {remote}")
+        if remote != __version__:
+            print(Fore.YELLOW + f"New version available: {remote}."
+                  "  Run 'pip install -U open-dataflow' to upgrade."
+                  + Style.RESET_ALL)
         else:
-            print(Fore.GREEN + f"You are using the latest version: {local_version}." + Style.RESET_ALL)
+            print(Fore.GREEN + f"You are using the latest version: {__version__}" + Style.RESET_ALL)
     except requests.exceptions.RequestException as e:
-        print(Fore.RED + "Failed to check for updates from PyPI. Please check your internet connection." + Style.RESET_ALL)
-        print(f"Error: {e}")
-    print(Fore.BLUE + "=" * os.get_terminal_size().columns + Style.RESET_ALL)
+        print(Fore.RED + "Failed to query PyPI – check your network." + Style.RESET_ALL)
+        print("Error:", e)
+    print(Fore.BLUE + "=" * width + Style.RESET_ALL)
 
-def main():
+
+# ---------------- CLI 主函数 ----------------
+def build_arg_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
-        description='Command line interface for DataFlow, with codebase version: ' + __version__
+        prog="dataflow",
+        description=f"DataFlow Command-Line Interface  (v{__version__})",
     )
-    # 全局版本选项
-    parser.add_argument(
-        '-v', '--version',
-        action='store_true',
-        help="Show the version of the tool"
-    )
+    parser.add_argument("-v", "--version", action="store_true", help="Show version and exit")
 
-    subparsers = parser.add_subparsers(dest='command', required=False)
+    # ============ 顶层子命令 ============ #
+    top = parser.add_subparsers(dest="command", required=False)
 
-    # init command
-    parser_init = subparsers.add_parser('init', help='Initialize the scripts and configs in a directory')
-    init_subparsers = parser_init.add_subparsers(dest='subcommand', required=False)
-    parser_init_all = init_subparsers.add_parser('all', help='Initialize all components')
-    parser_init_all.set_defaults(subcommand='all')
-    parser_init_reasoning = init_subparsers.add_parser('reasoning', help='Initialize reasoning components')
-    parser_init_reasoning.set_defaults(subcommand='reasoning')
+    # --- init ---
+    p_init = top.add_parser("init", help="Initialize scripts/configs in current dir")
+    p_init_sub = p_init.add_subparsers(dest="subcommand", required=False)
+    p_init_sub.add_parser("all",       help="Init all components").set_defaults(subcommand="all")
+    p_init_sub.add_parser("reasoning", help="Init reasoning components").set_defaults(subcommand="reasoning")
 
-    # env command
-    parser_env = subparsers.add_parser('env', help='Show environment information')
+    # --- env ---
+    top.add_parser("env", help="Show environment information")
 
-    # webui command
-    parser_webui = subparsers.add_parser(
-        'webui',
-        help='Launch the DataFlow web UI (Gradio)'
-    )
-    parser_webui.add_argument(
-        '--host', '-H',
-        default='0.0.0.0',
-        help='Host address to bind, default 0.0.0.0'
-    )
-    parser_webui.add_argument(
-        '--port', '-P',
-        type=int,
-        default=7862,
-        help='Port to listen on, default 7862'
-    )
-    parser_webui.add_argument(
-        '--show-error',
-        action='store_true',
-        help='Enable Gradio error display'
-    )
+    # --- webui ---
+    p_webui = top.add_parser("webui", help="Launch Gradio WebUI")
+    p_webui.add_argument("-H", "--host", default="0.0.0.0", help="Bind host (default 0.0.0.0)")
+    p_webui.add_argument("-P", "--port", type=int, default=7862, help="Port (default 7862)")
+    p_webui.add_argument("--show-error", action="store_true", help="Show Gradio error tracebacks")
 
+    #    webui 二级子命令：operators / agent
+    w_sub = p_webui.add_subparsers(dest="ui_mode", required=False)
+    w_sub.add_parser("operators", help="Launch operator / pipeline UI")
+    w_sub.add_parser("agent",     help="Launch DataFlow-Agent UI (backend included)")
+
+    return parser
+
+
+def main() -> None:
+    parser = build_arg_parser()
     args = parser.parse_args()
+
+    # ---------- 顶层逻辑分发 ----------
     if args.version:
         version_and_check_for_updates()
+        return
 
-    if args.command == 'init':
-        if args.subcommand is None:
-            args.subcommand = 'base'
-        cli_init(subcommand=args.subcommand)
-        # from dataflow.cli_funcs.paths import DataFlowPath
-        # print(DataFlowPath.get_dataflow_dir())
-        # print(DataFlowPath.get_dataflow_scripts_dir())
-    elif args.command == 'env':
+    if args.command == "init":
+        cli_init(subcommand=args.subcommand or "base")
+
+    elif args.command == "env":
         cli_env()
-    elif args.command == 'webui':
-        # 延迟导入以加快非 webui 场景的启动速度
-        from dataflow.webui import demo
-        demo.launch(
-            server_name=args.host,
-            server_port=args.port,
-            show_error=args.show_error
-        )
 
-if __name__ == '__main__':
+    elif args.command == "webui":
+        # 默认使用 operators
+        mode = args.ui_mode or "operators"
+        if mode == "operators":
+            from dataflow.webui import demo
+            demo.launch(
+                server_name=args.host,
+                server_port=args.port,
+                show_error=args.show_error,
+            )
+        elif mode == "agent":
+            from dataflow.agent.webui import app  
+            import uvicorn
+            uvicorn.run(app, host=args.host, port=args.port, log_level="info")
+        else:
+            parser.error(f"Unknown ui_mode {mode!r}")
+if __name__ == "__main__":
     main()
