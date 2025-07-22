@@ -2,7 +2,7 @@ from typing import ParamSpec, TypeVar, Generic, Protocol, List
 from functools import wraps
 import inspect
 from dataflow.logger import get_logger
-from dataflow.core import OperatorABC
+from dataflow.core import OperatorABC, WrapperABC
 from dataflow.utils.storage import DataFlowStorage, DummyStorage, FileStorage
 from tqdm import tqdm
 import pandas as pd
@@ -17,7 +17,7 @@ class HasRun(Protocol[P, R]):
         """
         ...
 
-class BatchWrapper(Generic[P, R]):
+class BatchWrapper(WrapperABC, Generic[P, R]):
     """
     通用的批处理 Wrapper。
 

@@ -19,15 +19,25 @@ from dataflow.prompts.reasoning.math import (
     MathQuestionSynthesisPrompt
 )
 
-from dataflow.utils.storage import FileStorage, GraphStorage
+from dataflow.utils.storage import FileStorage, CompileStorage
 from dataflow.serving import LocalModelLLMServing_sglang, APILLMServing_request
 from dataflow.core import LLMServingABC
+from dataflow.wrapper import BatchWrapper
 
 # 这里或许未来可以有个pipeline基类
 class ReasoningPipeline():
     def __init__(self, llm_serving: LLMServingABC = None):
 
-        self.storage = GraphStorage(
+
+        # self.storage = FileStorage(
+        #     first_entry_file_name="../dataflow/example/ReasoningPipeline/pipeline_math_short.json",
+        #     cache_path="./cache_local",
+        #     file_name_prefix="dataflow_cache_step",
+        #     cache_type="jsonl",
+        # )
+        
+        self.storage = CompileStorage(
+            
         )
 
         # use API server as LLM serving
@@ -42,11 +52,19 @@ class ReasoningPipeline():
         #     sgl_dp_size=1,
         # )
 
-        self.question_filter_step1 = QuestionFilter(
-            system_prompt="You are an expert in evaluating mathematical problems. Follow the user's instructions strictly and output your final judgment in the required JSON format.",
-            llm_serving=llm_serving,
-            prompt_template=MathQuestionFilterPrompt()
+        self.question_filter_step1 = BatchWrapper(
+            QuestionFilter(
+                system_prompt="You are an expert in evaluating mathematical problems. Follow the user's instructions strictly and output your final judgment in the required JSON format.",
+                llm_serving=llm_serving,
+                prompt_template=MathQuestionFilterPrompt()
+            ),
+            batch_size=32,
         )
+        
+        
+        print(self.question_filter_step1)
+        
+        
         self.question_gen_step2 =  QuestionGenerator(
             num_prompts=3,
             llm_serving=llm_serving,
@@ -154,3 +172,5 @@ if __name__ == "__main__":
     for op_dict in graph_list:
         pprint(f"Operator: {op_dict}, ")
         print("----" * 20)
+        
+    # model.storage.compile_run()

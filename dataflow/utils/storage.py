@@ -1,3 +1,4 @@
+import inspect
 from abc import ABC, abstractmethod
 from dataflow import get_logger
 import pandas as pd
@@ -5,7 +6,8 @@ import json
 from typing import Any, Literal
 import os
 import inspect
-from dataflow.core import OperatorABC
+from pprint import pprint
+from dataflow.core import OperatorABC, WrapperABC
 
 class DataFlowStorage(ABC):
     """
@@ -68,7 +70,7 @@ class DummyStorage(DataFlowStorage):
             else:
                 raise ValueError(f"Unsupported file type: {self.cache_type}, output file should end with json, jsonl, csv, parquet, pickle")
             
-class GraphStorage(DataFlowStorage):
+class CompileStorage(DataFlowStorage):
     """
     Storage for graph data.
     """
@@ -82,11 +84,22 @@ class GraphStorage(DataFlowStorage):
     def step(self):
         return self
     
-    def read(self, output_type: Literal["dataframe", "dict"] = "dataframe") -> Any:
-        import inspect
-        from pprint import pprint
-        stack = inspect.stack()
+    def compile(self):
+        pass
+    
+    def try_run(self):
+        pass
+        
+    def _run(self):
+        pass
+    def run(self):
+        pass
+    def _get_operator_info_from_stack(self, stack: list) -> OperatorABC:
+        """get an operator info from the current stack trace.
 
+        Args:
+            stack (list): A list of frame_info objects from inspect.stack().
+        """
         operator_dict = {}
         for frame_info in stack[1:]:
             frame = frame_info.frame
@@ -94,15 +107,19 @@ class GraphStorage(DataFlowStorage):
 
             for var in local_vars.values():
                 # 找到最近的 OperatorABC 子类实例
-                if isinstance(var, OperatorABC):
+                if isinstance(var, (OperatorABC, WrapperABC)):
                     operator_instance = var
 
                     # 判断是否当前帧在执行这个实例的 run 方法
                     if frame.f_code.co_name == 'run' and frame.f_locals.get('self') is operator_instance:
                         # 抽取参数名和传入值
                         code = frame.f_code
+                        print(code)
                         argcount = code.co_argcount + code.co_kwonlyargcount
+                        print(f"argcount: {argcount}")
+                        print(code.co_varnames)
                         arg_names = code.co_varnames[:argcount]
+                        print(f"arg_names: {arg_names}")
                         arg_values = {name: frame.f_locals.get(name, '<not passed>') for name in arg_names}
                         arg_values.pop('self', None)  # 移除 'self' 参数
 
@@ -110,15 +127,24 @@ class GraphStorage(DataFlowStorage):
                         operator_dict['operator'] = operator_instance
                         operator_dict['args'] = arg_values # key-value pairs of arguments, is a dict
                         
-                        # operator_dict['arg_names'] = arg_names
-                        self.graph_list.append(operator_dict)
                         pprint(f"Found Operator: {operator_instance.__class__.__name__}")
                         pprint(f"run() 参数: {arg_names}")
                         pprint(f"run() 参数值: {arg_values}")
                         
-                        break  # 只找最近一个
+                        return operator_dict  # 返回找到的 OperatorABC 实例
+    
+    def read(self, output_type: Literal["dataframe", "dict"] = "dataframe") -> Any:
+        from pprint import pprint
+        stack = inspect.stack()
+
+        operator_info = self._get_operator_info_from_stack(stack)
+        if operator_info is None:
+            raise ValueError("No OperatorABC instance found in the current stack trace in CompileStorage.")
+        else:
+            self.graph_list.append(operator_info)
 
         return self.data_frame
+    
     def write(self, data: Any) -> Any:
         # self.graph_data = data
         return self.data_frame
