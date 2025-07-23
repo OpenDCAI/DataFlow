@@ -405,7 +405,7 @@ def gradio_run(
         run_params = json.loads(run_str)
         info = dynamic_system.get_operator_info(op_name)
         if any(p.name == "llm_serving" for p in info.init_params):
-            cfg = {"type": "API", "api_url": api_url, "model_name": model_name,
+            cfg = {"serving_type": "API", "api_url": api_url, "model_name": model_name,
                    "api_key": api_key, "max_workers": max_workers}
             other_init["llm_serving"] = dynamic_system.create_serving_instance(**cfg)
         op_inst = info.class_obj(**other_init)
