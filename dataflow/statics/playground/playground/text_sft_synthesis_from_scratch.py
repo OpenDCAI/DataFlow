@@ -39,6 +39,8 @@ class TextPipeline():
             input_input_key="input",
             input_output_key='output'
         )
-
-model = TextPipeline()
-model.forward()
+if __name__ == "__main__":
+    # Example usage
+    print("Starting Text SFT Synthesis Pipeline...")
+    model = TextPipeline()
+    model.forward()
