@@ -124,13 +124,14 @@ def is_pdf_url(url):
         # 发送HEAD请求，只获取响应头，不下载文件
         response = requests.head(url, allow_redirects=True)
         # 如果响应的Content-Type是application/pdf
-        if response.headers.get('Content-Type') == 'application/pdf':
+        if response.status_code == 200 and response.headers.get('Content-Type') == 'application/pdf':
             return True
         else:
             print(f"Content-Type: {response.headers.get('Content-Type')}")
             return False
     except requests.exceptions.RequestException:
         # 如果请求失败，返回False
+        print("Request failed")
         return False
 
 def download_pdf(url, save_path):
