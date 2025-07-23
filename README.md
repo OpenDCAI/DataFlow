@@ -90,7 +90,10 @@ In this framework, operators are categorized into Fundamental Operators, Generic
 ![](./static/images/demo_reasoning.png) -->
 
 ## ⚡ 5. Quick Start
-For environment setup and installation, please using the following commands👇
+
+### 🛠️ 5.1 Environment Setup and Installation
+
+Please use the following commands for environment setup and installation👇
 
 ```shell
 conda create -n dataflow python=3.10 
@@ -98,18 +101,21 @@ conda activate dataflow
 
 pip install open-dataflow
 ```
-If you want to use your own GPU to inference locally, please use:
+If you want to use your own GPU for local inference, please use:
 ```shell
 pip install open-dataflow[vllm]
 ```
-> Dataflow supports Python>=3.10
+> DataFlow supports Python>=3.10 environments
 
-You can use follwing command to check if installed correctly:
+### ✅ 5.2 Verify Installation
+
+You can use the following command to check if DataFlow is installed correctly:
+
 ```shell
 dataflow -v
 ```
 
-You are expected to see following outputs:
+If installed correctly, you should see:
 ```log
 open-dataflow codebase version: 1.0.0
         Checking for updates...
@@ -118,20 +124,41 @@ open-dataflow codebase version: 1.0.0
 You are using the latest version: 1.0.0.
 ```
 
-### Using Gradio to Test DataFlow Operators
+### 🌐 5.3 Using Gradio Web Interface
 
-You can quickly launch a Gradio-based interface to test DataFlow operators with the following command:
+DataFlow provides two interactive web interfaces to help you work with operators and agent:
+
+#### 5.3.1 DataFlow Operators Interface
+
+Launch the DataFlow operators interface to test and visualize all operators:
 
 ```bash
 dataflow webui
 ```
 
-This will start an interactive web UI, allowing you to visualize all operators seamlessly.
+This command will launch an interactive web interface, allowing you to seamlessly visualize and use all operators.
 
-For **Quick-Start** and **Guide**, please visit our [Documentation](https://OpenDCAI.github.io/DataFlow-Doc/). 
+<div align="center">
+  <img src="./static/images/dataflow_gradio.png" width="40%">
+</div>
 
-[![Documents](https://img.shields.io/badge/Documents-Click_here-brightgreen?logo=read-the-docs)](https://OpenDCAI.github.io/DataFlow-Doc/)
+#### 5.3.2 DataFlow Agent Interface
 
+Launch the DataFlow agent interface for operator authoring and pipeline recommendation:
+
+```bash
+dataflow webui agent
+```
+
+This command will start the DataFlow-Agent interface, providing operator authoring capabilities and pipeline design services.
+
+<div align="center">
+  <img src="./static/images/dataflow_agent_gradio.png" width="40%">
+</div>
+
+### 📖 5.4 Reference Project Documentation
+
+For detailed **usage instructions** and **getting started guide**, please visit our [Documentation](https://OpenDCAI.github.io/DataFlow-Doc/).
 
 ## 🧪 6. Experimental Results
 For Detailed Experiments setting, please visit our documentation.

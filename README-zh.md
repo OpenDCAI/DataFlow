@@ -37,7 +37,7 @@ DataFlow 是一个数据准备系统，旨在从噪声数据源（PDF、纯文�
 
 ### 🔧 3.1 算子工作机制
 
-DataFlow采用模块化的算子设计理念，通过组合不同类型的算子来构建灵活的数据处理流水线。算子作为数据处理的基本单元，能够接收结构化数据输入（如json/jsonl/csv格式），经过智能处理后输出高质量的数据结果。详细的算子使用指南请参考：[算子文档](https://opendcai.github.io/DataFlow-Doc/zh/guide/text_evaluation_operators/)
+DataFlow采用模块化的算子设计理念，通过组合不同类型的算子来构建灵活的数据处理流水线。算子作为数据处理的基本单元，能够接收结构化数据输入（如json/jsonl/csv格式），经过智能处理后输出高质量的数据结果。详细的算子使用指南请参考：[项目文档](https://opendcai.github.io/DataFlow-Doc/zh/guide/text_evaluation_operators/)
 
 ![](./static/images/dataflow_operator.jpg)
 
@@ -87,6 +87,8 @@ DataFlow采用模块化的算子设计理念，通过组合不同类型的算子
 
 ## ⚡ 5. 快速开始
 
+### 🛠️ 5.1 环境配置和安装
+
 请使用如下命令进行环境配置和安装👇
 
 ```shell
@@ -100,6 +102,8 @@ pip install open-dataflow
 pip install open-dataflow[vllm]
 ```
 > Dataflow 支持 Python>=3.10 的环境
+
+### ✅ 5.2 验证安装
 
 你可以用如下指令查看dataflow是否正确安装:
 ```shell
@@ -115,19 +119,41 @@ open-dataflow codebase version: 1.0.0
 You are using the latest version: 1.0.0.
 ```
 
-### 尝试使用Gradio部署Dataflow算子
+### 🌐 5.3 使用Gradio Web界面
 
-你可以使用以下命令快速启动基于 Gradio 的界面来测试 DataFlow 算子：
+DataFlow提供了两个交互式Web界面，帮助你使用算子和智能体：
+
+#### 5.3.1 DataFlow算子界面
+
+启动DataFlow算子界面来测试和可视化所有算子：
 
 ```bash
 dataflow webui
 ```
 
-该命令将启动一个交互式 Web 界面，使你能够无缝可视化所有算子。
+该命令将启动一个交互式 Web 界面，使你能够无缝可视化并使用所有算子。
 
-更多使用说明和入门指南，请参考我们的 [项目文档](https://OpenDCAI.github.io/DataFlow-Doc/)。
+<div align="center">
+  <img src="./static/images/dataflow_gradio.png" width="40%">
+</div>
 
-[![Documents](https://img.shields.io/badge/官方文档-单击此处-brightgreen?logo=read-the-docs)](https://OpenDCAI.github.io/DataFlow-Doc/)
+#### 5.3.2 DataFlow智能体界面
+
+启动DataFlow智能体界面进行算子编写和流水线设计：
+
+```bash
+dataflow webui agent
+```
+
+该命令将启动DataFlow-Agent界面，提供算子编写功能和流水线设计服务。
+
+<div align="center">
+  <img src="./static/images/dataflow_agent_gradio.png" width="40%">
+</div>
+
+### 📖 5.4 参考项目文档
+
+详细**使用说明**和**入门指南**，请参考我们的 [项目文档](https://OpenDCAI.github.io/DataFlow-Doc/)。
 
 ## 🧪 6. 实验结果
 
