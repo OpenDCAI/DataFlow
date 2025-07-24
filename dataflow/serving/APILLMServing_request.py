@@ -7,6 +7,7 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 from tqdm import tqdm
 from dataflow.core  import LLMServingABC
 import re
+import time
 
 class APILLMServing_request(LLMServingABC):
     """Use OpenAI API to generate responses based on input messages.
@@ -15,7 +16,8 @@ class APILLMServing_request(LLMServingABC):
                  api_url: str = "https://api.openai.com/v1/chat/completions",
                  key_name_of_api_key: str = "DF_API_KEY",
                  model_name: str = "gpt-4o",
-                 max_workers: int = 10
+                 max_workers: int = 10,
+                 max_retries: int = 5
                  ):
         # Get API key from environment variable or config
         self.api_url = api_url
@@ -105,6 +107,13 @@ class APILLMServing_request(LLMServingABC):
             except Exception as e:
                 logging.error(f"API request error: {e}")
                 return id,None
+        def api_chat_id_retry(system_info: str, messages: str, model: str, id):
+            for i in range(self.max_retries):
+                id, response = api_chat_with_id(system_info, messages, model, id)
+                if response is not None:
+                    return id, response
+                time.sleep(2**i)
+            return id, None
         responses = [None] * len(user_inputs)
         # -- end of subfunction api_chat_with_id --
 
@@ -113,7 +122,7 @@ class APILLMServing_request(LLMServingABC):
         with ThreadPoolExecutor(max_workers=self.max_workers) as executor:
             futures = [
                 executor.submit(
-                    api_chat_with_id,
+                    api_chat_id_retry,
                     system_info = system_prompt,
                     messages = question,
                     model = self.model_name,
