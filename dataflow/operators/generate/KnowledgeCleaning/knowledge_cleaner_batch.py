@@ -117,8 +117,8 @@ class KnowledgeCleanerBatch(OperatorABC):
                 # for each in cleaned, only save the content in <cleaned_start> and <cleaned_end>
                 cleaned_extracted = [
                     text.split('<cleaned_start>')[1].split('<cleaned_end>')[0].strip()
-                    if '<cleaned_start>' in text and '<cleaned_end>' in text
-                    else text.strip()
+                    if '<cleaned_start>' in str(text) and '<cleaned_end>' in str(text)
+                    else str(text).strip()
                     for text in cleaned
                 ]
                 json_items=[{
