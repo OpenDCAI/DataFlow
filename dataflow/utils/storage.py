@@ -74,13 +74,29 @@ class CompileStorage(DataFlowStorage):
     """
     Storage for graph data.
     """
-    def __init__(self):
+    def __init__(
+        self,
+        real_storage: DataFlowStorage = None,
+    ):  
+        if real_storage != None:
+            self.real_storage = real_storage.step()
+            self.keys_in_real_storage = self.get_keys_in_real_storage()
+        print(self.keys_in_real_storage)
+        # exit(0)
+        # CompileStorage specific contents
         self.graph_list = []
         self.data_frame = pd.DataFrame()
-        # insert a key name of 'instruction' to the dataframe
-        self.data_frame['instruction'] = pd.Series(dtype='object')
-        self.data_frame['golden_answer'] = pd.Series(dtype='object')
-        
+        # insert all key in self.keys_in_real_storage to self.data_frame
+        for key in self.keys_in_real_storage:
+            self.data_frame[key] = pd.Series(dtype="object")
+        print(self.data_frame.columns.tolist())
+        # exit(0)
+    def get_keys_in_real_storage(self):
+        """
+        Get the keys in the real storage.
+        """
+        init_data = self.real_storage.read(output_type="dataframe")
+        return init_data.columns.tolist()
     def step(self):
         return self
     
@@ -102,6 +118,7 @@ class CompileStorage(DataFlowStorage):
         """
         operator_dict = {}
         for frame_info in stack[1:]:
+            print("--------------------------")
             frame = frame_info.frame
             local_vars = frame.f_locals
 
@@ -109,7 +126,6 @@ class CompileStorage(DataFlowStorage):
                 # 找到最近的 OperatorABC 子类实例
                 if isinstance(var, (OperatorABC, WrapperABC)):
                     operator_instance = var
-
                     # 判断是否当前帧在执行这个实例的 run 方法
                     if frame.f_code.co_name == 'run' and frame.f_locals.get('self') is operator_instance:
                         # 抽取参数名和传入值
@@ -121,6 +137,13 @@ class CompileStorage(DataFlowStorage):
                         arg_names = code.co_varnames[:argcount]
                         print(f"arg_names: {arg_names}")
                         arg_values = {name: frame.f_locals.get(name, '<not passed>') for name in arg_names}
+                        # get the args and kwargs from the frame if pass *args or **kwargs to the function
+                        the_args = frame.f_locals.get('args', None)
+                        the_kwargs = frame.f_locals.get('kwargs', None)
+                        if the_args is not None:
+                            arg_values['args'] = the_args
+                        if the_kwargs is not None:
+                            arg_values['kwargs'] = the_kwargs
                         arg_values.pop('self', None)  # 移除 'self' 参数
 
                         operator_dict["name"] = operator_instance.__class__.__name__

@@ -32,8 +32,8 @@ class BatchWrapper(WrapperABC, Generic[P, R]):
         self._batch_cache = batch_cache
 
         # 动态拷贝 operator.run 的 __doc__ 和 inspect.signature
-        orig = operator.run
-        sig = inspect.signature(orig)
+        # orig = operator.run
+        # sig = inspect.signature(orig)
         # wrapped = wraps(orig)(self.run)        # 先 wrap docstring, __name__…
         # wrapped.__signature__ = sig            # 再贴上准确的 signature
         # 把它绑到实例上覆盖掉 class method，这样 help(instance.run) 能看到原文档
