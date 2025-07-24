@@ -1,9 +1,5 @@
 import gradio as gr
 import os
-os.environ["NCCL_IB_DISABLE"] = "1"
-os.environ["NCCL_P2P_DISABLE"] = "1"
-os.environ["NCCL_SHM_DISABLE"] = "1"
-os.environ["NCCL_SOCKET_IFNAME"] = "bond0"
 import shutil
 import pandas as pd
 from typing import List
