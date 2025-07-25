@@ -1,5 +1,7 @@
 import os
 import torch
+import contextlib
+import time
 from typing import Optional, Union, List, Dict, Any
 from dataflow import get_logger
 from huggingface_hub import snapshot_download
@@ -24,7 +26,7 @@ class LocalModelLLMServing_vllm(LLMServingABC):
                  vllm_max_model_len: int = None,
                  vllm_gpu_memory_utilization: float=0.9,
                  ):
-
+        self.logger = get_logger()
         self.load_model(
             hf_model_name_or_path=hf_model_name_or_path,
             hf_cache_dir=hf_cache_dir,
@@ -39,7 +41,8 @@ class LocalModelLLMServing_vllm(LLMServingABC):
             vllm_max_model_len=vllm_max_model_len,
             vllm_gpu_memory_utilization=vllm_gpu_memory_utilization,
         )
-
+        self.backend_initialized = False
+        
     def load_model(self, 
                  hf_model_name_or_path: str = None,
                  hf_cache_dir: str = None,
@@ -54,18 +57,34 @@ class LocalModelLLMServing_vllm(LLMServingABC):
                  vllm_max_model_len: int = None,
                  vllm_gpu_memory_utilization: float=0.9,
                  ):
+        
+        self.hf_model_name_or_path = hf_model_name_or_path
+        self.hf_cache_dir = hf_cache_dir
+        self.hf_local_dir = hf_local_dir
+        self.vllm_tensor_parallel_size = vllm_tensor_parallel_size
+        self.vllm_temperature = vllm_temperature
+        self.vllm_top_p = vllm_top_p
+        self.vllm_max_tokens = vllm_max_tokens
+        self.vllm_top_k = vllm_top_k
+        self.vllm_repetition_penalty = vllm_repetition_penalty
+        self.vllm_seed = vllm_seed
+        self.vllm_max_model_len = vllm_max_model_len
+        self.vllm_gpu_memory_utilization = vllm_gpu_memory_utilization
+        
+    def start_serving(self):
+        self.backend_initialized = True  
         self.logger = get_logger()
-        if hf_model_name_or_path is None:
+        if self.hf_model_name_or_path is None:
             raise ValueError("hf_model_name_or_path is required") 
-        elif os.path.exists(hf_model_name_or_path):
-            self.logger.info(f"Using local model path: {hf_model_name_or_path}")
-            self.real_model_path = hf_model_name_or_path
+        elif os.path.exists(self.hf_model_name_or_path):
+            self.logger.info(f"Using local model path: {self.hf_model_name_or_path}")
+            self.real_model_path = self.hf_model_name_or_path
         else:
-            self.logger.info(f"Downloading model from HuggingFace: {hf_model_name_or_path}")
+            self.logger.info(f"Downloading model from HuggingFace: {self.hf_model_name_or_path}")
             self.real_model_path = snapshot_download(
-                repo_id=hf_model_name_or_path,
-                cache_dir=hf_cache_dir,
-                local_dir=hf_local_dir,
+                repo_id=self.hf_model_name_or_path,
+                cache_dir=self.hf_cache_dir,
+                local_dir=self.hf_local_dir,
             )
 
         # Import vLLM and set up the environment for multiprocessing
@@ -79,27 +98,29 @@ class LocalModelLLMServing_vllm(LLMServingABC):
         os.environ['VLLM_WORKER_MULTIPROC_METHOD'] = "spawn"
         
         self.sampling_params = SamplingParams(
-            temperature=vllm_temperature,
-            top_p=vllm_top_p,
-            max_tokens=vllm_max_tokens,
-            top_k=vllm_top_k,
-            repetition_penalty=vllm_repetition_penalty,
-            seed=vllm_seed
+            temperature=self.vllm_temperature,
+            top_p=self.vllm_top_p,
+            max_tokens=self.vllm_max_tokens,
+            top_k=self.vllm_top_k,
+            repetition_penalty=self.vllm_repetition_penalty,
+            seed=self.vllm_seed
         )
         
         self.llm = LLM(
             model=self.real_model_path,
-            tensor_parallel_size=vllm_tensor_parallel_size,
-            max_model_len=vllm_max_model_len,
-            gpu_memory_utilization=vllm_gpu_memory_utilization,
+            tensor_parallel_size=self.vllm_tensor_parallel_size,
+            max_model_len=self.vllm_max_model_len,
+            gpu_memory_utilization=self.vllm_gpu_memory_utilization,
         )
-        self.tokenizer = AutoTokenizer.from_pretrained(self.real_model_path, cache_dir=hf_cache_dir)
+        self.tokenizer = AutoTokenizer.from_pretrained(self.real_model_path, cache_dir=self.hf_cache_dir)
         self.logger.success(f"Model loaded from {self.real_model_path} by vLLM backend")
     
     def generate_from_input(self, 
                             user_inputs: list[str], 
                             system_prompt: str = "You are a helpful assistant"
                             ) -> list[str]:
+        if not self.backend_initialized:
+            self.start_serving()
         full_prompts = []
         for question in user_inputs:
             messages = [
@@ -117,15 +138,37 @@ class LocalModelLLMServing_vllm(LLMServingABC):
         return [output.outputs[0].text for output in responses]
 
     def generate_embedding_from_input(self, texts: list[str]) -> list[list[float]]:
+        if not self.backend_initialized:
+            self.start_serving()
         outputs = self.llm.embed(texts)
         return [output.outputs.embedding for output in outputs]
 
     def cleanup(self):
+        free_mem = torch.cuda.mem_get_info()[0]  # 返回可用显存（单位：字节）
+        total_mem = torch.cuda.get_device_properties(0).total_memory
+        self.logger.info(f"Free memory: {free_mem / (1024 ** 2):.2f} MB / {total_mem / (1024 ** 2):.2f} MB")
+        self.logger.info("Cleaning up vLLM backend resources...")
+        self.backend_initialized = False
+        from vllm.distributed.parallel_state import (
+            destroy_model_parallel,
+            destroy_distributed_environment,
+        )
+        del self.llm.llm_engine
         del self.llm
-        import gc;
+        destroy_model_parallel()
+        destroy_distributed_environment()
+        with contextlib.suppress(AssertionError):
+            torch.distributed.destroy_process_group()
+        import gc
         gc.collect()
         torch.cuda.empty_cache()
-    
+        import ray
+        ray.shutdown()
+        free_mem = torch.cuda.mem_get_info()[0]  # 返回可用显存（单位：字节）
+        total_mem = torch.cuda.get_device_properties(0).total_memory
+
+        self.logger.info(f"Free memory: {free_mem / (1024 ** 2):.2f} MB / {total_mem / (1024 ** 2):.2f} MB")
+            
 class LocalModelLLMServing_sglang(LLMServingABC):
     def __init__(
         self, 
@@ -158,8 +201,8 @@ class LocalModelLLMServing_sglang(LLMServingABC):
         sgl_custom_params: Optional[Dict[str, Any]] = None,
         sgl_stream_interval: Optional[int] = None,
         sgl_logit_bias: Optional[Dict[str, float]] = None,
-        **kwargs
     ):
+        self.logger = get_logger()
         self.load_model(
             hf_model_name_or_path=hf_model_name_or_path,
             hf_cache_dir=hf_cache_dir,
@@ -190,17 +233,18 @@ class LocalModelLLMServing_sglang(LLMServingABC):
             sgl_custom_params=sgl_custom_params,
             sgl_stream_interval=sgl_stream_interval,
             sgl_logit_bias=sgl_logit_bias,
-            **kwargs
         )
+        self.backend_initialized = False
+        
     def load_model(
         self, 
-        hf_model_name_or_path,
-        hf_cache_dir,
-        hf_local_dir,
-        sgl_tp_size: int,
-        sgl_dp_size: int,
-        sgl_mem_fraction_static: float,  # memory fraction for static memory allocation
-        sgl_max_new_tokens: int,
+        hf_model_name_or_path:str = None,
+        hf_cache_dir:str = None,
+        hf_local_dir:str = None,
+        sgl_tp_size: int = 1,
+        sgl_dp_size: int = 1,
+        sgl_mem_fraction_static: float = 0.9,  # memory fraction for static memory allocation
+        sgl_max_new_tokens: int = 2048,
         sgl_stop: Optional[Union[str, List[str]]] = None,
         sgl_stop_token_ids: Optional[List[int]] = None,
         sgl_temperature: float = 1.0,
@@ -223,20 +267,51 @@ class LocalModelLLMServing_sglang(LLMServingABC):
         sgl_custom_params: Optional[Dict[str, Any]] = None,
         sgl_stream_interval: Optional[int] = None,
         sgl_logit_bias: Optional[Dict[str, float]] = None,
-        **kwargs
     ):
+        self.hf_model_name_or_path = hf_model_name_or_path
+        self.hf_cache_dir = hf_cache_dir
+        self.hf_local_dir = hf_local_dir
+        self.sgl_tp_size = sgl_tp_size
+        self.sgl_dp_size = sgl_dp_size
+        self.sgl_mem_fraction_static = sgl_mem_fraction_static
+        self.sgl_max_new_tokens = sgl_max_new_tokens
+        self.sgl_stop = sgl_stop
+        self.sgl_stop_token_ids = sgl_stop_token_ids
+        self.sgl_temperature = sgl_temperature
+        self.sgl_top_p = sgl_top_p
+        self.sgl_top_k = sgl_top_k
+        self.sgl_min_p = sgl_min_p
+        self.sgl_frequency_penalty = sgl_frequency_penalty
+        self.sgl_presence_penalty = sgl_presence_penalty
+        self.sgl_repetition_penalty = sgl_repetition_penalty
+        self.sgl_min_new_tokens = sgl_min_new_tokens
+        self.sgl_n = sgl_n
+        self.sgl_json_schema = sgl_json_schema
+        self.sgl_regex = sgl_regex
+        self.sgl_ebnf = sgl_ebnf
+        self.sgl_structural_tag = sgl_structural_tag
+        self.sgl_ignore_eos = sgl_ignore_eos
+        self.sgl_skip_special_tokens = sgl_skip_special_tokens
+        self.sgl_spaces_between_special_tokens = sgl_spaces_between_special_tokens
+        self.sgl_no_stop_trim = sgl_no_stop_trim
+        self.sgl_custom_params = sgl_custom_params
+        self.sgl_stream_interval = sgl_stream_interval
+        self.sgl_logit_bias = sgl_logit_bias
+    
+    def start_serving(self):
+        self.backend_initialized = True
         self.logger = get_logger()
-        if hf_model_name_or_path is None:
+        if self.hf_model_name_or_path is None:
             raise ValueError("hf_model_name_or_path is required") 
-        elif os.path.exists(hf_model_name_or_path):
-            self.logger.info(f"Using local model path: {hf_model_name_or_path}")
-            self.real_model_path = hf_model_name_or_path
+        elif os.path.exists(self.hf_model_name_or_path):
+            self.logger.info(f"Using local model path: {self.hf_model_name_or_path}")
+            self.real_model_path = self.hf_model_name_or_path
         else:
-            self.logger.info(f"Downloading model from HuggingFace: {hf_model_name_or_path}")
+            self.logger.info(f"Downloading model from HuggingFace: {self.hf_model_name_or_path}")
             self.real_model_path = snapshot_download(
-                repo_id=hf_model_name_or_path,
-                cache_dir=hf_cache_dir,
-                local_dir=hf_local_dir,
+                repo_id=self.hf_model_name_or_path,
+                cache_dir=self.hf_cache_dir,
+                local_dir=self.hf_local_dir,
             )
         
         # import sglang and set up the environment for multiprocessing
@@ -246,47 +321,47 @@ class LocalModelLLMServing_sglang(LLMServingABC):
             raise ImportError("please install sglang first like 'pip install open-dataflow[sglang]'")
         self.llm = sgl.Engine(
             model_path=self.real_model_path,
-            tp_size=sgl_tp_size,
-            dp_size=sgl_dp_size,
-            mem_fraction_static=sgl_mem_fraction_static,  # memory fraction for static memory allocation
+            tp_size=self.sgl_tp_size,
+            dp_size=self.sgl_dp_size,
+            mem_fraction_static=self.sgl_mem_fraction_static,  # memory fraction for static memory allocation
         )
         self.sampling_params = {
-            "max_new_tokens": sgl_max_new_tokens,
-            "stop": sgl_stop,
-            "stop_token_ids": sgl_stop_token_ids,
-            "temperature": sgl_temperature,
-            "top_p": sgl_top_p,
-            "top_k": sgl_top_k,
-            "min_p": sgl_min_p,
-            "frequency_penalty": sgl_frequency_penalty,
-            "presence_penalty": sgl_presence_penalty,
-            "repetition_penalty": sgl_repetition_penalty,
-            "min_new_tokens": sgl_min_new_tokens,
-            "n": sgl_n,
-            "json_schema": sgl_json_schema,
-            "regex": sgl_regex,
-            "ebnf": sgl_ebnf,
-            "structural_tag": sgl_structural_tag,
-            "ignore_eos": sgl_ignore_eos,
-            "skip_special_tokens": sgl_skip_special_tokens,
-            "spaces_between_special_tokens": sgl_spaces_between_special_tokens,
-            "no_stop_trim": sgl_no_stop_trim,
-            "custom_params": sgl_custom_params,
-            "stream_interval": sgl_stream_interval,
-            "logit_bias": sgl_logit_bias,
-            **kwargs
+            "max_new_tokens": self.sgl_max_new_tokens,
+            "stop": self.sgl_stop,
+            "stop_token_ids": self.sgl_stop_token_ids,
+            "temperature": self.sgl_temperature,
+            "top_p": self.sgl_top_p,
+            "top_k": self.sgl_top_k,
+            "min_p": self.sgl_min_p,
+            "frequency_penalty": self.sgl_frequency_penalty,
+            "presence_penalty": self.sgl_presence_penalty,
+            "repetition_penalty": self.sgl_repetition_penalty,
+            "min_new_tokens": self.sgl_min_new_tokens,
+            "n": self.sgl_n,
+            "json_schema": self.sgl_json_schema,
+            "regex": self.sgl_regex,
+            "ebnf":self.sgl_ebnf,
+            "structural_tag": self.sgl_structural_tag,
+            "ignore_eos": self.sgl_ignore_eos,
+            "skip_special_tokens": self.sgl_skip_special_tokens,
+            "spaces_between_special_tokens": self.sgl_spaces_between_special_tokens,
+            "no_stop_trim": self.sgl_no_stop_trim,
+            "custom_params": self.sgl_custom_params,
+            "stream_interval":self.sgl_stream_interval,
+            "logit_bias": self.sgl_logit_bias,
         }
         # remove all keys equal to None
         self.sampling_params = {k: v for k, v in self.sampling_params.items() if v is not None}
 
-        self.tokenizer = AutoTokenizer.from_pretrained(self.real_model_path, cache_dir=hf_cache_dir)
+        self.tokenizer = AutoTokenizer.from_pretrained(self.real_model_path, cache_dir=self.hf_cache_dir)
         self.logger.success(f"Model loaded from {self.real_model_path} by SGLang backend")
 
     def generate_from_input(self,
                             user_inputs: list[str], 
                             system_prompt: str = "You are a helpful assistant"
                             ) -> list[str]:
-        
+        if not self.backend_initialized:
+            self.start_serving()
         full_prompts = []
         for question in user_inputs:
             messages = [
@@ -308,7 +383,17 @@ class LocalModelLLMServing_sglang(LLMServingABC):
 
         return [output['text'] for output in responses]
     
+    def generate_embedding_from_input(self, texts: list[str]) -> list[list[float]]:
+        raise NotImplementedError("SGLang backend does not support embedding generation yet. If you have experience with SGLang, please contribute to this feature in Pull Request.")
+        # if not self.backend_initialized:
+            # self.start_serving()
+            # self.llm.
+        # outputs = self.llm.embed(texts)
+        # return [output['embedding'] for output in outputs]
+    
     def cleanup(self):
+        self.logger.info("Cleaning up SGLang backend resources...")
+        self.backend_initialized = False
         self.llm.shutdown()
         del self.llm
         import gc;
