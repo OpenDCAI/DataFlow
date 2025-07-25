@@ -98,7 +98,7 @@ def main() -> None:
         # 默认使用 operators
         mode = args.ui_mode or "operators"
         if mode == "operators":
-            from dataflow.webui import demo
+            from dataflow.webui.operator_pipeline import demo
             demo.launch(
                 server_name=args.host,
                 server_port=args.port,

@@ -67,7 +67,7 @@ class DynamicOperatorSystem:
     def _discover_pipelines(self):
         """只发现 API Pipelines"""
         try:
-            pipeline_base = os.path.join(os.path.dirname(__file__), "statics", "pipelines")
+            pipeline_base = os.path.join(os.path.dirname(__file__), "..", "statics", "pipelines")
             for category in ["api_pipelines"]:
                 path = os.path.join(pipeline_base, category)
                 if not os.path.exists(path):
