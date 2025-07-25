@@ -18,7 +18,7 @@
 
 </div>
 
-https://github.com/user-attachments/assets/3dadeeb0-7007-4cdf-b412-593af000020c](https://github.com/user-attachments/assets/9168b567-47a3-4f26-97d5-a7fa28e3ac79
+[https://github.com/user-attachments/assets/05e047a5-99bb-4043-bc71-2b5ccdab2126](https://github.com/user-attachments/assets/d48f99f4-e687-4f6f-8076-db7c238c93ee)
 
 
 ## 📰 1. 最新动态
@@ -103,9 +103,7 @@ pip install open-dataflow[vllm]
 ```
 > Dataflow 支持 Python>=3.10 的环境
 
-### ✅ 5.2 验证安装
-
-你可以用如下指令查看dataflow是否正确安装:
+安装完成后，你可以用如下指令查看dataflow是否正确安装:
 ```shell
 dataflow -v
 ```
@@ -119,25 +117,21 @@ open-dataflow codebase version: 1.0.0
 You are using the latest version: 1.0.0.
 ```
 
-### 🌐 5.3 使用Gradio Web界面
+### 🚀 5.2 使用Gradio Web界面
 
-DataFlow提供了两个交互式Web界面，帮助你使用算子和智能体：
+DataFlow提供了两个交互式Web界面，帮助你使用算子、流水线和智能体：
 
-#### 5.3.1 DataFlow算子界面
+#### 5.2.1 DataFlow算子界面
 
-启动DataFlow算子界面来测试和可视化所有算子：
+启动DataFlow算子界面来测试和可视化所有算子和流水线：
 
 ```bash
 dataflow webui
 ```
 
-该命令将启动一个交互式 Web 界面，使你能够无缝可视化并使用所有算子。
+该命令将启动一个交互式 Web 界面，使你能够可视化并灵活使用所有算子和流水线。
 
-<div align="center">
-  <img src="./static/images/dataflow_agent_gradio.png" width="60%">
-</div>
-
-#### 5.3.2 DataFlow智能体界面
+#### 5.2.2 DataFlow智能体界面
 
 启动DataFlow智能体界面进行算子编写和流水线设计：
 
@@ -145,13 +139,21 @@ dataflow webui
 dataflow webui agent
 ```
 
-该命令将启动DataFlow-Agent界面，提供算子编写功能和流水线设计服务。
+该命令将启动 DataFlow-Agent 界面，提供自动化算子编写功能和流水线推荐服务。
+
+https://github.com/user-attachments/assets/a286d39f-00cf-4692-8d98-cc73475fca8b
+
+### 🌐 5.3 ADP智能数据平台
+
+除了本地Gradio界面，DataFlow还提供了基于Web的ADP智能数据平台：[https://adp.originhub.tech/login](https://adp.originhub.tech/login)
+
+ADP是OriginHub推出的智能数据平台，具备四大核心能力：DataFlow数据准备全流程自动化、融合大规模多模态知识库的知识系统、多Agent协同的智能协作，以及支撑数据全链路管理的AI数据库，旨在加速企业通过AI能力充分发挥独有数据的价值。
 
 <div align="center">
-  <img src="./static/images/dataflow_gradio.png" width="60%">
+  <img src="./static/images/ADP.png" width="60%">
 </div>
 
-### 📖 5.4 参考项目文档
+### 📖 5.4 参考DataFlow项目文档
 
 详细**使用说明**和**入门指南**，请参考我们的 [项目文档](https://OpenDCAI.github.io/DataFlow-Doc/)。
 
