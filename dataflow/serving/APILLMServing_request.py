@@ -47,34 +47,32 @@ class APILLMServing_request(LLMServingABC):
             return content
 
 
-    def api_chat(self, system_info: str, messages: str, model: str, max_retries: int = 3):
-        for attempt in range(max_retries):
-            try:
-                payload = json.dumps({
-                    "model": model,
-                    "messages": [
-                        {"role": "system", "content": system_info},
-                        {"role": "user", "content": messages}
-                    ]
-                })
+    def api_chat(self, system_info: str, messages: str, model: str):
+        try:
+            payload = json.dumps({
+                "model": model,
+                "messages": [
+                    {"role": "system", "content": system_info},
+                    {"role": "user", "content": messages}
+                ]
+            })
 
-                headers = {
-                    'Authorization': f"Bearer {self.api_key}",
-                    'Content-Type': 'application/json',
-                    'User-Agent': 'Apifox/1.0.0 (https://apifox.com)'
-                }
-                response = requests.post(self.api_url, headers=headers, data=payload, timeout=60)
-                if response.status_code == 200:
-                    response_data = response.json()
-                    return self.format_response(response_data)
-                else:
-                    logging.error(f"API request failed with status {response.status_code}: {response.text}")
-            except Exception as e:
-                logging.error(f"API request error (attempt {attempt+1}): {e}")
-            if attempt < max_retries - 1:
-                import time
-                time.sleep(2)  # 可根据需要调整重试间隔
-        return None
+            headers = {
+                'Authorization': f"Bearer {self.api_key}",
+                'Content-Type': 'application/json',
+                'User-Agent': 'Apifox/1.0.0 (https://apifox.com)'
+            }
+            # Make a POST request to the API
+            response = requests.post(self.api_url, headers=headers, data=payload, timeout=60)
+            if response.status_code == 200:
+                response_data = response.json()
+                return self.format_response(response_data)
+            else:
+                logging.error(f"API request failed with status {response.status_code}: {response.text}")
+                return None
+        except Exception as e:
+            logging.error(f"API request error: {e}")
+            return None
 
     def generate_from_input(self, 
                             user_inputs: list[str], system_prompt: str = "You are a helpful assistant"
