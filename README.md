@@ -155,7 +155,7 @@ In addition to the local Gradio interfaces, DataFlow also offers the web-based A
 ADP is an intelligent data platform launched by OriginHub. It features four core capabilities: full-process automation of data preparation with DataFlow, a knowledge system integrating large-scale multimodal knowledge bases, intelligent collaboration with multi-agent systems, and an AI database supporting full-lifecycle data management. It aims to accelerate enterprises in leveraging their unique data value through AI capabilities.
 
 <div align="center">
-  <img src="./static/images/ADP.png" width="60%">
+  <img src="./static/images/ADP.jpg" width="60%">
 </div>
 
 ### 📖 5.4 Reference Project Documentation

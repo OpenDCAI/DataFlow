@@ -150,7 +150,7 @@ https://github.com/user-attachments/assets/a286d39f-00cf-4692-8d98-cc73475fca8b
 ADP是OriginHub推出的智能数据平台，具备四大核心能力：DataFlow数据准备全流程自动化、融合大规模多模态知识库的知识系统、多Agent协同的智能协作，以及支撑数据全链路管理的AI数据库，旨在加速企业通过AI能力充分发挥独有数据的价值。
 
 <div align="center">
-  <img src="./static/images/ADP.png" width="60%">
+  <img src="./static/images/ADP.jpg" width="60%">
 </div>
 
 ### 📖 5.4 参考DataFlow项目文档
