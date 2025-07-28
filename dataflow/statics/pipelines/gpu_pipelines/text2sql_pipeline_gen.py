@@ -50,7 +50,8 @@ class Text2SQLGeneration_GPUPipeline():
 
         embedding_serving = LocalModelLLMServing_vllm(hf_model_name_or_path="Alibaba-NLP/gte-Qwen2-7B-instruct", vllm_max_tokens=8192)
 
-        # You can customize the difficulty config here, but it must contain 'thresholds' and 'labels' keys
+        # You can customize the difficulty config here, but it must contain 'num_generations', 'thresholds' and 'labels' keys
+        # 'num_generations' key is the number of generations for each question, SQL will be classified based on the number of correct executions
         execution_difficulty_config = {
             "num_generations": 10,
             'thresholds': [2, 5, 9],

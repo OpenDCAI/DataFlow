@@ -1,7 +1,6 @@
 import pandas as pd
 import os
 import re
-import sys
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from tqdm import tqdm
 from dataflow.utils.registry import OPERATOR_REGISTRY
@@ -33,9 +32,11 @@ class SQLExecutionClassifier(OperatorABC):
         self.num_generations = num_generations
         self.timeout = timeout
         self.logger = get_logger()
+        
         if self.num_generations <= self.difficulty_config["thresholds"][-1]:
-            self.logger.warning(f"num_generations is less than the last threshold, will be set to {self.difficulty_config['thresholds'][-1] + 1}")
-            self.num_generations = self.difficulty_config["thresholds"][-1] + 1
+            nearest_multiple = ((self.difficulty_config["thresholds"][-1] // 5) + 1) * 5
+            self.logger.warning(f"num_generations is less than the last threshold, will be set to {nearest_multiple}")
+            self.num_generations = nearest_multiple
         if len(self.difficulty_config['thresholds']) != len(self.difficulty_config['labels']) - 1:
             raise ValueError("Thresholds and labels configuration mismatch")
 
