@@ -48,7 +48,7 @@ class Text2SQLGeneration_APIPipeline():
         # You can customize the difficulty config here, but it must contain 'thresholds' and 'labels' keys
         execution_difficulty_config = {
             'thresholds': [2, 5, 9],
-            'labels': ['easy', 'medium', 'hard', 'extra']
+            'labels': ['extra', 'hard', 'medium', 'easy']
         }
 
         component_difficulty_config = {
@@ -142,7 +142,7 @@ class Text2SQLGeneration_APIPipeline():
             llm_serving=self.llm_serving,
             database_manager=database_manager,
             difficulty_config=execution_difficulty_config,
-            num_generations=5,
+            num_generations=10,
             timeout=sql_execution_timeout
         )
         

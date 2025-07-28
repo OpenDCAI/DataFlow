@@ -25,7 +25,7 @@ class SQLExecutionClassifier(OperatorABC):
         if difficulty_config is None:
             self.difficulty_config = {
                 'thresholds': [2, 5, 9],
-                'labels': ['easy', 'medium', 'hard', 'extra']
+                'labels': ['extra', 'hard', 'medium', 'easy']
             }
         else:
             self.difficulty_config = difficulty_config
@@ -229,6 +229,12 @@ class SQLExecutionClassifier(OperatorABC):
         
         self.output_predicted_sqls_key = "_temp_predicted_sqls"
         self.output_cnt_true_key = "_temp_cnt_true"
+
+        if self.num_generations % 10 != 0:
+            nearest_multiple = 10 * (self.num_generations // 10 + 1)
+            self.logger.warning(f"num_generations adjusted to nearest multiple of 10: {nearest_multiple}")
+            self.num_generations = nearest_multiple
+            self.logger.warning(f"num_generations will be set to {self.num_generations}")
         
         dataframe = storage.read("dataframe")
         self.check_column(dataframe)
