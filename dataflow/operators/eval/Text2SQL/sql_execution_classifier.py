@@ -24,6 +24,7 @@ class SQLExecutionClassifier(OperatorABC):
         self.database_manager = database_manager
         if difficulty_config is None:
             self.difficulty_config = {
+                "num_generations": 10,
                 'thresholds': [2, 5, 9],
                 'labels': ['extra', 'hard', 'medium', 'easy']
             }
@@ -32,6 +33,9 @@ class SQLExecutionClassifier(OperatorABC):
         self.num_generations = num_generations
         self.timeout = timeout
         self.logger = get_logger()
+        if self.num_generations <= self.difficulty_config["thresholds"][-1]:
+            self.logger.warning(f"num_generations is less than the last threshold, will be set to {self.difficulty_config['thresholds'][-1] + 1}")
+            self.num_generations = self.difficulty_config["thresholds"][-1] + 1
         if len(self.difficulty_config['thresholds']) != len(self.difficulty_config['labels']) - 1:
             raise ValueError("Thresholds and labels configuration mismatch")
 
@@ -229,12 +233,6 @@ class SQLExecutionClassifier(OperatorABC):
         
         self.output_predicted_sqls_key = "_temp_predicted_sqls"
         self.output_cnt_true_key = "_temp_cnt_true"
-
-        if self.num_generations % 10 != 0:
-            nearest_multiple = 10 * (self.num_generations // 10 + 1)
-            self.logger.warning(f"num_generations adjusted to nearest multiple of 10: {nearest_multiple}")
-            self.num_generations = nearest_multiple
-            self.logger.warning(f"num_generations will be set to {self.num_generations}")
         
         dataframe = storage.read("dataframe")
         self.check_column(dataframe)

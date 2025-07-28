@@ -48,6 +48,7 @@ class Text2SQLRefine_APIPipeline():
 
         # You can customize the difficulty config here, but it must contain 'thresholds' and 'labels' keys
         execution_difficulty_config = {
+            "num_generations": 10,
             'thresholds': [2, 5, 9],
             'labels': ['extra', 'hard', 'medium', 'easy']
         }
@@ -153,7 +154,7 @@ class Text2SQLRefine_APIPipeline():
             llm_serving=self.llm_serving,
             database_manager=database_manager,
             difficulty_config=execution_difficulty_config,
-            num_generations=10,
+            num_generations=execution_difficulty_config["num_generations"],
             timeout=sql_execution_timeout
         )
         
