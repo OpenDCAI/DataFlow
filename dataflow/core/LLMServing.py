@@ -12,6 +12,14 @@ class LLMServingABC(ABC):
         input: List[str], the input of the generator
         """
         pass
+    
+    @abstractmethod
+    def start_serving(self):
+        """
+        Cleanup the generator and garbage collect all GPU/CPU memory.
+        """
+        pass
+    
     @abstractmethod
     def cleanup(self):
         """
