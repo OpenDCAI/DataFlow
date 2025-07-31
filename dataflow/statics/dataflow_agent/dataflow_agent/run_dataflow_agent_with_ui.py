@@ -330,4 +330,4 @@ if __name__ == "__main__":
         resp = asyncio.run(_run_service(test_req))
         print(json.dumps(resp.dict(), ensure_ascii=False, indent=2))
         sys.exit(0)        
-    uvicorn.run("test_dataflow_agent_with_ui:app", host="0.0.0.0", port=8000, reload=False)
+    uvicorn.run("run_dataflow_agent_with_ui:app", host="0.0.0.0", port=8000, reload=False)

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-#  —— FastAPI + Gradio 同进程启动（UI = /ui, API = /api）
+# —— FastAPI + Gradio 同进程启动（UI = /ui, API = /api）
 
 import os, json, contextlib, requests
 from typing import Dict, Any, Generator, Tuple
@@ -9,6 +9,7 @@ from fastapi import FastAPI
 from fastapi.responses import RedirectResponse, JSONResponse
 import uvicorn
 from .run_dataflow_agent_with_ui import app as backend_app
+
 def build_payload(
     language, target, model, session_key,
     json_file, py_path, api_key, chat_api,
@@ -130,46 +131,52 @@ def stream_request(
         yield whole_log + f"\n❌ 流式异常: {e}", code_txt, cache
 
 with gr.Blocks(title="DataFlow-Agent") as demo:
-    gr.Markdown("## 🛠️ DataFlow-Agent 算子编写 + 管线推荐")
+    gr.Markdown("## 🛠️ DataFlow-Agent 算子编写 + 管线推荐 (Operator Authoring & Pipeline Recommendation)")
 
     with gr.Row():
-        api_base = gr.Textbox(label="后端地址", value="http://127.0.0.1:7862/api")
-        language = gr.Dropdown(["zh", "en"], value="zh", label="Language")
-        model    = gr.Textbox(label="LLM Model", value="deepseek-v3")
+        api_base = gr.Textbox(label="后端地址 (Backend URL)", value="http://127.0.0.1:7862/api")
+        language = gr.Dropdown(["zh", "en"], value="zh", label="Language (语言)")
+        model    = gr.Textbox(label="LLM Model (模型名称)", value="deepseek-v3")
 
-    session_key = gr.Textbox(label="sessionKEY", value="dataflow_demo")
-    target = gr.Textbox(label="目标（Target）", lines=4,
-                        value="我需要一个算子，使用LLMServing对医疗场景的原始题干进行同义改写，生成语义一致但表达不同的新问题，有效增加训练样本多样性，并且输入key是question，输出key是questionPARA,就在原数据上新加入key。")
+    session_key = gr.Textbox(label="sessionKEY (会话标识)", value="dataflow_demo")
+    target = gr.Textbox(
+        label="目标提示词（Target Prompted）",
+        # label_visibility="visible",
+        lines=4,
+        value="I need an operator that uses LLMServing to paraphrase the original prompts in a medical scenario—producing new questions that are semantically equivalent but phrased differently to effectively increase the diversity of training samples. The input key should be “question” and the output key “questionPARA,” which will be added directly to the original data."
+    )
 
     gr.Markdown("---")
 
-    json_file = gr.Textbox(label="待处理 JSON 文件地址")
-    py_path   = gr.Textbox(label="算子代码保存路径 (.py)")
-    api_key   = gr.Textbox(label="DF_API_KEY", type="password")
-    chat_api  = gr.Textbox(label="DF_API_URL")
+    json_file = gr.Textbox(label="待处理 JSON 文件地址 (Input JSON File Path)")
+    py_path   = gr.Textbox(label="算子代码保存路径 (.py) (Operator .py File Path)")
+    api_key   = gr.Textbox(label="DF_API_KEY (API 密钥)", type="password")
+    chat_api  = gr.Textbox(label="DF_API_URL (Chat API URL)")
 
     with gr.Row():
-        execute_operator = gr.Checkbox(label="调试算子（耗 tokens）")
-        execute_pipeline = gr.Checkbox(label="调试 pipeline（耗 tokens）")
-        use_local_model  = gr.Checkbox(label="使用本地模型")
+        execute_operator = gr.Checkbox(label="调试算子（耗 tokens） (Debug Operator)")
+        execute_pipeline = gr.Checkbox(label="调试 pipeline（耗 tokens） (Debug Pipeline)")
+        use_local_model  = gr.Checkbox(label="使用本地模型 (Use Local Model)")
 
-    local_model = gr.Textbox(label="本地模型路径",
-                             value="/mnt/public/model/huggingface/Qwen2.5-7B-Instruct")
+    local_model = gr.Textbox(
+        label="本地模型路径 (Local Model Path)",
+        value="/mnt/public/model/huggingface/Qwen2.5-7B-Instruct"
+    )
 
     with gr.Row():
-        timeout   = gr.Slider(60, 7200, value=3600, step=60, label="超时 (s)")
-        max_debug = gr.Slider(1, 20, value=5, step=1, label="最大 Debug 轮数")
+        timeout   = gr.Slider(60, 7200, value=3600, step=60, label="超时 (s) (Timeout (s))")
+        max_debug = gr.Slider(1, 20, value=5, step=1, label="最大 Debug 轮数 (Max Debug Rounds)")
 
-    gr.Markdown("### 📮 普通请求")
-    normal_btn  = gr.Button("发送")
-    norm_status = gr.Textbox(label="状态")
-    norm_output = gr.JSON(label="返回结果")
+    gr.Markdown("### 📮 普通请求 (Normal Request)")
+    normal_btn  = gr.Button("发送 (Send)")
+    norm_status = gr.Textbox(label="状态 (Status)")
+    norm_output = gr.JSON(label="返回结果 (Response)")
 
-    gr.Markdown("### 🚀 流式请求")
-    stream_btn  = gr.Button("开始流式")
-    stream_box  = gr.Textbox(lines=20, label="流式输出", interactive=False)
-    code_box    = gr.Code(label="生成的算子代码", language="python", lines=22)
-    cache_box   = gr.JSON(label="cache_local 数据")
+    gr.Markdown("### 🚀 流式请求 (Streaming Request)")
+    stream_btn  = gr.Button("开始流式 (Start Streaming)")
+    stream_box  = gr.Textbox(lines=20, label="流式输出 (Streaming Output)", interactive=False)
+    code_box    = gr.Code(label="生成的算子代码 (Generated Operator Code)", language="python", lines=22)
+    cache_box   = gr.JSON(label="cache_local 数据 (cache_local Data)")
 
     normal_btn.click(
         normal_request,

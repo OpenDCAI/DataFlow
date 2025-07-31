@@ -314,7 +314,10 @@ class ExampleConstructor:
             info_pairs = self._extract_info_pairs(processed_text)
 
             # 3. Construct question-answer pairs
-            qa_pairs = self._generate_qa_pairs(info_pairs)
+            if(info_pairs):
+                qa_pairs = self._generate_qa_pairs(info_pairs)
+            else:
+                qa_pairs = []
 
             # 4. Add metadata
             example = {
@@ -323,7 +326,7 @@ class ExampleConstructor:
                 'metadata': {
                     'source': data.get('source', 'unknown'),
                     'timestamp': data.get('timestamp', ''),
-                    'complexity': self._calculate_complexity(qa_pairs),
+                    'complexity': self._calculate_complexity(qa_pairs) if qa_pairs else 0,
                 },
             }
 

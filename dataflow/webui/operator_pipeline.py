@@ -10,6 +10,8 @@ from dataflow.logger import get_logger
 from dataflow.utils.registry import OPERATOR_REGISTRY
 from dataflow.core import LLMServingABC
 from dataflow.utils.storage import FileStorage
+import logging
+logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
 # =========================
 # 1. 强制初始化注册表
@@ -65,7 +67,7 @@ class DynamicOperatorSystem:
     def _discover_pipelines(self):
         """只发现 API Pipelines"""
         try:
-            pipeline_base = os.path.join(os.path.dirname(__file__), "statics", "pipelines")
+            pipeline_base = os.path.join(os.path.dirname(__file__), "..", "statics", "pipelines")
             for category in ["api_pipelines"]:
                 path = os.path.join(pipeline_base, category)
                 if not os.path.exists(path):
@@ -405,7 +407,7 @@ def gradio_run(
         run_params = json.loads(run_str)
         info = dynamic_system.get_operator_info(op_name)
         if any(p.name == "llm_serving" for p in info.init_params):
-            cfg = {"type": "API", "api_url": api_url, "model_name": model_name,
+            cfg = {"serving_type": "API", "api_url": api_url, "model_name": model_name,
                    "api_key": api_key, "max_workers": max_workers}
             other_init["llm_serving"] = dynamic_system.create_serving_instance(**cfg)
         op_inst = info.class_obj(**other_init)
@@ -473,6 +475,15 @@ def gradio_run_pipeline(
             return "**Pipeline执行完成** 但未找到输出文件", "<pre></pre>"
     except Exception as e:
         return f"[Error] {e}", "<pre></pre>"
+
+# =========================
+# 新增：保存 Pipeline API Key 到环境变量
+# =========================
+def save_pipeline_api_key(key):
+    import os, logging
+    os.environ["DF_API_KEY"] = key
+    logging.info("DF_API_KEY 已保存到环境变量")  # 终端会看到 INFO 提示
+
 
 # =========================
 # Gradio 界面
@@ -553,6 +564,14 @@ with gr.Blocks(title="DataFlow 动态算子和Pipeline可视化") as demo:
             pipeline_api_url = gr.Textbox(label=current_t["api_url"], value="https://api.openai.com/v1/chat/completions")
             pipeline_api_model_name = gr.Textbox(label=current_t["model_name"], value="gpt-4o-mini")
             pipeline_api_key = gr.Textbox(label=current_t["api_key"], type="password")
+            # 新增保存 API Key 按钮
+            save_api_key_btn = gr.Button(value="保存 API Key", variant="secondary")
+            # 绑定：点击按钮时执行保存环境变量的操作
+            save_api_key_btn.click(
+                fn=save_pipeline_api_key,
+                inputs=[pipeline_api_key],
+                outputs=[]
+            )
             pipeline_api_max_workers = gr.Number(label=current_t["max_workers"], value=2)
 
         # 算子存储区

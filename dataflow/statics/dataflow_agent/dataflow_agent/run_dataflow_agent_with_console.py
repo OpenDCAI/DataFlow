@@ -113,7 +113,7 @@ if __name__ == "__main__":
         resp = asyncio.run(_run_service(test_req))
         print(json.dumps(resp.dict(), ensure_ascii=False, indent=2))
         sys.exit(0)        
-    uvicorn.run("test_dataflow_agent:app", host="0.0.0.0", port=8000, reload=True)
+    uvicorn.run("run_dataflow_agent_with_console:app", host="0.0.0.0", port=8000, reload=True)
 
     # 我需要一个算子，能够对用户评论进行情感分析并输出积极/消极标签。
     # 我需要一个算子，能够计算文本的可读性分数并给出优化建议。

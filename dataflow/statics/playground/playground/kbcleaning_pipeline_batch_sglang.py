@@ -12,7 +12,7 @@ class KBCleaning_batchSglang_GPUPipeline():
     def __init__(self):
 
         self.storage = FileStorage(
-            first_entry_file_name="../example_data/KBCleaningPipeline/kbc_test.jsonl",
+            first_entry_file_name="../example_data/KBCleaningPipeline/kbc_playground.jsonl",
             cache_path="./.cache/gpu",
             file_name_prefix="batch_cleaning_step",
             cache_type="json",

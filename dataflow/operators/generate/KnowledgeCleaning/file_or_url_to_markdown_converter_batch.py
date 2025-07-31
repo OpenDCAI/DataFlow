@@ -76,8 +76,8 @@ Please make sure you have GPU on your machine.
     try:
         result = subprocess.run(
             command,
-            stdout=subprocess.DEVNULL,  
-            stderr=subprocess.DEVNULL,  
+            #stdout=subprocess.DEVNULL,  
+            #stderr=subprocess.DEVNULL,  
             check=True  
         )
     except Exception as e:
@@ -124,13 +124,14 @@ def is_pdf_url(url):
         # 发送HEAD请求，只获取响应头，不下载文件
         response = requests.head(url, allow_redirects=True)
         # 如果响应的Content-Type是application/pdf
-        if response.headers.get('Content-Type') == 'application/pdf':
+        if response.status_code == 200 and response.headers.get('Content-Type') == 'application/pdf':
             return True
         else:
             print(f"Content-Type: {response.headers.get('Content-Type')}")
             return False
     except requests.exceptions.RequestException:
         # 如果请求失败，返回False
+        print("Request failed")
         return False
 
 def download_pdf(url, save_path):
@@ -140,6 +141,8 @@ def download_pdf(url, save_path):
         # 确保响应内容是PDF
         if response.status_code == 200 and response.headers.get('Content-Type') == 'application/pdf':
             # 将PDF保存到本地
+            pdf_folder = os.path.dirname(save_path)
+            os.makedirs(pdf_folder, exist_ok=True)
             with open(save_path, 'wb') as f:
                 for chunk in response.iter_content(chunk_size=1024):
                     if chunk:

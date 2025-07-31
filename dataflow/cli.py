@@ -66,7 +66,7 @@ def build_arg_parser() -> argparse.ArgumentParser:
 
     # --- webui ---
     p_webui = top.add_parser("webui", help="Launch Gradio WebUI")
-    p_webui.add_argument("-H", "--host", default="0.0.0.0", help="Bind host (default 0.0.0.0)")
+    p_webui.add_argument("-H", "--host", default="127.0.0.1", help="Bind host (default 127.0.0.1)")
     p_webui.add_argument("-P", "--port", type=int, default=7862, help="Port (default 7862)")
     p_webui.add_argument("--show-error", action="store_true", help="Show Gradio error tracebacks")
 
@@ -74,6 +74,7 @@ def build_arg_parser() -> argparse.ArgumentParser:
     w_sub = p_webui.add_subparsers(dest="ui_mode", required=False)
     w_sub.add_parser("operators", help="Launch operator / pipeline UI")
     w_sub.add_parser("agent",     help="Launch DataFlow-Agent UI (backend included)")
+    w_sub.add_parser("pdf",   help="Launch PDF Knowledge Base Cleaning UI")
 
     return parser
 
@@ -97,7 +98,7 @@ def main() -> None:
         # 默认使用 operators
         mode = args.ui_mode or "operators"
         if mode == "operators":
-            from dataflow.webui import demo
+            from dataflow.webui.operator_pipeline import demo
             demo.launch(
                 server_name=args.host,
                 server_port=args.port,
@@ -107,6 +108,9 @@ def main() -> None:
             from dataflow.agent.webui import app  
             import uvicorn
             uvicorn.run(app, host=args.host, port=args.port, log_level="info")
+        elif mode == "pdf":
+            from dataflow.webui import kbclean_webui
+            kbclean_webui.create_ui().launch()
         else:
             parser.error(f"Unknown ui_mode {mode!r}")
 if __name__ == "__main__":

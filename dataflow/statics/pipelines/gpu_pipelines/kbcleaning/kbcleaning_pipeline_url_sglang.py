@@ -5,20 +5,20 @@ from dataflow.operators.generate import (
     MultiHopQAGenerator,
 )
 from dataflow.utils.storage import FileStorage
-from dataflow.serving import LocalModelLLMServing_vllm
+from dataflow.serving import LocalModelLLMServing_sglang
 
-class KBCleaning_PDFvllm_GPUPipeline():
+class KBCleaning_URLSglang_GPUPipeline():
     def __init__(self):
 
         self.storage = FileStorage(
-            first_entry_file_name="../example_data/KBCleaningPipeline/kbc_placeholder.json",
+            first_entry_file_name="../../example_data/KBCleaningPipeline/kbc_placeholder.json",
             cache_path="./.cache/gpu",
-            file_name_prefix="pdf_cleaning_step",
+            file_name_prefix="url_cleaning_step",
             cache_type="json",
         )
 
         self.knowledge_cleaning_step1 = FileOrURLToMarkdownConverter(
-            intermediate_dir="../example_data/KBCleaningPipeline/raw/",
+            intermediate_dir="../../example_data/KBCleaningPipeline/raw/",
             lang="en",
             mineru_backend="vlm-sglang-engine",
         )
@@ -42,12 +42,11 @@ class KBCleaning_PDFvllm_GPUPipeline():
             output_key="raw_content",
         )
 
-        self.llm_serving = LocalModelLLMServing_vllm(
+        self.llm_serving = LocalModelLLMServing_sglang(
             hf_model_name_or_path="Qwen/Qwen2.5-7B-Instruct",
-            vllm_max_tokens=2048,
-            vllm_tensor_parallel_size=4,
-            vllm_gpu_memory_utilization=0.6,
-            vllm_repetition_penalty=1.2
+            sgl_dp_size=1, # data parallel size
+            sgl_tp_size=1, # tensor parallel size
+            sgl_max_new_tokens=1024,
         )
 
         self.knowledge_cleaning_step3 = KnowledgeCleaner(
@@ -72,5 +71,5 @@ class KBCleaning_PDFvllm_GPUPipeline():
         )
         
 if __name__ == "__main__":
-    model = KBCleaning_PDFvllm_GPUPipeline()
-    model.forward(raw_file="../example_data/KBCleaningPipeline/test.pdf")
+    model = KBCleaning_URLSglang_GPUPipeline()
+    model.forward(url="https://trafilatura.readthedocs.io/en/latest/quickstart.html")

@@ -7,18 +7,18 @@ from dataflow.operators.generate import (
 from dataflow.utils.storage import FileStorage
 from dataflow.serving import LocalModelLLMServing_vllm
 
-class KBCleaning_URLvllm_GPUPipeline():
+class KBCleaning_PDFvllm_GPUPipeline():
     def __init__(self):
 
         self.storage = FileStorage(
-            first_entry_file_name="../example_data/KBCleaningPipeline/kbc_placeholder.json",
+            first_entry_file_name="../../example_data/KBCleaningPipeline/kbc_placeholder.json",
             cache_path="./.cache/gpu",
-            file_name_prefix="url_cleaning_step",
+            file_name_prefix="pdf_cleaning_step",
             cache_type="json",
         )
 
         self.knowledge_cleaning_step1 = FileOrURLToMarkdownConverter(
-            intermediate_dir="../example_data/KBCleaningPipeline/raw/",
+            intermediate_dir="../../example_data/KBCleaningPipeline/raw/",
             lang="en",
             mineru_backend="vlm-sglang-engine",
         )
@@ -72,5 +72,5 @@ class KBCleaning_URLvllm_GPUPipeline():
         )
         
 if __name__ == "__main__":
-    model = KBCleaning_URLvllm_GPUPipeline()
-    model.forward(url="https://trafilatura.readthedocs.io/en/latest/quickstart.html")
+    model = KBCleaning_PDFvllm_GPUPipeline()
+    model.forward(raw_file="../../example_data/KBCleaningPipeline/test.pdf")
