@@ -44,8 +44,8 @@ class AgenticRAGEval_APIPipeline():
         self.task_step2.run(
             storage=self.storage.step(),
             output_key="F1Score",
-            prediction_key="refined_answer",
-            ground_truth_key="golden_doc_answer"
+            input_prediction_key="refined_answer",
+            input_ground_truth_key="golden_doc_answer"
         )
 
 if __name__ == "__main__":

@@ -67,7 +67,7 @@ class QAGenerator:
         self, 
         storage: DataFlowStorage, 
         input_key:str = "text", 
-        prompt_key:str = "generated_prompt",
+        output_prompt_key:str = "generated_prompt",
         output_quesion_key:str = "generated_question",
         output_answer_key:str = "generated_answer"
         ):
@@ -75,7 +75,7 @@ class QAGenerator:
         Runs the answer generation process, reading from the input file and saving results to output.
         '''
 
-        self.input_key, self.prompt_key, self.output_question_key, self.output_answer_key = input_key, prompt_key, output_quesion_key, output_answer_key
+        self.input_key, self.prompt_key, self.output_question_key, self.output_answer_key = input_key, output_prompt_key, output_quesion_key, output_answer_key
 
         dataframe = storage.read("dataframe")
         self._validate_dataframe(dataframe)

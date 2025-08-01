@@ -99,14 +99,14 @@ class F1Scorer(OperatorABC):
 
     def run(self, 
             storage: DataFlowStorage, 
-            prediction_key:str ="refined_answer",
-            ground_truth_key:str ="golden_doc_answer",
+            input_prediction_key:str ="refined_answer",
+            input_ground_truth_key:str ="golden_doc_answer",
             output_key:str ="F1Score",
             ):
         dataframe = storage.read("dataframe")
         self.output_key = output_key
-        self.prediction_key = prediction_key
-        self.ground_truth_key = ground_truth_key
+        self.prediction_key = input_prediction_key
+        self.ground_truth_key = input_ground_truth_key
         self._validate_dataframe(dataframe)
         scores = self.eval(dataframe)
         dataframe[self.output_key] = scores

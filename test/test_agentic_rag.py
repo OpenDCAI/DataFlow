@@ -59,7 +59,7 @@ class AgenticRAGPipeline():
         self.qa_generator_step3.run(
             storage = self.storage.step(),
             input_key="text",
-            prompt_key="generated_prompt",
+            output_prompt_key="generated_prompt",
             output_quesion_key="generated_question",
             output_answer_key="generated_answer"
         )
