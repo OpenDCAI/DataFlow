@@ -157,15 +157,19 @@ class FileOrURLToMarkdownConverter(OperatorABC):
     """
     def __init__(
         self, 
+        url: str = None,
+        raw_file: str = None,
         intermediate_dir: str = "intermediate", 
         lang: str = "en", 
-        mineru_backend:  Literal["vlm-sglang-engine", "pipeline"] = "vlm-sglang-engine"
+        mineru_backend:  Literal["vlm-sglang-engine", "pipeline"] = "vlm-sglang-engine",
         ):
         self.logger = get_logger()
         self.intermediate_dir=intermediate_dir
         os.makedirs(self.intermediate_dir, exist_ok=True)
         self.lang=lang
         self.mineru_backend = mineru_backend
+        self.url = url
+        self.raw_file = raw_file
         
     @staticmethod
     def get_desc(lang: str = "zh"):
@@ -199,27 +203,27 @@ class FileOrURLToMarkdownConverter(OperatorABC):
                 "- Generates intermediate files to specified directory(intermediate_dir)"
             )
 
-    def run(self, storage: DataFlowStorage, raw_file=None, url=None):
+    def run(self, storage: DataFlowStorage, input_key="", output_key=""):
         self.logger.info("Starting extraction...")
         self.logger.info("If you're providing a URL or a large file, this may take a while. Please wait...")
 
         # Handle extraction from URL
-        if url:
-            if is_pdf_url(url):
+        if self.url:
+            if is_pdf_url(self.url):
                 pdf_save_path = output_file = os.path.join(
                     os.path.dirname(storage.first_entry_file_name),
                     "raw/crawled.pdf"
                 )
-                self.logger.info(f"Downloading PDF from {url} to {pdf_save_path}")
-                download_pdf(url, pdf_save_path)
-                raw_file=pdf_save_path
+                self.logger.info(f"Downloading PDF from {self.url} to {pdf_save_path}")
+                download_pdf(self.url, pdf_save_path)
+                self.raw_file=pdf_save_path
                 self.logger.info(f"pdf file has been fetched and saved to {pdf_save_path}")
             else:       
                 output_file = os.path.join(
                     os.path.dirname(storage.first_entry_file_name),
                     "raw/crawled.md"
                 )
-                output_file = _parse_xml_to_md(url=url, output_file=output_file)
+                output_file = _parse_xml_to_md(url=self.url, output_file=output_file)
                 self.logger.info(f"Primary extracted result written to: {output_file}")
                 return output_file
 
@@ -227,8 +231,8 @@ class FileOrURLToMarkdownConverter(OperatorABC):
 
         # Handle supported file types
         # Extract file name and extension
-        raw_file_name = os.path.splitext(os.path.basename(raw_file))[0]
-        raw_file_suffix = os.path.splitext(raw_file)[1].lower()
+        raw_file_name = os.path.splitext(os.path.basename(self.raw_file))[0]
+        raw_file_suffix = os.path.splitext(self.raw_file)[1].lower()
         raw_file_suffix_no_dot = raw_file_suffix.lstrip(".")
 
         # Define default output path
@@ -240,7 +244,7 @@ class FileOrURLToMarkdownConverter(OperatorABC):
             self.logger.info(f"Using MinerU backend: {self.mineru_backend}")
             # Use MinerU backend for PDF and image files
             output_file = _parse_file_with_mineru(
-                raw_file=raw_file,
+                raw_file=self.raw_file,
                 output_file=self.intermediate_dir,
                 mineru_backend=self.mineru_backend
             )
@@ -255,11 +259,11 @@ class FileOrURLToMarkdownConverter(OperatorABC):
 
         elif raw_file_suffix in [".html", ".xml"]:
             # Use XML/HTML parser for HTML and XML files
-            output_file = _parse_xml_to_md(raw_file=raw_file, output_file=output_file)
+            output_file = _parse_xml_to_md(raw_file=self.raw_file, output_file=output_file)
 
         elif raw_file_suffix in [".txt", ".md"]:
             # Plain text and markdown files require no processing
-            output_file = raw_file
+            output_file = self.raw_file
 
         else:
             # Unsupported file type

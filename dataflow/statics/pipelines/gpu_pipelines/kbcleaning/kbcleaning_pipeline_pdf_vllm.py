@@ -8,7 +8,7 @@ from dataflow.utils.storage import FileStorage
 from dataflow.serving import LocalModelLLMServing_vllm
 
 class KBCleaning_PDFvllm_GPUPipeline():
-    def __init__(self):
+    def __init__(self, url:str=None, raw_file:str=None):
 
         self.storage = FileStorage(
             first_entry_file_name="../../example_data/KBCleaningPipeline/kbc_placeholder.json",
@@ -21,6 +21,7 @@ class KBCleaning_PDFvllm_GPUPipeline():
             intermediate_dir="../../example_data/KBCleaningPipeline/raw/",
             lang="en",
             mineru_backend="vlm-sglang-engine",
+            raw_file=raw_file,
         )
 
         self.knowledge_cleaning_step2 = CorpusTextSplitter(
@@ -29,11 +30,9 @@ class KBCleaning_PDFvllm_GPUPipeline():
             tokenizer_name="Qwen/Qwen2.5-7B-Instruct",
         )
 
-    def forward(self, url:str=None, raw_file:str=None):
+    def forward(self):
         extracted=self.knowledge_cleaning_step1.run(
             storage=self.storage,
-            raw_file=raw_file,
-            url=url,
         )
         
         self.knowledge_cleaning_step2.run(
@@ -72,5 +71,5 @@ class KBCleaning_PDFvllm_GPUPipeline():
         )
         
 if __name__ == "__main__":
-    model = KBCleaning_PDFvllm_GPUPipeline()
-    model.forward(raw_file="../../example_data/KBCleaningPipeline/test.pdf")
+    model = KBCleaning_PDFvllm_GPUPipeline(raw_file="../../example_data/KBCleaningPipeline/test.pdf")
+    model.forward()
