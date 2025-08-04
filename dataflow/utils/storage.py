@@ -4,7 +4,7 @@ import pandas as pd
 import json
 from typing import Any, Literal
 import os
-
+import copy
 
 class DataFlowStorage(ABC):
     """
@@ -97,7 +97,7 @@ class FileStorage(DataFlowStorage):
 
     def step(self):
         self.operator_step += 1
-        return self
+        return copy.copy(self)
     
     def reset(self):
         self.operator_step = -1
