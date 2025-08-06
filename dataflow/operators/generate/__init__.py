@@ -49,6 +49,9 @@ if TYPE_CHECKING:
 
     #VQA
     from .VQA.PromptedVQAGenerator import PromptedVQAGenerator
+
+    # SpeechTranscription
+    from .SpeechTranscription.speech_transcriptor import SpeechTranscriptor
 else:
     import sys
     from dataflow.utils.registry import LazyLoader, generate_import_structure_from_type_checking
