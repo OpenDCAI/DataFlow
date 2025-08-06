@@ -63,3 +63,7 @@ requests
 termcolor
 uvicorn
 sseclient-py
+
+# speech
+librosa
+soundfile
