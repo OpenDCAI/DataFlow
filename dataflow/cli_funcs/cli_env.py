@@ -1,9 +1,10 @@
 import os
+import torch
 import platform
 from colorama import init, Fore, Style
 from dataflow import __version__
+import importlib.metadata
 
-import torch
 
 def is_torch_cuda_available():
     """
@@ -46,6 +47,19 @@ def get_env_info():
         info["vLLM version"] = vllm.__version__
     except Exception:
         pass
+    
+    try:
+        import sglang
+        info["SGLang version"] = sglang.__version__
+    except Exception:
+        pass
+
+    try:
+        mineru_version = importlib.metadata.version("mineru")
+        info["MinerU version"] = mineru_version
+    except Exception:
+        pass    
+
     try:
         import subprocess
         # get the dir of imdlbenco package
