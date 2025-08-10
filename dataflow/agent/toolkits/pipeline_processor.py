@@ -274,7 +274,8 @@ def generate_pipeline_py(
     json_file: str = "",
     *,
     local: bool = False,
-    local_model_name_or_path: str= ""
+    local_model_name_or_path: str= "",
+    chat_api_url: str = ""
 ) -> str:
     """Generate an executable Python pipeline script."""
 
@@ -346,7 +347,7 @@ def generate_pipeline_py(
         llm_block = f"""
         # -------- LLM Serving (Remote) --------
         llm_serving = APILLMServing_request(
-            api_url="http://123.129.219.111:3000/v1/chat/completions",
+            api_url="{chat_api_url}",
             key_name_of_api_key='DF_API_KEY',
             model_name="gpt-4o",
             max_workers=100,
@@ -443,6 +444,7 @@ def local_tool_for_execute_the_recommended_pipeline(
             json_file=request.json_file,
             local=request.use_local_model,
             local_model_name_or_path=request.local_model_name_or_path,
+            chat_api_url=request.chat_api_url   
         )
     logger.info(f"[Agent generated Pipeline Code]: {code}")
     if request.execute_the_pipeline and not dry_run:

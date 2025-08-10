@@ -1149,7 +1149,7 @@
     },
     {
       "node": 26,
-      "name": "ComponentClassifier",
+      "name": "SQLComponentClassifier",
       "description": "根据SQL的组件数量和复杂度，评估SQL的难度。\n\n输入参数：\n- input_sql_key: 输入SQL列名\n\n输出参数：\n- output_difficulty_key: 输出难度列名",
       "command": {
         "init": [
@@ -1183,7 +1183,7 @@
     },
     {
       "node": 27,
-      "name": "ExecutionClassifier",
+      "name": "SQLExecutionClassifier",
       "description": "让模型根据自然语言问题、数据库Schema和提示词，多次生成SQL，通过生成SQL的准确率，评估该问题对于模型的难度。\n\n输入参数：\n- input_db_id_key: 输入数据库ID列名\n- input_sql_key: 输入SQL列名\n- input_prompt_key: 输入prompt列名\n\n输出参数：\n- output_difficulty_key: 输出难度列名",
       "command": {
         "init": [
@@ -1205,6 +1205,11 @@
           {
             "name": "num_generations",
             "default": 10,
+            "kind": "POSITIONAL_OR_KEYWORD"
+          },
+          {
+            "name": "timeout",
+            "default": 5.0,
             "kind": "POSITIONAL_OR_KEYWORD"
           }
         ],
@@ -3636,6 +3641,60 @@
     },
     {
       "node": 84,
+      "name": "AnswerModelJudge",
+      "description": "该算子用于对答案进行正确性评判，通过比较当前答案与参考答案的语义一致性，判断答案是否正确。调用大语言模型进行语义理解和判断，最终返回每个答案是否正确的二分类结果。\n输入参数：\n- system_prompt：系统提示词，用于定义模型行为\n- llm_serving：LLM服务对象，需实现LLMServingABC接口\n- prompt_template：提示模板对象，用于构建评判提示词\n- keep_all_samples：是否保留所有样本，默认为False（仅保留正确答案）\n- question_key：问题字段名，默认为'question'\n- answer_key：当前答案字段名，默认为'answer'\n- reference_key：参考答案字段名，默认为'reference_answer'\n输出参数：\n- DataFrame，包含原始数据和判断结果（answer_match_result字段）\n- 如果keep_all_samples为False，则仅保留判断结果为True的行\n- 返回包含输入字段名的列表，用于后续算子引用",
+      "command": {
+        "init": [
+          {
+            "name": "system_prompt",
+            "default": "You are a helpful assistant specialized in evaluating answer correctness.",
+            "kind": "POSITIONAL_OR_KEYWORD"
+          },
+          {
+            "name": "llm_serving",
+            "default": null,
+            "kind": "POSITIONAL_OR_KEYWORD"
+          },
+          {
+            "name": "prompt_template",
+            "default": null,
+            "kind": "POSITIONAL_OR_KEYWORD"
+          },
+          {
+            "name": "keep_all_samples",
+            "default": false,
+            "kind": "POSITIONAL_OR_KEYWORD"
+          }
+        ],
+        "run": [
+          {
+            "name": "storage",
+            "default": null,
+            "kind": "POSITIONAL_OR_KEYWORD"
+          },
+          {
+            "name": "question_key",
+            "default": "question",
+            "kind": "POSITIONAL_OR_KEYWORD"
+          },
+          {
+            "name": "answer_key",
+            "default": "answer",
+            "kind": "POSITIONAL_OR_KEYWORD"
+          },
+          {
+            "name": "reference_key",
+            "default": "reference_answer",
+            "kind": "POSITIONAL_OR_KEYWORD"
+          }
+        ]
+      },
+      "required": "",
+      "depends_on": [],
+      "mode": "GPU"
+    },
+    {
+      "node": 85,
       "name": "ContentChooser",
       "description": "该算子用于从大量的文档片段中选取部分文档片段，用于后续生成种子QA对\n\n输入参数:\n- input_key: 包含文档片段的字段名\n- embedding_model_path: 嵌入模型路径\n- num_samples: 选取的文档片段数量\n- method: 选择方法，随机或k-center-greedy\n\n",
       "command": {
@@ -3674,8 +3733,8 @@
       "mode": ""
     },
     {
-      "node": 85,
-      "name": "ConsistencyFilter",
+      "node": 86,
+      "name": "SQLConsistencyFilter",
       "description": "对条目进行过滤，检测SQL和自然语言问题是否对应，即判断SQL是否能解决该问题。\n\n输入参数：\n- input_sql_key: 输入SQL列名\n- input_db_id_key: 输入数据库ID列名\n- input_question_key: 输入问题列名\n\n",
       "command": {
         "init": [
@@ -3718,14 +3777,19 @@
       "mode": "GPU"
     },
     {
-      "node": 86,
-      "name": "ExecutionFilter",
+      "node": 87,
+      "name": "SQLExecutionFilter",
       "description": "对条目进行过滤，在数据库中执行SQL，筛选掉不可执行的条目。\n\n输入参数：\n- input_sql_key: 输入SQL列名\n- input_db_id_key: 输入数据库ID列名\n\n",
       "command": {
         "init": [
           {
             "name": "database_manager",
             "default": null,
+            "kind": "POSITIONAL_OR_KEYWORD"
+          },
+          {
+            "name": "timeout",
+            "default": 5,
             "kind": "POSITIONAL_OR_KEYWORD"
           }
         ],
@@ -3752,7 +3816,7 @@
       "mode": ""
     },
     {
-      "node": 87,
+      "node": 88,
       "name": "PretrainGenerator",
       "description": "基于给定文档内容，生成预训练格式的多轮对话问答数据。将原始文档内容转换为适合语言模型预训练的对话格式数据。输入参数：\n- llm_serving：LLM服务对象，需实现LLMServingABC接口\n- input_key：输入文档内容字段名，默认为'raw_content'\n- output_key：输出生成内容字段名，默认为'generated_content'\n输出参数：\n- 包含原始内容和生成内容的DataFrame\n- 返回输出字段名，用于后续算子引用",
       "command": {
@@ -3786,7 +3850,7 @@
       "mode": "GPU"
     },
     {
-      "node": 88,
+      "node": 89,
       "name": "SFTGeneratorSeed",
       "description": "基于给定文档内容，生成监督微调格式的问答数据。并支持用户自定义生成内容要求。从原始文档中提取信息，生成符合SFT格式的指令-响应对。输入参数：\n- llm_serving：LLM服务对象，需实现LLMServingABC接口\n- custom_prompt：用户自定义提示词\n- input_key：输入文档内容字段名，默认为'raw_content'\n- max_tokens：生成文本的最大token数，默认为4096\n输出参数：\n- 包含'instruction'、'output'和'raw_content'字段的DataFrame\n- 返回包含'instruction'和'output'字段名的列表，用于后续算子引用",
       "command": {
@@ -3820,7 +3884,7 @@
       "mode": "GPU"
     },
     {
-      "node": 89,
+      "node": 90,
       "name": "CondorGenerator",
       "description": "基于预置知识树标签，两阶段从0合成SFT格式数据（合成数量大于5000时建议增加标签数量）。第一阶段生成不同难度级别的问题，第二阶段为每个问题生成对应的答案。输入参数：\n- llm_serving：LLM服务对象，需实现LLMServingABC接口\n- num_samples：生成样本总数，建议小于5000，默认值为15\n输出参数：\n- 包含'difficulty'、'instruction'和'output'字段的DataFrame\n- 返回生成的DataFrame用于后续处理",
       "command": {
@@ -3849,7 +3913,7 @@
       "mode": "GPU"
     },
     {
-      "node": 90,
+      "node": 91,
       "name": "PromptedGenerator",
       "description": "基于用户提供的提示词（prompt）生成数据。结合系统提示词和输入内容生成符合要求的输出文本。输入参数：\n- llm_serving：LLM服务对象，需实现LLMServingABC接口\n- system_prompt：系统提示词，定义模型行为，默认为'You are a helpful agent.'\n- input_key：输入内容字段名，默认为'raw_content'\n- output_key：输出生成内容字段名，默认为'generated_content'\n输出参数：\n- 包含生成内容的DataFrame\n- 返回输出字段名，用于后续算子引用",
       "command": {
@@ -3888,7 +3952,7 @@
       "mode": "GPU"
     },
     {
-      "node": 91,
+      "node": 92,
       "name": "AnswerGenerator",
       "description": "该算子用于为给定问题生成答案，调用大语言模型进行推理。\n输入参数：\n- llm_serving：LLM服务实例，用于生成答案\n- prompt_template：提示模板对象，用于构建生成提示词\n输出参数：\n- output_key：生成的答案字段，默认'generated_cot'",
       "command": {
@@ -3927,7 +3991,7 @@
       "mode": "GPU"
     },
     {
-      "node": 92,
+      "node": 93,
       "name": "QuestionCategoryClassifier",
       "description": "该算子用于对用户问题进行多级分类（主分类和子分类）。通过大语言模型对输入问题进行语义分析，输出分类编码结果。\n\n输入参数：\n- db_port/db_name/table_name：数据库连接参数（存储模式）\n- input_file/output_file：文件路径（文件模式）\n- input_key：输入数据中问题字段的键名\n- generator_type：模型调用方式（aisuite/request）\n\n输出参数：\n- classification_result：包含主分类和子分类的编码结果",
       "command": {
@@ -3961,7 +4025,7 @@
       "mode": "GPU"
     },
     {
-      "node": 93,
+      "node": 94,
       "name": "QuestionDifficultyClassifier",
       "description": "该算子用于评估问题的难度等级。通过大语言模型分析问题复杂度，输出1-10级的难度评分。\n\n输入参数：\n- eval_stage：评估阶段标识\n- read_min/max_score：分数过滤阈值\n- 其他参数同QuestionCategoryClassifier\n\n输出参数：\n- difficulty_score：数值型难度评分（1-10）",
       "command": {
@@ -3995,7 +4059,7 @@
       "mode": "GPU"
     },
     {
-      "node": 94,
+      "node": 95,
       "name": "QuestionGenerator",
       "description": "该算子用于基于现有问题生成新问题。\n输入参数：\n- num_prompts：生成问题的数量，整数，范围1-5（含），默认1\n- llm_serving：LLM服务实例，用于生成问题\n- prompt_template：提示模板对象，用于构建生成提示词\n输出参数：\n- 原始输入列（由input_key指定）：新增生成的问题\n- Synth_or_Input：标识问题来源，'input'表示原始问题，'synth'表示生成的新问题",
       "command": {
@@ -4034,7 +4098,7 @@
       "mode": "GPU"
     },
     {
-      "node": 95,
+      "node": 96,
       "name": "AnswerExtraction_QwenMathEval",
       "description": "该算子用于从数学问题回答中提取规范化答案表达式，进行字符串清洗、单位处理和格式标准化。\n\n输入参数：\n- input_key：输入数据字段名\n- answer_key：原始答案字段名\n- output_key：处理后的答案字段名\n- unit_texts：需要过滤的单位文本列表\n\n输出参数：\n- output_key：标准化后的数学表达式字段",
       "command": {
@@ -4068,7 +4132,7 @@
       "mode": ""
     },
     {
-      "node": 96,
+      "node": 97,
       "name": "PseudoAnswerGenerator",
       "description": "该算子生成多个候选答案并通过统计选择最优解，实现伪答案生成。\n\n输入参数：\n- input_file：输入文件路径\n- output_file：输出文件路径\n- max_times：最大生成次数\n- selection_mode：统计选择模式（frequency/consistency）\n\n输出参数：\n- final_answer：最终选择答案字段\n- candidate_answers：候选答案列表字段",
       "command": {
@@ -4122,7 +4186,7 @@
       "mode": "GPU"
     },
     {
-      "node": 97,
+      "node": 98,
       "name": "PretrainFormatConverter",
       "description": "该算子用于将SFT格式数据转换为预训练格式。\n\n输入参数：\n- read_key_question：问题字段名\n- read_key_answer：答案字段名\n- output_key：输出文本字段名\n\n输出参数：\n- output_key：输出文本字段名，包含问题和答案的拼接结果\n- 输出文件：转换后的预训练格式数据文件路径",
       "command": {
@@ -4155,8 +4219,8 @@
       "mode": ""
     },
     {
-      "node": 98,
-      "name": "PromptGenerator",
+      "node": 99,
+      "name": "Text2SQLPromptGenerator",
       "description": "从数据库提取Schema信息，结合自然语言问题生成提示词。其中提示词模版支持自定义。\n\n输入参数：\n- input_question_key: 问题列名\n- input_db_id_key: 数据库ID列名\n- output_prompt_key: 输出prompt列名\n\n输出参数：\n- output_prompt_key: 生成的prompt",
       "command": {
         "init": [
@@ -4204,8 +4268,8 @@
       "mode": ""
     },
     {
-      "node": 99,
-      "name": "QuestionGeneration",
+      "node": 100,
+      "name": "Text2SQLQuestionGenerator",
       "description": "对于每个条目，如果自然语言问题为空，生成SQL对应的自然语言问题。为保证正确，生成多个候选问题，并选择最优的。\n\n输入参数：\n- input_sql_key: 输入SQL列名\n- input_db_id_key: 数据库ID列名\n\n输出参数：\n- output_question_key: 输出问题列名",
       "command": {
         "init": [
@@ -4258,7 +4322,76 @@
       "mode": "GPU"
     },
     {
-      "node": 100,
+      "node": 101,
+      "name": "Text2SQLCoTGenerator",
+      "description": "对于每个条目，生成从自然语言问题和数据库Schema到SQL的CoT长链路推理过程。\n\n输入参数：\n- input_sql_key: 输入SQL列名\n- input_question_key: 输入问题列名\n- input_db_id_key: 输入数据库ID列名\n\n输出参数：\n- output_cot_key: 输出CoT列名",
+      "command": {
+        "init": [
+          {
+            "name": "llm_serving",
+            "default": null,
+            "kind": "POSITIONAL_OR_KEYWORD"
+          },
+          {
+            "name": "database_manager",
+            "default": null,
+            "kind": "POSITIONAL_OR_KEYWORD"
+          },
+          {
+            "name": "schema_config",
+            "default": null,
+            "kind": "POSITIONAL_OR_KEYWORD"
+          },
+          {
+            "name": "max_retries",
+            "default": 3,
+            "kind": "POSITIONAL_OR_KEYWORD"
+          },
+          {
+            "name": "enable_retry",
+            "default": true,
+            "kind": "POSITIONAL_OR_KEYWORD"
+          },
+          {
+            "name": "timeout",
+            "default": 5,
+            "kind": "POSITIONAL_OR_KEYWORD"
+          }
+        ],
+        "run": [
+          {
+            "name": "storage",
+            "default": null,
+            "kind": "POSITIONAL_OR_KEYWORD"
+          },
+          {
+            "name": "input_sql_key",
+            "default": "SQL",
+            "kind": "POSITIONAL_OR_KEYWORD"
+          },
+          {
+            "name": "input_question_key",
+            "default": "question",
+            "kind": "POSITIONAL_OR_KEYWORD"
+          },
+          {
+            "name": "input_db_id_key",
+            "default": "db_id",
+            "kind": "POSITIONAL_OR_KEYWORD"
+          },
+          {
+            "name": "output_cot_key",
+            "default": "cot_reasoning",
+            "kind": "POSITIONAL_OR_KEYWORD"
+          }
+        ]
+      },
+      "required": "",
+      "depends_on": [],
+      "mode": "GPU"
+    },
+    {
+      "node": 102,
       "name": "SQLVariationGenerator",
       "description": "对于每个条目，基于已有的SQL，指导模型生成SQL的变种，即在原有SQL的基础上，进行数据替换、函数变换、难度变换等操作，生成更加丰富的SQL。\n\n输入参数：\n- input_sql_key: SQL列名\n- input_db_id_key: 数据库ID列名\n\n",
       "command": {
@@ -4302,71 +4435,7 @@
       "mode": "GPU"
     },
     {
-      "node": 101,
-      "name": "CoTGenerator",
-      "description": "对于每个条目，生成从自然语言问题和数据库Schema到SQL的CoT长链路推理过程。\n\n输入参数：\n- input_sql_key: 输入SQL列名\n- input_question_key: 输入问题列名\n- input_db_id_key: 输入数据库ID列名\n\n输出参数：\n- output_cot_key: 输出CoT列名",
-      "command": {
-        "init": [
-          {
-            "name": "llm_serving",
-            "default": null,
-            "kind": "POSITIONAL_OR_KEYWORD"
-          },
-          {
-            "name": "database_manager",
-            "default": null,
-            "kind": "POSITIONAL_OR_KEYWORD"
-          },
-          {
-            "name": "schema_config",
-            "default": null,
-            "kind": "POSITIONAL_OR_KEYWORD"
-          },
-          {
-            "name": "max_retries",
-            "default": 3,
-            "kind": "POSITIONAL_OR_KEYWORD"
-          },
-          {
-            "name": "enable_retry",
-            "default": true,
-            "kind": "POSITIONAL_OR_KEYWORD"
-          }
-        ],
-        "run": [
-          {
-            "name": "storage",
-            "default": null,
-            "kind": "POSITIONAL_OR_KEYWORD"
-          },
-          {
-            "name": "input_sql_key",
-            "default": "SQL",
-            "kind": "POSITIONAL_OR_KEYWORD"
-          },
-          {
-            "name": "input_question_key",
-            "default": "question",
-            "kind": "POSITIONAL_OR_KEYWORD"
-          },
-          {
-            "name": "input_db_id_key",
-            "default": "db_id",
-            "kind": "POSITIONAL_OR_KEYWORD"
-          },
-          {
-            "name": "output_cot_key",
-            "default": "cot_reasoning",
-            "kind": "POSITIONAL_OR_KEYWORD"
-          }
-        ]
-      },
-      "required": "",
-      "depends_on": [],
-      "mode": "GPU"
-    },
-    {
-      "node": 102,
+      "node": 103,
       "name": "SQLGenerator",
       "description": "基于数据库信息，合成SQL，覆盖不同的难度、数据库Schema、函数和风格。\n\n输出参数：\n- output_sql_key: 输出SQL列名\n- output_db_id_key: 数据库ID列名\n\n",
       "command": {
@@ -4410,7 +4479,7 @@
       "mode": "GPU"
     },
     {
-      "node": 103,
+      "node": 104,
       "name": "CorpusTextSplitter",
       "description": [
         "CorpusTextSplitter是轻量级文本分割工具，",
@@ -4468,7 +4537,7 @@
       "mode": ""
     },
     {
-      "node": 104,
+      "node": 105,
       "name": "CorpusTextSplitterBatch",
       "description": [
         "CorpusTextSplitter是轻量级文本分割工具，",
@@ -4526,7 +4595,7 @@
       "mode": ""
     },
     {
-      "node": 105,
+      "node": 106,
       "name": "FileOrURLToMarkdownConverter",
       "description": "知识提取算子：支持从多种文件格式中提取结构化内容并转换为标准Markdown\n核心功能：\n1. PDF文件：使用MinerU解析引擎提取文本/表格/公式，保留原始布局\n2. Office文档(DOC/PPT等)：通过DocConverter转换为Markdown格式\n3. 网页内容(HTML/XML)：使用trafilatura提取正文并转为Markdown\n4. 纯文本(TXT/MD)：直接透传不做处理\n特殊处理：\n- 自动识别中英文文档(lang参数)\n- 支持本地文件路径和URL输入\n- 生成中间文件到指定目录(intermediate_dir)",
       "command": {
@@ -4570,7 +4639,7 @@
       "mode": ""
     },
     {
-      "node": 106,
+      "node": 107,
       "name": "FileOrURLToMarkdownConverterBatch",
       "description": "知识提取算子：支持从多种文件格式中提取结构化内容并转换为标准Markdown\n核心功能：\n1. PDF文件：使用MinerU解析引擎提取文本/表格/公式，保留原始布局\n2. Office文档(DOC/PPT等)：通过DocConverter转换为Markdown格式\n3. 网页内容(HTML/XML)：使用trafilatura提取正文并转为Markdown\n4. 纯文本(TXT/MD)：直接透传不做处理\n特殊处理：\n- 自动识别中英文文档(lang参数)\n- 支持本地文件路径和URL输入\n- 生成中间文件到指定目录(intermediate_dir)",
       "command": {
@@ -4614,7 +4683,7 @@
       "mode": ""
     },
     {
-      "node": 107,
+      "node": 108,
       "name": "KnowledgeCleaner",
       "description": "知识清洗算子：对原始知识内容进行标准化处理，包括HTML标签清理、特殊字符规范化、链接处理和结构优化，提升RAG知识库的质量。主要功能：\n1. 移除冗余HTML标签但保留语义化标签\n2. 标准化引号/破折号等特殊字符\n3. 处理超链接同时保留文本\n4. 保持原始段落结构和代码缩进\n5. 确保事实性内容零修改\n\n输入格式示例：\n<div class=\"container\">\n  <h1>标题文本</h1>\n  <p>正文段落，包括特殊符号，例如“弯引号”、–破折号等</p>\n  <img src=\"example.jpg\" alt=\"示意图\">\n  <a href=\"...\">链接文本</a>\n  <pre><code>代码片段</code></pre>\n  ...\n</div>\n\n输出格式示例：\n标题文本\n\n正文段落，包括特殊符号，例如\"直引号\"、-破折号等\n\n[Image: 示例图 example.jpg]\n\n链接文本\n\n<code>代码片段</code>\n\n[结构保持，语义保留，敏感信息脱敏处理（如手机号、保密标记等）]",
       "command": {
@@ -4653,7 +4722,7 @@
       "mode": "GPU"
     },
     {
-      "node": 108,
+      "node": 109,
       "name": "KnowledgeCleanerBatch",
       "description": "知识清洗算子：对原始知识内容进行标准化处理，包括HTML标签清理、特殊字符规范化、链接处理和结构优化，提升RAG知识库的质量。主要功能：\n1. 移除冗余HTML标签但保留语义化标签\n2. 标准化引号/破折号等特殊字符\n3. 处理超链接同时保留文本\n4. 保持原始段落结构和代码缩进\n5. 确保事实性内容零修改",
       "command": {
@@ -4692,7 +4761,7 @@
       "mode": "GPU"
     },
     {
-      "node": 109,
+      "node": 110,
       "name": "AutoPromptGenerator",
       "description": "该算子用于为给的的文档片段生成提示词，用于生成种子QA对\n\n输入参数：\n- input_key: 包含文档片段的字段名\n- output_key: 包含提示词的字段名\n",
       "command": {
@@ -4726,7 +4795,7 @@
       "mode": "GPU"
     },
     {
-      "node": 110,
+      "node": 111,
       "name": "QAScorer",
       "description": "该算子用于为给的的文档片段生成种子QA对打分\n\n输入参数：\n- input_question_key: Field name containing the generated question\n- input_answer_key: Field name containing the generated answer\n- output_question_quality_key: Field name containing the question quality grade\n- output_question_quality_feedback_key: Field name containing the question quality feedback\n- output_answer_alignment_key: Field name containing the answer alignment grade\n- output_answer_alignment_feedback_key: Field name containing the answer alignment feedback\n- output_answer_verifiability_key: Field name containing the answer verifiability grade\n- output_downstream_value_key: Field name containing the downstream value grade\n- output_downstream_value_feedback_key: Field name containing the downstream value feedback\n",
       "command": {
@@ -4800,7 +4869,7 @@
       "mode": "GPU"
     },
     {
-      "node": 111,
+      "node": 112,
       "name": "QAGenerator",
       "description": "该算子用于生成对应文档片段的QA对。\n\n输入参数：\n- input_key: 包含文档片段的字段名\n- prompt_key: 包含提示词的字段名\n- output_quesion_key: 包含生成问题的字段名\n- output_answer_key: 包含生成答案的字段名\n",
       "command": {
@@ -4844,7 +4913,7 @@
       "mode": "GPU"
     },
     {
-      "node": 112,
+      "node": 113,
       "name": "AtomicTaskGenerator",
       "description": "该算子用于为提供的文本内容生成合适的高质量问题与可验证答案。\n\n输入参数：\n- input_key: 输入文本内容字段名（默认值：\"prompts\"）\n- output_question_key: 输出问题字段名（默认值：\"question\"）\n- output_answer_key: 输出答案字段名（默认值：\"answer\"）\n- output_refined_answer_key: 输出精炼答案字段名（默认值：\"refined_answer\"）\n- output_optional_answer_key: 输出可替代精炼答案字段名（默认值：\"optional_answer\"）\n- output_golden_doc_answer_key: 输出黄金文档回答字段名（默认值：\"golden_doc_answer\"）\n",
       "command": {
@@ -4918,7 +4987,7 @@
       "mode": "GPU"
     },
     {
-      "node": 113,
+      "node": 114,
       "name": "DepthQAGenerator",
       "description": "该算子以已有问答生成更深度的问题。\n\n输入参数：\n- input_key: 输入字段名（默认值：\"question\"）\n- output_key: 输出字段名（默认值：\"depth_question\"）\n",
       "command": {
@@ -4957,7 +5026,7 @@
       "mode": "GPU"
     },
     {
-      "node": 114,
+      "node": 115,
       "name": "WidthQAGenerator",
       "description": "该算子用于结合两个问答，生成新的问题。\n\n输入参数：\n- input_question_key: 输入问题字段名（默认值：\"question\"）\n- input_identifier_key: 输入标识符字段名（默认值：\"identifier\"）\n- input_answer_key: 输入答案字段名（默认值：\"answer\"）\n- output_question_key: 输出问题字段名（默认值：\"generated_width_task\"）\n",
       "command": {
@@ -5001,7 +5070,7 @@
       "mode": "GPU"
     },
     {
-      "node": 115,
+      "node": 116,
       "name": "Doc2Query",
       "description": "RAREPipeline: Doc2Query 算子使用大语言模型为给定文档生成推理密集型问题。\n\n输入参数：\n- input_key: 包含文档片段的字段名\n- output_question_key: 包含生成问题的字段名\n- output_scenario_key: 包含生成情景的字段名\n",
       "command": {
@@ -5045,7 +5114,7 @@
       "mode": "GPU"
     },
     {
-      "node": 116,
+      "node": 117,
       "name": "BM25HardNeg",
       "description": "RAREPipeline: BM25HardNeg 算子使用 BM25 算法为给定查询挖掘困难负样本。\n\n输入参数：\n- input_question_key: 包含查询的字段名。\n- input_text_key: 包含正面文档的字段名。\n- output_negatives_key: 用于存储挖掘出的困难负样本列表的字段名。\n- num_neg: 每个查询需要挖掘的困难负样本数量。\n",
       "command": {
@@ -5083,7 +5152,7 @@
       "mode": ""
     },
     {
-      "node": 117,
+      "node": 118,
       "name": "ReasonDistill",
       "description": "RAREPipeline: ReasonDistill 算子通过组合正负示例文档，提示大语言模型生成详细的推理过程。\n\n输入参数：\n- input_text_key: 包含正面文档的字段名。\n- input_question_key: 包含问题的字段名。\n- input_scenario_key: 包含情景的字段名。\n- input_hardneg_key: 包含困难负样本列表的字段名。\n- output_key: 用于存储生成推理过程的字段名。\n",
       "command": {
@@ -5132,7 +5201,7 @@
       "mode": "GPU"
     },
     {
-      "node": 118,
+      "node": 119,
       "name": "HtmlUrlRemoverRefiner",
       "description": "去除文本中的URL链接和HTML标签，净化文本内容。使用正则表达式匹配并移除各种形式的URL和HTML标签。输入参数：\n- input_key：输入文本字段名\n输出参数：\n- 包含净化后文本的DataFrame\n- 返回输入字段名，用于后续算子引用",
       "command": {
@@ -5155,7 +5224,7 @@
       "mode": ""
     },
     {
-      "node": 119,
+      "node": 120,
       "name": "HtmlEntityRefiner",
       "description": "去除文本中的HTML实体，包括标准实体（如&nbsp;、&lt;）和各种变体形式（全角符号、中文分号等）。支持自定义需要移除的HTML实体列表。输入参数：\n- html_entities：需要移除的HTML实体列表，默认为包含常见实体的列表\n- input_key：输入文本字段名\n输出参数：\n- 包含移除HTML实体后文本的DataFrame\n- 返回输入字段名，用于后续算子引用",
       "command": {
@@ -5198,7 +5267,7 @@
       "mode": ""
     },
     {
-      "node": 120,
+      "node": 121,
       "name": "LowercaseRefiner",
       "description": "将文本字段中的所有大写字符转换为小写，统一文本格式。对指定字段的文本内容进行全小写处理。输入参数：\n- input_key：输入文本字段名\n输出参数：\n- 包含小写转换后文本的DataFrame\n- 返回输入字段名，用于后续算子引用",
       "command": {
@@ -5221,7 +5290,7 @@
       "mode": ""
     },
     {
-      "node": 121,
+      "node": 122,
       "name": "NERRefiner",
       "description": "使用命名实体识别（NER）技术识别并屏蔽文本中的特定实体。使用spaCy的'en_core_web_sm'模型识别实体，并将其替换为对应的实体类型标签。输入参数：\n- input_key：输入文本字段名\n输出参数：\n- 包含实体屏蔽后文本的DataFrame\n- 返回输入字段名，用于后续算子引用",
       "command": {
@@ -5244,7 +5313,7 @@
       "mode": ""
     },
     {
-      "node": 122,
+      "node": 123,
       "name": "PIIAnonymizeRefiner",
       "description": "使用Presidio和BERT-NER模型识别并匿名化文本中的个人身份信息（PII）。支持多种PII类型的检测和匿名化处理。输入参数：\n- lang：语言代码，默认为'en'\n- device：运行设备，默认为'cuda'\n- model_cache_dir：模型缓存目录，默认为'./dataflow_cache'\n- model_name：NER模型名称，默认为'dslim/bert-base-NER'\n- input_key：输入文本字段名\n输出参数：\n- 包含匿名化后文本的DataFrame\n- 返回输入字段名，用于后续算子引用",
       "command": {
@@ -5288,7 +5357,7 @@
       "mode": ""
     },
     {
-      "node": 123,
+      "node": 124,
       "name": "ReferenceRemoverRefiner",
       "description": "删除文本中未闭合的引用标签和引用链接，包括<ref>标签和{{cite}}模板的各种完整和不完整形式。净化文本中的引用标记。输入参数：\n- input_key：输入文本字段名\n输出参数：\n- 包含移除引用标记后文本的DataFrame\n- 返回输入字段名，用于后续算子引用",
       "command": {
@@ -5311,7 +5380,7 @@
       "mode": ""
     },
     {
-      "node": 124,
+      "node": 125,
       "name": "RemoveContractionsRefiner",
       "description": "该算子用于扩展文本中的英语缩写词，将缩写形式转换为完整形式（例如将\"can't\"扩展为\"cannot\"）。\n使用contractions库进行缩写词扩展，提高文本标准化程度。\n输入参数：\n- 无初始化参数\n运行参数：\n- input_key：输入文本字段名\n输出参数：\n- 处理后的DataFrame，包含扩展缩写词后的文本\n- 返回包含输入字段名的列表，用于后续算子引用",
       "command": {
@@ -5334,7 +5403,7 @@
       "mode": ""
     },
     {
-      "node": 125,
+      "node": 126,
       "name": "RemoveEmoticonsRefiner",
       "description": "该算子用于移除文本中的文本型表情符号，例如':-)'、':D'、':('等字符组合表情。\n基于预定义的表情符号字典进行匹配替换，支持多种常见文本表情模式。\n输入参数：\n- 无初始化参数\n运行参数：\n- input_key：输入文本字段名\n输出参数：\n- 处理后的DataFrame，包含去除文本表情的文本\n- 返回包含输入字段名的列表，用于后续算子引用",
       "command": {
@@ -5357,7 +5426,7 @@
       "mode": ""
     },
     {
-      "node": 126,
+      "node": 127,
       "name": "RemoveExtraSpacesRefiner",
       "description": "该算子用于移除文本中的多余空格，将连续的多个空格替换为单个空格，并去除文本前后的空白字符。\n通过字符串分割和连接实现空格标准化，提高文本格式一致性。\n输入参数：\n- 无初始化参数\n运行参数：\n- input_key：输入文本字段名\n输出参数：\n- 处理后的DataFrame，包含标准化空格的文本\n- 返回包含输入字段名的列表，用于后续算子引用",
       "command": {
@@ -5380,7 +5449,7 @@
       "mode": ""
     },
     {
-      "node": 127,
+      "node": 128,
       "name": "RemoveEmojiRefiner",
       "description": "该算子用于去除文本中的Unicode图像表情符号，包括表情符号、杂项符号、交通符号、旗帜等各类图像符号。\n通过正则表达式匹配Unicode表情符号范围，实现高效过滤。\n输入参数：\n- 无初始化参数\n运行参数：\n- input_key：输入文本字段名\n输出参数：\n- 处理后的DataFrame，包含去除表情符号的文本\n- 返回包含输入字段名的列表，用于后续算子引用",
       "command": {
@@ -5403,7 +5472,7 @@
       "mode": ""
     },
     {
-      "node": 128,
+      "node": 129,
       "name": "RemoveImageRefsRefiner",
       "description": "该算子用于去除文本中的图片引用格式，包括Markdown图片链接、图片编号、特殊符号组合等图像引用模式。\n通过多模式正则表达式匹配，识别并移除多种图片引用格式。\n输入参数：\n- 无初始化参数\n运行参数：\n- input_key：输入文本字段名\n输出参数：\n- 处理后的DataFrame，包含去除图片引用的文本\n- 返回包含输入字段名的列表，用于后续算子引用",
       "command": {
@@ -5426,7 +5495,7 @@
       "mode": ""
     },
     {
-      "node": 129,
+      "node": 130,
       "name": "RemoveNumberRefiner",
       "description": "该算子用于移除文本中的数字字符，包括0-9的阿拉伯数字。\n通过字符过滤实现数字移除，保留纯文本内容。\n输入参数：\n- 无初始化参数\n运行参数：\n- input_key：输入文本字段名\n输出参数：\n- 处理后的DataFrame，包含去除数字的文本\n- 返回包含输入字段名的列表，用于后续算子引用",
       "command": {
@@ -5449,7 +5518,7 @@
       "mode": ""
     },
     {
-      "node": 130,
+      "node": 131,
       "name": "RemovePunctuationRefiner",
       "description": "该算子用于移除文本中的标点符号，包括英文标点符号集合中的所有符号。\n使用string.punctuation定义的标点集合进行过滤，实现文本去标点处理。\n输入参数：\n- 无初始化参数\n运行参数：\n- input_key：输入文本字段名\n输出参数：\n- 处理后的DataFrame，包含去除标点的文本\n- 返回包含输入字段名的列表，用于后续算子引用",
       "command": {
@@ -5472,7 +5541,7 @@
       "mode": ""
     },
     {
-      "node": 131,
+      "node": 132,
       "name": "RemoveRepetitionsPunctuationRefiner",
       "description": "该算子用于移除文本中重复的标点符号，例如将\"!!!\"变为\"!\"，\",,\"变为\",\"。\n通过正则表达式匹配连续重复的标点符号，替换为单个符号。\n输入参数：\n- 无初始化参数\n运行参数：\n- input_key：输入文本字段名\n输出参数：\n- 处理后的DataFrame，包含标准化标点的文本\n- 返回包含输入字段名的列表，用于后续算子引用",
       "command": {
@@ -5495,7 +5564,7 @@
       "mode": ""
     },
     {
-      "node": 132,
+      "node": 133,
       "name": "RemoveStopwordsRefiner",
       "description": "该算子用于移除文本中的英语停用词（如\"the\"，\"is\"，\"in\"等无实际意义的高频词汇）。\n使用NLTK库的stopwords语料库进行停用词过滤，提高文本特征密度。\n输入参数：\n- model_cache_dir：模型缓存目录，默认为'./dataflow_cache'\n运行参数：\n- input_key：输入文本字段名\n输出参数：\n- 处理后的DataFrame，包含去除停用词的文本\n- 返回包含输入字段名的列表，用于后续算子引用",
       "command": {
@@ -5524,7 +5593,7 @@
       "mode": ""
     },
     {
-      "node": 133,
+      "node": 134,
       "name": "SpellingCorrectionRefiner",
       "description": "该算子用于通过SymSpell算法对文本中的拼写错误进行纠正，支持自定义编辑距离和词典路径。\n若本地词典不存在则自动下载，使用近似字符串匹配实现拼写纠错功能。\n输入参数：\n- max_edit_distance：最大编辑距离，默认为2\n- prefix_length：前缀长度，默认为7\n- dictionary_path：词典路径，默认为'frequency_dictionary_en_82_765.txt'\n运行参数：\n- input_key：输入文本字段名\n输出参数：\n- 处理后的DataFrame，包含纠正拼写错误的文本\n- 返回包含输入字段名的列表，用于后续算子引用",
       "command": {
@@ -5563,7 +5632,7 @@
       "mode": ""
     },
     {
-      "node": 134,
+      "node": 135,
       "name": "StemmingLemmatizationRefiner",
       "description": "该算子用于对文本进行词干提取或词形还原处理，将词语转换为其基本形式。\n支持两种处理方式：Porter词干提取(stemming)和WordNet词形还原(lemmatization)，可通过参数选择。\n输入参数：\n- method：处理方法，可选'stemming'或'lemmatization'，默认为'stemming'\n运行参数：\n- input_key：输入文本字段名\n输出参数：\n- 处理后的DataFrame，包含词干/词形还原后的文本\n- 返回包含输入字段名的列表，用于后续算子引用",
       "command": {
@@ -5592,7 +5661,7 @@
       "mode": ""
     },
     {
-      "node": 135,
+      "node": 136,
       "name": "TextNormalizationRefiner",
       "description": "该算子用于规范化文本中的日期格式和货币格式，统一为标准表示形式。\n日期格式统一转换为'YYYY-MM-DD'形式，货币格式转换为'金额 USD'形式，提高数据一致性。\n输入参数：\n- 无初始化参数\n运行参数：\n- input_key：输入文本字段名\n输出参数：\n- 处理后的DataFrame，包含格式规范化的文本\n- 返回包含输入字段名的列表，用于后续算子引用",
       "command": {
@@ -5615,7 +5684,7 @@
       "mode": ""
     },
     {
-      "node": 136,
+      "node": 137,
       "name": "CondorRefiner",
       "description": "两阶段优化指令回复质量：第一阶段调用API生成对回复的评论，第二阶段利用评论调用API改写回复，提升指令对质量。通过迭代优化提高问答对的整体质量。输入参数：\n- llm_serving：LLM服务对象，需实现LLMServingABC接口\n- input_instruction_key：输入指令字段名，默认为'instruction'\n- input_output_key：输入回复字段名，默认为'output'\n输出参数：\n- 包含优化后回复的DataFrame\n- 返回包含优化后回复字段名的列表，用于后续算子引用",
       "command": {
@@ -5649,7 +5718,7 @@
       "mode": "GPU"
     },
     {
-      "node": 137,
+      "node": 138,
       "name": "ScenarioExtractor",
       "description": "从对话内容中提取场景信息，使用LLM服务分析对话并生成场景描述。\n输入参数：\n- llm_serving：LLM服务对象，需实现LLMServingABC接口\n- input_chat_key：对话内容字段名\n- output_key：输出场景字段名，默认'scenario'\n输出参数：\n- 包含提取场景信息的DataFrame\n- 包含输出字段名的列表",
       "command": {
@@ -5683,7 +5752,7 @@
       "mode": "GPU"
     },
     {
-      "node": 138,
+      "node": 139,
       "name": "ScenarioExpander",
       "description": "基于原始场景生成新的替代场景，使用LLM服务重写或改写原有场景内容。\n输入参数：\n- llm_serving：LLM服务对象，需实现LLMServingABC接口\n- input_scenario_key：原始场景字段名\n- output_key：生成的新场景字段名，默认'modified_scenario'\n输出参数：\n- 包含生成新场景的DataFrame\n- 包含输出字段名的列表",
       "command": {
@@ -5717,7 +5786,7 @@
       "mode": "GPU"
     },
     {
-      "node": 139,
+      "node": 140,
       "name": "AtomTaskGenerator",
       "description": "根据输入的场景信息，使用LLM服务生成对应的原子任务。\n输入参数：\n- llm_serving：LLM服务对象，需实现LLMServingABC接口\n- input_scenario_key：场景字段名\n- output_key：原子任务的输出字段名，默认'atom_task'\n输出参数：\n- 包含原子任务的DataFrame\n- 包含输出字段名的列表",
       "command": {
@@ -5751,7 +5820,7 @@
       "mode": "GPU"
     },
     {
-      "node": 140,
+      "node": 141,
       "name": "SequentialTaskGenerator",
       "description": "根据输入的原子任务，使用LLM服务生成该任务的后继任务和两者的组合任务。\n输入参数：\n- llm_serving：LLM服务对象，需实现LLMServingABC接口\n- input_task_key：原子任务字段名\n- output_subsequent_task_key：后继任务输出字段名，默认'subsequent_task'\n- output_composition_task_key：组合任务输出字段名，默认'composition_task'\n输出参数：\n- 包含后继任务和组合任务的DataFrame\n- 输出字段名的列表（后继任务字段和组合任务字段）",
       "command": {
@@ -5790,7 +5859,7 @@
       "mode": "GPU"
     },
     {
-      "node": 141,
+      "node": 142,
       "name": "ParaSeqTaskGenerator",
       "description": "基于原子任务，使用LLM服务生成三个任务类型：并行任务、后继任务以及这三者的组合任务。\n输入参数：\n- llm_serving：LLM服务对象，需实现LLMServingABC接口\n- input_task_key：原子任务字段名\n- output_parallel_task_key：并行任务输出字段名，默认'parallel_task'\n- output_subsequent_task_key：后继任务输出字段名，默认'subsequent_task'\n- output_composition_task_key：组合任务输出字段名，默认'composition_task'\n输出参数：\n- 包含并行任务、后继任务与组合任务的DataFrame\n- 输出字段名列表（并行任务、后继任务、组合任务）",
       "command": {
@@ -5834,7 +5903,7 @@
       "mode": "GPU"
     },
     {
-      "node": 142,
+      "node": 143,
       "name": "CompositionTaskFilter",
       "description": "根据组合任务及其子任务，使用LLM服务判断组合任务是否具备可行性与完备性，从而进行可运行任务的筛选。\n输入参数：\n- llm_serving：LLM服务对象，需实现LLMServingABC接口\n- input_composition_task_key：组合任务字段名\n- input_sub_tasks_keys：子任务字段名列表（如原子任务、并行任务、后继任务等）\n- output_key：可运行标签的输出字段名，默认'runable_label'\n输出参数：\n- 仅包含可运行组合任务的数据DataFrame\n- 包含输出字段名的列表（可运行标签字段）",
       "command": {
@@ -5873,7 +5942,7 @@
       "mode": "GPU"
     },
     {
-      "node": 143,
+      "node": 144,
       "name": "FunctionGenerator",
       "description": "基于组合任务及其相关子任务，使用LLM服务生成对应的函数列表。输入参数：\n- llm_serving：LLM服务对象，需实现LLMServingABC接口\n- input_composition_task_key：组合任务字段名\n- input_sub_tasks_keys：子任务字段名列表（如原子任务、并行任务、后继任务等）\n- output_key：函数列表输出字段名，默认'functions'\n输出参数：\n- 包含函数定义或函数列表的DataFrame\n- 输出字段名的列表（函数列表字段）",
       "command": {
@@ -5912,7 +5981,7 @@
       "mode": "GPU"
     },
     {
-      "node": 144,
+      "node": 145,
       "name": "MultiTurnConversationGenerator",
       "description": "根据组合任务及其子任务函数，使用LLM服务模拟多轮对话过程，由User、Assistant和Tool三个Agent协同生成完整的对话数据。\n输入参数：\n- llm_serving：LLM服务对象，需实现LLMServingABC接口\n- input_task_key：任务字段名（组合任务）\n- input_sub_tasks_keys：子任务字段名列表\n- input_functions_key：子任务函数字段名\n- output_conversations_key：输出对话字段名，默认'conversations'\n输出参数：\n- 包含已完成的多轮对话记录的DataFrame\n- 输出字段名（对话字段名）",
       "command": {
@@ -5956,7 +6025,7 @@
       "mode": "GPU"
     },
     {
-      "node": 145,
+      "node": 146,
       "name": "ConsistentChatGenerator",
       "description": "根据预置主题和人类意图，两阶段从0合成多轮对话格式数据（合成数量大于9000时建议增加标签数量）。\n输入参数：\n- llm_serving：LLM服务对象，需实现LLMServingABC接口\n- num_dialogs_per_intent：每个意图生成的对话数量，默认20\n- num_turns_per_dialog：每个对话的轮次数量，默认6\n- temperature：生成温度，控制输出随机性，默认0.9\n输出参数：\n- 包含category和conversation字段的DataFrame，其中conversation为多轮对话列表",
       "command": {
