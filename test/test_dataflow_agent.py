@@ -68,15 +68,15 @@ async def chatagent(req: ChatAgentRequest):
 if __name__ == "__main__":
     import uvicorn, json, sys, asyncio
     pipeline_recommend_params = {
-        "json_file": f"{DATAFLOW_DIR}/dataflow/example/ReasoningPipeline/pipeline_math_short.json",
-        "py_path": f"{DATAFLOW_DIR}/test/recommend_pipeline.py",
+        "json_file": f"{DATAFLOW_DIR}/dataflow/example/ReasoningPipeline/pipeline_general.json",
+        "py_path": f"{DATAFLOW_DIR}/test/recommend_pipeline_test.py",
         "api_key": api_key,
         "chat_api_url": chat_api_url,
-        "execute_the_pipeline": False,
+        "execute_the_pipeline": True,
         "use_local_model": False,
         "local_model_name_or_path": "/mnt/public/model/huggingface/Qwen2.5-7B-Instruct",
         "timeout": 3600,
-        "max_debug_round": 5
+        "max_debug_round": 10
     }
 # /mnt/h_h_public/lh/lz/DataFlow/dataflow/example/DataflowAgent/mq_test_data.jsonl
     operator_write_params = {
@@ -94,7 +94,7 @@ if __name__ == "__main__":
     if len(sys.argv) == 2 and sys.argv[1] == "recommend":
         test_req = ChatAgentRequest(
             language="zh",
-            target="帮我针对数据推荐一个的pipeline!!!只需要前3个算子！！不需要去重的算子 ！",
+            target="帮我针对数据推荐一个完整的pipeline!!尽量复杂！！",
             model="deepseek-v3",
             sessionKEY="dataflow_demo",
             **pipeline_recommend_params
