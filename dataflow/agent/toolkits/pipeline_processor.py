@@ -363,15 +363,13 @@ def generate_pipeline_py(
 
     code = "\n".join(
         [
-            "from dataflow.pipeline import PipelineABC",
             "import pytest",
             *import_lines,
             *extra_imports,
             "",
             "",
-            "class RecommendPipeline(PipelineABC):",
+            "class RecommendPipeline():",
             "    def __init__(self):",
-            "        super().__init__()",
             textwrap.indent(
                 textwrap.dedent(
                     f"""
@@ -395,7 +393,6 @@ def generate_pipeline_py(
             "",
             'if __name__ == "__main__":',
             "    pipeline = RecommendPipeline()",
-            "    pipeline.compile()",
             "    pipeline.forward()",
             "",
         ]
@@ -429,7 +426,6 @@ def local_tool_for_execute_the_recommended_pipeline(
                 """
                 if __name__ == "__main__":
                     pipeline = RecommendPipeline()
-                    pipeline.compile()
                     pipeline.forward()
                 """
             )

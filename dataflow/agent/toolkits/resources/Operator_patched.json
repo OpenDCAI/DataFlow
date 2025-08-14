@@ -1127,12 +1127,12 @@
             "kind": "POSITIONAL_OR_KEYWORD"
           },
           {
-            "name": "input_prediction_key",
+            "name": "prediction_key",
             "default": "refined_answer",
             "kind": "POSITIONAL_OR_KEYWORD"
           },
           {
-            "name": "input_ground_truth_key",
+            "name": "ground_truth_key",
             "default": "golden_doc_answer",
             "kind": "POSITIONAL_OR_KEYWORD"
           },
@@ -3419,7 +3419,7 @@
     {
       "node": 78,
       "name": "AnswerGroundTruthFilter",
-      "description": "该算子用于对比预测答案与标准答案的匹配度，支持精确匹配和数学验证两种方式。\n\n输入参数：\n- input_test_answer_key：预测答案字段名\n- input_gt_answer_key：标准答案字段名\n- compare_method：比较方法（exact/math_verify）\n\n输出参数：\n- 匹配成功返回1，否则返回0",
+      "description": "该算子用于对比预测答案与标准答案的匹配度，支持精确匹配和数学验证两种方式。\n\n输入参数：\n- test_answer_key：预测答案字段名\n- gt_answer_key：标准答案字段名\n- compare_method：比较方法（exact/math_verify）\n\n输出参数：\n- 匹配成功返回1，否则返回0",
       "command": {
         "init": [
           {
@@ -3435,12 +3435,12 @@
             "kind": "POSITIONAL_OR_KEYWORD"
           },
           {
-            "name": "input_test_answer_key",
+            "name": "test_answer_key",
             "default": "generated_cot",
             "kind": "POSITIONAL_OR_KEYWORD"
           },
           {
-            "name": "input_gt_answer_key",
+            "name": "gt_answer_key",
             "default": "golden_answer",
             "kind": "POSITIONAL_OR_KEYWORD"
           }
@@ -3523,12 +3523,12 @@
             "kind": "POSITIONAL_OR_KEYWORD"
           },
           {
-            "name": "input_question_key",
+            "name": "question_key",
             "default": "instruction",
             "kind": "POSITIONAL_OR_KEYWORD"
           },
           {
-            "name": "input_answer_key",
+            "name": "answer_key",
             "default": "generated_cot",
             "kind": "POSITIONAL_OR_KEYWORD"
           }
@@ -3673,17 +3673,17 @@
             "kind": "POSITIONAL_OR_KEYWORD"
           },
           {
-            "name": "input_question_key",
+            "name": "question_key",
             "default": "question",
             "kind": "POSITIONAL_OR_KEYWORD"
           },
           {
-            "name": "input_answer_key",
+            "name": "answer_key",
             "default": "answer",
             "kind": "POSITIONAL_OR_KEYWORD"
           },
           {
-            "name": "input_reference_key",
+            "name": "reference_key",
             "default": "reference_answer",
             "kind": "POSITIONAL_OR_KEYWORD"
           }
@@ -4090,11 +4090,6 @@
             "name": "input_key",
             "default": null,
             "kind": "POSITIONAL_OR_KEYWORD"
-          },
-          {
-            "name": "output_synth_or_input_flag",
-            "default": "Synth_or_Input",
-            "kind": "POSITIONAL_OR_KEYWORD"
           }
         ]
       },
@@ -4203,12 +4198,12 @@
             "kind": "POSITIONAL_OR_KEYWORD"
           },
           {
-            "name": "input_read_key_question",
+            "name": "read_key_question",
             "default": "question",
             "kind": "POSITIONAL_OR_KEYWORD"
           },
           {
-            "name": "input_read_key_answer",
+            "name": "read_key_answer",
             "default": "answer",
             "kind": "POSITIONAL_OR_KEYWORD"
           },
@@ -4606,16 +4601,6 @@
       "command": {
         "init": [
           {
-            "name": "url",
-            "default": null,
-            "kind": "POSITIONAL_OR_KEYWORD"
-          },
-          {
-            "name": "raw_file",
-            "default": null,
-            "kind": "POSITIONAL_OR_KEYWORD"
-          },
-          {
             "name": "intermediate_dir",
             "default": "intermediate",
             "kind": "POSITIONAL_OR_KEYWORD"
@@ -4638,13 +4623,13 @@
             "kind": "POSITIONAL_OR_KEYWORD"
           },
           {
-            "name": "input_key",
-            "default": "",
+            "name": "raw_file",
+            "default": null,
             "kind": "POSITIONAL_OR_KEYWORD"
           },
           {
-            "name": "output_key",
-            "default": "",
+            "name": "url",
+            "default": null,
             "kind": "POSITIONAL_OR_KEYWORD"
           }
         ]
@@ -4907,7 +4892,7 @@
             "kind": "POSITIONAL_OR_KEYWORD"
           },
           {
-            "name": "output_prompt_key",
+            "name": "prompt_key",
             "default": "generated_prompt",
             "kind": "POSITIONAL_OR_KEYWORD"
           },
@@ -8920,11 +8905,6 @@
             "name": "input_key",
             "default": null,
             "kind": "POSITIONAL_OR_KEYWORD"
-          },
-          {
-            "name": "output_synth_or_input_flag",
-            "default": "Synth_or_Input",
-            "kind": "POSITIONAL_OR_KEYWORD"
           }
         ]
       },
@@ -9427,12 +9407,12 @@
             "kind": "POSITIONAL_OR_KEYWORD"
           },
           {
-            "name": "input_question_key",
+            "name": "question_key",
             "default": "instruction",
             "kind": "POSITIONAL_OR_KEYWORD"
           },
           {
-            "name": "input_answer_key",
+            "name": "answer_key",
             "default": "generated_cot",
             "kind": "POSITIONAL_OR_KEYWORD"
           }
