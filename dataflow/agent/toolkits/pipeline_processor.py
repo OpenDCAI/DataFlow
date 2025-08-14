@@ -314,8 +314,11 @@ def generate_pipeline_py(
         parts = []
         for p in node["command"]["init"]:
             pname, pdef = p["name"], p["default"]
+
             if pname == "llm_serving":
                 parts.append("llm_serving=llm_serving")
+            elif pname == "prompt_template":
+                parts.append("prompt_template=None")
             else:
                 parts.append(f"{pname}={_py_literal(pdef)}")
         init_operator_lines.append(f"        self.{var_name} = {cls_name}({', '.join(parts)})")
