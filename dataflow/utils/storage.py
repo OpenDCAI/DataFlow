@@ -203,15 +203,49 @@ class FileStorage(DataFlowStorage):
         Write data to current file managed by storage.
         data: Any, the data to write, it should be a dataframe, List[dict], etc.
         """
-        if type(data) == list:
-            if type(data[0]) == dict:
-                dataframe = pd.DataFrame(data)
+        def clean_surrogates(obj):
+            """递归清理数据中的无效Unicode代理对字符"""
+            if isinstance(obj, str):
+                # 替换无效的Unicode代理对字符（如\udc00）
+                return obj.encode('utf-8', 'replace').decode('utf-8')
+            elif isinstance(obj, dict):
+                return {k: clean_surrogates(v) for k, v in obj.items()}
+            elif isinstance(obj, list):
+                return [clean_surrogates(item) for item in obj]
+            elif isinstance(obj, (int, float, bool)) or obj is None:
+                # 数字、布尔值和None直接返回
+                return obj
+            else:
+                # 其他类型（如自定义对象）尝试转为字符串处理
+                try:
+                    return clean_surrogates(str(obj))
+                except:
+                    # 如果转换失败，返回原对象或空字符串（根据需求选择）
+                    return obj
+
+        # 转换数据为DataFrame
+        if isinstance(data, list):
+            if len(data) > 0 and isinstance(data[0], dict):
+                # 清洗列表中的每个字典
+                cleaned_data = [clean_surrogates(item) for item in data]
+                dataframe = pd.DataFrame(cleaned_data)
             else:
                 raise ValueError(f"Unsupported data type: {type(data[0])}")
-        elif type(data) == pd.DataFrame:
-            dataframe = data
+        elif isinstance(data, pd.DataFrame):
+            # 对DataFrame的每个元素进行清洗
+            dataframe = data.applymap(clean_surrogates)
         else:
             raise ValueError(f"Unsupported data type: {type(data)}")
+
+        # if type(data) == list:
+        #     if type(data[0]) == dict:
+        #         dataframe = pd.DataFrame(data)
+        #     else:
+        #         raise ValueError(f"Unsupported data type: {type(data[0])}")
+        # elif type(data) == pd.DataFrame:
+        #     dataframe = data
+        # else:
+        #     raise ValueError(f"Unsupported data type: {type(data)}")
 
         file_path = self._get_cache_file_path(self.operator_step + 1)
         os.makedirs(os.path.dirname(file_path), exist_ok=True)
