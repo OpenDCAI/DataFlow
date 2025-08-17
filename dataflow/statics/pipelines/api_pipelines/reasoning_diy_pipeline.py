@@ -99,8 +99,8 @@ class DiyReasoning_APIPipeline():
         )
         self.answer_ngram_filter_step4.run(
             storage = self.storage.step(),
-            question_key = "instruction",
-            answer_key = "generated_cot"
+            input_question_key = "instruction",
+            input_answer_key = "generated_cot"
         )
 
 if __name__ == "__main__":

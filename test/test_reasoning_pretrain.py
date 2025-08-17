@@ -93,13 +93,13 @@ class ReasoningPipeline_Pretrain():
         )
         self.answer_ngram_filter_step5.run(
             storage = self.storage.step(),
-            question_key = "instruction",
-            answer_key = "generated_cot"
+            input_question_key = "instruction",
+            input_answer_key = "generated_cot"
         )
         self.sft_to_pretrain_step6.run(
             storage = self.storage.step(),
-            read_key_question="instruction",
-            read_key_answer="generated_cot",
+            input_read_key_question="instruction",
+            input_read_key_answer="generated_cot",
             output_key="text",
             )
 

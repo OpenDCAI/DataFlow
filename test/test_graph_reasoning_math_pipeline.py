@@ -1,3 +1,4 @@
+from dataflow.pipeline import PipelineABC
 from dataflow.operators.generate import (
     QuestionCategoryClassifier,
     QuestionDifficultyClassifier,
@@ -7,10 +8,11 @@ from dataflow.operators.generate import (
 
 from dataflow.operators.filter import (
     QuestionFilter,
+    AnswerPipelineRoot,
     AnswerFormatterFilter,
-    AnswerGroundTruthFilter,
     AnswerTokenLengthFilter,
-    AnswerNgramFilter
+    AnswerGroundTruthFilter,
+    AnswerNgramFilter, 
 )
 
 from dataflow.prompts.reasoning.math import (
@@ -20,63 +22,58 @@ from dataflow.prompts.reasoning.math import (
 )
 
 from dataflow.utils.storage import FileStorage
-from dataflow.serving import APILLMServing_request, LocalModelLLMServing
-from dataflow.core import LLMServingABC
+from dataflow.serving import LocalModelLLMServing_vllm, LocalModelLLMServing_sglang
 
-# 这里或许未来可以有个pipeline基类
-class ReasoningPipeline():
-    def __init__(self, llm_serving: LLMServingABC = None):
-
+class ReasoningMath_GPUPipeline(PipelineABC):
+    def __init__(self):
+        super().__init__()
         self.storage = FileStorage(
             first_entry_file_name="../dataflow/example/ReasoningPipeline/pipeline_math_short.json",
             cache_path="./cache_local",
             file_name_prefix="dataflow_cache_step",
             cache_type="jsonl",
         )
-
-        # use API server as LLM serving
-        llm_serving = APILLMServing_request(
-                api_url="http://123.129.219.111:3000/v1/chat/completions",
-                model_name="gpt-4o",
-                max_workers=100
+        # use vllm as LLM serving
+        self.llm_serving = LocalModelLLMServing_vllm(
+            hf_model_name_or_path="/mnt/public/model/huggingface/Qwen2.5-7B-Instruct", # set to your own model path
+            vllm_tensor_parallel_size=1,
+            vllm_max_tokens=8192,
         )
-        
-        # if llm_serving is None:
-        #     # use local model as LLM serving
-        #     llm_serving = LocalModelLLMServing(
-        #         # model_name_or_path="/data0/models/Qwen2.5-7B-Instruct", # set to your own model path
-        #         model_name_or_path="/mnt/public/model/huggingface/Qwen2.5-7B-Instruct",
-        #         tensor_parallel_size=4,
-        #         max_tokens=8192,
-        #         model_source="local"
-        #     )
+        # use SGLang as LLM serving
+        # llm_serving = LocalModelLLMServing_sglang(
+        #     hf_model_name_or_path="Qwen/Qwen2.5-7B-Instruct",
+        #     sgl_dp_size=1, # data parallel size
+        #     sgl_tp_size=1, # tensor parallel size
+        #     sgl_max_tokens=1024,
+        #     sgl_tensor_parallel_size=4
+        # )
 
         self.question_filter_step1 = QuestionFilter(
             system_prompt="You are an expert in evaluating mathematical problems. Follow the user's instructions strictly and output your final judgment in the required JSON format.",
-            llm_serving=llm_serving,
+            llm_serving=self.llm_serving,
             prompt_template=MathQuestionFilterPrompt()
         )
         self.question_gen_step2 =  QuestionGenerator(
             num_prompts=3,
-            llm_serving=llm_serving,
+            llm_serving=self.llm_serving,
             prompt_template=MathQuestionSynthesisPrompt()
         )
         self.question_filter_step3 = QuestionFilter(
             system_prompt="You are an expert in evaluating mathematical problems. Follow the user's instructions strictly and output your final judgment in the required JSON format.",
-            llm_serving=llm_serving,
+            llm_serving=self.llm_serving,
             prompt_template=MathQuestionFilterPrompt()
         )
         self.question_difficulty_classifier_step4 = QuestionDifficultyClassifier(
-            llm_serving=llm_serving
+            llm_serving=self.llm_serving
         )
         self.question_category_classifier_step5 = QuestionCategoryClassifier(
-            llm_serving=llm_serving
+            llm_serving=self.llm_serving
         )
         ########################## branch ############################
         # self.answer_pipeline_root_step6 = AnswerPipelineRoot()
         ########################## answer ############################
         self.answer_generator_step7 = AnswerGenerator(
-            llm_serving=llm_serving,
+            llm_serving=self.llm_serving,
             prompt_template=MathAnswerGeneratorPrompt()
         )
         
@@ -94,8 +91,7 @@ class ReasoningPipeline():
             max_score = 1.0,
             ngrams = 5
         )
-        
-        # 未来或许可以维护一个类似nn.sequential的容器，方便添加并实例化多个算子
+
     def forward(self):
 
         self.question_filter_step1.run(
@@ -146,8 +142,8 @@ class ReasoningPipeline():
         )
         self.answer_groundtruth_filter_step10.run(
             storage = self.storage.step(),
-            input_test_answer_key = "generated_cot",
-            input_gt_answer_key =  "golden_answer"
+            input_gt_answer_key = "generated_cot",
+            input_test_answer_key = "golden_answer"
         )
         self.answer_ngram_filter_step11.run(
             storage = self.storage.step(),
@@ -156,5 +152,7 @@ class ReasoningPipeline():
         )
 
 if __name__ == "__main__":
-    model = ReasoningPipeline()
-    model.forward()
+    model = ReasoningMath_GPUPipeline()
+    model.compile()
+    model.draw_graph(port=8080)
+    # model.forward()

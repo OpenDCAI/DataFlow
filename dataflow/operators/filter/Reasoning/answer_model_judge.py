@@ -94,22 +94,22 @@ class AnswerModelJudge(OperatorABC):
             self.logger.error(f"Response format error: {response}. Error: {e}")
             return False
             
-    def run(self, storage: DataFlowStorage, question_key: str = "question", answer_key: str = "answer", reference_key: str = "reference_answer") -> list:
-        self.question_key = question_key
-        self.answer_key = answer_key
-        self.reference_key = reference_key
+    def run(self, storage: DataFlowStorage, input_question_key: str = "question", input_answer_key: str = "answer", input_reference_key: str = "reference_answer") -> list:
+        self.question_key = input_question_key
+        self.answer_key = input_answer_key
+        self.reference_key = input_reference_key
         
         dataframe = storage.read("dataframe")
         
         # 检查必要的列是否存在
-        required_columns = [question_key, answer_key, reference_key]
+        required_columns = [input_question_key, input_answer_key, input_reference_key]
         for column in required_columns:
             if column not in dataframe.columns:
                 self.logger.error(f"Required column '{column}' not found in dataframe")
                 return required_columns
         
         # 检查参考答案是否为空或不存在
-        empty_reference_mask = dataframe[reference_key].isna() | (dataframe[reference_key] == '')
+        empty_reference_mask = dataframe[input_reference_key].isna() | (dataframe[input_reference_key] == '')
         skipped_rows = dataframe[empty_reference_mask]
         valid_rows = dataframe[~empty_reference_mask]
         
@@ -130,9 +130,9 @@ class AnswerModelJudge(OperatorABC):
         
         # 只对有参考答案的行构建提示词并调用LLM
         inputs = [self.prompt_template.build_prompt(
-            question=row[question_key],
-            answer=row[answer_key],
-            reference_answer=row[reference_key]
+            question=row[input_question_key],
+            answer=row[input_answer_key],
+            reference_answer=row[input_reference_key]
         ) for _, row in valid_rows.iterrows()]
         
         responses = self.llm_serving.generate_from_input(user_inputs=inputs, system_prompt=self.system_prompt)

@@ -12,12 +12,12 @@ class PretrainFormatConverter(OperatorABC):
 
     def run(self,
             storage: DataFlowStorage,
-            read_key_question: str = "question",
-            read_key_answer: str = "answer",
+            input_read_key_question: str = "question",
+            input_read_key_answer: str = "answer",
             output_key: str = "text"
             ):
-        self.read_key_question = read_key_question
-        self.read_key_answer = read_key_answer
+        self.read_key_question = input_read_key_question
+        self.read_key_answer = input_read_key_answer
         self.output_key = output_key
 
         dataframe = storage.read("dataframe")
@@ -35,7 +35,7 @@ class PretrainFormatConverter(OperatorABC):
         output_file = storage.write(output_1)
         self.logger.info(f"SFT to PT convertion results saved to {output_file}")
         
-        return [read_key_question, read_key_answer, output_key]
+        return [input_read_key_question, input_read_key_answer, output_key]
 
     @staticmethod
     def get_desc(lang: str = "zh"):

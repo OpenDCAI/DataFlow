@@ -12,6 +12,10 @@ import time
 class APILLMServing_request(LLMServingABC):
     """Use OpenAI API to generate responses based on input messages.
     """
+    def start_serving(self) -> None:
+        self.logger.info("APILLMServing_request: no local service to start.")
+        return
+    
     def __init__(self, 
                  api_url: str = "https://api.openai.com/v1/chat/completions",
                  key_name_of_api_key: str = "DF_API_KEY",

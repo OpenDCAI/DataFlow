@@ -26,6 +26,7 @@ test/test_cli
 
 dist
 build
+*.html
 
 
-
+lib

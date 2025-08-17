@@ -3,6 +3,8 @@ from .LocalModelLLMServing import LocalModelLLMServing_vllm
 from .LocalModelLLMServing import LocalModelLLMServing_sglang
 from .GoogleAPIServing import PerspectiveAPIServing
 from .LiteLLMServing import LiteLLMServing
+
+from .LocalHostLLMAPIServing import LocalHostLLMAPIServing_vllm
 from .LocalModelLALMServing import LocalModelLALMServing_vllm
 
 __all__ = [
@@ -12,4 +14,5 @@ __all__ = [
     "PerspectiveAPIServing",
     "LiteLLMServing",
     "LocalModelLALMServing_vllm"
+    "LocalHostLLMAPIServing_vllm"
 ]

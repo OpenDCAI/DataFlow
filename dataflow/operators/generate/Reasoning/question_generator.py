@@ -111,7 +111,12 @@ class QuestionGenerator(OperatorABC):
 
         return formatted_prompts
 
-    def run(self, storage: DataFlowStorage, input_key: str):
+    def run(
+            self, 
+            storage: DataFlowStorage, 
+            input_key: str,
+            output_synth_or_input_flag: str = "Synth_or_Input"
+            ):
         """
         Run the question generation process.
         """
@@ -124,9 +129,9 @@ class QuestionGenerator(OperatorABC):
         new_rows = pd.DataFrame({
             input_key: responses,
         })
-        new_rows["Synth_or_Input"] = "synth"
-        dataframe["Synth_or_Input"] = "input"
-        
+        new_rows[output_synth_or_input_flag] = "synth"
+        dataframe[output_synth_or_input_flag] = "input"
+
         dataframe = pd.concat([dataframe, new_rows], ignore_index=True)
         dataframe = dataframe[dataframe[input_key].notna()]
         dataframe = dataframe[dataframe[input_key] != ""]
@@ -134,4 +139,4 @@ class QuestionGenerator(OperatorABC):
         output_file = storage.write(dataframe)
         self.logger.info(f"Generated questions saved to {output_file}")
 
-        return [input_key, "Synth_or_Input"]
+        return [input_key, output_synth_or_input_flag]

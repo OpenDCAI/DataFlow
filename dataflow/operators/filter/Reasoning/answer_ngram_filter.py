@@ -64,11 +64,11 @@ class AnswerNgramFilter(OperatorABC):
     def run(
             self,
             storage: DataFlowStorage,
-            question_key: str = "instruction",
-            answer_key: str = "generated_cot"
+            input_question_key: str = "instruction",
+            input_answer_key: str = "generated_cot"
             ) -> list:
-        self.question_key = question_key
-        self.answer_key = answer_key
+        self.question_key = input_question_key
+        self.answer_key = input_answer_key
         
         dataframe = storage.read("dataframe")
         self.logger.info(f"Found {len(dataframe)} rows in the dataframe, DataFrame columns: {dataframe.columns}")
@@ -104,4 +104,4 @@ class AnswerNgramFilter(OperatorABC):
         output_file = storage.write(dataframe)
         self.logger.info(f"Results saved to {output_file}")
         
-        return [question_key, answer_key]
+        return [input_question_key, input_answer_key]

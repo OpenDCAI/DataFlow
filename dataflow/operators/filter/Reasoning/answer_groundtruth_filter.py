@@ -41,8 +41,8 @@ class AnswerGroundTruthFilter(OperatorABC):
             return (
                 "该算子用于对比预测答案与标准答案的匹配度，支持精确匹配和数学验证两种方式。\n\n"
                 "输入参数：\n"
-                "- test_answer_key：预测答案字段名\n"
-                "- gt_answer_key：标准答案字段名\n"
+                "- input_test_answer_key：预测答案字段名\n"
+                "- input_gt_answer_key：标准答案字段名\n"
                 "- compare_method：比较方法（exact/math_verify）\n\n"
                 "输出参数：\n"
                 "- 匹配成功返回1，否则返回0"
@@ -63,13 +63,13 @@ class AnswerGroundTruthFilter(OperatorABC):
     def run(
             self,
             storage:DataFlowStorage,
-            test_answer_key: str = "generated_cot",
-            gt_answer_key: str = "golden_answer"
+            input_test_answer_key: str = "generated_cot",
+            input_gt_answer_key: str = "golden_answer"
             ) -> list:
-        
-        self.test_answer_key = test_answer_key
-        self.gt_answer_key = gt_answer_key
-        
+
+        self.test_answer_key = input_test_answer_key
+        self.gt_answer_key = input_gt_answer_key
+
         dataframe = storage.read("dataframe")
         output = []
         answers = dataframe[self.test_answer_key]
@@ -82,5 +82,5 @@ class AnswerGroundTruthFilter(OperatorABC):
         
         output_file = storage.write(output)
         self.logger.info(f"Filtered data saved to {output_file}")
-        
-        return [test_answer_key, gt_answer_key]
+
+        return [self.test_answer_key, self.gt_answer_key]

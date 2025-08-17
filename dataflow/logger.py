@@ -1,5 +1,9 @@
+import os
 import logging
 import colorlog
+
+# 读取logging level
+default_log_level = os.getenv("DF_LOGGING_LEVEL", "INFO")
 
 # 自定义日志等级
 SUCCESS_LEVEL_NUM = 25
@@ -11,7 +15,7 @@ def success(self, message, *args, **kwargs):
 
 logging.Logger.success = success  # 添加方法到 Logger 类
 
-def get_logger(level=logging.INFO) -> logging.Logger:
+def get_logger(level=default_log_level) -> logging.Logger:
     # 创建logger对象
     logger = logging.getLogger("DataFlow")
     if not logger.handlers:

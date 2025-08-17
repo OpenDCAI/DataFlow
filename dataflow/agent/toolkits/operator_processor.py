@@ -135,7 +135,7 @@ def generate_operator_py(
                 f"""\
                 # -------- LLM Serving (Remote) --------
                 llm_serving = APILLMServing_request(
-                    api_url="http://123.129.219.111:3000/v1/chat/completions",
+                    api_url="{request.chat_api_url}",
                     key_name_of_api_key = 'DF_API_KEY',
                     model_name="gpt-4o",
                     max_workers=100,
