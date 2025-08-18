@@ -1,4 +1,4 @@
-from dataflow.operators.generate.SpeechTranscription.speech_transcriptor import SpeechTranscriptor
+from dataflow.operators.generate import SpeechTranscriptor
 from dataflow.serving import LocalModelLALMServing_vllm
 from dataflow.utils.storage import FileStorage
 
@@ -12,7 +12,7 @@ class SpeechTranscription_GPUPipeline():
         )
 
         self.llm_serving = LocalModelLALMServing_vllm(
-            hf_model_name_or_path='/data0/gty/models/Qwen2-Audio-7B-Instruct',
+            hf_model_name_or_path='Qwen/Qwen2-Audio-7B-Instruct',
             vllm_tensor_parallel_size=4,
             vllm_max_tokens=8192,
         )
