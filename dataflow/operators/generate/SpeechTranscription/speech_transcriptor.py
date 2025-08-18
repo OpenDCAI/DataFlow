@@ -154,7 +154,6 @@ class SpeechTranscriptor(OperatorABC):
         transcriptions = self.llm_serving.generate_from_input(
             user_inputs=user_inputs,
             audio_inputs=audio_inputs,
-            system_prompt=self.system_prompt
         )
 
         dataframe[self.output_key] = transcriptions

@@ -103,7 +103,6 @@ class LocalModelLALMServing_vllm(LLMServingABC):
     def generate_from_input(self,    
                             user_inputs: list[str], 
                             audio_inputs: list,
-                            system_prompt: str = "You are a helpful assistant",
                         ) -> list[str]:   
 
 
