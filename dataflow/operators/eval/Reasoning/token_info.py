@@ -13,6 +13,37 @@ class ToKenInfo(OperatorABC):
         self.logger.info(f'{self.__class__.__name__} initialized.')
         self.information_name = "Token Information"
 
+    @staticmethod
+    def get_desc(lang: str = "zh"):
+        if lang == "zh":
+            return (
+                "该算子用于统计数据集中问题和回答的token信息，包括token数量的最小值、最大值、平均值和中位数等统计指标。"
+                "它使用指定的tokenizer对文本进行编码，并计算token长度的分布情况。\n"
+                "输入参数：\n"
+                "- input_question_key：问题文本字段名\n"
+                "- input_answer_key：回答文本字段名\n"
+                "- model_name_or_path：tokenizer模型名称或路径\n"
+                "输出参数：\n"
+                "- 返回包含token统计信息的字典，包括问题和回答的token数量的零值计数、最小值、最大值、平均值和中位数"
+            )
+        elif lang == "en":
+            return (
+                "This operator analyzes token information for questions and answers in the dataset, including statistical metrics "
+                "such as minimum, maximum, mean, and median token counts. It encodes text using the specified tokenizer and calculates "
+                "token length distribution.\n"
+                "Input Parameters:\n"
+                "- input_question_key: Field name for question text\n"
+                "- input_answer_key: Field name for answer text\n"
+                "- model_name_or_path: Tokenizer model name or path\n\n"
+                "Output Parameters:\n"
+                "- Returns a dictionary containing token statistics, including zero count, minimum, maximum, mean, and median token counts "
+                "for both questions and answers"
+            )
+        else:
+            return (
+                "ToKenInfo analyzes and reports token length statistics for questions and answers in the dataset using a specified tokenizer."
+            )
+    
     def get_token_info(self, samples, input_question_key, input_answer_key, model_name_or_path):
         tokenizer = AutoTokenizer.from_pretrained(model_name_or_path)
         questions = [sample.get(input_question_key, '') for sample in samples]
