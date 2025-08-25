@@ -1,3 +1,4 @@
+from dataflow import get_logger
 '''
 A collection of prompts for the diy reasoning operator.
 '''
@@ -5,7 +6,8 @@ A collection of prompts for the diy reasoning operator.
 class DiyAnswerGeneratorPrompt:
     def __init__(self, prompt_template):
         self.prompt_template = prompt_template
-    
+        self.logger = get_logger()
+        
     def build_prompt(self, question: str) -> str:
         try:
             return self.prompt_template + question + r'''Your response must start directly with "Solution:" without any preamble. Finish your response immediately after the solution.'''
@@ -15,7 +17,8 @@ class DiyAnswerGeneratorPrompt:
 class DiyQuestionFilterPrompt:
     def __init__(self, prompt_template):
         self.prompt_template = prompt_template
-    
+        self.logger = get_logger()
+        
     def build_prompt(self, question: str) -> str:
         try:
             return self.prompt_template.format(question=question)
@@ -25,7 +28,8 @@ class DiyQuestionFilterPrompt:
 class DiyQuestionSynthesisPrompt:
     def __init__(self, prompt_template):
         self.prompt_template = prompt_template
-    
+        self.logger = get_logger()
+        
     def build_prompt(self, question: str) -> str:
         try:
             return self.prompt_template.format(question=question)
