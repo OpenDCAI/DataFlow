@@ -1,10 +1,10 @@
-from dataflow.operators.generate import (
+from dataflow.operators.text2sql import (
     Text2SQLPromptGenerator
 )
-from dataflow.operators.filter import (
+from dataflow.operators.text2sql import (
     SQLExecutionFilter
 )
-from dataflow.operators.eval import (
+from dataflow.operators.text2sql import (
     SQLComponentClassifier
 )
 from dataflow.utils.storage import FileStorage

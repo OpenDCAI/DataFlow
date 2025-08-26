@@ -194,7 +194,21 @@ class Registry():
             'db': db_operators
         }
 
-OPERATOR_REGISTRY = Registry(name='operators', sub_modules=['eval', 'filter', 'generate', 'refine', 'conversations'])
+OPERATOR_REGISTRY = Registry(
+    name='operators', 
+    sub_modules=[
+        'agentic_rag',
+        'conversations',
+        'core_speech',
+        'core_vision',
+        'db',
+        'general_text',
+        'knowledge_cleaning',
+        'rare',
+        'reasoning',
+        'text2sql'
+    ]
+)
 class LazyLoader(types.ModuleType):
 
     def __init__(self, name, path, import_structure):

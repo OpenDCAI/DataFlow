@@ -1,4 +1,4 @@
-from dataflow.operators.generate import SpeechTranscriptor
+from dataflow.operators.core_speech import Speech2TextGenerator
 from dataflow.serving import LocalModelLALMServing_vllm
 from dataflow.utils.storage import FileStorage
 
@@ -16,7 +16,7 @@ class SpeechTranscription_GPUPipeline():
             vllm_tensor_parallel_size=4,
             vllm_max_tokens=8192,
         )
-        self.speech_transcriptor = SpeechTranscriptor(
+        self.speech_transcriptor = Speech2TextGenerator(
             llm_serving = self.llm_serving,
             system_prompt="你是一个专业的翻译员，你需要将语音转录为文本。"
         )

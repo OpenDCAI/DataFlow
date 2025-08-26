@@ -1,4 +1,4 @@
-from dataflow.operators.filter import WordNumberFilter
+from dataflow.operators.general_text import WordNumberFilter
 from dataflow.utils.storage import FileStorage
 
 
