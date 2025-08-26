@@ -4,6 +4,7 @@ from tqdm import tqdm
 from typing import Dict, Optional
 from dataflow.utils.registry import OPERATOR_REGISTRY
 from dataflow import get_logger
+from dataflow.prompts.text2sql import Text2SQLPromptGeneratorPrompt
 from dataflow.core import OperatorABC
 from dataflow.utils.storage import DataFlowStorage
 from dataflow.utils.text2sql.database_manager import DatabaseManager
@@ -13,41 +14,15 @@ from dataflow.utils.text2sql.database_manager import DatabaseManager
 class Text2SQLPromptGenerator(OperatorABC):
     def __init__(self, 
                 database_manager: DatabaseManager,
-                prompt_template: str = "",
-                schema_config: Optional[Dict] = None
+                prompt_template = None
             ):
 
-        if not prompt_template:
-            self.prompt_template = '''Task Overview:
-            /* Given the following database schema: */
-            {schema}
-            /* Answer the following: {question} */
-            Let's think step by step'''
-        else:
-            self.prompt_template = prompt_template
-        
-        if not schema_config:
-            self.schema_config = {
-                'format': 'ddl',  # Optional: 'ddl', 'formatted_schema'
-                'use_example': True  # Whether to include example data
-            }
-        else:
-            self.schema_config = schema_config
+        if prompt_template is None:
+            prompt_template = Text2SQLPromptGeneratorPrompt()
+        self.prompt_template = prompt_template
         
         self.logger = get_logger()
         self.database_manager = database_manager
-        self._validate_config()
-
-    def _validate_config(self):
-        if "{schema}" not in self.prompt_template or "{question}" not in self.prompt_template:
-            raise ValueError("prompt_template must contain {schema} and {question} placeholders")
-        
-        valid_formats = ['ddl', 'formatted_schema']
-        if self.schema_config.get('format') not in valid_formats:
-            raise ValueError(f"schema_config.format must be one of {valid_formats}")
-        
-        if not isinstance(self.schema_config.get('use_example'), bool):
-            raise ValueError("schema_config.use_example must be a boolean")
 
     @staticmethod
     def get_desc(lang):
@@ -74,33 +49,15 @@ class Text2SQLPromptGenerator(OperatorABC):
         else:
             return "Prompt generator for Text2SQL tasks."
 
-    def get_schema_for_db(self, db_id: str) -> Dict:
-        return self.database_manager.get_database_schema(db_id)
-
-    def format_schema_according_to_config(self, db_id: str) -> str:
-        format_type = self.schema_config.get('format', 'formatted_schema')
-        use_example = self.schema_config.get('use_example', True)
-        
-        if format_type == 'ddl':
-            if use_example:
-                return self.database_manager.generate_ddl_with_examples(db_id)
-            else:
-                return self.database_manager.generate_ddl_without_examples(db_id)
-        elif format_type == 'formatted_schema':
-            if use_example:
-                return self.database_manager.generate_formatted_schema_with_examples(db_id)
-            else:
-                return self.database_manager.generate_formatted_schema_without_examples(db_id)
-        else:
-            raise ValueError(f"Unsupported format type: {format_type}")
+    def get_schema_info(self, db_id: str) -> str:
+        create_statements, insert_statements = self.database_manager.get_create_statements_and_insert_statements(db_id)
+        create_statements_str = "\n\n".join(create_statements)
+        insert_statements_str = "\n\n".join(insert_statements)
+        return "\n\n".join([create_statements_str, insert_statements_str])
 
     def generate_prompt(self, db_id: str, question: str) -> str:
-        formatted_schema = self.format_schema_according_to_config(db_id)
-        generated_prompt = self.prompt_template.format(
-            schema=formatted_schema, 
-            question=question
-        )
-        return generated_prompt
+        schema_info = self.get_schema_info(db_id)
+        return self.prompt_template.build_prompt(schema_info, question) 
 
     def _process_item(self, item: Dict) -> Dict:
         try:

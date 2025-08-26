@@ -670,17 +670,14 @@ class EvalHardnessLite:
         if 'having' in sql:
             score += 1
 
-        # 函数调用
         if any(func in sql for func in ['cast', 'round', 'substring', 'date', 'coalesce']):
             score += 1
 
-        # 排序 + 限制
         if 'order by' in sql:
             score += 1
         if 'limit' in sql:
             score += 1
 
-        # set 操作
         if any(op in sql for op in ['union', 'intersect', 'except']):
             score += 2
 
@@ -696,14 +693,15 @@ class EvalHardnessLite:
 
 @OPERATOR_REGISTRY.register()
 class SQLComponentClassifier(OperatorABC):
-    def __init__(self, difficulty_config: dict | None = None):
-        if difficulty_config is None:
-            self.difficulty_config = {
-                'thresholds': [2, 5, 9],
-                'labels': ['easy', 'medium', 'hard', 'extra']
-            }
-        else:
-            self.difficulty_config = difficulty_config
+    def __init__(self, 
+        difficulty_thresholds: list,
+        difficulty_labels: list
+    ):
+        
+        self.difficulty_config = {
+            'thresholds': difficulty_thresholds,
+            'labels': difficulty_labels
+        }
         self.logger = get_logger()
         if len(self.difficulty_config['thresholds']) != len(self.difficulty_config['labels']) - 1:
             raise ValueError("Thresholds and labels configuration mismatch")

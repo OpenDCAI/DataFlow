@@ -26,7 +26,7 @@ from dataflow.prompts.text2sql import (
     Text2SQLPromptGeneratorPrompt
 )
 from dataflow.utils.storage import FileStorage
-from dataflow.serving import LocalModelLLMServing_vllm, LocalModelLLMServing_sglang
+from dataflow.serving import APILLMServing_request
 from dataflow.utils.text2sql.database_manager import DatabaseManager
 
 
@@ -127,10 +127,7 @@ class Text2SQLRefine_APIPipeline():
             config={
                 "root_path": self.db_root_path
             },
-            logger=None,
-            sql_execution_timeout = 2,
-            max_connections_per_db=100,
-            max_workers=100
+            sql_execution_timeout = 5 # SQL execution timeout. Generated SQL execution time should be less than this value.
         )
         
         self.sql_execution_filter_step1 = SQLExecutionFilter(
@@ -146,7 +143,7 @@ class Text2SQLRefine_APIPipeline():
         self.sql_variation_generator_step3 = SQLVariationGenerator(
             llm_serving=self.llm_serving,
             database_manager=database_manager,
-            num_variations=5,
+            num_variations=5, # Number of variations to generate for each SQL
             prompt_template=SQLVariationGeneratorPrompt()
         )
 

@@ -16,21 +16,17 @@ class SQLExecutionClassifier(OperatorABC):
     def __init__(self, 
                 llm_serving: LLMServingABC, 
                 database_manager: DatabaseManager, 
-                difficulty_config: dict | None = None, 
                 num_generations: int = 10,
-                timeout: float = 5.0):
+                difficulty_thresholds: list = [2, 5, 9],
+                difficulty_labels: list = ['extra', 'hard', 'medium', 'easy']
+            ):
         self.llm_serving = llm_serving     
         self.database_manager = database_manager
-        if difficulty_config is None:
-            self.difficulty_config = {
-                "num_generations": 10,
-                'thresholds': [2, 5, 9],
-                'labels': ['extra', 'hard', 'medium', 'easy']
-            }
-        else:
-            self.difficulty_config = difficulty_config
+        self.difficulty_config = {
+            'thresholds': difficulty_thresholds,
+            'labels': difficulty_labels
+        }
         self.num_generations = num_generations
-        self.timeout = timeout
         self.logger = get_logger()
         
         if self.num_generations <= self.difficulty_config["thresholds"][-1]:
@@ -91,13 +87,7 @@ class SQLExecutionClassifier(OperatorABC):
         comparison_idx = 0
         for i, (predicted_sqls, ground_truth, db_id, idx) in enumerate(zip(predicted_sqls_list, ground_truth_list, db_ids, idxs)):
             for j, predicted_sql in enumerate(predicted_sqls):
-                comparison = {
-                    'db_id': db_id,
-                    'sql1': predicted_sql,
-                    'sql2': ground_truth,
-                    'timeout': meta_time_out,
-                    'operation_id': f"compare_{comparison_idx}"
-                }
+                comparison = (db_id, predicted_sql, ground_truth)
                 comparisons.append(comparison)
                 sql_mapping[comparison_idx] = {
                     'original_idx': i,
@@ -108,7 +98,7 @@ class SQLExecutionClassifier(OperatorABC):
                 comparison_idx += 1
         
         try:
-            batch_results = database_manager.batch_compare_sql(comparisons)
+            batch_results = database_manager.batch_compare_queries(comparisons)
         except Exception as e:
             logger.error(f"Batch comparison failed: {e}")
             results = []
@@ -127,21 +117,16 @@ class SQLExecutionClassifier(OperatorABC):
                 "results": [None] * len(predicted_sqls)
             }
         
-        for batch_idx, batch_result in enumerate(batch_results):
-            if batch_idx in sql_mapping:
-                mapping = sql_mapping[batch_idx]
-                original_idx = mapping['original_idx']
-                sql_idx = mapping['sql_idx']
-                
-                if batch_result.success:
-                    res = 1 if batch_result.data else 0
-                    if res == 1:
-                        results[original_idx]["cnt_true"] += 1
-                    result_item = {'res': res, 'sql': mapping['sql']}
-                else:
-                    result_item = {'res': 0, 'sql': mapping['sql'], 'error': batch_result.error or 'unknown_error'}
-                
-                results[original_idx]["results"][sql_idx] = result_item
+        for batch_idx, comparison_result in enumerate(batch_results):
+            if comparison_result['result1_success'] and comparison_result['result2_success']:
+                res = 1 if comparison_result['equal'] else 0
+            else:
+                error_msg = ""
+                if not comparison_result['result1_success']:
+                    error_msg += f"Predicted SQL failed; "
+                if not comparison_result['result2_success']:
+                    error_msg += f"Ground truth SQL failed"
+                result_item = {'res': 0, 'sql': mapping['sql'], 'error': error_msg}
         
         return [results[i] for i in sorted(results.keys())]
 

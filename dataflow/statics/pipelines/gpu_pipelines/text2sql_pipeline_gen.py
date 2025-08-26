@@ -162,7 +162,7 @@ class Text2SQLGeneration_GPUPipeline():
         )
 
         self.sql_cot_generator_step5 = Text2SQLCoTGenerator(
-            llm_serving=cot_generation_api_llm_serving,
+            llm_serving=cot_generation_llm_serving,
             database_manager=database_manager,
             max_retries=3,
             enable_retry=True,

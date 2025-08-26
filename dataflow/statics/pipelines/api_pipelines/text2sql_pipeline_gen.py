@@ -24,7 +24,7 @@ from dataflow.prompts.text2sql import (
     Text2SQLPromptGeneratorPrompt
 )
 from dataflow.utils.storage import FileStorage
-from dataflow.serving import LocalModelLLMServing_vllm, LocalModelLLMServing_sglang
+from dataflow.serving import APILLMServing_request
 from dataflow.utils.text2sql.database_manager import DatabaseManager
 
 

@@ -1,12 +1,10 @@
-import json
 import random
 import re
 import pandas as pd
 from tqdm import tqdm
 import numpy as np
 from scipy.spatial.distance import cdist
-
-from dataflow.prompts.text2sql import QuestionGenerationPrompt
+from dataflow.prompts.text2sql import Text2SQLQuestionGeneratorPrompt
 from dataflow.utils.registry import OPERATOR_REGISTRY
 from dataflow import get_logger
 from dataflow.core import OperatorABC, LLMServingABC
@@ -20,12 +18,17 @@ class Text2SQLQuestionGenerator(OperatorABC):
                 llm_serving: LLMServingABC, 
                 embedding_serving: LLMServingABC, 
                 database_manager: DatabaseManager, 
-                question_candidates_num: int = 5):
-
+                question_candidates_num: int = 5,
+                prompt_template = None
+                ):
+                
         self.llm_serving = llm_serving
         self.embedding_serving = embedding_serving
         self.database_manager = database_manager
-        self.prompt = QuestionGenerationPrompt()
+        if prompt_template is None:
+            self.prompt_template = Text2SQLQuestionGeneratorPrompt()
+        else:
+            self.prompt_template = prompt_template
         self.logger = get_logger()
         self.question_candidates_num = question_candidates_num
         random.seed(42)
@@ -129,10 +132,9 @@ class Text2SQLQuestionGenerator(OperatorABC):
         styles = ["Formal", "Colloquial", "Imperative", "Interrogative", "Descriptive", "Concise", "Vague", "Metaphorical"]
         db_ids = list(set([data[self.input_db_id_key] for data in raw_data]))
         db_id2column_info = dict()
-        style2desc = self.prompt.get_style2desc()
         
         for db_id in tqdm(db_ids, desc="Extracting database schema"):
-            _, create_statements = self.database_manager.get_table_names_and_create_statements(db_id)
+            create_statements, _ = self.database_manager.get_create_statements_and_insert_statements(db_id)
             db_id2column_info[db_id] = self.extract_column_descriptions(create_statements)
         
         self.logger.info("Generating question candidates...")
@@ -140,34 +142,13 @@ class Text2SQLQuestionGenerator(OperatorABC):
         prompt_data_mapping = []
         
         for data in tqdm(raw_data, desc="Preparing prompts"):
-            style_name = random.sample(styles, 1)[0]
-            column_name2column_desc = db_id2column_info[data[self.input_db_id_key]]
-            used_column_name2column_desc = dict()
-            
-            for column_name, column_desc in column_name2column_desc.items():
-                if column_name.lower() in data[self.input_sql_key].lower():
-                    used_column_name2column_desc[column_name] = column_desc
-
-            if style_name in ["Vague", "Metaphorical"]:
-                steps = self.prompt.get_steps_w_ek()
-                guidelines = self.prompt.get_guidelines_w_ek()
-                instruction = self.prompt.get_instruction_w_ek()
-                output_format = self.prompt.get_output_format_w_ek()
-            else:
-                steps = self.prompt.get_steps_wo_ek()
-                guidelines = self.prompt.get_guidelines_wo_ek()
-                instruction = self.prompt.get_instruction_wo_ek()
-                output_format = self.prompt.get_output_format_wo_ek()
-
-            prompt = self.prompt.question_synthesis_prompt(
-                style_desc=style2desc[style_name].strip(),
-                engine=self.database_manager.db_type,
-                column_info=json.dumps(used_column_name2column_desc, indent=2, ensure_ascii=False).strip(),
-                sql=data[self.input_sql_key].strip(),
-                steps=steps.strip(),
-                guidelines=guidelines.strip(),
-                output_format=output_format.strip(),
-                instruction=instruction.strip()
+            prompt, style_name = self.prompt_template.build_prompt(
+                data,
+                self.input_db_id_key,
+                self.input_sql_key,
+                styles,
+                db_id2column_info,
+                self.database_manager.db_type
             )
             
             for _ in range(self.question_candidates_num):
