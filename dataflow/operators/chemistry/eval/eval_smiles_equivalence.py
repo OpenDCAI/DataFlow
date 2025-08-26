@@ -7,15 +7,6 @@ from dataflow.core import OperatorABC
 from dataflow.core import LLMServingABC
 import json
 
-try:
-    from rdkit import Chem
-except ImportError:
-    raise Exception(
-        """
-rdkit is not installed in this environment yet.
-Please use pip install rdkit.
-"""
-    )
 @OPERATOR_REGISTRY.register()
 class EvaluateSmilesEquivalence(OperatorABC):
     """
@@ -50,6 +41,15 @@ class EvaluateSmilesEquivalence(OperatorABC):
         使用 RDKit 将 SMILES 规范化后判断是否等价。
         任意一侧解析失败，返回 False。
         """
+        try:
+            from rdkit import Chem
+        except ImportError:
+            raise Exception(
+                """
+        rdkit is not installed in this environment yet.
+        Please use pip install rdkit.
+        """
+            )
         try:
             m1, m2 = Chem.MolFromSmiles(s1), Chem.MolFromSmiles(s2)
             if m1 is None or m2 is None:
