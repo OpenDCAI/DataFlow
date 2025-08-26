@@ -1,5 +1,4 @@
 import pandas as pd
-from rdkit import Chem
 from dataflow.utils.registry import OPERATOR_REGISTRY
 from dataflow import get_logger
 
@@ -8,6 +7,15 @@ from dataflow.core import OperatorABC
 from dataflow.core import LLMServingABC
 import json
 
+try:
+    from rdkit import Chem
+except ImportError:
+    raise Exception(
+        """
+rdkit is not installed in this environment yet.
+Please use pip install rdkit.
+"""
+    )
 @OPERATOR_REGISTRY.register()
 class EvaluateSmilesEquivalence(OperatorABC):
     """
