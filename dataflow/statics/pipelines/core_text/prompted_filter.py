@@ -5,13 +5,13 @@ from dataflow.utils.storage import FileStorage
 class GPT_evaluator():
     def __init__(self):
         self.storage = FileStorage(
-            first_entry_file_name="/Users/lianghao/Desktop/dataflow_code/test_dataflow/example_data/core_text_data/eval_data.json",
+            first_entry_file_name="../example_data/core_text_data/eval_data.json",
             cache_path="./cache_1",
             file_name_prefix="math_QA",
             cache_type="json",
         )
         self.llm_serving = APILLMServing_request(
-                api_url="http://123.129.219.111:3000/v1/chat/completions",
+                api_url="https://api.openai.com/v1/chat/completions",
                 model_name="gpt-4o",
                 max_workers=10
         )
