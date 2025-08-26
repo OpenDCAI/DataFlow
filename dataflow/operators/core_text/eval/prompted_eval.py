@@ -20,9 +20,9 @@ class PromptedEvaluator(OperatorABC):
     def get_desc(lang: str = "zh"):
         if lang == "zh":
             return (
-                "PromptedEvaluator：使用 LLM 根据系统提示词对数据质量进行 1–5 分评分，并将评分写回 DataFrame（同时通过 "
+                "PromptedEvaluator：使用 LLM 根据系统提示词对数据质量进行评分，并将评分写回 DataFrame（同时通过 "
                 "storage 持久化）。模型应只输出分数（整数）。\n"
-                "功能：对每行输入文本生成一个整数评分（1=最低，5=最高）。\n"
+                "功能：对每行输入文本生成一个评分。\n"
                 "输入参数：\n"
                 "- llm_serving：LLM 服务对象，需实现 LLMServingABC 接口。\n"
                 "- system_prompt：系统提示词（默认：'Please evaluate the quality of this data on a scale from 1 to 5.'）。\n"
@@ -33,9 +33,9 @@ class PromptedEvaluator(OperatorABC):
             )
         elif lang == "en":
             return (
-                "PromptedEvaluator: uses an LLM to rate data quality on a 1–5 scale and writes the score back to the "
+                "PromptedEvaluator: uses an LLM to rate data quality and writes the score back to the "
                 "DataFrame (persisted via storage). The model is expected to output only the integer score.\n"
-                "Purpose: for each input row, produce an integer score (1=lowest, 5=highest).\n"
+                "Purpose: for each input row, produce an score.\n"
                 "Input Parameters:\n"
                 "- llm_serving: LLM serving object implementing LLMServingABC.\n"
                 "- system_prompt: system prompt (default: 'Please evaluate the quality of this data on a scale from 1 to 5.').\n"

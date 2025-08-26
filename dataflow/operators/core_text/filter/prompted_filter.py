@@ -21,32 +21,45 @@ class PromptedFilter(OperatorABC):
     def get_desc(lang: str = "zh"):
         if lang == "zh":
             return (
-                "基于用户提供的提示词（prompt）生成数据。结合系统提示词和输入内容生成符合要求的输出文本。"
-                "输入参数：\n"
-                "- llm_serving：LLM服务对象，需实现LLMServingABC接口\n"
-                "- system_prompt：系统提示词，定义模型行为，默认为'You are a helpful agent.'\n"
-                "- input_key：输入内容字段名，默认为'raw_content'\n"
-                "- output_key：输出生成内容字段名，默认为'generated_content'\n"
-                "输出参数：\n"
-                "- 包含生成内容的DataFrame\n"
-                "- 返回输出字段名，用于后续算子引用"
+                "PromptedFilter 使用内置的 PromptedEvaluator 对输入数据进行数值化打分，"
+                "并根据指定的分数区间（min_score 到 max_score，闭区间）筛选出符合条件的样本。"
+                "默认情况下打分范围是 1–5，但用户可以通过 system_prompt 自定义其他评分规则。\n"
+                "\n输入参数：\n"
+                "- llm_serving：LLM 服务对象，需实现 LLMServingABC 接口\n"
+                "- system_prompt：系统提示词，定义评估规范（可选，默认 "
+                "'Please evaluate the quality of this data on a scale from 1 to 5.'）\n"
+                "- input_key：待评估文本所在列名（默认 'raw_content'）\n"
+                "- output_key：写回打分结果的列名（默认 'eval'，若已存在将被覆盖）\n"
+                "- min_score：筛选的最小分（默认 5）\n"
+                "- max_score：筛选的最大分（默认 5）\n"
+                "\n输出参数：\n"
+                "- 过滤后的 DataFrame（仅保留分数位于 [min_score, max_score] 的行）\n"
+                "- 返回 output_key 以供后续算子引用\n"
+                "\n备注：\n"
+                "- 默认打分区间是 1–5，但可根据实际 prompt 改变。"
             )
         elif lang == "en":
             return (
-                "Generate data from user-provided prompts. Combines system prompt and input content to generate desired output text.\n"
-                "Input Parameters:\n"
-                "- llm_serving: LLM serving object implementing LLMServingABC interface\n"
-                "- system_prompt: System prompt to define model behavior, default is 'You are a helpful agent.'\n"
-                "- input_key: Field name for input content, default is 'raw_content'\n"
-                "- output_key: Field name for output generated content, default is 'generated_content'\n\n"
-                "Output Parameters:\n"
-                "- DataFrame containing generated content\n"
-                "- Returns output field name for subsequent operator reference"
+                "PromptedFilter leverages PromptedEvaluator to assign numeric scores to input data, "
+                "and filters rows whose scores fall within [min_score, max_score] (inclusive). "
+                "By default, the scoring scale is 1–5, but this can be customized through system_prompt.\n"
+                "\nInput Parameters:\n"
+                "- llm_serving: LLM serving object implementing LLMServingABC\n"
+                "- system_prompt: System prompt defining the evaluation criteria "
+                "(default: 'Please evaluate the quality of this data on a scale from 1 to 5.')\n"
+                "- input_key: Column name containing the text to evaluate (default 'raw_content')\n"
+                "- output_key: Column name to store the score (default 'eval'; overwritten if it exists)\n"
+                "- min_score: Minimum score for filtering (default 5)\n"
+                "- max_score: Maximum score for filtering (default 5)\n"
+                "\nOutput:\n"
+                "- Filtered DataFrame (rows with scores in [min_score, max_score])\n"
+                "- Returns output_key for downstream operators\n"
+                "\nNote:\n"
+                "- Default scoring range is 1–5, but can vary depending on the system_prompt."
             )
         else:
-            return (
-                "PromptedGenerator generates text based on system prompt and input content."
-            )
+            return "PromptedFilter scores rows via PromptedEvaluator and filters by a configurable score range (default 1–5)."
+
 
     def run(self, storage: DataFlowStorage, input_key: str = "raw_content", output_key: str = "eval", min_score = 5, max_score = 5):
         self.logger.info("Running PromptGenerator...")

@@ -26,32 +26,41 @@ class ExtractSmilesFromText(OperatorABC):
     def get_desc(lang: str = "zh"):
         if lang == "zh":
             return (
-                "基于用户提供的提示词（prompt）生成数据。结合系统提示词和输入内容生成符合要求的输出文本。"
-                "输入参数：\n"
-                "- llm_serving：LLM服务对象，需实现LLMServingABC接口\n"
-                "- system_prompt：系统提示词，定义模型行为，默认为'You are a helpful agent.'\n"
-                "- input_key：输入内容字段名，默认为'raw_content'\n"
-                "- output_key：输出生成内容字段名，默认为'generated_content'\n"
-                "输出参数：\n"
-                "- 包含生成内容的DataFrame\n"
-                "- 返回输出字段名，用于后续算子引用"
+                "ExtractSmilesFromText 用于从 OCR 文本中抽取或解析化学分子的 SMILES 表达式。"
+                "算子会根据给定的提示模板（prompt_template），结合文本内容和（可选的）单体缩写信息，"
+                "调用大语言模型完成解析与结构化，并将结果以 JSON 格式写回到指定列。\n"
+                "\n输入参数：\n"
+                "- llm_serving：LLM 服务对象，需实现 LLMServingABC 接口\n"
+                "- prompt_template：提示词模板对象，用于构造模型输入\n"
+                "- content_key：包含 OCR 文本的列名（默认 'text'）\n"
+                "- abbreviation_key：包含缩写/单体信息的列名（默认 'abbreviations'），可为空\n"
+                "- output_key：写回抽取结果的列名（默认 'synth_smiles'）\n"
+                "\n输出参数：\n"
+                "- DataFrame，其中 output_key 列为模型返回并经 JSON 解析后的 SMILES 结构\n"
+                "- 返回 output_key，供后续算子引用\n"
+                "\n备注：\n"
+                "- 模型输出会尝试解析为 JSON；若解析失败，将返回 [] 并记录失败次数。"
             )
         elif lang == "en":
             return (
-                "Generate data from user-provided prompts. Combines system prompt and input content to generate desired output text.\n"
-                "Input Parameters:\n"
-                "- llm_serving: LLM serving object implementing LLMServingABC interface\n"
-                "- system_prompt: System prompt to define model behavior, default is 'You are a helpful agent.'\n"
-                "- input_key: Field name for input content, default is 'raw_content'\n"
-                "- output_key: Field name for output generated content, default is 'generated_content'\n\n"
-                "Output Parameters:\n"
-                "- DataFrame containing generated content\n"
-                "- Returns output field name for subsequent operator reference"
+                "ExtractSmilesFromText is designed to extract or parse chemical SMILES expressions "
+                "from OCR text. It uses a given prompt_template to construct model inputs, combining "
+                "text content and optional abbreviation/monomer information, then calls the LLM to "
+                "produce structured outputs which are parsed into JSON.\n"
+                "\nInput Parameters:\n"
+                "- llm_serving: LLM serving object implementing LLMServingABC\n"
+                "- prompt_template: Prompt template object used to build model input\n"
+                "- content_key: Column name containing OCR text (default 'text')\n"
+                "- abbreviation_key: Column name containing abbreviations/monomer info (default 'abbreviations'); optional\n"
+                "- output_key: Column name to store extracted results (default 'synth_smiles')\n"
+                "\nOutput:\n"
+                "- DataFrame with output_key column containing JSON-parsed SMILES structures\n"
+                "- Returns output_key for downstream operators\n"
+                "\nNotes:\n"
+                "- The operator attempts to parse model outputs as JSON; failures return [] and are counted."
             )
         else:
-            return (
-                "PromptedGenerator generates text based on system prompt and input content."
-            )
+            return "ExtractSmilesFromText extracts chemical SMILES expressions from OCR text using an LLM."
 
     def _strip_code_fence(self, s: str) -> str:
         s = s.strip()

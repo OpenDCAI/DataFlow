@@ -20,32 +20,42 @@ class PromptedRefiner(OperatorABC):
     def get_desc(lang: str = "zh"):
         if lang == "zh":
             return (
-                "基于用户提供的提示词（prompt）生成数据。结合系统提示词和输入内容生成符合要求的输出文本。"
-                "输入参数：\n"
-                "- llm_serving：LLM服务对象，需实现LLMServingABC接口\n"
-                "- system_prompt：系统提示词，定义模型行为，默认为'You are a helpful agent.'\n"
-                "- input_key：输入内容字段名，默认为'raw_content'\n"
-                "- output_key：输出生成内容字段名，默认为'generated_content'\n"
-                "输出参数：\n"
-                "- 包含生成内容的DataFrame\n"
-                "- 返回输出字段名，用于后续算子引用"
+                "PromptedRefiner 根据给定的 system_prompt 对指定列的文本进行改写/润色/规范化，"
+                "并将结果**就地写回**同一列（覆盖原内容）。其做法是对每一行拼接 "
+                "`system_prompt + raw_content` 作为模型输入，批量生成改写结果。\n"
+                "\n输入参数：\n"
+                "- llm_serving：LLM 服务对象，需实现 LLMServingABC 接口\n"
+                "- system_prompt：系统提示词，用于描述改写目标与风格（默认 'You are a helpful agent.'）\n"
+                "- input_key：要改写的文本列名（默认 'raw_content'），改写后会覆盖该列\n"
+                "\n输出参数：\n"
+                "- 覆盖后的 DataFrame（同名列被改写后的文本）\n"
+                "- 无返回值（结果已通过 DataFlowStorage 写出）\n"
+                "\n备注：\n"
+                "- 该算子**覆盖** input_key 列；若需保留原文，建议先拷贝到新列。\n"
+                "- 期望每行在 input_key 列提供可用文本；空值将不会生成对应输入，如与行数不匹配可能导致赋值报错。"
             )
         elif lang == "en":
             return (
-                "Generate data from user-provided prompts. Combines system prompt and input content to generate desired output text.\n"
-                "Input Parameters:\n"
-                "- llm_serving: LLM serving object implementing LLMServingABC interface\n"
-                "- system_prompt: System prompt to define model behavior, default is 'You are a helpful agent.'\n"
-                "- input_key: Field name for input content, default is 'raw_content'\n"
-                "- output_key: Field name for output generated content, default is 'generated_content'\n\n"
-                "Output Parameters:\n"
-                "- DataFrame containing generated content\n"
-                "- Returns output field name for subsequent operator reference"
+                "PromptedRefiner rewrites/refines/normalizes text in a specified column **in place**, "
+                "using a provided system_prompt. For each row it concatenates "
+                "`system_prompt + raw_content` as the model input and generates the refined text.\n"
+                "\nInput Parameters:\n"
+                "- llm_serving: LLM serving object implementing LLMServingABC\n"
+                "- system_prompt: Instruction describing the rewrite goal/style (default 'You are a helpful agent.')\n"
+                "- input_key: Column to refine (default 'raw_content'); the refined output **overwrites** this column\n"
+                "\nOutput:\n"
+                "- DataFrame with the same column overwritten by refined text\n"
+                "- No return value (the result is written via DataFlowStorage)\n"
+                "\nNotes:\n"
+                "- This operator **overwrites** the input_key column; copy it first if you need to keep originals.\n"
+                "- Each row is expected to provide text in input_key; missing/empty rows won’t form inputs, which may cause "
+                "length-mismatch errors on assignment."
             )
         else:
             return (
-                "PromptedGenerator generates text based on system prompt and input content."
+                "PromptedRefiner rewrites a chosen column in place using `system_prompt + raw_content` as input."
             )
+
 
     def run(self, storage: DataFlowStorage, input_key: str = "raw_content"):
         self.input_key = input_key
