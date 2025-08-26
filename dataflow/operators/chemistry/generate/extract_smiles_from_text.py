@@ -1,0 +1,169 @@
+import pandas as pd
+from dataflow.utils.registry import OPERATOR_REGISTRY
+from dataflow import get_logger
+
+from dataflow.utils.storage import DataFlowStorage
+from dataflow.core import OperatorABC
+from dataflow.core import LLMServingABC
+import json
+
+import json
+import re
+
+
+@OPERATOR_REGISTRY.register()
+class ExtractSmilesFromText(OperatorABC):
+    '''
+    Answer Generator is a class that generates answers for given questions.
+    '''
+    def __init__(self, llm_serving: LLMServingABC, prompt_template = None):
+        self.logger = get_logger()
+        self.llm_serving = llm_serving
+        self.prompt_template = prompt_template
+        self.json_failures = 0
+    
+    @staticmethod
+    def get_desc(lang: str = "zh"):
+        if lang == "zh":
+            return (
+                "基于用户提供的提示词（prompt）生成数据。结合系统提示词和输入内容生成符合要求的输出文本。"
+                "输入参数：\n"
+                "- llm_serving：LLM服务对象，需实现LLMServingABC接口\n"
+                "- system_prompt：系统提示词，定义模型行为，默认为'You are a helpful agent.'\n"
+                "- input_key：输入内容字段名，默认为'raw_content'\n"
+                "- output_key：输出生成内容字段名，默认为'generated_content'\n"
+                "输出参数：\n"
+                "- 包含生成内容的DataFrame\n"
+                "- 返回输出字段名，用于后续算子引用"
+            )
+        elif lang == "en":
+            return (
+                "Generate data from user-provided prompts. Combines system prompt and input content to generate desired output text.\n"
+                "Input Parameters:\n"
+                "- llm_serving: LLM serving object implementing LLMServingABC interface\n"
+                "- system_prompt: System prompt to define model behavior, default is 'You are a helpful agent.'\n"
+                "- input_key: Field name for input content, default is 'raw_content'\n"
+                "- output_key: Field name for output generated content, default is 'generated_content'\n\n"
+                "Output Parameters:\n"
+                "- DataFrame containing generated content\n"
+                "- Returns output field name for subsequent operator reference"
+            )
+        else:
+            return (
+                "PromptedGenerator generates text based on system prompt and input content."
+            )
+
+    def _strip_code_fence(self, s: str) -> str:
+        s = s.strip()
+        # 去掉 ```json ... ``` 或 ``` ... ```
+        if s.startswith("```"):
+            # 去掉第一行的 ```(json)?
+            s = re.sub(r"^```(?:json|JSON)?\s*", "", s)
+            # 去掉结尾 ```
+            s = re.sub(r"\s*```$", "", s)
+        return s.strip()
+
+    def _safe_json_load(self, item):
+        """
+        尝试把 item 解析为 JSON：
+        - 解析失败：返回 []，并将 self.json_failures += 1
+        - 解析成功：返回解析后的对象（list/dict/其他 JSON 标准类型）
+        """
+        try:
+            # 已经是结构化就直接返回
+            if isinstance(item, (list, dict)):
+                return item
+            if item is None:
+                return []  # 约定空返回
+
+            # 其他类型（比如 float/int）转成字符串再处理
+            if not isinstance(item, str):
+                item = str(item)
+
+            s = item.strip()
+            if not s:
+                return []  # 空字符串
+
+            # 去掉代码块围栏
+            s = self._strip_code_fence(s)
+
+            # 去掉包裹的引号（例如整个内容被 "..." 或 '...' 包着）
+            if (s.startswith('"') and s.endswith('"')) or (s.startswith("'") and s.endswith("'")):
+                s = s[1:-1].strip()
+
+            # 去掉前缀 json/JSON
+            s = re.sub(r"^\s*(?:json|JSON)\s*", "", s)
+
+            # 定位第一个 { 或 [，从这里开始截
+            m = re.search(r"[\[\{]", s)
+            if m:
+                s = s[m.start():].strip()
+
+            # 如果末尾有多余字符，尝试保留到最后一个 ] 或 }
+            last_bracket = max(s.rfind("]"), s.rfind("}"))
+            if last_bracket != -1:
+                s = s[:last_bracket + 1].strip()
+
+            # 第一次解析
+            obj = json.loads(s)
+
+            # 如果第一次解析结果仍是字符串，尝试再解一次（处理二次编码）
+            if isinstance(obj, str):
+                try:
+                    obj2 = json.loads(obj)
+                    return obj2
+                except json.JSONDecodeError:
+                    # 二次解析失败不视为致命，返回第一次结果
+                    return obj
+
+            return obj
+
+        except Exception as e:
+            # 任何异常：计数 + 返回空列表
+            self.json_failures += 1
+            # 打印精简预览，避免日志过长
+            preview = ""
+            try:
+                preview = (s if len(s) <= 200 else s[:200] + "...").replace("\n", "\\n")
+            except Exception:
+                preview = "<unavailable>"
+            self.logger.warning(f"[safe_json_load] 解析失败，第{self.json_failures}次；错误：{type(e).__name__}: {e}；预览: {preview}")
+            return []
+
+    def run(self, storage: DataFlowStorage, content_key: str = "text", abbreviation_key: str = "abbreviations", output_key: str = "synth_smiles"):
+        # self.input_key, self.output_key = input_key, output_key
+        self.logger.info("Running PromptGenerator...")
+
+        # Load the raw dataframe from the input file
+        dataframe = storage.read('dataframe')
+        self.logger.info(f"Loading, number of rows: {len(dataframe)}")
+
+        # Create a list to hold all generated questions and answers
+        llm_inputs = []
+
+        # Prepare LLM inputs by formatting the prompt with raw content from the dataframe
+        for index, row in dataframe.iterrows():
+            content = row.get(content_key, '')
+            monomer = row.get(abbreviation_key, '')
+            llm_input = self.prompt_template.build_prompt(monomer) + content 
+            llm_inputs.append(llm_input)
+        
+        # Generate the text using the model
+        try:
+            self.logger.info("Generating text using the model...")
+            generated_outputs = self.llm_serving.generate_from_input(llm_inputs)
+            self.logger.info("Text generation completed.")
+        except Exception as e:
+            self.logger.error(f"Error during text generation: {e}")
+            return
+
+        # Add the generated content back to the dataframe
+        #dataframe[output_key] = json.loads(generated_outputs)
+        parsed_outputs = [self._safe_json_load(item) for item in generated_outputs]
+
+        dataframe[output_key] = parsed_outputs
+
+        # Save the updated dataframe to the output file
+        output_file = storage.write(dataframe)
+        return output_key
+
