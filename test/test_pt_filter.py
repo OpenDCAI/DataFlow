@@ -23,7 +23,7 @@ from dataflow.operators.general_text import (
     LineWithJavascriptFilter,
     PairQualFilter
 )
-from dataflow.operators.refine import (
+from dataflow.operators.general_text import (
     HtmlUrlRemoverRefiner,
     RemoveEmojiRefiner,
     RemoveExtraSpacesRefiner

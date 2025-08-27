@@ -24,12 +24,12 @@ from dataflow.operators.general_text import (
     PairQualFilter,
     QuratingFilter
 )
-from dataflow.operators.refine import (
+from dataflow.operators.general_text import (
     HtmlUrlRemoverRefiner,
     RemoveEmojiRefiner,
     RemoveExtraSpacesRefiner
 )
-from dataflow.operators.generate import PretrainGenerator
+from dataflow.operators.general_text import PretrainGenerator
 from dataflow.serving import LocalModelLLMServing
 from dataflow.utils.storage import FileStorage
 
