@@ -137,7 +137,7 @@ def generate_operator_py(
                 llm_serving = APILLMServing_request(
                     api_url="{request.chat_api_url}",
                     key_name_of_api_key = 'DF_API_KEY',
-                    model_name="gpt-4o",
+                    model_name="GPT-OSS-20B-T",
                     max_workers=100,
                 )
                 # 若需本地模型，请改用 LocalModelLLMServing 并设置 local=True
