@@ -1,5 +1,0 @@
-{
-  "bos_token": "<|startoftext|>",
-  "eos_token": "<|return|>",
-  "pad_token": "<|endoftext|>"
-}
