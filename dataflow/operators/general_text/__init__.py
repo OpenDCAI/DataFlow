@@ -55,7 +55,6 @@ if TYPE_CHECKING:
     # generate
     from .generate.condor_generator import CondorGenerator
     from .generate.pretrain_generator import PretrainGenerator
-    from .generate.prompted_generator import PromptedGenerator
     from .generate.sft_generator_from_seed import SFTGeneratorSeed
 
     # refine
@@ -104,7 +103,10 @@ if TYPE_CHECKING:
 
     from .eval.diversity.vendi_scorer import VendiScorer
     from .eval.diversity.task2vec_scorer import Task2VecScorer
-
+    
+    from .eval.gen.bert_scorer import BERTScorer
+    from .eval.gen.bleu_scorer import BleuScorer
+    from .eval.gen.cider_scorer import CiderScorer
 else:
     import sys
     from dataflow.utils.registry import LazyLoader, generate_import_structure_from_type_checking

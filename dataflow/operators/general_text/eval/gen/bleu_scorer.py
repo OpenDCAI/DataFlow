@@ -2,7 +2,7 @@ from dataflow.core import OperatorABC
 from dataflow.utils.storage import DataFlowStorage
 from dataflow.utils.registry import OPERATOR_REGISTRY
 from dataflow import get_logger
-from dataflow.operators.eval.GeneralText.gen.bleu.bleu import Bleu
+from dataflow.operators.general_text.eval.gen.bleu.bleu import Bleu
 from tqdm import tqdm
 
 @OPERATOR_REGISTRY.register()

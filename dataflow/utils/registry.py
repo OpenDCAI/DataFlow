@@ -69,6 +69,7 @@ class Registry():
         
     def _init_loaders(self):
         for module_name in self.loader_map.keys():
+            print(module_name, "fuckds")
             module_path = f"dataflow.{self._name}.{module_name}"
             self.loader_map[module_name] = importlib.import_module(module_path)
 

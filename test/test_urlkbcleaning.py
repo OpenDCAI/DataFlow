@@ -2,7 +2,7 @@ import sys
 from pathlib import Path
 sys.path.append(str(Path(__file__).parent.parent))
 
-from dataflow.operators.generate import (
+from dataflow.operators.knowledge_cleaning import (
     CorpusTextSplitter,
     FileOrURLToMarkdownConverter,
     KnowledgeCleaner,

@@ -1,5 +1,5 @@
-from dataflow.operators.generate import SFTGeneratorSeed
-from dataflow.operators.refine import CondorRefiner
+from dataflow.operators.general_text import SFTGeneratorSeed
+from dataflow.operators.general_text import CondorRefiner
 from dataflow.utils.storage import FileStorage
 from dataflow.serving import APILLMServing_request 
 

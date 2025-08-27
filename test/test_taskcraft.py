@@ -1,10 +1,10 @@
-from dataflow.operators.generate import (
+from dataflow.operators.general_text import (
     AtomicTaskGenerator,
     DepthQAGenerator,
     WidthQAGenerator
 )
 
-from dataflow.operators.filter import *
+from dataflow.operators.general_text import *
 from dataflow.utils.storage import FileStorage
 from dataflow.serving import APILLMServing_request, LocalModelLLMServing
 from dataflow.core import LLMServingABC

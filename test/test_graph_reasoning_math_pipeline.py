@@ -1,12 +1,12 @@
 from dataflow.pipeline import PipelineABC
-from dataflow.operators.generate import (
+from dataflow.operators.reasoning import (
     QuestionCategoryClassifier,
     QuestionDifficultyClassifier,
     QuestionGenerator,
     AnswerGenerator,
 )
 
-from dataflow.operators.filter import (
+from dataflow.operators.reasoning import (
     QuestionFilter,
     AnswerPipelineRoot,
     AnswerFormatterFilter,

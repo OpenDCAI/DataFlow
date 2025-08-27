@@ -1,10 +1,10 @@
-from dataflow.operators.generate import (
+from dataflow.operators.agentic_rag import (
     AutoPromptGenerator,
     QAGenerator,
     QAScorer
 )
 
-from dataflow.operators.filter import (
+from dataflow.operators.agentic_rag import (
     ContentChooser,
 )
 from dataflow.utils.storage import FileStorage

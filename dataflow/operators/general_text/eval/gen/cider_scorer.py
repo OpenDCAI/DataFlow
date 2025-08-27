@@ -6,7 +6,7 @@ from dataflow.core import OperatorABC
 from dataflow.utils.storage import DataFlowStorage
 from dataflow.utils.registry import OPERATOR_REGISTRY
 from dataflow import get_logger
-from dataflow.operators.eval.GeneralText.gen.cider.cider import Cider
+from dataflow.operators.general_text.eval.gen.cider.cider import Cider
 
 def load_idf(idf_path):
     with open(idf_path, 'rb') as f:

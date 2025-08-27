@@ -61,6 +61,9 @@ if __name__ == "__main__":
     print(OPERATOR_REGISTRY)
     dataflow_obj_map = OPERATOR_REGISTRY.get_obj_map()
 
+    # print count
+    print("Total number of OPERATORS:",len(dataflow_obj_map))
+
     # pprint(dataflow_obj_map)
     # # print typedict of all operators
     # print("\nTypedict of all operators:")
