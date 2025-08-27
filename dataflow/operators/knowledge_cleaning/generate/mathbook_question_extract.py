@@ -25,6 +25,52 @@ class MathBookQuestionExtract(OperatorABC):
         self.logger = get_logger()
         self.llm_serving = llm_serving
     
+    @staticmethod
+    def get_desc(lang: str = "zh"):
+        if lang == "zh":
+            return (
+                "该算子用于从数学教材PDF中提取问题和相关图片内容。它将PDF转换为图片，使用MinerU进行内容提取，"
+                "然后组织图片并使用大语言模型分析内容，最终生成包含问题和图片的JSON和Markdown文件。\n"
+                "输入参数：\n"
+                "- llm_serving：VLM服务对象，需实现APIVLMServing_openai接口\n"
+                "- pdf_file_path：PDF文件路径\n"
+                "- output_file_name：输出文件名\n"
+                "- output_folder：输出文件夹路径\n"
+                "- MinerU_Backend：MinerU后端类型，默认为'vlm-sglang-engine'\n"
+                "- dpi：PDF转图片的分辨率，默认为300\n"
+                "- api_url：API服务URL\n"
+                "- key_name_of_api_key：API密钥的环境变量名\n"
+                "- model_name：使用的模型名称，默认为'o4-mini'\n"
+                "- max_workers：最大并行工作线程数，默认为20\n"
+                "输出参数：\n"
+                "- 返回布尔值表示处理是否成功\n"
+                "- 在指定文件夹生成JSON和Markdown格式的提取结果"
+            )
+        elif lang == "en":
+            return (
+                "This operator extracts questions and related images from mathematics textbook PDFs. It converts the PDF to images, "
+                "uses MinerU for content extraction, organizes the images, and analyzes the content using a large vision-language model, "
+                "ultimately generating JSON and Markdown files containing questions and images.\n"
+                "Input Parameters:\n"
+                "- llm_serving: VLM serving object implementing APIVLMServing_openai interface\n"
+                "- pdf_file_path: Path to the PDF file\n"
+                "- output_file_name: Name for the output files\n"
+                "- output_folder: Path to the output folder\n"
+                "- MinerU_Backend: MinerU backend type, default is 'vlm-sglang-engine'\n"
+                "- dpi: Resolution for PDF to image conversion, default is 300\n"
+                "- api_url: API service URL\n"
+                "- key_name_of_api_key: Environment variable name for API key\n"
+                "- model_name: Model name to use, default is 'o4-mini'\n"
+                "- max_workers: Maximum number of parallel workers, default is 20\n\n"
+                "Output Parameters:\n"
+                "- Returns boolean indicating success of processing\n"
+                "- Generates extraction results in JSON and Markdown formats in the specified folder"
+            )
+        else:
+            return (
+                "MathBookQuestionExtract processes mathematics textbook PDFs to extract questions and images using MinerU and VLM."
+            )
+    
     def mineru2_runner(self,
                         pdf_file_path:str,
                         output_folder:str,
