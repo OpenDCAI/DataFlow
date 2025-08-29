@@ -188,7 +188,7 @@ def local_tool_for_get_match_operator_code(pre_task_result: Dict[str, Any]) -> s
     _NAME2CLS = {name: cls for name, cls in OPERATOR_REGISTRY}
 
     blocks: list[str] = []
-    for op_name in pre_task_result.get("match_operators", []):
+    for op_name in pre_task_result.get("match_operators", [])[:2]:
         cls = _NAME2CLS.get(op_name)
         if cls is None:
             blocks.append(f"# --- {op_name} is not registered in OPERATOR_REGISTRY ---")
