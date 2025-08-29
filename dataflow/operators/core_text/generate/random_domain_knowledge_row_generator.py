@@ -9,17 +9,6 @@ from dataflow.core import LLMServingABC
 @OPERATOR_REGISTRY.register()
 
 class RandomDomainKnowledgeRowGenerator(OperatorABC):
-    '''
-    随机领域知识生成器（RandomDomainKnowledgeRowGenerator）
-
-    该类用于结合系统提示词（system_prompt）和用户自定义提示模板（user_prompt），
-    批量生成领域知识相关的文本内容，适用于SFT等训练数据的自动合成。
-
-    主要特性：
-    - 支持无输入数据时，按generation_num参数生成指定数量的内容；
-    - 支持自定义系统提示词和用户提示模板，user_prompt可通过'{}'占位符灵活插入输入内容或整行字典；
-    - 支持指定输出字段（output_key）
-    '''
     def __init__(self, llm_serving: LLMServingABC, system_prompt: str = "You are a helpful agent.", user_prompt: str = "{}"):
         self.logger = get_logger()
         self.llm_serving = llm_serving
@@ -31,6 +20,7 @@ class RandomDomainKnowledgeRowGenerator(OperatorABC):
         if lang == "zh":
             return (
                 "RandomDomainKnowledgeRowGenerator算子用于结合系统提示词(system_prompt)和用户自定义提示模板(user_prompt)，批量生成领域知识相关文本内容。\n"
+                "注意：本算子随机生成的SFT数据所参考的领域是人为预先设定的，具体领域列表可参考prompt中的domain_keys。\n"
                 "核心功能：\n"
                 "- 支持无输入数据时，按generation_num参数生成指定数量的内容；\n"
                 "- 支持自定义system_prompt和user_prompt，user_prompt可通过'{}'占位符灵活插入输入内容或整行字典；\n"
@@ -48,6 +38,7 @@ class RandomDomainKnowledgeRowGenerator(OperatorABC):
         elif lang == "en":
             return (
                 "RandomDomainKnowledgeRowGenerator operator is used to batch generate domain knowledge related text by combining a system prompt (system_prompt) and a user-defined prompt template (user_prompt).\n"
+                "Note: The domains referenced for randomly generated SFT data are manually predefined, see the domain_keys in the prompt for the specific list.\n"
                 "Main features:\n"
                 "- Supports generating a specified number of outputs according to the generation_num parameter when there is no input data;\n"
                 "- Supports custom system_prompt and user_prompt, user_prompt can flexibly insert input content or the entire row dict via '{}' placeholder;\n"
