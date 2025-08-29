@@ -32,7 +32,7 @@ from dataflow.operators.general_text import (
     RemoveExtraSpacesRefiner
 )
 from dataflow.operators.general_text import SFTGeneratorSeed
-from dataflow.serving import LocalModelLLMServing
+from dataflow.serving import LocalModelLLMServing_vllm
 from dataflow.utils.storage import FileStorage
 
 class SFTTextSynPipeline():
@@ -44,7 +44,7 @@ class SFTTextSynPipeline():
             cache_type="jsonl",
         )
         self.model_cache_dir = './dataflow_cache'
-        self.llm_serving = LocalModelLLMServing(
+        self.llm_serving = LocalModelLLMServing_vllm(
             model_name_or_path='./dataflow_cache/Qwen/Qwen2.5-7B-Instruct',
             tensor_parallel_size=1,
             max_tokens=8192,

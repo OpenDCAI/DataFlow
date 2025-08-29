@@ -4,7 +4,7 @@ from dataflow.operators.reasoning import (
 )
 from dataflow.operators.reasoning import QuestionFilter, AnswerNgramFilter
 from dataflow.utils.storage import FileStorage
-from dataflow.serving import APILLMServing_request, LocalModelLLMServing
+from dataflow.serving import APILLMServing_request
 from dataflow.core import LLMServingABC
 from dataflow.prompts.reasoning.diy import (
     DiyQuestionFilterPrompt,

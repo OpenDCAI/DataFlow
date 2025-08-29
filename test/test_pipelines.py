@@ -6,8 +6,8 @@ from test_agentic_rag import AgenticRAGPipeline
 from test_text2sql import Text2SQLPipeline
 @pytest.fixture(scope="session")
 def llm_serving():
-    from dataflow.serving import LocalModelLLMServing
-    return LocalModelLLMServing(
+    from dataflow.serving import LocalModelLLMServing_vllm
+    return LocalModelLLMServing_vllm(
         model_name_or_path="/mnt/public/model/huggingface/Qwen2.5-7B-Instruct",
         tensor_parallel_size=4,
         # max_tokens=8192,

@@ -9,7 +9,7 @@ from dataflow.operators.knowledge_cleaning import (
     MultiHopQAGenerator,
 )
 from dataflow.utils.storage import FileStorage
-from dataflow.serving import LocalModelLLMServing
+from dataflow.serving import LocalModelLLMServing_vllm
 
 class KBCleaningPipeline():
     def __init__(self):
@@ -27,7 +27,7 @@ class KBCleaningPipeline():
         #         max_workers=100
         # )
 
-        local_llm_serving = LocalModelLLMServing(
+        local_llm_serving = LocalModelLLMServing_vllm(
             model_name_or_path="/data0/models/Qwen2.5-7B-Instruct",
             max_tokens=1024,
             tensor_parallel_size=4,
