@@ -152,8 +152,6 @@ class APILLMServing_request(LLMServingABC):
             ]
             for future in tqdm(as_completed(futures), total=len(futures), desc="Generating......"):
                     response = future.result() # (id, response)
-                    print(response[0])
-                    print(response[1])
                     responses[response[0]] = response[1]
         return responses
     

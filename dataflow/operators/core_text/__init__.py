@@ -2,6 +2,7 @@ from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from .generate.prompted_generator import PromptedGenerator
+    from .generate.paired_prompted_generator import PairedPromptedGenerator
     from .eval.prompted_eval import PromptedEvaluator
     from .filter.prompted_filter import PromptedFilter
     from .refine.prompted_refiner import PromptedRefiner
