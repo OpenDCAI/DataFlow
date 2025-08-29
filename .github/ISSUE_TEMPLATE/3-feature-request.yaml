@@ -1,0 +1,43 @@
+name: "✨ Feature Request"
+description: "Suggest an idea for new features. 请求加入的有趣的新功能。"
+labels:
+  - enhancement
+
+body:
+  - type: textarea
+    id: feature-description
+    attributes:
+      label: "Feature Description / 功能描述"
+      description: |
+        Please describe the feature you are suggesting.
+        请描述您所建议的功能。
+      placeholder: |
+        e.g. Add support for PyTorch models in dataflow.
+        例如：在 dataflow 中添加对 PyTorch 模型的支持。
+    validations:
+      required: true
+
+  - type: textarea
+    id: system-info
+    attributes:
+      label: "System Info (`dataflow env`) / 系统信息（`dataflow env`）"
+      description: |
+        Please run `dataflow env` in your terminal and paste the full output here.
+        请在终端运行 `dataflow env` 并将完整输出粘贴在此处。
+      placeholder: |
+        dataflow version: x.y.z
+        platform: macOS/Linux/Windows
+        python version: 3.x.x
+    validations:
+      required: true
+
+  - type: textarea
+    id: others
+    attributes:
+      label: "Additional Information / 其他补充"
+      description: |
+        Any other details, screenshots, or logs that might help.
+        任何其他可能有帮助的细节、截图或日志。
+      placeholder: Optional
+    validations:
+      required: false

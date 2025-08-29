@@ -1,0 +1,20 @@
+[
+    {
+        "instruction": "A recent clinical study compared two treatments for chronic back pain. What were the main findings regarding patient-reported pain reduction over six months?",
+        "output": "The study found that patients receiving Treatment A reported an average pain reduction of 45% over six months, compared to a 30% reduction for those on Treatment B. Additionally, quality-of-life scores improved more significantly in the Treatment A group.",
+        "golden_answer": "Treatment A led to greater pain reduction (45% vs. 30%).",
+        "source": "Medical_clinical"
+    },
+    {
+        "instruction": "In the last quarter, a commercial bank reported a rise in its non-performing loan ratio from 2.1% to 3.4%. What might this indicate about the bank's loan portfolio?",
+        "output": "This increase suggests that more borrowers are struggling to repay their loans, potentially due to economic slowdowns or tighter household finances. It indicates a deterioration in the quality of the bank’s loan assets and may lead to increased provisions.",
+        "golden_answer": "Higher credit risk due to nothing.",
+        "source": "Finance_banking"
+    },
+    {
+        "instruction": "A city government launched a free vaccination drive. How did it impact the reported cases of influenza compared to the previous year?",
+        "output": "The campaign resulted in a 40% decline in reported influenza cases compared to the same period last year, indicating substantial community-level protection due to increased vaccination coverage.",
+        "golden_answer": "Cases fell by 40%.",
+        "source": "Public_health"
+    }
+]

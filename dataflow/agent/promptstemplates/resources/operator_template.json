@@ -1,0 +1,27 @@
+{
+  "text_cleaner": {
+    "prompts": {
+      "zh": {
+        "system": "[ROLE] 你是文本清洗算子……",
+        "task": "请对以下文本进行清洗：{text} -        ----  {{text}}"
+      },
+      "en": {
+        "system": "[ROLE] You are a text-cleaning operator…",
+        "task": "Please clean the text: {text}"
+      }
+    }
+  },
+
+  "html_sanitizer": {
+    "prompts": {
+      "zh": {
+        "system": "[ROLE] 你是 HTML 清洗算子……",
+        "task": "请对以下 HTML 进行清理：{html}"
+      },
+      "en": {
+        "system": "[ROLE] You are an HTML sanitizing operator…",
+        "task": "Sanitize the following HTML: {html}"
+      }
+    }
+  }
+}

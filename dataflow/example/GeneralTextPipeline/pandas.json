@@ -1,0 +1,7 @@
+[
+  { "id": 1, "name": "Alice", "score": 82.5, "status": "active", "comment": "Excellent job!", "age": 23 },
+  { "id": 2, "name": "Bob", "score": 91.0, "status": "inactive", "comment": "Needs improvement", "age": 27 },
+  { "id": 3, "name": "Charlie", "score": 67.0, "status": "active", "comment": "Average performance", "age": 22 },
+  { "id": 4, "name": "Diana", "score": 88.5, "status": "active", "comment": "Great!", "age": 30 },
+  { "id": 5, "name": "Eve", "score": 79.0, "status": "inactive", "comment": "Well done", "age": 24 }
+]

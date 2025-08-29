@@ -1,0 +1,62 @@
+[
+    {
+        "instruction": "A recent clinical study compared two treatments for chronic back pain. What were the main findings regarding patient-reported pain reduction over six months?",
+        "output": "The study found that patients receiving Treatment A reported an average pain reduction of 45% over six months, compared to a 30% reduction for those on Treatment B. Additionally, quality-of-life scores improved more significantly in the Treatment A group.",
+        "golden_answer": "Treatment A led to greater pain reduction (45% vs. 30%).",
+        "source": "Medical_clinical"
+    },
+    {
+        "instruction": "In the last quarter, a commercial bank reported a rise in its non-performing loan ratio from 2.1% to 3.4%. What might this indicate about the bank's loan portfolio?",
+        "output": "This increase suggests that more borrowers are struggling to repay their loans, potentially due to economic slowdowns or tighter household finances. It indicates a deterioration in the quality of the bank’s loan assets and may lead to increased provisions.",
+        "golden_answer": "Higher credit risk due to more troubled loans.",
+        "source": "Finance_banking"
+    },
+    {
+        "instruction": "A city government launched a free vaccination drive. How did it impact the reported cases of influenza compared to the previous year?",
+        "output": "The campaign resulted in a 40% decline in reported influenza cases compared to the same period last year, indicating substantial community-level protection due to increased vaccination coverage.",
+        "golden_answer": "Cases fell by 40%.",
+        "source": "Public_health"
+    },
+    {
+        "instruction": "Why do investors typically diversify their portfolios across different asset classes?",
+        "output": "Diversification reduces overall investment risk by spreading exposure across assets that may not move in the same direction. It helps protect against significant losses if one sector underperforms, leading to more stable returns over time.",
+        "golden_answer": "To reduce risk and stabilize returns.",
+        "source": "Finance_investing"
+    },
+    {
+        "instruction": "What are some social consequences of long-term unemployment in a community?",
+        "output": "Long-term unemployment can lead to increased poverty, higher rates of mental health issues like depression, strained family relationships, and potentially higher crime rates as economic hardship intensifies.",
+        "golden_answer": "Increased poverty, mental health issues, family strain.",
+        "source": "Social_studies"
+    },
+    {
+        "instruction": "A pharmaceutical company is conducting Phase III trials for a new cancer drug. What is the primary objective of this phase?",
+        "output": "The main goal of Phase III trials is to confirm the drug's effectiveness, monitor side effects on a larger scale, compare it to standard treatments, and gather information to ensure it can be used safely in the general population.",
+        "golden_answer": "To confirm efficacy and monitor safety on a large scale.",
+        "source": "Medical_trials"
+    },
+    {
+        "instruction": "A national survey shows that 65% of respondents believe climate change policies should be stricter. What does this indicate about public sentiment?",
+        "output": "This suggests a strong majority support for more aggressive measures to combat climate change, which could influence future policy decisions and encourage governments to implement stricter regulations.",
+        "golden_answer": "Majority support stricter climate policies.",
+        "source": "Social_opinion"
+    },
+    {
+        "instruction": "Explain why compound interest leads to faster growth of investments compared to simple interest.",
+        "output": "Compound interest earns interest on both the initial principal and the accumulated interest from previous periods, creating a snowball effect. In contrast, simple interest only earns on the original principal, so growth is linear rather than exponential.",
+        "golden_answer": "It earns interest on interest, accelerating growth.",
+        "source": "Finance_concepts"
+    },
+    {
+        "instruction": "A triangle has sides of lengths 7, 24, and 25. Determine if it is a right triangle.",
+        "output": "We can check using the Pythagorean theorem: 7² + 24² = 49 + 576 = 625, and 25² = 625. Since they are equal, the triangle is indeed a right triangle.",
+        "golden_answer": "Yes, it is a right triangle.",
+        "source": "Math_geometry"
+    },
+    {
+        "instruction": "In a study involving 400 patients with hypertension, 300 were able to reduce their blood pressure below 140/90 mmHg after six months on a new treatment. What does this imply?",
+        "output": "This implies a success rate of 75%, indicating the treatment is effective for a significant majority of patients in managing hypertension.",
+        "golden_answer": "75% achieved target blood pressure.",
+        "source": "Medical_statistics"
+    }
+]

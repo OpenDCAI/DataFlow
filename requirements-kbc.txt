@@ -1,0 +1,3 @@
+fairy-doc[gpu]
+chonkie
+trafilatura

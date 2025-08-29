@@ -1,0 +1,72 @@
+datasets<=3.2
+scipy
+torch
+torchvision
+torchaudio
+tqdm
+transformers
+aisuite
+math_verify
+word2number
+accelerate
+rapidfuzz
+colorlog
+appdirs
+datasketch
+modelscope
+addict
+pytest
+rich
+docstring_parser
+pydantic
+nltk
+colorama
+gradio>5
+
+# text2sql
+func_timeout
+sqlglot
+pymysql
+# general text
+fasttext-wheel
+kenlm
+langkit
+openai
+sentencepiece
+datasketch
+presidio_analyzer[transformers]
+presidio_anonymizer
+vendi-score==0.0.3
+google-api-core
+google-api-python-client
+evaluate
+contractions
+symspellpy
+simhash
+
+# knowledge base cleaning
+chonkie
+trafilatura
+lxml_html_clean
+pymupdf
+httpx[socks]
+
+# dataflow agent
+cloudpickle
+fastapi
+httpx
+pandas
+psutil
+pyfiglet
+pyyaml
+requests
+termcolor
+uvicorn
+sseclient-py
+
+# speech
+librosa
+soundfile
+
+# map visualize
+# matplotlib

@@ -1,0 +1,76 @@
+[build-system]
+requires = ["setuptools>=42", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "open-dataflow"
+authors = [
+    {name = "Hao Liang", email = "hao.liang@stu.pku.edu.cn"},
+    {name = "Xiaochen Ma", email = "xiaochen.ma.cs@gmail.com"},
+]
+description = "Modern Data Centric AI system for Large Language Models"
+readme = {file = "README.md", content-type = "text/markdown"}
+requires-python = ">=3.7, <4"
+license = {text = "Apache-2.0"}
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Developers",
+    "Intended Audience :: Science/Research",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+    "License :: Free For Educational Use",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.7",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3 :: Only",
+]
+keywords = [
+    "AI",
+    "artificial intelligence",
+]
+dynamic = ["version", "dependencies"]
+
+[project.urls]
+Github = "https://github.com/Open-DataFlow/DataFlow"
+Documentation = "https://open-dataflow.github.io/DataFlow-Doc/"
+"Bug Reports" = "https://github.com/Open-DataFlow/DataFlow/issues"
+
+[project.scripts]
+dataflow = "dataflow.cli:main"
+
+[tool.setuptools]
+include-package-data = true
+packages = ["dataflow"]  # 显式指定主包
+
+
+[tool.setuptools.dynamic]
+version = {attr = "dataflow.version.__version__"}
+dependencies = {file = "requirements.txt"}
+
+
+[project.optional-dependencies]
+vllm =["vllm>=0.7.0,<=0.9.2", "numpy<2.0.0"]
+vllm07 = ["vllm<0.8", "numpy<2.0.0"]
+vllm08 = ["vllm<0.9"]
+# 要求numpy版本大于1.24小于2.0.0
+kbc = ["vllm==0.6.3", "mineru[pipeline]==2.0.6"]
+mineru = ["mineru[all]", "numpy>=1.24,<2.0.0", "sglang[all]>=0.4.8"]
+myscale = ["clickhouse-driver"]
+sglang =["sglang[all]"]
+litellm = ["litellm>=1.70.0,<2.0.0"]
+agent = [
+    "cloudpickle",
+    "fastapi",
+    "httpx",
+    "minio",
+    "pandas",
+    "psutil",
+    "pyfiglet",
+    "pyyaml",
+    "requests",
+    "termcolor",
+    "uvicorn",
+    "sseclient-py",
+]
+audio = ['librosa', 'soundfile']

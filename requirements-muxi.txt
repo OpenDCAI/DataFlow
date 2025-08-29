@@ -1,0 +1,18 @@
+datasets
+numpy<2.0.0
+scipy
+torch
+tqdm
+transformers
+# vllm==0.6.3
+aisuite
+math_verify
+word2number
+accelerate
+rapidfuzz
+colorlog
+appdirs
+datasketch
+modelscope
+addict
+pytest

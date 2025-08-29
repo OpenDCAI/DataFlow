@@ -1,0 +1,40 @@
+data_content_classification:
+  category: pipeline
+  tools:
+    local_tool_for_sample:
+      sample_size: 10
+      use_file_sys: 1
+      cache_type: json
+
+recommendation_inference_pipeline:
+  category: pipeline
+  tools:
+    local_tool_for_sample:
+      sample_size: 1
+      use_file_sys: 1
+      cache_type: json
+    
+execute_the_recommended_pipeline:
+  category: pipeline
+  need_debug_tools:
+    local_tool_for_execute_the_recommended_pipeline: True
+  tools:
+    local_tool_for_execute_the_recommended_pipeline:
+      dry_run: False
+
+match_operator:
+  category: operator
+  tools:
+    get_operator_content:
+      data_key: 
+        ContentSubType: MIXTURE
+      keep_keys: [name, type, description]
+      
+write_the_operator:
+  category: operator
+  special_model: o3
+  
+exe_and_debug_operator:
+  category: operator
+  need_debug_tools:
+    local_tool_for_debug_and_exe_operator: True

@@ -1,0 +1,10 @@
+{"input_key": "The quick brown fox jumps over the lazy dog.", "reference_key": "A fast brown fox leaps over a lazy dog."}
+{"input_key": "She sells seashells by the seashore.", "reference_key": "She is selling shells by the beach."}
+{"input_key": "To be or not to be, that is the question.", "reference_key": "The question is whether to be or not."}
+{"input_key": "All that glitters is not gold.", "reference_key": "Not everything that shines is gold."}
+{"input_key": "A picture is worth a thousand words.", "reference_key": "A single image can convey so much meaning."}
+{"input_key": "Actions speak louder than words.", "reference_key": "What people do is more important than what they say."}
+{"input_key": "Beauty is in the eye of the beholder.", "reference_key": "What one person finds beautiful may differ from others."}
+{"input_key": "The early bird catches the worm.", "reference_key": "People who wake up early often achieve more."}
+{"input_key": "Two heads are better than one.", "reference_key": "Collaborating is more effective than working alone."}
+{"input_key": "A journey of a thousand miles begins with a single step.", "reference_key": "Big achievements start with small actions."}
