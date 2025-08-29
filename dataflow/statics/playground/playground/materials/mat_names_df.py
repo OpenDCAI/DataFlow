@@ -1,7 +1,7 @@
 from dataflow.operators.core_text import PromptedGenerator
 from dataflow.operators.chemistry import EvaluateSmilesEquivalence
 
-from dataflow.serving import LocalModelLLMServing, APILLMServing_request
+from dataflow.serving import APILLMServing_request
 from dataflow.utils.storage import FileStorage
 from dataflow.prompts.chemistry import ExtractSmilesFromTextPrompt
 
