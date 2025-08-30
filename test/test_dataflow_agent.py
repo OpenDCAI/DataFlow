@@ -95,7 +95,7 @@ if __name__ == "__main__":
         test_req = ChatAgentRequest(
             language="zh",
             target="帮我针对数据推荐一个pipeline!!!",
-            model="deepseek-v3",
+            model="gpt-4.1",
             sessionKEY="dataflow_demo",
             **pipeline_recommend_params
         )
