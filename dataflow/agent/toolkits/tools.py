@@ -78,7 +78,7 @@ class ChatAgentRequest(BaseModel):
 
     # —— GPT ——
     temperature: int = 0.4
-    max_toknes: int = 0
+    max_tokens: int = 0
 
 
 class ChatResponse(BaseModel):

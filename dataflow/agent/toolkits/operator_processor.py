@@ -35,6 +35,7 @@ Usage:
     result = local_tool_for_debug_and_exe_operator(request, dry_run=False)
 
 """
+import time
 from dataflow.utils.registry import OPERATOR_REGISTRY
 OPERATOR_REGISTRY._get_all()
 import importlib
@@ -181,6 +182,7 @@ def generate_operator_py(
     return full_code
 
 def local_tool_for_get_match_operator_code(pre_task_result: Dict[str, Any]) -> str:
+    start_time = time.time()
     if not pre_task_result or not isinstance(pre_task_result, dict):
         return "# ❗ pre_task_result is empty, cannot extract operator names"
 
@@ -208,7 +210,8 @@ def local_tool_for_get_match_operator_code(pre_task_result: Dict[str, Any]) -> s
             blocks.append(src_block)
         except (OSError, TypeError) as e:
             blocks.append(f"# --- Failed to get the source code of {op_name}: {e} ---")
-
+    elapsed = time.time() - start_time
+    logger.warning(f"[local_tool_for_get_match_operator_code] Time used: {elapsed:.4f} seconds")
     return "\n\n".join(blocks)
 
 def local_tool_for_debug_and_exe_operator(
