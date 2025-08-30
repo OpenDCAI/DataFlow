@@ -314,8 +314,11 @@ def generate_pipeline_py(
         parts = []
         for p in node["command"]["init"]:
             pname, pdef = p["name"], p["default"]
+
             if pname == "llm_serving":
                 parts.append("llm_serving=llm_serving")
+            elif pname == "prompt_template":
+                parts.append("prompt_template=None")
             else:
                 parts.append(f"{pname}={_py_literal(pdef)}")
         init_operator_lines.append(f"        self.{var_name} = {cls_name}({', '.join(parts)})")
@@ -363,13 +366,15 @@ def generate_pipeline_py(
 
     code = "\n".join(
         [
+            "from dataflow.pipeline import PipelineABC",
             "import pytest",
             *import_lines,
             *extra_imports,
             "",
             "",
-            "class RecommendPipeline():",
+            "class RecommendPipeline(PipelineABC):",
             "    def __init__(self):",
+            "        super().__init__()",
             textwrap.indent(
                 textwrap.dedent(
                     f"""
@@ -393,6 +398,7 @@ def generate_pipeline_py(
             "",
             'if __name__ == "__main__":',
             "    pipeline = RecommendPipeline()",
+            "    pipeline.compile()",
             "    pipeline.forward()",
             "",
         ]
@@ -426,6 +432,7 @@ def local_tool_for_execute_the_recommended_pipeline(
                 """
                 if __name__ == "__main__":
                     pipeline = RecommendPipeline()
+                    pipeline.compile()
                     pipeline.forward()
                 """
             )

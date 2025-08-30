@@ -69,6 +69,7 @@ class Registry():
         
     def _init_loaders(self):
         for module_name in self.loader_map.keys():
+            print(module_name, "fuckds")
             module_path = f"dataflow.{self._name}.{module_name}"
             self.loader_map[module_name] = importlib.import_module(module_path)
 
@@ -194,7 +195,24 @@ class Registry():
             'db': db_operators
         }
 
-OPERATOR_REGISTRY = Registry(name='operators', sub_modules=['eval', 'filter', 'generate', 'refine', 'conversations'])
+OPERATOR_REGISTRY = Registry(
+    name='operators', 
+    sub_modules=[
+        'agentic_rag',
+        'chemistry',
+        'conversations',
+        'core_speech',
+        'core_text',
+        'core_vision',
+        'db',
+        'general_text',
+        'knowledge_cleaning',
+        'rare',
+        'reasoning',
+        'text2sql'
+    ]
+)
+
 class LazyLoader(types.ModuleType):
 
     def __init__(self, name, path, import_structure):

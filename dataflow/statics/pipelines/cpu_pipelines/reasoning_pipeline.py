@@ -1,4 +1,4 @@
-from dataflow.operators.filter import (
+from dataflow.operators.reasoning import (
     AnswerFormatterFilter,
     AnswerGroundTruthFilter,
     AnswerNgramFilter,
@@ -33,14 +33,14 @@ class Reasoning_CPUPipeline():
         
         self.answer_groundtruth_filter_step2.run(
             storage = self.storage.step(),
-            test_answer_key = "output",
-            gt_answer_key =  "golden_answer"
+            input_test_answer_key = "output",
+            input_gt_answer_key =  "golden_answer"
         )
         
         self.answer_ngram_filter_step3.run(
             storage = self.storage.step(),
-            question_key = "instruction",
-            answer_key = "output"
+            input_question_key = "instruction",
+            input_answer_key = "output"
         )
 
 if __name__ == "__main__":

@@ -1,29 +1,48 @@
-name: "🤔 ask for help"
-description: Ask for help to others here, like model performance, something won't work. 在这里请求帮助，比如模型表现不佳，某些功能无法使用。
-labels: question
+name: "🤔 Ask for Help"
+description: "Ask for help to others here, like model performance, something won't work. 在这里请求帮助，比如模型表现不佳，某些功能无法使用。"
+labels:
+  - question
 
 body:
   - type: textarea
+    id: problem-description
+    attributes:
+      label: "Problem Description / 问题描述"
+      description: |
+        Please describe your question or issue.
+        请描述您的问题或困惑。
+      placeholder: |
+        e.g. When I run `dataflow train`, the model accuracy stays at 50%.
+        例如：当我执行 `dataflow train` 时，模型准确率一直保持在 50%。
+    validations:
+      required: true
+
+  - type: textarea
     id: system-info
     attributes:
-      label: System Info
+      label: "System Info (`dataflow env`) / 系统信息（`dataflow env`）"
       description: |
-        Please share your system info with us. You can run the command **dataflow env** and copy-paste its output below.
-        请提供您的系统信息。您可以在命令行运行 **dataflow env** 并将其输出复制到该文本框中。
-      placeholder: dataflow version, platform, python version, ...
+        Please run `dataflow env` in your terminal and paste the full output here.
+        请在终端运行 `dataflow env` 并将完整输出粘贴在此处。
+      placeholder: |
+        dataflow version: x.y.z  
+        platform: macOS/Linux/Windows  
+        python version: 3.x.x
     validations:
       required: true
 
   - type: textarea
     id: reproduction
     attributes:
-      label: Reproduction
+      label: "Minimal Reproducible Example / 最小可复现示例"
       description: |
-        Please provide entry script.
-        请提供入口的脚本。
+        Please provide the smallest code snippet or script to reproduce or illustrate the problem.
+        请提供最小可复现的脚本或代码片段以演示问题。
       value: |
         ```text
-        Put your script here
+        # e.g.
+        from dataflow.operators.generate import PromptedVQA
+        ...
         ```
     validations:
       required: true
@@ -31,9 +50,10 @@ body:
   - type: textarea
     id: others
     attributes:
-      label: Others 
+      label: "Additional Information / 其他补充"
       description: |
-        Describe your issue detailly here.
-        详细描述你的问题。
+        Any other details, screenshots, or logs that might help.
+        任何其他可能有帮助的细节、截图或日志。
+      placeholder: Optional
     validations:
       required: false

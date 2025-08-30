@@ -1,4 +1,4 @@
-from dataflow.operators.filter import (
+from dataflow.operators.general_text import (
     MinHashDeduplicator,
     LanguageFilter,
     ColonEndFilter,
@@ -26,12 +26,12 @@ from dataflow.operators.filter import (
     DeitaQualityFilter,
     InstagFilter
 )
-from dataflow.operators.refine import (
+from dataflow.operators.general_text import (
     HtmlUrlRemoverRefiner,
     RemoveEmojiRefiner,
     RemoveExtraSpacesRefiner
 )
-from dataflow.operators.generate import SFTGeneratorSeed
+from dataflow.operators.general_text import SFTGeneratorSeed
 from dataflow.serving import LocalModelLLMServing_vllm, LocalModelLLMServing_sglang
 from dataflow.utils.storage import FileStorage
 

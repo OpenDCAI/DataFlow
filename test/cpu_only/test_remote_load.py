@@ -1,4 +1,4 @@
-from dataflow.operators.filter import (
+from dataflow.operators.reasoning import (
     AnswerNgramFilter
 )
 
@@ -31,14 +31,14 @@ class RemoteDataLoader():
     def forward(self):
         self.answer_ngram_filter_step1.run(
             storage = self.storage_1.step(),
-            question_key = "question",
-            answer_key = "answer"
+            input_question_key = "question",
+            input_answer_key = "answer"
         )
 
         self.answer_ngram_filter_step1.run(
             storage = self.storage_2.step(),
-            question_key = "question",
-            answer_key = "answer"
+            input_question_key = "question",
+            input_answer_key = "answer"
         )
 @pytest.mark.gpu  
 def test_remote_data_loader():

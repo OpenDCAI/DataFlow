@@ -1,4 +1,4 @@
-from dataflow.operators.filter import (
+from dataflow.operators.general_text import (
     MinHashDeduplicator,
     ColonEndFilter,
     WordNumberFilter,

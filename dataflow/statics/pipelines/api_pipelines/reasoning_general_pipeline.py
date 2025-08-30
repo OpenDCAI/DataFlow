@@ -1,10 +1,10 @@
-from dataflow.operators.generate import (
+from dataflow.operators.reasoning import (
     QuestionGenerator,
     AnswerGenerator,
 )
-from dataflow.operators.filter import QuestionFilter, AnswerNgramFilter, AnswerModelJudge
+from dataflow.operators.reasoning import QuestionFilter, AnswerNgramFilter, AnswerModelJudge
 from dataflow.utils.storage import FileStorage
-from dataflow.serving import APILLMServing_request, LocalModelLLMServing
+from dataflow.serving import APILLMServing_request
 from dataflow.core import LLMServingABC
 from dataflow.prompts.reasoning.general import (
     GeneralQuestionFilterPrompt,
@@ -74,14 +74,14 @@ class GeneralReasoning_APIPipeline():
         ),
         self.answer_model_judge_step4.run(
             storage = self.storage.step(),
-            question_key = "instruction",
-            answer_key = "generated_cot",
-            reference_key = "golden_answer"
+            input_question_key = "instruction",
+            input_answer_key = "generated_cot",
+            input_reference_key = "golden_answer"
         ),
         self.answer_ngram_filter_step5.run(
             storage = self.storage.step(),
-            question_key = "instruction",
-            answer_key = "generated_cot"
+            input_question_key = "instruction",
+            input_answer_key = "generated_cot"
         )
 
 if __name__ == "__main__":

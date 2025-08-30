@@ -1,11 +1,11 @@
-from dataflow.operators.generate import (
+from dataflow.operators.reasoning import (
     QuestionCategoryClassifier,
     QuestionDifficultyClassifier,
     QuestionGenerator,
     AnswerGenerator,
 )
 
-from dataflow.operators.filter import (
+from dataflow.operators.reasoning import (
     QuestionFilter,
     AnswerPipelineRoot,
     AnswerFormatterFilter,
@@ -141,13 +141,13 @@ class ReasoningMath_GPUPipeline():
         )
         self.answer_groundtruth_filter_step10.run(
             storage = self.storage.step(),
-            test_answer_key = "generated_cot",
-            gt_answer_key =  "golden_answer"
+            input_test_answer_key = "generated_cot",
+            input_gt_answer_key =  "golden_answer"
         )
         self.answer_ngram_filter_step11.run(
             storage = self.storage.step(),
-            question_key = "instruction",
-            answer_key = "generated_cot"
+            input_question_key = "instruction",
+            input_answer_key = "generated_cot"
         )
 
 if __name__ == "__main__":

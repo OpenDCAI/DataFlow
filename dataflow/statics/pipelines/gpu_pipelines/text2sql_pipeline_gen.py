@@ -1,13 +1,13 @@
-from dataflow.operators.generate import (
+from dataflow.operators.text2sql import (
     SQLGenerator,
     Text2SQLQuestionGenerator,
     Text2SQLPromptGenerator,
     Text2SQLCoTGenerator
 )
-from dataflow.operators.filter import (
+from dataflow.operators.text2sql import (
     SQLExecutionFilter
 )
-from dataflow.operators.eval import (
+from dataflow.operators.text2sql import (
     SQLComponentClassifier,
     SQLExecutionClassifier
 )   

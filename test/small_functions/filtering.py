@@ -1,4 +1,4 @@
-from dataflow.operators.filter import GeneralFilter
+from dataflow.operators.general_text import GeneralFilter
 from dataflow.utils.storage import FileStorage
 
 class Dataframe_Filter():

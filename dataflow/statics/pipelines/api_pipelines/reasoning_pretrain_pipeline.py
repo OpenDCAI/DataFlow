@@ -1,4 +1,4 @@
-from dataflow.operators.generate import (
+from dataflow.operators.reasoning import (
     QuestionGenerator,
     AnswerGenerator,
     PretrainFormatConverter
@@ -8,9 +8,9 @@ from dataflow.prompts.reasoning.math import (
     MathQuestionSynthesisPrompt,
     MathAnswerGeneratorPrompt
 )
-from dataflow.operators.filter import QuestionFilter, AnswerNgramFilter, AnswerPipelineRoot
+from dataflow.operators.reasoning import QuestionFilter, AnswerNgramFilter, AnswerPipelineRoot
 from dataflow.utils.storage import FileStorage
-from dataflow.serving import APILLMServing_request, LocalModelLLMServing
+from dataflow.serving import APILLMServing_request
 
 # 这里或许未来可以有个pipeline基类
 class Reasoning_APIPipeline_Pretrain():
@@ -93,13 +93,13 @@ class Reasoning_APIPipeline_Pretrain():
         )
         self.answer_ngram_filter_step5.run(
             storage = self.storage.step(),
-            question_key = "instruction",
-            answer_key = "generated_cot"
+            input_question_key = "instruction",
+            input_answer_key = "generated_cot"
         )
         self.sft_to_pretrain_step6.run(
             storage = self.storage.step(),
-            read_key_question="instruction",
-            read_key_answer="generated_cot",
+            input_read_key_question="instruction",
+            input_read_key_answer="generated_cot",
             output_key="text",
             )
 
