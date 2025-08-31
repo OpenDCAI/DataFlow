@@ -15,7 +15,7 @@ import base64
 from typing import List, Literal
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from dataflow.core import LLMServingABC
-from dataflow.serving.APIVLMServing_openai import APIVLMServing_openai
+from dataflow.serving import APIVLMServing_openai
 
 
 
