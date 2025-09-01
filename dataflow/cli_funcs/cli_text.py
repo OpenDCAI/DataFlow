@@ -70,16 +70,16 @@ def copy_customizable_scripts():
     print("Step 0: Setting up customizable pipeline scripts...")
 
     current_dir = Path(os.getcwd())
-    
+
     # 检查当前目录下是否已经存在所需的脚本文件
     required_scripts = [
         "text_to_qa_pipeline.py",
         "merge_filter_qa_pairs.py",
     ]
-    
+
     existing_scripts = []
     missing_scripts = []
-    
+
     for script_name in required_scripts:
         script_path = current_dir / script_name
         if script_path.exists():
@@ -87,7 +87,7 @@ def copy_customizable_scripts():
             print(f"Found existing: {script_name}")
         else:
             missing_scripts.append(script_name)
-    
+
     # 尝试从模板复制缺失的脚本
     copied_files = []
     for script_name in missing_scripts:
@@ -103,9 +103,9 @@ def copy_customizable_scripts():
                 print(f"Warning: Failed to copy {script_name}: {e}")
         else:
             print(f"Warning: Template not found for {script_name}")
-    
+
     total_available = len(existing_scripts) + len(copied_files)
-    
+
     if total_available > 0:
         print(f"Setup completed: {total_available} scripts available")
         if existing_scripts:
@@ -390,58 +390,59 @@ def cli_text2model_train(input_keys: str = None, lf_yaml: str = "./.cache/train_
     try:
         # Step 1: Merge JSON/JSONL files to create text_input.jsonl
         print(f"{Fore.CYAN}Step 1: Merging JSON/JSONL files...{Style.RESET_ALL}")
-        
+
         # 调用 merge_json_jsonl.py 的逻辑
         script1_path = get_dataflow_script_path("merge_json_jsonl.py")
         args1 = [str(input_path), "--cache", str(cache_path_obj)]
         if not run_script_with_args(script1_path, "JSON/JSONL merging", args1, cwd=str(current_dir)):
             print(f"{Fore.RED}❌ Step 1: JSON/JSONL merging failed{Style.RESET_ALL}")
             return False
-        
+
         # 验证 text_input.jsonl 是否创建成功
         text_input_file = cache_path_obj / ".cache" / "gpu" / "text_input.jsonl"
         if not text_input_file.exists():
-            print(f"{Fore.RED}❌ text_input.jsonl not created. Check if you have JSON/JSONL files in {input_path}{Style.RESET_ALL}")
+            print(
+                f"{Fore.RED}❌ text_input.jsonl not created. Check if you have JSON/JSONL files in {input_path}{Style.RESET_ALL}")
             return False
-        
+
         file_size = text_input_file.stat().st_size
         print(f"{Fore.GREEN}✅ Step 1 completed: {text_input_file} ({file_size} bytes){Style.RESET_ALL}")
 
         # Step 2: Text2QA Pipeline
         print(f"{Fore.CYAN}Step 2: Text2QA generation...{Style.RESET_ALL}")
-        
+
         script2_path = get_dataflow_script_path("text_to_qa_pipeline.py")
         args2 = ["--cache", str(cache_path_obj)]
         if not run_script_with_args(script2_path, "Text2QA generation", args2, cwd=str(current_dir)):
             print(f"{Fore.RED}❌ Step 2: Text2QA generation failed{Style.RESET_ALL}")
             return False
-        
+
         # 验证 Text2QA 输出
         qa_output_file = cache_path_obj / ".cache" / "gpu" / "text2qa_step_step3.json"
         if not qa_output_file.exists():
             print(f"{Fore.RED}❌ Text2QA output not found{Style.RESET_ALL}")
             return False
-        
+
         file_size = qa_output_file.stat().st_size
         print(f"{Fore.GREEN}✅ Step 2 completed: {qa_output_file} ({file_size} bytes){Style.RESET_ALL}")
 
         # Step 3: Convert to training format
         print(f"{Fore.CYAN}Step 3: Converting to training format...{Style.RESET_ALL}")
-        
+
         script3_path = get_dataflow_script_path("merge_filter_qa_pairs.py")
         args3 = ["--cache", str(cache_path_obj)]
         if not run_script_with_args(script3_path, "QA format conversion", args3, cwd=str(current_dir)):
             print(f"{Fore.RED}❌ Step 3: QA format conversion failed{Style.RESET_ALL}")
             return False
-        
+
         # 验证训练数据
         qa_file = cache_path_obj / ".cache" / "data" / "qa.json"
         dataset_info_file = cache_path_obj / ".cache" / "data" / "dataset_info.json"
-        
+
         if not qa_file.exists() or not dataset_info_file.exists():
             print(f"{Fore.RED}❌ Training data files not created{Style.RESET_ALL}")
             return False
-        
+
         # 统计样本数
         try:
             import json
@@ -449,13 +450,14 @@ def cli_text2model_train(input_keys: str = None, lf_yaml: str = "./.cache/train_
                 qa_data = json.load(f)
             sample_count = len(qa_data)
             file_size = qa_file.stat().st_size
-            print(f"{Fore.GREEN}✅ Step 3 completed: {sample_count} training samples ({file_size} bytes){Style.RESET_ALL}")
+            print(
+                f"{Fore.GREEN}✅ Step 3 completed: {sample_count} training samples ({file_size} bytes){Style.RESET_ALL}")
         except:
             print(f"{Fore.GREEN}✅ Step 3 completed{Style.RESET_ALL}")
 
         # Step 4: Training
         print(f"{Fore.CYAN}Step 4: Starting model training...{Style.RESET_ALL}")
-        
+
         script4_path = get_dataflow_script_path("llama_factory_trainer.py")
         args4 = ["--config", str(config_path_obj), "--cache", str(cache_path_obj)]
         if not run_script_with_args(script4_path, "Model training", args4, cwd=str(current_dir)):
@@ -465,7 +467,7 @@ def cli_text2model_train(input_keys: str = None, lf_yaml: str = "./.cache/train_
         print(f"{Fore.GREEN}✅ Text2Model training completed successfully!{Style.RESET_ALL}")
         print(f"Next steps:")
         print(f"  Test the model: dataflow chat")
-        
+
         return True
 
     except Exception as e:
@@ -531,14 +533,14 @@ def _run_normal_text_workflow(input_path: Path, current_dir: Path, cache_path_ob
     # Step 2: Run Text2QA Pipeline - 使用用户目录下的脚本
     script2 = current_dir / "text_to_qa_pipeline.py"
     args2 = ["--cache", str(cache_path_obj)]
-    
+
     if not run_script_with_args(script2, "Step 2: Text2QA generation", args2, cwd=str(current_dir)):
         return False
 
     # Step 3: Convert QA to Alpaca format - 使用用户目录下的脚本
     script3 = current_dir / "merge_filter_qa_pairs.py"
     args3 = ["--cache", str(cache_path_obj)]
-    
+
     if not run_script_with_args(script3, "Step 3: Converting QA to training format", args3, cwd=str(current_dir)):
         return False
 
@@ -590,8 +592,22 @@ def cli_text2model_chat(model_path=None):
         print("Run 'dataflow text2model train' to train a model first")
         return False
 
-    # 使用默认基础模型
-    base_model = 'Qwen/Qwen2.5-7B-Instruct'
+    # 验证是否为有效的adapter目录
+    adapter_files = [
+        "adapter_config.json",
+        "adapter_model.bin",
+        "adapter_model.safetensors"
+    ]
+
+    has_adapter = any((model_path / f).exists() for f in adapter_files)
+    if not has_adapter:
+        print(f"No adapter files found in {model_path}")
+        print("This doesn't appear to be a trained adapter directory.")
+        print("Expected files: adapter_config.json, adapter_model.bin/safetensors")
+        return False
+
+    # 安全地确定基础模型
+    base_model = None
 
     # 尝试从训练配置中读取基础模型
     config_file = cache_path_obj / ".cache" / "train_config.yaml"
@@ -600,9 +616,31 @@ def cli_text2model_chat(model_path=None):
             import yaml
             with open(config_file, 'r', encoding='utf-8') as f:
                 config = yaml.safe_load(f)
-                base_model = config.get('model_name_or_path', 'Qwen/Qwen2.5-7B-Instruct')
-        except:
-            pass
+                base_model = config.get('model_name_or_path')
+                if base_model:
+                    print(f"Found base model in config: {base_model}")
+        except Exception as e:
+            print(f"Warning: Could not read config file: {e}")
+
+    # 尝试从adapter_config.json读取
+    if not base_model:
+        adapter_config_path = model_path / "adapter_config.json"
+        if adapter_config_path.exists():
+            try:
+                with open(adapter_config_path, 'r', encoding='utf-8') as f:
+                    adapter_config = json.load(f)
+                    base_model = adapter_config.get('base_model_name_or_path')
+                    if base_model:
+                        print(f"Found base model in adapter config: {base_model}")
+            except Exception as e:
+                print(f"Warning: Could not read adapter config: {e}")
+
+    # 如果仍然没有找到base_model，报错退出
+    if not base_model:
+        print("Cannot determine base model path")
+        print("Please ensure your training config contains 'model_name_or_path'")
+        print("Or check that adapter_config.json exists and contains 'base_model_name_or_path'")
+        return False
 
     # 检查LlamaFactory
     try:

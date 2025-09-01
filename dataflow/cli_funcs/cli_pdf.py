@@ -393,19 +393,55 @@ def cli_pdf2model_chat(model_path=None, cache_path="./", base_model=None):
         print("Run 'dataflow pdf2model train' to train a model first")
         return False
 
-    # 确定基础模型路径
+    # 验证是否为有效的adapter目录
+    adapter_files = [
+        "adapter_config.json",
+        "adapter_model.bin",
+        "adapter_model.safetensors"
+    ]
+
+    has_adapter = any((model_path / f).exists() for f in adapter_files)
+    if not has_adapter:
+        print(f"No adapter files found in {model_path}")
+        print("This doesn't appear to be a trained adapter directory.")
+        print("Expected files: adapter_config.json, adapter_model.bin/safetensors")
+        return False
+
+    # 确定基础模型路径 - 安全的读取方式
     if base_model is None:
+        base_model = None  # 先设为None
+
         # 尝试从训练配置中读取基础模型
         config_file = cache_path_obj / ".cache" / "train_config.yaml"
         if config_file.exists():
             try:
                 with open(config_file, 'r', encoding='utf-8') as f:
                     config = yaml.safe_load(f)
-                    base_model = config.get('model_name_or_path', 'Qwen/Qwen2.5-7B-Instruct')
-            except:
-                base_model = 'Qwen/Qwen2.5-7B-Instruct'
-        else:
-            base_model = 'Qwen/Qwen2.5-7B-Instruct'
+                    base_model = config.get('model_name_or_path')
+                    if base_model:
+                        print(f"Found base model in config: {base_model}")
+            except Exception as e:
+                print(f"Warning: Could not read config file: {e}")
+
+        # 尝试从adapter_config.json读取
+        if not base_model:
+            adapter_config_path = model_path / "adapter_config.json"
+            if adapter_config_path.exists():
+                try:
+                    with open(adapter_config_path, 'r', encoding='utf-8') as f:
+                        adapter_config = json.load(f)
+                        base_model = adapter_config.get('base_model_name_or_path')
+                        if base_model:
+                            print(f"Found base model in adapter config: {base_model}")
+                except Exception as e:
+                    print(f"Warning: Could not read adapter config: {e}")
+
+        # 如果仍然没有找到base_model，报错退出而不是使用默认值
+        if not base_model:
+            print("Cannot determine base model path")
+            print("Please ensure your training config contains 'model_name_or_path'")
+            print("Or check that adapter_config.json exists and contains 'base_model_name_or_path'")
+            return False
 
     # 检查LlamaFactory
     try:
@@ -432,11 +468,11 @@ def cli_pdf2model_chat(model_path=None, cache_path="./", base_model=None):
 
     try:
         result = subprocess.run(chat_cmd, check=True)
-        print("\n✅ Chat session completed")
+        print("\nChat session completed")
         return True
     except subprocess.CalledProcessError as e:
-        print(f"\n❌ Chat failed: {e}")
+        print(f"\nChat failed: {e}")
         return False
     except KeyboardInterrupt:
-        print("\n\n👋 Chat session ended by user")
+        print("\n\nChat session ended by user")
         return True

@@ -17,6 +17,8 @@ import argparse
 import requests
 import sys
 import re
+import yaml
+import json
 from pathlib import Path
 from colorama import init as color_init, Fore, Style
 from dataflow.cli_funcs import cli_env, cli_init  # 项目已有工具
@@ -53,8 +55,15 @@ def version_and_check_for_updates() -> None:
 
 # ---------------- 智能聊天功能 ----------------
 def check_current_dir_for_model():
-    """检查当前目录是否包含模型文件"""
+    """检查当前目录是否包含模型文件，优先检查adapter"""
     current_dir = Path.cwd()
+
+    # 先检查 LoRA 适配器文件（优先级更高）
+    adapter_files = [
+        "adapter_config.json",
+        "adapter_model.bin",
+        "adapter_model.safetensors"
+    ]
 
     # 检查是否是标准的 HuggingFace 模型目录
     model_files = [
@@ -65,20 +74,13 @@ def check_current_dir_for_model():
         "tokenizer_config.json"  # 分词器配置
     ]
 
-    # 检查 LoRA 适配器文件
-    adapter_files = [
-        "adapter_config.json",
-        "adapter_model.bin",
-        "adapter_model.safetensors"
-    ]
+    # 优先检查适配器文件，如果有适配器就认为是微调后的模型
+    if any((current_dir / f).exists() for f in adapter_files):
+        return current_dir, "fine_tuned_model"
 
     # 如果包含基础模型文件，认为是预训练模型目录
     if any((current_dir / f).exists() for f in model_files):
         return current_dir, "base_model"
-
-    # 如果包含适配器文件，认为是微调后的模型目录
-    if any((current_dir / f).exists() for f in adapter_files):
-        return current_dir, "fine_tuned_model"
 
     return None, None
 
@@ -187,14 +189,66 @@ def smart_chat_command(model_path=None, cache_path="./"):
     if current_model_path:
         print(f"Found {model_type} in current directory: {current_model_path}")
 
-        # 对于当前目录的模型，默认使用base model方式启动聊天
-        # 这里可能需要根据实际的聊天函数接口调整
-        try:
-            # 尝试导入并使用通用的聊天函数
-            from dataflow.cli_funcs.cli_text import cli_text2model_chat
-            return cli_text2model_chat(str(current_model_path))
-        except ImportError:
-            print("Chat function not available for current model format")
+        # 修复：对于fine_tuned_model，需要正确处理adapter路径
+        if model_type == "fine_tuned_model":
+            # 这是一个adapter目录，需要判断是pdf2model还是text2model
+            # 通过检查父目录结构、目录名称和adapter_config.json来判断
+            parent_path = str(current_model_path.parent)
+            current_path = str(current_model_path)
+
+            # 尝试从adapter_config.json读取信息
+            detected_type = None
+            adapter_config_path = current_model_path / "adapter_config.json"
+            if adapter_config_path.exists():
+                try:
+                    with open(adapter_config_path, 'r', encoding='utf-8') as f:
+                        adapter_config = json.load(f)
+                        base_model_name = adapter_config.get('base_model_name_or_path', '')
+                        # 可以通过其他线索判断类型，暂时使用路径判断
+                except Exception as e:
+                    print(f"Warning: Could not read adapter config: {e}")
+
+            # 检查是否在pdf2model的saves目录中
+            if ('pdf2model_cache_' in current_model_path.name or
+                    'pdf2model' in parent_path.lower() or
+                    'pdf2model' in current_path.lower()):
+                detected_type = 'pdf2model'
+            # 检查是否在text2model的saves目录中
+            elif ('text2model_cache_' in current_model_path.name or
+                  'text2model' in parent_path.lower() or
+                  'text2model' in current_path.lower()):
+                detected_type = 'text2model'
+
+            if detected_type == 'pdf2model':
+                try:
+                    from dataflow.cli_funcs.cli_pdf import cli_pdf2model_chat
+                    return cli_pdf2model_chat(str(current_model_path), cache_path)
+                except ImportError:
+                    print("Cannot find PDF model chat function")
+                    return False
+            elif detected_type == 'text2model':
+                try:
+                    from dataflow.cli_funcs.cli_text import cli_text2model_chat
+                    return cli_text2model_chat(str(current_model_path))
+                except ImportError:
+                    print("Cannot find text model chat function")
+                    return False
+            else:
+                # 如果无法判断类型，提示用户明确指定
+                print(f"Warning: Cannot determine model type from path: {current_model_path}")
+                print("Please specify the model type explicitly:")
+                print(f"   dataflow chat --model {current_model_path}  # Will auto-detect")
+                print("Or move to a properly structured model directory")
+                return False
+
+        # 对于base_model类型，需要额外检查是否真的有训练数据
+        elif model_type == "base_model":
+            print("Warning: Found base model files, but no adapter files detected.")
+            print("This appears to be a pre-trained model, not a trained adapter.")
+            print("If you want to chat with a pre-trained model, use:")
+            print(f"   llamafactory-cli chat --model_name_or_path {current_model_path}")
+            print("If you have a trained adapter elsewhere, specify its path:")
+            print("   dataflow chat --model /path/to/your/adapter")
             return False
 
     # 如果当前目录没有模型，再查找训练缓存目录
@@ -204,15 +258,41 @@ def smart_chat_command(model_path=None, cache_path="./"):
 
     if not latest_model:
         print("No trained model found in cache either.")
-        print("Options:")
-        print(f"1. Change to a model directory and run: cd /path/to/model && dataflow chat")
-        print("2. Specify model path explicitly: dataflow chat --model /path/to/model")
-        print("3. Train a new model:")
-        print("   dataflow text2model train   # Train from text data")
+        print()
+        print("You need to train a model first:")
+        print("   dataflow pdf2model init     # Initialize PDF training pipeline")
         print("   dataflow pdf2model train    # Train from PDF data")
+        print("   or")
+        print("   dataflow text2model init    # Initialize text training pipeline")
+        print("   dataflow text2model train   # Train from text data")
+        print()
+        print("Or specify an existing model path:")
+        print("   dataflow chat --model /path/to/your/adapter")
+        print("   dataflow chat --model /path/to/your/base/model")
+        print()
+        print("If you have a model elsewhere, cd to that directory and run 'dataflow chat'")
         return False
 
     print(f"Found latest {model_type} model in cache: {latest_model}")
+
+    # 确保找到的模型路径确实存在且包含必要文件
+    latest_model_path = Path(latest_model)
+    if not latest_model_path.exists():
+        print(f"Model path does not exist: {latest_model}")
+        return False
+
+    # 检查是否有adapter文件（说明是训练好的模型）
+    adapter_files = [
+        "adapter_config.json",
+        "adapter_model.bin",
+        "adapter_model.safetensors"
+    ]
+
+    has_adapter = any((latest_model_path / f).exists() for f in adapter_files)
+    if not has_adapter:
+        print(f"No adapter files found in {latest_model}")
+        print("This doesn't appear to be a trained model directory.")
+        return False
 
     # 使用缓存中的模型启动聊天
     if model_type == 'text2model':
