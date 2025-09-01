@@ -168,7 +168,10 @@ class ExtractSmilesFromText(OperatorABC):
 
         # Add the generated content back to the dataframe
         #dataframe[output_key] = json.loads(generated_outputs)
-        parsed_outputs = [self._safe_json_load(item) for item in generated_outputs]
+        # parsed_outputs = [self._safe_json_load(item) for item in generated_outputs]
+        # print(generated_outputs)
+        parsed_outputs = [json.loads(item)['chemical_structures'] for item in generated_outputs]
+        # print(parsed_outputs)
         dataframe[output_key] = parsed_outputs
 
         # Save the updated dataframe to the output file
