@@ -32,7 +32,7 @@ match_operator:
       
 write_the_operator:
   category: operator
-  special_model: o3
+  special_model: gpt-4o-mini
   
 exe_and_debug_operator:
   category: operator

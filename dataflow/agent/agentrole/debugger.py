@@ -48,7 +48,7 @@ class DebugAgent:
         self.json_template_keys = {}
     async def llm_caller(self,prompts:str):
         json_data = {
-            "model": 'o3',
+            "model": 'gpt-4o-mini',
             "messages": [
                 {"role": "system", "content": "你是一个python代码debug专家"},
                 {"role": "user", "content": prompts}
