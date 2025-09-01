@@ -1,4 +1,4 @@
-from dataflow.operators.filter import (
+from dataflow.operators.general_text import (
     MinHashDeduplicator,
     LanguageFilter,
     ColonEndFilter,
@@ -23,7 +23,7 @@ from dataflow.operators.filter import (
     LineWithJavascriptFilter,
     PairQualFilter
 )
-from dataflow.operators.refine import (
+from dataflow.operators.general_text import (
     HtmlUrlRemoverRefiner,
     RemoveEmojiRefiner,
     RemoveExtraSpacesRefiner

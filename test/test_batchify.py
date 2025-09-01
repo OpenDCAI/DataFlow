@@ -1,4 +1,4 @@
-from dataflow.operators.generate import PromptedGenerator
+from dataflow.operators.core_text import PromptedGenerator
 from dataflow.serving import LocalModelLLMServing_sglang, LocalModelLLMServing_vllm
 from dataflow.utils.storage import FileStorage
 from dataflow.wrapper import BatchWrapper

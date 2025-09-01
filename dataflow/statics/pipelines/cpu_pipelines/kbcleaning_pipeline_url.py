@@ -1,4 +1,4 @@
-from dataflow.operators.generate import (
+from dataflow.operators.knowledge_cleaning import (
     CorpusTextSplitter,
     FileOrURLToMarkdownConverter,
 )

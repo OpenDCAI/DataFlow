@@ -67,3 +67,6 @@ sseclient-py
 # speech
 librosa
 soundfile
+
+# map visualize
+# matplotlib

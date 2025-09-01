@@ -1,11 +1,11 @@
-from dataflow.operators.generate import (
+from dataflow.operators.reasoning import (
     QuestionCategoryClassifier,
     QuestionDifficultyClassifier,
     QuestionGenerator,
     AnswerGenerator,
 )
 
-from dataflow.operators.filter import (
+from dataflow.operators.reasoning import (
     QuestionFilter,
     AnswerFormatterFilter,
     AnswerGroundTruthFilter,
@@ -20,7 +20,7 @@ from dataflow.prompts.reasoning.math import (
 )
 
 from dataflow.utils.storage import FileStorage
-from dataflow.serving import APILLMServing_request, LocalModelLLMServing
+from dataflow.serving import APILLMServing_request
 from dataflow.core import LLMServingABC
 
 # 这里或许未来可以有个pipeline基类

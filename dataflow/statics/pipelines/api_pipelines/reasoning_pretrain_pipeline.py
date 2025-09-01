@@ -1,4 +1,4 @@
-from dataflow.operators.generate import (
+from dataflow.operators.reasoning import (
     QuestionGenerator,
     AnswerGenerator,
     PretrainFormatConverter
@@ -8,9 +8,9 @@ from dataflow.prompts.reasoning.math import (
     MathQuestionSynthesisPrompt,
     MathAnswerGeneratorPrompt
 )
-from dataflow.operators.filter import QuestionFilter, AnswerNgramFilter, AnswerPipelineRoot
+from dataflow.operators.reasoning import QuestionFilter, AnswerNgramFilter, AnswerPipelineRoot
 from dataflow.utils.storage import FileStorage
-from dataflow.serving import APILLMServing_request, LocalModelLLMServing
+from dataflow.serving import APILLMServing_request
 
 # 这里或许未来可以有个pipeline基类
 class Reasoning_APIPipeline_Pretrain():

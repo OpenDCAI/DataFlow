@@ -1,5 +1,5 @@
-from dataflow.operators.generate import PromptedGenerator
-from dataflow.serving import LocalModelLLMServing, APILLMServing_request
+from dataflow.operators.core_text import PromptedGenerator
+from dataflow.serving import APILLMServing_request
 from dataflow.utils.storage import FileStorage
 
 class GPT_generator():

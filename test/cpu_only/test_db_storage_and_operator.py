@@ -1,7 +1,7 @@
 from dataflow.operators.db.db_operator import DBOperator
 
 from dataflow.utils.storage import MyScaleDBStorage
-from dataflow.operators.generate import QuestionDifficultyClassifier
+from dataflow.operators.reasoning import QuestionDifficultyClassifier
 class DBShowCasePipeline():
     def __init__(self):
         self.storage = MyScaleDBStorage()

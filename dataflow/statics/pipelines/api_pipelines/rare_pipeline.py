@@ -1,4 +1,4 @@
-from dataflow.operators.generate import (
+from dataflow.operators.rare import (
     Doc2Query,
     BM25HardNeg,
     ReasonDistill,

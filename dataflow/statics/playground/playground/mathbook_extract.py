@@ -1,4 +1,4 @@
-from dataflow.operators.generate import MathBookQuestionExtract
+from dataflow.operators.knowledge_cleaning import MathBookQuestionExtract
 from dataflow.serving.APIVLMServing_openai import APIVLMServing_openai
 
 class QuestionExtractPipeline:

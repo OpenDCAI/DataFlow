@@ -28,5 +28,6 @@ dist
 build
 *.html
 
+*.xlsx
 
 lib
