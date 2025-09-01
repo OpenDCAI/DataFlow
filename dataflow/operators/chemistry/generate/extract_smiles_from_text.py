@@ -16,11 +16,12 @@ class ExtractSmilesFromText(OperatorABC):
     '''
     Answer Generator is a class that generates answers for given questions.
     '''
-    def __init__(self, llm_serving: LLMServingABC, prompt_template = None):
+    def __init__(self, llm_serving: LLMServingABC, prompt_template = None, response_format : str = {}):
         self.logger = get_logger()
         self.llm_serving = llm_serving
         self.prompt_template = prompt_template
         self.json_failures = 0
+        self.response_format = response_format
     
     @staticmethod
     def get_desc(lang: str = "zh"):
@@ -160,17 +161,19 @@ class ExtractSmilesFromText(OperatorABC):
         # Generate the text using the model
         try:
             self.logger.info("Generating text using the model...")
-            generated_outputs = self.llm_serving.generate_from_input(llm_inputs)
+            generated_outputs = self.llm_serving.generate_from_input(llm_inputs, response_format = self.response_format)
             self.logger.info("Text generation completed.")
         except Exception as e:
             self.logger.error(f"Error during text generation: {e}")
             return
 
-        # Add the generated content back to the dataframe
-        #dataframe[output_key] = json.loads(generated_outputs)
-        # parsed_outputs = [self._safe_json_load(item) for item in generated_outputs]
-        # print(generated_outputs)
-        parsed_outputs = [json.loads(item)['chemical_structures'] for item in generated_outputs]
+        parsed_outputs = []
+        for item in generated_outputs:
+            try:
+                parsed_outputs.append(self._safe_json_load(item))
+            except Exception:
+                parsed_outputs.append([])
+        #parsed_outputs = [self._safe_json_load(item)['chemical_structures'] for item in generated_outputs]
         # print(parsed_outputs)
         dataframe[output_key] = parsed_outputs
 

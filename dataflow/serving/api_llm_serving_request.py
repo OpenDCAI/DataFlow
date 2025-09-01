@@ -22,7 +22,6 @@ class APILLMServing_request(LLMServingABC):
                 model_name: str = "gpt-4o",
                 max_workers: int = 10,
                 max_retries: int = 5,
-                response_format: str = "", 
                 temperature: float = 0.0
                 ):
         # Get API key from environment variable or config
@@ -30,7 +29,6 @@ class APILLMServing_request(LLMServingABC):
         self.model_name = model_name
         self.max_workers = max_workers
         self.max_retries = max_retries
-        self.response_format = response_format
         self.logger = get_logger()
 
         # config api_key in os.environ global, since safty issue.
@@ -90,7 +88,7 @@ class APILLMServing_request(LLMServingABC):
             logging.error(f"API request error: {e}")
             return None
 
-    def _api_chat_with_id(self, id, payload, model, is_embedding: bool = False):
+    def _api_chat_with_id(self, id, payload, model, is_embedding: bool = False, response_format: str = {}):
             try:
                 if is_embedding:
                     payload = {
@@ -101,7 +99,7 @@ class APILLMServing_request(LLMServingABC):
                     payload = {
                         "model": model,
                         "messages": payload,
-                        "response_format": self.response_format
+                        "response_format": response_format
                     }
                 headers = {
                     'Authorization': f"Bearer {self.api_key}",
@@ -122,16 +120,17 @@ class APILLMServing_request(LLMServingABC):
                 logging.error(f"API request error: {e}")
                 return id, None
         
-    def _api_chat_id_retry(self, id, payload, model, is_embedding : bool = False):
+    def _api_chat_id_retry(self, id, payload, model, is_embedding : bool = False, response_format : str = {}):
         for i in range(self.max_retries):
-            id, response = self._api_chat_with_id(id, payload, model, is_embedding)
+            id, response = self._api_chat_with_id(id, payload, model, is_embedding, response_format)
             if response is not None:
                 return id, response
             time.sleep(2**i)
         return id, None    
     
     def generate_from_input(self, 
-                            user_inputs: list[str], system_prompt: str = "You are a helpful assistant"
+                            user_inputs: list[str], system_prompt: str = "You are a helpful assistant",
+                            response_format: str = {} 
                             ) -> list[str]:
 
 
@@ -149,7 +148,8 @@ class APILLMServing_request(LLMServingABC):
                         {"role": "user", "content": question}
                         ],
                     model = self.model_name,
-                    id = idx
+                    id = idx,
+                    response_format = response_format
                 ) for idx, question in enumerate(user_inputs)
             ]
             for future in tqdm(as_completed(futures), total=len(futures), desc="Generating......"):
