@@ -21,7 +21,7 @@ project_root = Path(__file__).parent.parent
 sys.path.insert(0, str(project_root))
 
 try:
-    from dataflow.serving.LocalVLLMServing import VLLMServiceServing
+    from dataflow.agent.servicemanager.local_model_llmserving import VLLMServiceServing
     from dataflow import get_logger
 except ImportError as e:
     print(f"导入错误: {e}")
