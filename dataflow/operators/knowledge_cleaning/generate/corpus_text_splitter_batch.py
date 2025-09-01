@@ -144,8 +144,8 @@ class CorpusTextSplitterBatch(OperatorABC):
                     words_per_chunk = (len(words) + x - 1) // x  # 每份的词数
 
                     chunks = []
-                    for i in range(0, len(words), words_per_chunk):
-                        chunk_text = ' '.join(words[i:i+words_per_chunk])
+                    for j in range(0, len(words), words_per_chunk):
+                        chunk_text = ' '.join(words[j:j+words_per_chunk])
                         chunks.extend(self.chunker(chunk_text))
                 json_chunks = [{
                     "raw_chunk": chunk.text,
