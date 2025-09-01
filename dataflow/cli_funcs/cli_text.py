@@ -74,7 +74,6 @@ def copy_customizable_scripts():
     # 检查当前目录下是否已经存在所需的脚本文件
     required_scripts = [
         "text_to_qa_pipeline.py",
-        "merge_filter_qa_pairs.py",
     ]
 
     existing_scripts = []
@@ -246,7 +245,6 @@ def check_required_files_for_training():
     current_dir = Path(os.getcwd())
     customizable_scripts = [
         "text_to_qa_pipeline.py",
-        "merge_filter_qa_pairs.py"
     ]
 
     missing_customizable = []
@@ -411,7 +409,7 @@ def cli_text2model_train(input_keys: str = None, lf_yaml: str = "./.cache/train_
         # Step 2: Text2QA Pipeline
         print(f"{Fore.CYAN}Step 2: Text2QA generation...{Style.RESET_ALL}")
 
-        script2_path = get_dataflow_script_path("text_to_qa_pipeline.py")
+        script2_path = cache_path_obj / "text_to_qa_pipeline.py"
         args2 = ["--cache", str(cache_path_obj)]
         if not run_script_with_args(script2_path, "Text2QA generation", args2, cwd=str(current_dir)):
             print(f"{Fore.RED}❌ Step 2: Text2QA generation failed{Style.RESET_ALL}")
@@ -520,50 +518,50 @@ def _run_text2qa_workflow(current_dir: Path, cache_path_obj: Path, config_path_o
     return True
 
 
-def _run_normal_text_workflow(input_path: Path, current_dir: Path, cache_path_obj: Path, config_path_obj: Path,
-                              input_keys: str) -> bool:
-    """Run Text2QA workflow as the main processing pipeline"""
+# def _run_normal_text_workflow(input_path: Path, current_dir: Path, cache_path_obj: Path, config_path_obj: Path,
+#                               input_keys: str) -> bool:
+#     """Run Text2QA workflow as the main processing pipeline"""
 
-    # Step 1: Merge JSON/JSONL files and create text_input.jsonl - 使用内置脚本
-    script1_path = get_dataflow_script_path("merge_json_jsonl.py")
-    args1 = [str(input_path), "--cache", str(cache_path_obj)]
-    if not run_script_with_args(script1_path, "Step 1: Preparing text input for Text2QA", args1, cwd=str(current_dir)):
-        return False
+#     # Step 1: Merge JSON/JSONL files and create text_input.jsonl - 使用内置脚本
+#     script1_path = get_dataflow_script_path("merge_json_jsonl.py")
+#     args1 = [str(input_path), "--cache", str(cache_path_obj)]
+#     if not run_script_with_args(script1_path, "Step 1: Preparing text input for Text2QA", args1, cwd=str(current_dir)):
+#         return False
 
-    # Step 2: Run Text2QA Pipeline - 使用用户目录下的脚本
-    script2 = current_dir / "text_to_qa_pipeline.py"
-    args2 = ["--cache", str(cache_path_obj)]
+#     # Step 2: Run Text2QA Pipeline - 使用用户目录下的脚本
+#     script2 = current_dir / "text_to_qa_pipeline.py"
+#     args2 = ["--cache", str(cache_path_obj)]
 
-    if not run_script_with_args(script2, "Step 2: Text2QA generation", args2, cwd=str(current_dir)):
-        return False
+#     if not run_script_with_args(script2, "Step 2: Text2QA generation", args2, cwd=str(current_dir)):
+#         return False
 
-    # Step 3: Convert QA to Alpaca format - 使用用户目录下的脚本
-    script3 = current_dir / "merge_filter_qa_pairs.py"
-    args3 = ["--cache", str(cache_path_obj)]
+#     # Step 3: Convert QA to Alpaca format - 使用用户目录下的脚本
+#     script3 = current_dir / "merge_filter_qa_pairs.py"
+#     args3 = ["--cache", str(cache_path_obj)]
 
-    if not run_script_with_args(script3, "Step 3: Converting QA to training format", args3, cwd=str(current_dir)):
-        return False
+#     if not run_script_with_args(script3, "Step 3: Converting QA to training format", args3, cwd=str(current_dir)):
+#         return False
 
-    # Step 4: Training - 使用内置脚本
-    script4_path = get_dataflow_script_path("llama_factory_trainer.py")
-    args4 = ["--config", str(config_path_obj)]
-    if not run_script_with_args(script4_path, "Step 4: Training", args4, cwd=str(current_dir)):
-        return False
+#     # Step 4: Training - 使用内置脚本
+#     script4_path = get_dataflow_script_path("llama_factory_trainer.py")
+#     args4 = ["--config", str(config_path_obj)]
+#     if not run_script_with_args(script4_path, "Step 4: Training", args4, cwd=str(current_dir)):
+#         return False
 
-    # 显示训练完成信息，从配置文件中读取实际的输出目录
-    try:
-        import yaml
-        with open(config_path_obj, 'r', encoding='utf-8') as f:
-            config = yaml.safe_load(f)
-            actual_output_dir = config.get('output_dir', 'unknown')
-    except:
-        actual_output_dir = 'unknown'
+#     # 显示训练完成信息，从配置文件中读取实际的输出目录
+#     try:
+#         import yaml
+#         with open(config_path_obj, 'r', encoding='utf-8') as f:
+#             config = yaml.safe_load(f)
+#             actual_output_dir = config.get('output_dir', 'unknown')
+#     except:
+#         actual_output_dir = 'unknown'
 
-    print("Text2QA training completed successfully!")
-    print(f"Model saved to: {actual_output_dir}")
-    print("Next steps:")
-    print("Test the trained model with 'dataflow chat'")
-    return True
+#     print("Text2QA training completed successfully!")
+#     print(f"Model saved to: {actual_output_dir}")
+#     print("Next steps:")
+#     print("Test the trained model with 'dataflow chat'")
+#     return True
 
 
 def cli_text2model_chat(model_path=None):

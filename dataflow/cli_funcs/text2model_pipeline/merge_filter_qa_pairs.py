@@ -110,7 +110,8 @@ def convert_to_alpaca(input_file, output_dir):
     try:
         with open(input_file, 'r', encoding='utf-8') as f:
             data = json.load(f)
-        print(f"Successfully read main data, type: {type(data)}, length: {len(data) if hasattr(data, '__len__') else 'N/A'}")
+        print(
+            f"Successfully read main data, type: {type(data)}, length: {len(data) if hasattr(data, '__len__') else 'N/A'}")
     except Exception as e:
         print(f"Failed to read file: {e}")
         return None
@@ -142,7 +143,7 @@ def convert_to_alpaca(input_file, output_dir):
     # Process QA pairs
     results = []
     processed_pairs = 0
-    
+
     for qa in all_qa_pairs:
         if not isinstance(qa, dict):
             continue
