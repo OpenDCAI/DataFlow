@@ -13,7 +13,7 @@ import re
 from collections import Counter
 
 @OPERATOR_REGISTRY.register()
-class AtomicTaskGenerator(OperatorABC):
+class AgenticRAGAtomicTaskGenerator(OperatorABC):
     def __init__(self,
                  llm_serving: LLMServingABC = None,
                  data_num : int = 100,

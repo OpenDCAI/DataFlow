@@ -9,7 +9,7 @@ import pandas as pd
 import json
 
 @OPERATOR_REGISTRY.register()
-class WidthQAGenerator(OperatorABC):
+class AgenticRAGWidthQAGenerator(OperatorABC):
     def __init__(self,
                  llm_serving: LLMServingABC = None
                  ):

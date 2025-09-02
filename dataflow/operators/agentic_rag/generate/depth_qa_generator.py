@@ -9,7 +9,7 @@ import pandas as pd
 import json
 
 @OPERATOR_REGISTRY.register()
-class DepthQAGenerator(OperatorABC):
+class AgenticRAGDepthQAGenerator(OperatorABC):
     def __init__(self,
                  llm_serving: LLMServingABC = None,
                  n_rounds:int = 2
