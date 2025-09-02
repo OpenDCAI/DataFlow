@@ -1,127 +1,13 @@
 import json
 
-class AutoPromptGeneratorPrompt:
+class AtomicTaskGeneratorGetIdentifierPrompt:
     '''
-    The prompt for the AutoPromptGenerator.
-    '''
-    def __init__(self):
-        pass
-
-    def auto_prompt_generator_prompt(self, seed_data: str) -> str:
-        system_prompt = f'''You will be given a piece of seed data, which may consist of a paragraph, dialogue, or any other form of text containing potential question-answer information.
-Your task is to analyze this seed data carefully and generate a clear and effective prompt that can be used to instruct a language model to extract a single high-quality question-answer (QA) pair suitable for reinforcement learning (RL) training from this piece of data.
-
-The generated prompt should:
-Clearly describe the type and format of input the model will receive;
-Explicitly ask for the extraction of a relevant QA pair;
-Optionally include instructions about the desired style, level of detail, or coverage;
-Be written in natural, precise English that could be directly used with another LLM;
-Be strictly the prompt used to extract QA pairs, not the QA pairs themselves. 
-
-Your prompts should contain the following instructions:
-The question should be clear, focused, and unambiguous, such that it targets specific factual content from the input;
-The answer should be a few words that are concise, factual and directly verifiable from the source rather than a whole sentence, enabling accurate reward computation in the RL pipeline;
-Both the question and answer should be simple enough to facilitate evaluation and automatic feedback.
-
-Don't include any additional explanations or comments in your output.
-Don't repeat the seed data in your output.
-Don't output the formatting instructions, just the prompt itself.
-Here is the seed data you need to analyze and generate a prompt for:\n{seed_data}'''
-
-        return system_prompt
-
-
-class QAScorerPrompt:
-    '''
-    The prompt for the RAG scorer.
-    '''
-    def __init__(self):
-        pass
-
-    def question_quality_prompt(self) -> str:
-        system_prompt = '''You are an expert question quality evaluator. Given a single question from a QA dataset, your job is to assess the **clarity and meaningfulness** of the question. Specifically, judge whether the question is clearly defined, unambiguous, and worth asking in a real-world or task-specific context.
-
-Assign a score from 1 to 5 based on the following rubric:
-5 = Very clear and meaningful question, well-posed  
-4 = Clear but slightly underspecified or too general  
-3 = Somewhat unclear or poorly scoped, but understandable  
-2 = Ambiguous, vague, or unnatural  
-1 = Nonsensical or meaningless
-
-Output format:
-**Grading**: [1-5]
-
-**Feedback**: Explain your score. Mention if the question is ambiguous, overly broad, or lacks practical purpose. Suggest how to improve clarity or specificity if needed.
-
-'''
-
-        return system_prompt
-
-    def answer_alignment_prompt(self) -> str:
-        system_prompt = '''You are a response alignment evaluator. Your task is to assess whether a given answer **directly and clearly addresses the given question**.
-
-Assign a score from 1 to 5 based on the following rubric:
-5 = Fully and directly answers the question  
-4 = Mostly addresses the question, with minor gaps or irrelevant additions  
-3 = Partially answers the question but omits key aspects  
-2 = Barely addresses the question or is off-topic  
-1 = Completely unrelated to the question
-
-Output format:
-**Grading**: [1-5]
-
-**Feedback**: Justify your score. Point out if the answer is evasive, incomplete, or misaligned. Suggest ways to better match the response to the question.
-
-'''
-
-        return system_prompt
-
-    def answer_verifiability_prompt(self) -> str:
-        system_prompt = '''You are an evaluator tasked with assessing how **easily verifiable** an answer is. You must determine whether the correctness of the answer can be **conveniently and unambiguously judged** — for example, whether it is fact-based, precise, and not subjective or vague.
-
-Assign a score from 1 to 5 based on the following rubric:
-5 = Very easy to verify; answer is objective, concrete, and unambiguous  
-4 = Mostly verifiable, with minor ambiguities  
-3 = Verifiable in parts, but some subjectivity or fuzziness  
-2 = Hard to verify; answer is vague, speculative, or opinion-based  
-1 = Unverifiable or meaningless
-
-Output format:
-**Grading**: [1-5]
-
-**Feedback**: Explain your score. Identify elements that make verification easier or harder. Suggest rephrasing or grounding techniques to improve verifiability.
-
-'''
-
-        return system_prompt
-
-    def downstream_value_prompt(self) -> str:
-        system_prompt = '''You are a task relevance evaluator. Given a QA pair, assess how well this data point could **support a downstream task** such as classification, dialogue, retrieval, summarization, or knowledge grounding.
-
-Assign a score from 1 to 5 based on the following rubric:
-5 = Highly valuable for downstream tasks; question and answer are precise and informative  
-4 = Useful with minor limitations  
-3 = Moderately helpful; limited in informativeness or specificity  
-2 = Of little value; vague or too generic to help the model learn  
-1 = Useless or irrelevant for any downstream learning objective
-
-Output format:
-**Grading**: [1-5]
-
-**Feedback**: Describe how the QA pair does or does not benefit potential downstream tasks. If relevant, suggest how to make it more useful for training.
-
-'''
-
-        return system_prompt
-
-class AtomicTaskGeneratorPrompt:
-    '''
-    The prompt for the AtomicTaskGenerator.
+    The prompt for the AtomicTaskGenerator to get identifier.
     '''
     def __init__(self):
         pass
     
-    def get_identifier_system_prompt(self) -> str:
+    def build_system_prompt(self) -> str:
         system_prompt = '''
         You need to extract the content_identifier from question. Here's how:
   1. For each question, identify the main subject/noun phrase that the question is about
@@ -144,13 +30,20 @@ class AtomicTaskGeneratorPrompt:
 '''
         return system_prompt
     
-    def get_identifier_prompt(self, input) -> str:
+    def build_prompt(self, input) -> str:
         prompt = f'''
         Now process this question:{input}
         '''
         return prompt
-    
-    def initial_conclusion_system_prompt(self) -> str:
+
+class AtomicTaskGeneratorGetConlcusionPrompt:
+    '''
+    The prompt for the AtomicTaskGenerator to get initial conclusion.
+    '''
+    def __init__(self):
+        pass
+
+    def build_system_prompt(self) -> str:
         system_prompt = '''
   # Conclusion Extraction and Relationship Generation Specifications
 
@@ -279,13 +172,20 @@ class AtomicTaskGeneratorPrompt:
         '''
         return system_prompt
     
-    def initial_conclusion_prompt(self, input) -> str:
+    def build_prompt(self, input) -> str:
         prompt = f'''
     The document content to be processed is as follows: {input}
     '''
         return prompt
-    
-    def initial_question_system_prompt(self) -> str:
+
+class AtomicTaskGeneratorQuestionPrompt:
+    '''
+    The prompt for the AtomicTaskGenerator to get initial question.
+    '''
+    def __init__(self):
+        pass
+
+    def build_system_prompt(self) -> str:
         system_prompt = '''Your task is to generate a corresponding question (Q) based on the given task identifier (ID), relationship (R), and answer (A).
 
   Input/Output Specifications:
@@ -323,7 +223,7 @@ class AtomicTaskGeneratorPrompt:
   '''
         return system_prompt
     
-    def initial_question_prompt(self, identifier, conclusion, relation) -> str:
+    def build_prompt(self, identifier, conclusion, relation) -> str:
         prompt = f'''
         Data to be Processed:
         ID: {identifier}
@@ -332,8 +232,15 @@ class AtomicTaskGeneratorPrompt:
         '''
 
         return prompt
-    
-    def clean_qa_system_prompt(self) -> str:
+
+class AtomicTaskGeneratorCleanQAPrompt:
+    '''
+    The prompt for the AtomicTaskGenerator to clean QA.
+    '''
+    def __init__(self):
+        pass
+
+    def build_system_prompt(self) -> str:
         system_prompt = '''Processing Rules:
   1. Extract ONLY the exact information requested in the question
   2. Preserve the original index numbering
@@ -367,20 +274,34 @@ class AtomicTaskGeneratorPrompt:
   '''
         return system_prompt
     
-    def clean_qa_prompt(self, input) -> str:
+    def build_prompt(self, input) -> str:
         prompt = f'''
             The data need to be processed is as follows: {input}
         '''
 
         return prompt
 
-    def llm_answer_prompt(self, input) -> str:
+class AtomicTaskGeneratorAnswerPrompt:
+    '''
+    The prompt for the AtomicTaskGenerator to get LLM's answer.
+    '''
+    def __init__(self):
+        pass
+
+    def build_prompt(self, input) -> str:
         prompt = f'''Please solve the following problem and return as many relevant results as possible that meet the query requirements.\n Ensure responses are as concise as possible, focusing only on key information while omitting redundant details.\n The task is:\n {input}
         '''.strip()
         
         return prompt
-    
-    def recall_system_prompt(self) -> str:
+
+class AtomicTaskGeneratorRecallScorePrompt:
+    '''
+    The prompt for the AtomicTaskGenerator to get recall score.
+    '''
+    def __init__(self):
+        pass
+
+    def  build_system_prompt(self) -> str:
         system_prompt = '''
 Evaluate the consistency of the core content of the golden answer and the other answer
   # Scoring Criteria 
@@ -413,7 +334,7 @@ Evaluate the consistency of the core content of the golden answer and the other 
 '''
         return system_prompt
     
-    def recall_prompt(self, golden_answer, llm_answer) -> str:
+    def build_prompt(self, golden_answer, llm_answer) -> str:
         prompt = f'''
     The inputs are as follows:
     Golden Answer: {golden_answer}
@@ -421,7 +342,14 @@ Evaluate the consistency of the core content of the golden answer and the other 
         '''
         return prompt
 
-    def more_optional_answer_system_prompt(self) -> str:
+class AtomicTaskGeneratorOptionalAnswerPrompt:
+    '''
+    The prompt for the AtomicTaskGenerator to get optional answer.
+    '''
+    def __init__(self):
+        pass
+
+    def build_system_prompt(self) -> str:
         system_prompt = """
   You are an expert in **linguistic variation** and **data augmentation**. Your task is to generate a comprehensive list of all plausible and commonly recognized alternative expressions, formats, and aliases for a given input entity or piece of information. The goal is to create high-quality training data that captures diverse ways of referring to the same concept.
 
@@ -461,7 +389,7 @@ Evaluate the consistency of the core content of the golden answer and the other 
 
         return system_prompt
 
-    def more_optional_answer_prompt(self, answer) -> str:
+    def build_prompt(self, answer) -> str:
         prompt = f"""
     The original answer is: {answer}
     Please list all possible textual expressions that have the same meaning or refer to the same entity, especially in different formats (e.g., dates, names, abbreviations).
@@ -470,7 +398,14 @@ Evaluate the consistency of the core content of the golden answer and the other 
         """
         return prompt
 
-    def golden_doc_prompt(self, golden_doc, question) -> str:
+class AtomicTaskGeneratorGoldenDocAnswerPrompt:
+    '''
+    The prompt for the AtomicTaskGenerator to get LLM's answer with golden doc.
+    '''
+    def __init__(self):
+        pass
+
+    def build_prompt(self, golden_doc, question) -> str:
         prompt = f"""You are given the following document that contains relevant information to help answer a question.
 Document:
 \"\"\"
@@ -482,14 +417,14 @@ Please answer the question using ONLY the information in the provided document. 
         """
         return prompt
     
-class DepthQAGeneratorPrompt:
+class DepthQAGeneratorGetIdentifierPrompt:
     '''
-    The prompt for the AtomicTaskGenerator.
+    The prompt for the AtomicTaskGenerator to get identifier.
     '''
     def __init__(self):
         pass
     
-    def get_identifier_system_prompt(self) -> str:
+    def build_system_prompt(self) -> str:
         system_prompt = '''
         You need to extract the content_identifier from question. Here's how:
   1. For each question, identify the main subject/noun phrase that the question is about
@@ -512,13 +447,20 @@ class DepthQAGeneratorPrompt:
 '''
         return system_prompt
     
-    def get_identifier_prompt(self, input) -> str:
+    def build_prompt(self, input) -> str:
         prompt = f'''
         Now process this question:{input}
         '''
         return prompt
-    
-    def get_backward_task_prompt(self, input) -> str:
+
+class DepthQAGeneratorBackwardTaskPrompt:
+    '''
+    The prompt for the AtomicTaskGenerator to get backward task.
+    '''
+    def __init__(self):
+        pass
+
+    def build_prompt(self, input) -> str:
         prompt = f'''
         Conduct divergent searches based on the input element to find an appropriate superset related to its attributes, and elaborate on the relationship between the superset and the element (mine for special and uniquely pointing relationships to ensure that the superset + relationship does not mislead to other subsets). Example supersets include:
   1. The superset of a paragraph or sentence can be the text content it belongs to.
@@ -599,8 +541,15 @@ class DepthQAGeneratorPrompt:
   {input}
         '''
         return prompt
-    
-    def check_superset_system_prompt(self) -> str:
+
+class DepthQAGeneratorSupersetCheckPrompt:
+    '''
+    The prompt for the AtomicTaskGenerator to check superset.
+    '''
+    def __init__(self):
+        pass
+
+    def build_system_prompt(self) -> str:
         system_prompt = '''
 **Task**: Validate if a given "superset" can uniquely identify a "subset" based on the provided "relationship".  
   
@@ -623,15 +572,22 @@ class DepthQAGeneratorPrompt:
 '''
         return system_prompt
     
-    def check_superset_prompt(self, new_id, relation, identifier) -> str:
+    def build_prompt(self, new_id, relation, identifier) -> str:
         prompt = f'''
 Given superset: {new_id}\n
 Given relationship: {relation}\n
 Given subset: {identifier}\n
 '''
         return prompt
-    
-    def get_question_system_prompt(self) -> str:
+
+class DepthQAGeneratorQuestionPrompt:
+    '''
+    The prompt for the AtomicTaskGenerator to get question.
+    '''
+    def __init__(self):
+        pass
+
+    def build_system_prompt(self) -> str:
         system_prompt = '''
   Please generate a question based on the content of the input identifier, a certain answer, and a certain relationship (this relationship is the relationship between the content of the file corresponding to the identifier and the given answer), such that
   The answer to this question is the input answer.
@@ -641,15 +597,22 @@ Given subset: {identifier}\n
 '''
         return system_prompt
     
-    def get_question_prompt(self, new_id, relation, identifier) -> str:
+    def build_prompt(self, new_id, relation, identifier) -> str:
         prompt = f'''
                 Certain answer: {identifier}\n
                 Identifier: {new_id}\n
                 Relationship: {relation}\n
 '''
         return prompt
-    
-    def llm_answer_prompt(self, input) -> str:
+
+class DepthQAGeneratorAnswerPrompt:
+    '''
+    The prompt for the AtomicTaskGenerator to get LLM's answer.
+    '''
+    def __init__(self):
+        pass
+
+    def build_prompt(self, input) -> str:
         prompt = f'''
 Please solve the following problem and return as many relevant results as possible that "
 "meet the query requirements. Ensure responses are as concise as possible, focusing only "
@@ -662,7 +625,14 @@ Please solve the following problem and return as many relevant results as possib
         
         return prompt
 
-    def recall_system_prompt(self) -> str:
+class DepthQAGeneratorRecallScorePrompt:
+    '''
+    The prompt for the AtomicTaskGenerator to get recall score.
+    '''
+    def __init__(self):
+        pass
+
+    def build_system_prompt(self) -> str:
         system_prompt = '''
 Evaluate the consistency of the core content of the golden answer and the other answer
   # Scoring Criteria 
@@ -695,7 +665,7 @@ Evaluate the consistency of the core content of the golden answer and the other 
 '''
         return system_prompt
     
-    def recall_prompt(self, golden_answer, llm_answer) -> str:
+    def build_prompt(self, golden_answer, llm_answer) -> str:
         prompt = f'''
     The inputs are as follows:
     Golden Answer: {golden_answer}
@@ -703,14 +673,14 @@ Evaluate the consistency of the core content of the golden answer and the other 
         '''
         return prompt
     
-class WidthQAGeneratorPrompt:
+class WidthQAGeneratorMergePrompt:
     '''
-    The prompt for the AtomicTaskGenerator.
+    The prompt for the WidthQAGenerator to merge prompt.
     '''
     def __init__(self):
         pass
     
-    def merge_prompt_system_prompt(self) -> str:
+    def build_system_prompt(self) -> str:
         system_prompt = '''
         # Comprehensive Task Guide for Research Questions
 
@@ -757,15 +727,22 @@ class WidthQAGeneratorPrompt:
         '''
         return system_prompt
     
-    def merge_prompt_prompt(self, input) -> str:
+    def build_prompt(self, input) -> str:
         prompt = f'''
         Here are the base questions to process:
     {json.dumps(input, indent=2, ensure_ascii=False)}
     Each dictionary contains: index (unique ID), question (original question), and content_identifier (identifier).
 '''
         return prompt
-    
-    def check_origin_system_prompt(self) -> str:
+
+class WidthQAGeneratorOriginCheckPrompt:
+    '''
+    The prompt for the WidthQAGenerator to check origin.
+    '''
+    def __init__(self):
+        pass
+
+    def build_system_prompt(self) -> str:
         system_prompt = '''
     Task Instructions:
   Verify if complex questions can be properly decomposed into their original questions.
@@ -804,7 +781,7 @@ class WidthQAGeneratorPrompt:
 '''
         return system_prompt
     
-    def check_origin_prompt(self, input) -> str:
+    def build_prompt(self, input) -> str:
         prompt = f'''
     Here are the base questions to process:
     {json.dumps(input, indent=2, ensure_ascii=False)}
@@ -812,8 +789,15 @@ class WidthQAGeneratorPrompt:
     and original_questions (list of original questions).
 '''
         return prompt
-    
-    def question_verify_system_prompt(self) -> str:
+
+class WidthQAGeneratorQuestionVerifyPrompt:
+    '''
+    The prompt for the WidthQAGenerator to verify question.
+    '''
+    def __init__(self):
+        pass
+
+    def build_system_prompt(self) -> str:
         system_prompt = '''
   Answer the provided complex research questions based on your knowledge.
   For each question, provide your answer.
@@ -833,14 +817,21 @@ class WidthQAGeneratorPrompt:
 '''
         return system_prompt
     
-    def question_verify_prompt(self, input) -> str:
+    def build_prompt(self, input) -> str:
         prompt = f'''
     Please answer these research questions:
     {json.dumps(input, indent=2, ensure_ascii=False)}
 '''
         return prompt
-    
-    def llm_answer_prompt(self, input) -> str:
+
+class WidthQAGeneratorAnswerPrompt:
+    '''
+    The prompt for the WidthQAGenerator to get LLM's answer.
+    '''
+    def __init__(self):
+        pass
+
+    def build_prompt(self, input) -> str:
         prompt = f'''
 Please solve the following problem and return as many relevant results as possible that "
 "meet the query requirements. Ensure responses are as concise as possible, focusing only "
@@ -853,7 +844,14 @@ Please solve the following problem and return as many relevant results as possib
         
         return prompt
 
-    def recall_system_prompt(self) -> str:
+class WidthQAGeneratorRecallScorePrompt:
+    '''
+    The prompt for the WidthQAGenerator to get recall score.
+    '''
+    def __init__(self):
+        pass
+
+    def build_system_prompt(self) -> str:
         system_prompt = '''
 Evaluate the consistency of the core content of the golden answer and the other answer
   # Scoring Criteria 
@@ -886,7 +884,7 @@ Evaluate the consistency of the core content of the golden answer and the other 
 '''
         return system_prompt
     
-    def recall_prompt(self, golden_answer, llm_answer) -> str:
+    def build_prompt(self, golden_answer, llm_answer) -> str:
         prompt = f'''
     The inputs are as follows:
     Golden Answer: {golden_answer}
