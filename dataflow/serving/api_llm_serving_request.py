@@ -17,13 +17,12 @@ class APILLMServing_request(LLMServingABC):
         return
     
     def __init__(self, 
-                api_url: str = "https://api.openai.com/v1/chat/completions",
-                key_name_of_api_key: str = "DF_API_KEY",
-                model_name: str = "gpt-4o",
-                max_workers: int = 10,
-                max_retries: int = 5,
-                temperature: float = 0.0
-                ):
+                 api_url: str = "https://api.openai.com/v1/chat/completions",
+                 key_name_of_api_key: str = "DF_API_KEY",
+                 model_name: str = "gpt-4o",
+                 max_workers: int = 10,
+                 max_retries: int = 5
+                 ):
         # Get API key from environment variable or config
         self.api_url = api_url
         self.model_name = model_name
@@ -44,7 +43,6 @@ class APILLMServing_request(LLMServingABC):
             embedding = response['data'][0]['embedding']
             return embedding
         content = response['choices'][0]['message']['content']
-        
         if re.search(r'<think>.*</think>.*<answer>.*</answer>', content):
             return content
         
@@ -67,8 +65,7 @@ class APILLMServing_request(LLMServingABC):
                     {"role": "system", "content": system_info},
                     {"role": "user", "content": messages}
                 ],
-                "response_format" : self.response_format,
-                "temperature": self.temperature,
+                "temperature": 0.0   
             })
 
             headers = {
@@ -88,26 +85,25 @@ class APILLMServing_request(LLMServingABC):
             logging.error(f"API request error: {e}")
             return None
 
-    def _api_chat_with_id(self, id, payload, model, is_embedding: bool = False, response_format: str = {}):
+    def _api_chat_with_id(self, id, payload, model, is_embedding: bool = False):
             try:
                 if is_embedding:
-                    payload = {
+                    payload = json.dumps({
                         "model": model,
                         "input": payload
-                    }
+                    })
                 else:
-                    payload = {
+                    payload = json.dumps({
                         "model": model,
-                        "messages": payload,
-                        "response_format": response_format
-                    }
+                        "messages": payload
+                    })
                 headers = {
                     'Authorization': f"Bearer {self.api_key}",
                     'Content-Type': 'application/json',
                     'User-Agent': 'Apifox/1.0.0 (https://apifox.com)'
                 }
                 # Make a POST request to the API
-                response = requests.post(self.api_url, headers=headers, json=payload, timeout=1800)
+                response = requests.post(self.api_url, headers=headers, data=payload, timeout=1800)
                 if response.status_code == 200:
                     # logging.info(f"API request successful")
                     response_data = response.json()
@@ -120,17 +116,16 @@ class APILLMServing_request(LLMServingABC):
                 logging.error(f"API request error: {e}")
                 return id, None
         
-    def _api_chat_id_retry(self, id, payload, model, is_embedding : bool = False, response_format : str = {}):
+    def _api_chat_id_retry(self, id, payload, model, is_embedding : bool = False):
         for i in range(self.max_retries):
-            id, response = self._api_chat_with_id(id, payload, model, is_embedding, response_format)
+            id, response = self._api_chat_with_id(id, payload, model, is_embedding)
             if response is not None:
                 return id, response
             time.sleep(2**i)
         return id, None    
     
     def generate_from_input(self, 
-                            user_inputs: list[str], system_prompt: str = "You are a helpful assistant",
-                            response_format: str = {} 
+                            user_inputs: list[str], system_prompt: str = "You are a helpful assistant"
                             ) -> list[str]:
 
 
@@ -148,8 +143,7 @@ class APILLMServing_request(LLMServingABC):
                         {"role": "user", "content": question}
                         ],
                     model = self.model_name,
-                    id = idx,
-                    response_format = response_format
+                    id = idx
                 ) for idx, question in enumerate(user_inputs)
             ]
             for future in tqdm(as_completed(futures), total=len(futures), desc="Generating......"):

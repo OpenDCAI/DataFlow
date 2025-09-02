@@ -47,7 +47,6 @@ class ExtractSmiles():
                 api_url="https://api.openai.com/v1/chat/completions",
                 model_name="gemini-2.5-flash",
                 max_workers=200,
-                temperature = 0.0,
         )
         self.prompt_smile_extractor = ExtractSmilesFromText(
             llm_serving = self.llm_serving, 

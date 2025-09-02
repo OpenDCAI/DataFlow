@@ -16,12 +16,11 @@ class ExtractSmilesFromText(OperatorABC):
     '''
     Answer Generator is a class that generates answers for given questions.
     '''
-    def __init__(self, llm_serving: LLMServingABC, prompt_template = None, response_format : str = {}):
+    def __init__(self, llm_serving: LLMServingABC, prompt_template = None):
         self.logger = get_logger()
         self.llm_serving = llm_serving
         self.prompt_template = prompt_template
         self.json_failures = 0
-        self.response_format = response_format
     
     @staticmethod
     def get_desc(lang: str = "zh"):
@@ -161,7 +160,7 @@ class ExtractSmilesFromText(OperatorABC):
         # Generate the text using the model
         try:
             self.logger.info("Generating text using the model...")
-            generated_outputs = self.llm_serving.generate_from_input(llm_inputs, response_format = self.response_format)
+            generated_outputs = self.llm_serving.generate_from_input(llm_inputs)
             self.logger.info("Text generation completed.")
         except Exception as e:
             self.logger.error(f"Error during text generation: {e}")
