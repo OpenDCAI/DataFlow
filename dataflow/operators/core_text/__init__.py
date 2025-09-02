@@ -4,8 +4,12 @@ if TYPE_CHECKING:
     from .generate.prompted_generator import PromptedGenerator
     from .generate.paired_prompted_generator import PairedPromptedGenerator
     from .generate.random_domain_knowledge_row_generator import RandomDomainKnowledgeRowGenerator
+    from .generate.doc2prompt_generator import Doc2PromptGenerator
+    from .generate.doc2qa_generator import Doc2QAGenerator
+    from .eval.doc2qa_eval import Doc2QAEvaluator
     from .eval.prompted_eval import PromptedEvaluator
     from .filter.prompted_filter import PromptedFilter
+    from .filter.content_chooser import ContentChooser
     from .refine.prompted_refiner import PromptedRefiner
 else:
     import sys

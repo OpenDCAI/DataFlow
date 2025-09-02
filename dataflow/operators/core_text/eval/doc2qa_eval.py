@@ -8,7 +8,7 @@ from dataflow.core import OperatorABC
 from dataflow.core import LLMServingABC
 
 @OPERATOR_REGISTRY.register()
-class QAScorer(OperatorABC):
+class Doc2QAEvaluator(OperatorABC):
     '''
     Answer Generator is a class that generates answers for given questions.
     '''

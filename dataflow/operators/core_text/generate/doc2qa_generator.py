@@ -7,7 +7,7 @@ from dataflow.core import OperatorABC
 from dataflow.core import LLMServingABC
 
 @OPERATOR_REGISTRY.register()
-class QAGenerator:
+class Doc2QAGenerator:
     '''
     SeedQAGenerator is a class that uses LLMs to generate QA pairs based on seed input.
     '''

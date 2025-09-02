@@ -8,7 +8,7 @@ from dataflow.core import OperatorABC
 from dataflow.core import LLMServingABC
 
 @OPERATOR_REGISTRY.register()
-class AutoPromptGenerator(OperatorABC):
+class Doc2PromptGenerator(OperatorABC):
     '''
     AutoPromptGenerator is a class that generates prompts for given document fragments to generate seed QA pairs.
     '''
