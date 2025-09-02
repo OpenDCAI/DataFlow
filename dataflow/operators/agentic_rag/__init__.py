@@ -4,7 +4,7 @@ if TYPE_CHECKING:
     # filter
 
     # eval
-    from eval.f1_scorer import AgenticRAGQAF1Evaluator
+    from eval.f1_eval import AgenticRAGQAF1Evaluator
     # generate
     from generate.atomic_task_generator import AgenticRAGAtomicTaskGenerator
     from generate.depth_qa_generator import AgenticRAGDepthQAGenerator
