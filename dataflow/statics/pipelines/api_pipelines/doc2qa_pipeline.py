@@ -1,11 +1,8 @@
-from dataflow.operators.agentic_rag import (
-    AutoPromptGenerator,
-    QAGenerator,
-    QAScorer
-)
-
-from dataflow.operators.agentic_rag import (
-    ContentChooser
+from dataflow.operators.core_text import (
+    Doc2PromptGenerator,
+    Doc2QAEvaluator,
+    Doc2QAGenerator,
+    KCenterGreedyFilter
 )
 
 from dataflow.utils.storage import FileStorage
@@ -35,13 +32,13 @@ class AgenticRAG_APIPipeline():
                     max_workers=100
         )
 
-        self.content_chooser_step1 = ContentChooser(embedding_serving=embedding_serving, num_samples=5, method="random")
+        self.content_chooser_step1 = KCenterGreedyFilter(embedding_serving=embedding_serving, num_samples=5)
 
-        self.prompt_generator_step2 = AutoPromptGenerator(self.llm_serving)
+        self.doc2prompt_generator_step2 = Doc2PromptGenerator(self.llm_serving)
 
-        self.qa_generator_step3 = QAGenerator(self.llm_serving)
+        self.doc2qa_generator_step3 = Doc2QAGenerator(self.llm_serving)
 
-        self.qa_scorer_step4 = QAScorer(self.llm_serving)
+        self.doc2qa_scorer_step4 = Doc2QAEvaluator(self.llm_serving)
         
     def forward(self):
 
@@ -50,12 +47,12 @@ class AgenticRAG_APIPipeline():
             input_key = "text"
         )
 
-        self.prompt_generator_step2.run(
+        self.doc2prompt_generator_step2.run(
             storage = self.storage.step(),
             input_key = "text"
         )
 
-        self.qa_generator_step3.run(
+        self.doc2qa_generator_step3.run(
             storage = self.storage.step(),
             input_key="text",
             output_prompt_key="generated_prompt",
@@ -63,7 +60,7 @@ class AgenticRAG_APIPipeline():
             output_answer_key="generated_answer"
         )
 
-        self.qa_scorer_step4.run(
+        self.doc2qa_scorer_step4.run(
             storage = self.storage.step(),
             input_question_key="generated_question",
             input_answer_key="generated_answer",
