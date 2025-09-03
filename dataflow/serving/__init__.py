@@ -7,6 +7,8 @@ from .LiteLLMServing import LiteLLMServing
 from .LocalHostLLMAPIServing import LocalHostLLMAPIServing_vllm
 from .LocalModelLALMServing import LocalModelLALMServing_vllm
 
+from .LocalSentenceLLMServing import LocalEmbeddingServing
+
 __all__ = [
     "APILLMServing_request",
     "LocalModelLLMServing_vllm",

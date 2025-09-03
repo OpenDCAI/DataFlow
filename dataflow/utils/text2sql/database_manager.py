@@ -8,6 +8,7 @@ import os
 from dataflow import get_logger
 from .base import DatabaseInfo, QueryResult
 from .database_connector.sqlite_connector import SQLiteConnector
+from .database_connector.sqlite_vec_connector import SQLiteVecConnector
 from .database_connector.mysql_connector import MySQLConnector
 
 
@@ -87,6 +88,7 @@ class DatabaseManager:
     CONNECTORS = {
         'sqlite': SQLiteConnector,
         'mysql': MySQLConnector,
+        'sqlite-vec': SQLiteVecConnector,
         # Add new database types here
         # 'postgres': PostgresConnector
     }
