@@ -9,7 +9,7 @@ if TYPE_CHECKING:
     from .eval.doc2qa_eval import Doc2QAEvaluator
     from .eval.prompted_eval import PromptedEvaluator
     from .filter.prompted_filter import PromptedFilter
-    from .filter.content_chooser import ContentChooser
+    from .filter.kcentergreedy_filter import KCenterGreedyFilter
     from .refine.prompted_refiner import PromptedRefiner
 else:
     import sys

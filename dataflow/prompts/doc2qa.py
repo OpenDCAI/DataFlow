@@ -1,14 +1,14 @@
 import json
 
-class AutoPromptGeneratorPrompt:
+class Doc2QAAutoPromptGeneratorPrompt:
     '''
     The prompt for the AutoPromptGenerator.
     '''
     def __init__(self):
         pass
 
-    def auto_prompt_generator_prompt(self, seed_data: str) -> str:
-        system_prompt = f'''You will be given a piece of seed data, which may consist of a paragraph, dialogue, or any other form of text containing potential question-answer information.
+    def build_prompt(self, seed_data: str) -> str:
+        prompt = f'''You will be given a piece of seed data, which may consist of a paragraph, dialogue, or any other form of text containing potential question-answer information.
 Your task is to analyze this seed data carefully and generate a clear and effective prompt that can be used to instruct a language model to extract a single high-quality question-answer (QA) pair suitable for reinforcement learning (RL) training from this piece of data.
 
 The generated prompt should:
@@ -28,18 +28,18 @@ Don't repeat the seed data in your output.
 Don't output the formatting instructions, just the prompt itself.
 Here is the seed data you need to analyze and generate a prompt for:\n{seed_data}'''
 
-        return system_prompt
+        return prompt
 
 
-class QAScorerPrompt:
+class Doc2QAQuestionQualityPrompt:
     '''
-    The prompt for the RAG scorer.
+    The prompt for the question quality scorer.
     '''
     def __init__(self):
         pass
 
-    def question_quality_prompt(self) -> str:
-        system_prompt = '''You are an expert question quality evaluator. Given a single question from a QA dataset, your job is to assess the **clarity and meaningfulness** of the question. Specifically, judge whether the question is clearly defined, unambiguous, and worth asking in a real-world or task-specific context.
+    def build_prompt(self) -> str:
+        prompt = '''You are an expert question quality evaluator. Given a single question from a QA dataset, your job is to assess the **clarity and meaningfulness** of the question. Specifically, judge whether the question is clearly defined, unambiguous, and worth asking in a real-world or task-specific context.
 
 Assign a score from 1 to 5 based on the following rubric:
 5 = Very clear and meaningful question, well-posed  
@@ -55,10 +55,17 @@ Output format:
 
 '''
 
-        return system_prompt
+        return prompt
 
-    def answer_alignment_prompt(self) -> str:
-        system_prompt = '''You are a response alignment evaluator. Your task is to assess whether a given answer **directly and clearly addresses the given question**.
+class Doc2QAAnswerAlignmentPrompt:
+    '''
+    The prompt for the RAG answer alignment scorer.
+    '''
+    def __init__(self):
+        pass
+
+    def build_prompt(self) -> str:
+        prompt = '''You are a response alignment evaluator. Your task is to assess whether a given answer **directly and clearly addresses the given question**.
 
 Assign a score from 1 to 5 based on the following rubric:
 5 = Fully and directly answers the question  
@@ -74,10 +81,17 @@ Output format:
 
 '''
 
-        return system_prompt
+        return prompt
 
-    def answer_verifiability_prompt(self) -> str:
-        system_prompt = '''You are an evaluator tasked with assessing how **easily verifiable** an answer is. You must determine whether the correctness of the answer can be **conveniently and unambiguously judged** — for example, whether it is fact-based, precise, and not subjective or vague.
+class Doc2QAAnswerVerifiabilityPrompt:
+    '''
+    The prompt for the RAG answer verifiability scorer.
+    '''
+    def __init__(self):
+        pass
+
+    def build_prompt(self) -> str:
+        prompt = '''You are an evaluator tasked with assessing how **easily verifiable** an answer is. You must determine whether the correctness of the answer can be **conveniently and unambiguously judged** — for example, whether it is fact-based, precise, and not subjective or vague.
 
 Assign a score from 1 to 5 based on the following rubric:
 5 = Very easy to verify; answer is objective, concrete, and unambiguous  
@@ -93,10 +107,17 @@ Output format:
 
 '''
 
-        return system_prompt
+        return prompt
 
-    def downstream_value_prompt(self) -> str:
-        system_prompt = '''You are a task relevance evaluator. Given a QA pair, assess how well this data point could **support a downstream task** such as classification, dialogue, retrieval, summarization, or knowledge grounding.
+class Doc2QADownstreamValuePrompt:
+    '''
+    The prompt for the RAG  downstream value scorer.
+    '''
+    def __init__(self):
+        pass
+
+    def build_prompt(self) -> str:
+        prompt = '''You are a task relevance evaluator. Given a QA pair, assess how well this data point could **support a downstream task** such as classification, dialogue, retrieval, summarization, or knowledge grounding.
 
 Assign a score from 1 to 5 based on the following rubric:
 5 = Highly valuable for downstream tasks; question and answer are precise and informative  
@@ -112,4 +133,4 @@ Output format:
 
 '''
 
-        return system_prompt
+        return prompt

@@ -2,7 +2,7 @@ from dataflow.operators.core_text import (
     Doc2PromptGenerator,
     Doc2QAEvaluator,
     Doc2QAGenerator,
-    ContentChooser
+    KCenterGreedyFilter
 )
 
 from dataflow.utils.storage import FileStorage
@@ -32,7 +32,7 @@ class AgenticRAG_APIPipeline():
                     max_workers=100
         )
 
-        self.content_chooser_step1 = ContentChooser(embedding_serving=embedding_serving, num_samples=5, method="random")
+        self.content_chooser_step1 = KCenterGreedyFilter(embedding_serving=embedding_serving, num_samples=5)
 
         self.doc2prompt_generator_step2 = Doc2PromptGenerator(self.llm_serving)
 
