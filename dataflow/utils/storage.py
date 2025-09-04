@@ -102,6 +102,16 @@ class FileStorage(DataFlowStorage):
         else:
             return os.path.join(self.cache_path, f"{self.file_name_prefix}_step{step}.{self.cache_type}")
 
+    def _get_eval_cache_file_path(self, step) -> str:
+        if step == -1:
+            self.logger.error("You must call storage.step() before reading or writing data. Please call storage.step() first for each operator step.")  
+            raise ValueError("You must call storage.step() before reading or writing data. Please call storage.step() first for each operator step.")
+        if step == 0:
+            # If it's the first step, use the first entry file name
+            return os.path.join(self.first_entry_file_name)
+        else:
+            return os.path.join(self.cache_path, f"eval_{self.file_name_prefix}_step{step}.{self.cache_type}")
+
     def step(self):
         self.operator_step += 1
         return copy.copy(self) # TODO if future maintain an object in memory, we need to apply a deepcopy (except the dataframe object during copy to avoid OOM)
@@ -276,6 +286,52 @@ class FileStorage(DataFlowStorage):
         
         return file_path
 
+    def write_eval(self, data: Any) -> Any:
+        """
+        Write evaluation info to current file managed by storage.
+        data: Any, the data to write, it should be a dataframe, List[dict], etc.
+        """
+        def clean_surrogates(obj):
+            """递归清理数据中的无效Unicode代理对字符"""
+            if isinstance(obj, str):
+                # 替换无效的Unicode代理对字符（如\udc00）
+                return obj.encode('utf-8', 'replace').decode('utf-8')
+            elif isinstance(obj, dict):
+                return {k: clean_surrogates(v) for k, v in obj.items()}
+            elif isinstance(obj, list):
+                return [clean_surrogates(item) for item in obj]
+            elif isinstance(obj, (int, float, bool)) or obj is None:
+                # 数字、布尔值和None直接返回
+                return obj
+            else:
+                # 其他类型（如自定义对象）尝试转为字符串处理
+                try:
+                    return clean_surrogates(str(obj))
+                except:
+                    # 如果转换失败，返回原对象或空字符串（根据需求选择）
+                    return obj
+
+        # 转换数据为DataFrame
+        if isinstance(data, list):
+            if len(data) > 0 and isinstance(data[0], dict):
+                # 清洗列表中的每个字典
+                cleaned_data = [clean_surrogates(item) for item in data]
+                dataframe = pd.DataFrame(cleaned_data)
+            else:
+                raise ValueError(f"Unsupported data type: {type(data[0])}")
+        elif isinstance(data, pd.DataFrame):
+            # 对DataFrame的每个元素进行清洗
+            dataframe = data.applymap(clean_surrogates)
+        else:
+            raise ValueError(f"Unsupported data type: {type(data)}")
+
+        file_path = self._get_eval_cache_file_path(self.operator_step + 1)
+        os.makedirs(os.path.dirname(file_path), exist_ok=True)
+        self.logger.success(f"Writing evaluation data to {file_path} with type of json")
+        dataframe.to_json(file_path, orient="records", force_ascii=False, indent=2)
+        
+        return file_path
+    
 from threading import Lock
 import math
 
