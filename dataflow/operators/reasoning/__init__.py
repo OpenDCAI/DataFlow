@@ -14,7 +14,6 @@ if TYPE_CHECKING:
     from .eval.category_info import CategoryInfo
     from .eval.difficulty_info import DifficultyInfo
     from .eval.token_info import ToKenInfo
-    from .eval.bench_calculator import BenchCalculator
     
     # filter
     from .filter.answer_formatter_filter import AnswerFormatterFilter

@@ -1,0 +1,219 @@
+from dataflow.utils.reasoning.AnswerExtraction import StringCleaner, UnitTextManager, AnswerExtractor
+from dataflow.utils.registry import OPERATOR_REGISTRY
+from dataflow.utils.storage import DataFlowStorage
+from dataflow.core import LLMServingABC
+from dataflow.core import OperatorABC
+
+from math_verify import parse, verify
+from dataflow import get_logger
+from typing import Literal
+import pandas as pd
+import numpy as np
+import re
+
+@OPERATOR_REGISTRY.register()
+class BenchEvaluator(OperatorABC):
+    def __init__(self,
+                compare_method: Literal["match", "semantic"] = "match",
+                system_prompt: str = "You are a helpful assistant specialized in evaluating answer correctness.",
+                llm_serving: LLMServingABC = None,
+                prompt_template = None
+                ):
+        
+        self.compare_method = compare_method
+        self.empty_responses_count = 0  # 添加空响应计数器
+        
+        if compare_method == "match":
+            self.compare = self.math_verify_compare
+            unit_manager = UnitTextManager()
+            string_cleaner = StringCleaner(unit_manager)
+            self.answer_extractor = AnswerExtractor(string_cleaner)
+        else:
+            if prompt_template is None:
+                prompt_template = AnswerJudgePrompt()
+            self.prompt_template = prompt_template
+            self.system_prompt = system_prompt
+            self.llm_serving = llm_serving
+            
+        self.logger = get_logger()
+    
+    def math_verify_compare(self, answer, ground_truth):
+        try:
+            return verify(parse(str(ground_truth)), parse(str(answer)))
+        except:
+            try:
+                return verify(parse(ground_truth), parse(answer))
+            except:
+                return False
+
+    def ResolveResponse(self, response):
+        # 检查空响应
+        if response is None or (isinstance(response, str) and response.strip() == ''):
+            self.empty_responses_count += 1
+            return False
+        try:
+            pattern = re.compile(r'"judgement_result"\s*:\s*(true|false)', re.IGNORECASE)
+            match = pattern.search(response)
+            result_value = None
+            if match:
+                result_value = match.group(1).lower()
+            else:
+                # 备用解析逻辑，检查响应中是否包含true或false
+                if "true" in response.lower():
+                    result_value = "true"
+                else:
+                    result_value = "false"
+            if result_value == "true":
+                return True
+            else:
+                return False
+        except Exception as e:
+            self.logger.error(f"Response format error: {response}. Error: {e}")
+            return False
+        
+    @staticmethod
+    def get_desc(lang: str = "zh"):
+        if lang == "zh":
+            return (
+                "该算子用于对比预测答案与标准答案的匹配度，支持精确匹配和数学验证两种方式。\n\n"
+                "输入参数：\n"
+                "- input_test_answer_key：预测答案字段名\n"
+                "- input_gt_answer_key：标准答案字段名\n"
+                "- compare_method：比较方法（exact/math_verify）\n\n"
+                "输出参数：\n"
+                "- 匹配成功返回1，否则返回0"
+            )
+        elif lang == "en":
+            return (
+                "This operator compares predicted answers against ground truth using exact or mathematical verification.\n\n"
+                "Input Parameters:\n"
+                "- test_answer_key: Predicted answer field\n"
+                "- gt_answer_key: Ground truth field\n"
+                "- compare_method: Comparison method (exact/math_verify)\n\n"
+                "Output Parameters:\n"
+                "- Returns 1 for matches, 0 otherwise"
+            )
+        else:
+            return "AnswerGroundTruthFilter performs answer validation"
+        
+    def check_column(self, required_columns: list[str], dataframe: pd.DataFrame):
+        for column in required_columns:
+            if column not in dataframe.columns:
+                self.logger.error(f"Required column '{column}' not found in dataframe")
+                return False
+        return True
+            
+    def statistic(self, file_name_prefix: str, dataframe: pd.DataFrame, compare_method: Literal["match", "semantic"]):
+        total_samples = len(dataframe)
+        valid_samples = len(dataframe) - self.empty_responses_count
+        matched_samples = sum(dataframe['answer_match_result'])
+        accuracy = matched_samples / valid_samples if valid_samples > 0 else 0
+        
+        # 创建统计信息字典
+        stats = {
+            "bench_name_or_prefix": file_name_prefix,
+            "total_samples": total_samples,
+            "valid_samples": valid_samples,
+            "matched_samples": matched_samples,
+            "accuracy": float(accuracy),  # 确保可以被JSON序列化
+            "empty_responses_count": self.empty_responses_count,
+            "compare_method": compare_method
+        }
+        
+        # 将字典转换为DataFrame
+        stats_df = pd.DataFrame([stats])
+        
+        return stats_df
+        
+    def run(
+            self,
+            storage:DataFlowStorage,
+            input_test_answer_key: str = "generated_cot",
+            input_gt_answer_key: str = "golden_answer",
+            input_question_key: str = None,
+            ) -> list:
+
+        self.test_answer_key = input_test_answer_key
+        self.gt_answer_key = input_gt_answer_key
+        self.question_key = input_question_key
+        
+        dataframe = storage.read("dataframe")
+        dataframe['answer_match_result'] = False
+        answers = dataframe[self.test_answer_key]
+        ground_truths = dataframe[self.gt_answer_key]
+    
+        if self.compare_method == "match":
+            if self.check_column(
+                required_columns=[input_test_answer_key,input_gt_answer_key],
+                dataframe=dataframe
+            ) is False:
+                return required_columns
+            
+            for i in range(len(answers)):
+                final_answer =  self.answer_extractor.extract_answer(answers[i], None)
+                if self.compare(final_answer, ground_truths[i]):
+                    dataframe.at[i, 'answer_match_result'] = True
+                else:
+                    dataframe.at[i, 'answer_match_result'] = False
+                    
+            output_file = storage.write(dataframe)
+            
+            # 生成统计信息并写入JSON文件
+            stats = self.statistic(storage.file_name_prefix, dataframe, self.compare_method)
+            stats_file = storage.write_eval(stats)
+            
+            return [self.test_answer_key, self.gt_answer_key, 'answer_match_result']
+        else:
+            if self.check_column(
+                required_columns=[input_test_answer_key,input_gt_answer_key, input_question_key],
+                dataframe=dataframe
+            ) is False:
+                return required_columns
+            
+            empty_reference_mask = dataframe[input_gt_answer_key].isna() | (dataframe[input_gt_answer_key] == '')
+            skipped_rows = dataframe[empty_reference_mask]
+            valid_rows = dataframe[~empty_reference_mask]
+            skipped_count = len(skipped_rows)
+            
+            if len(valid_rows) == 0:
+                self.logger.warning("No valid samples with reference answers found. All samples skipped.")
+                if self.keep_all_samples:
+                    output_file = storage.write(dataframe)  # 保留所有行，但answer_match_result都为False
+                else:
+                    output_file = storage.write(pd.DataFrame(columns=dataframe.columns))  # 不保留任何行
+                self.logger.info(f"Dataframe saved to {output_file}. Skipped {skipped_count} samples due to missing reference answers.")
+                return required_columns + ['answer_match_result']
+            
+            # 只对有参考答案的行构建提示词并调用LLM
+            inputs = [self.prompt_template.build_prompt(
+                question=row[input_question_key],
+                answer=row[input_test_answer_key],
+                reference_answer=row[input_gt_answer_key]
+            ) for _, row in valid_rows.iterrows()]
+            
+            responses = self.llm_serving.generate_from_input(user_inputs=inputs, system_prompt=self.system_prompt)
+            results = [self.ResolveResponse(response) for response in responses]
+            
+            # 创建结果掩码，与valid_rows长度相同
+            result_mask = np.array(results, dtype=bool)
+            
+            # 更新有效行的answer_match_result
+            valid_indices = valid_rows.index
+            for i, idx in enumerate(valid_indices):
+                dataframe.at[idx, 'answer_match_result'] = results[i]
+                
+            output_file = storage.write(dataframe)
+            
+            # 生成统计信息并写入JSON文件
+            stats = self.statistic(storage.file_name_prefix, dataframe, self.compare_method)
+            stats_file = storage.write_eval(stats)
+            
+            self.logger.info(f"Evaluated data saved to {output_file}")
+            self.logger.info(f"Statistics saved to {stats_file}")
+            
+            # 重置空响应计数器
+            self.empty_responses_count = 0
+            
+            return [input_test_answer_key, input_gt_answer_key, input_question_key, 'answer_match_result']
+
+        

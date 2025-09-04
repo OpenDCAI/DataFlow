@@ -1,8 +1,5 @@
-from dataflow.operators.reasoning import (
-    AnswerGenerator,
-    AnswerGroundTruthFilter,
-    BenchCalculator
-)
+from dataflow.operators.reasoning import AnswerGenerator
+from dataflow.operators.core_text import BenchEvaluator
 from dataflow.serving import APILLMServing_request, LocalModelLLMServing_vllm
 from dataflow.prompts.reasoning.diy import DiyAnswerGeneratorPrompt
 from dataflow.utils.storage import FileStorage
@@ -11,12 +8,12 @@ from dataflow.core import LLMServingABC
 import os
 
 """ 3 steps for evaluating your own model using personal bench """
-    # Step 1, your own prompt
+# Step 1, your own prompt
 DIY_PROMPT_ANSWER ="""<|im_start|>system\nPlease reason step by step, and put your final answer within \\boxed{{}}.<|im_end|>\n
 <|im_start|>user\n{question}<|im_end|>\n
 <|im_start|>assistant\n"""
 
-    # Step 2, your own model path, support multi-model path
+# Step 2, your own model path, support multi-model path
 model_paths = [
     "Qwen/Qwen2.5-7B-Instruct",
 ]
@@ -24,16 +21,16 @@ model_paths = [
 prefixs = [os.path.basename(path) for path in model_paths]
 
 for prefix, model_path in zip(prefixs, model_paths):
-    # Step 3, your own bench path, prefix is according to model_path
+# Step 3, your own bench path, prefix is according to model_path
     Benchs = [
         {   # every data must include: "question", "answer"
-            "file_path": "../example_data/BenchEvalPipeline/test.jsonl",
+            "file_path": "/mnt/public/data/scy/DataFlow/dataflow/example/BenchEvalPipeline/test.jsonl",
             "cache_path": f"../bench_result/{prefix}_test"
         },
     ]
 ###################################################
 
-class GeneralReasoningPipeline():
+class BenchEvalPipeline():
     def __init__(self, first_entry_file_name: str, cache_path: str,  llm_serving: LLMServingABC = None):
         self.storage = FileStorage(
             first_entry_file_name=first_entry_file_name,
@@ -47,9 +44,7 @@ class GeneralReasoningPipeline():
             prompt_template=DiyAnswerGeneratorPrompt(DIY_PROMPT_ANSWER)
         )
 
-        self.eval_step2 = AnswerGroundTruthFilter(compare_method="math_verify")
-        
-        self.eval_step3 = BenchCalculator()
+        self.eval_step2 = BenchEvaluator(compare_method="match")
         
     def forward(self):
 
@@ -63,10 +58,6 @@ class GeneralReasoningPipeline():
             input_test_answer_key="generated_cot",
             input_gt_answer_key="answer"
           )
-        self.eval_step3.run(
-            storage=self.storage.step(),
-            cache_path=self.storage.cache_path,
-        )
 
 if __name__ == "__main__":        
         # use vllm as LLM serving
@@ -77,7 +68,7 @@ if __name__ == "__main__":
         )
         
         for bench in Benchs:
-            pl = GeneralReasoningPipeline(
+            pl = BenchEvalPipeline(
                 first_entry_file_name=bench["file_path"],
                 cache_path=bench["cache_path"],
                 llm_serving=llm_serving
