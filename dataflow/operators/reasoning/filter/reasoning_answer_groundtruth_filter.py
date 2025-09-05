@@ -8,7 +8,7 @@ from math_verify import parse, verify
 import pandas as pd
 
 @OPERATOR_REGISTRY.register()
-class AnswerGroundTruthFilter(OperatorABC):
+class ReasoningAnswerGroundTruthFilter(OperatorABC):
     def __init__(self,
                 compare_method: Literal["math_verify", "exact"] = "math_verify"):
         

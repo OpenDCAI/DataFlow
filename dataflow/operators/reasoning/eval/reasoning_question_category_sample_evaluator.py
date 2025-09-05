@@ -12,7 +12,7 @@ from dataflow.utils.reasoning.CategoryFuzz import CategoryUtils
 from dataflow.core import LLMServingABC
 
 @OPERATOR_REGISTRY.register()
-class QuestionCategoryClassifier(OperatorABC):
+class ReasoningQuestionCategorySampleEvaluator(OperatorABC):
     def __init__(self, llm_serving: LLMServingABC = None):
         """
         Initialize the QuestionCategoryClassifier with the provided configuration.

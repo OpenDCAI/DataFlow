@@ -10,7 +10,7 @@ from dataflow.core import LLMServingABC
 from dataflow.utils.reasoning.AnswerExtraction import StringCleaner, UnitTextManager, AnswerExtractor
 
 @OPERATOR_REGISTRY.register()
-class PseudoAnswerGenerator(OperatorABC):
+class ReasoningPseudoAnswerGenerator(OperatorABC):
     '''
     Pseudo Answer Generator is a class that generates answers for given questions, then choose the most frequent answer.
     '''
