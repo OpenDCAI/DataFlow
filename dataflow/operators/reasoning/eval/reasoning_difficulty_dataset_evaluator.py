@@ -6,7 +6,7 @@ import pandas as pd
 
 
 @OPERATOR_REGISTRY.register()
-class DifficultyInfo(OperatorABC):
+class ReasoningDifficultyDatasetEvaluator(OperatorABC):
     def __init__(self):
         self.logger = get_logger()
         self.logger.info(f'Initializing {self.__class__.__name__}...')

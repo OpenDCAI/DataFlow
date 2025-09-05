@@ -1,16 +1,16 @@
 from dataflow.operators.reasoning import (
-    QuestionCategoryClassifier,
-    QuestionDifficultyClassifier,
-    QuestionGenerator,
-    AnswerGenerator,
+    ReasoningCategoryDatasetEvaluator,
+    ReasoningDifficultyDatasetEvaluator,
+    ReasoningQuestionGenerator,
+    ReasoningAnswerGenerator,
 )
 
 from dataflow.operators.reasoning import (
-    QuestionFilter,
-    AnswerFormatterFilter,
-    AnswerGroundTruthFilter,
-    AnswerTokenLengthFilter,
-    AnswerNgramFilter
+    ReasoningQuestionFilter,
+    ReasoningAnswerFormatterFilter,
+    ReasoningAnswerGroundTruthFilter,
+    ReasoningAnswerTokenLengthFilter,
+    ReasoningAnswerNgramFilter
 )
 
 from dataflow.prompts.reasoning.math import (
@@ -51,45 +51,45 @@ class ReasoningMath_APIPipeline():
         #         model_source="local"
         #     )
 
-        self.question_filter_step1 = QuestionFilter(
+        self.question_filter_step1 = ReasoningQuestionFilter(
             system_prompt="You are an expert in evaluating mathematical problems. Follow the user's instructions strictly and output your final judgment in the required JSON format.",
             llm_serving=self.llm_serving,
             prompt_template=MathQuestionFilterPrompt()
         )
-        self.question_gen_step2 =  QuestionGenerator(
+        self.question_gen_step2 =  ReasoningQuestionGenerator(
             num_prompts=3,
             llm_serving=self.llm_serving,
             prompt_template=MathQuestionSynthesisPrompt()
         )
-        self.question_filter_step3 = QuestionFilter(
+        self.question_filter_step3 = ReasoningQuestionFilter(
             system_prompt="You are an expert in evaluating mathematical problems. Follow the user's instructions strictly and output your final judgment in the required JSON format.",
             llm_serving=self.llm_serving,
             prompt_template=MathQuestionFilterPrompt()
         )
-        self.question_difficulty_classifier_step4 = QuestionDifficultyClassifier(
+        self.question_difficulty_classifier_step4 = ReasoningDifficultyDatasetEvaluator(
             llm_serving=self.llm_serving
         )
-        self.question_category_classifier_step5 = QuestionCategoryClassifier(
+        self.question_category_classifier_step5 = ReasoningCategoryDatasetEvaluator(
             llm_serving=self.llm_serving
         )
         ########################## branch ############################
         # self.answer_pipeline_root_step6 = AnswerPipelineRoot()
         ########################## answer ############################
-        self.answer_generator_step7 = AnswerGenerator(
+        self.answer_generator_step7 = ReasoningAnswerGenerator(
             llm_serving=self.llm_serving,
             prompt_template=MathAnswerGeneratorPrompt()
         )
         
-        self.answer_format_filter_step8 = AnswerFormatterFilter()
+        self.answer_format_filter_step8 = ReasoningAnswerFormatterFilter()
         
-        self.answer_token_length_filter_step9 = AnswerTokenLengthFilter(
+        self.answer_token_length_filter_step9 = ReasoningAnswerTokenLengthFilter(
             max_answer_token_length = 8192,
             tokenizer_dir = "Qwen/Qwen2.5-0.5B-Instruct"
         )
         
-        self.answer_groundtruth_filter_step10 = AnswerGroundTruthFilter()
+        self.answer_groundtruth_filter_step10 = ReasoningAnswerGroundTruthFilter()
         
-        self.answer_ngram_filter_step11 = AnswerNgramFilter(
+        self.answer_ngram_filter_step11 = ReasoningAnswerNgramFilter(
             min_score = 0.1,
             max_score = 1.0,
             ngrams = 5

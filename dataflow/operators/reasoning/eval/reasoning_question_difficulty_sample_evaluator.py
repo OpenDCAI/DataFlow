@@ -9,10 +9,10 @@ from dataflow.core import OperatorABC
 from dataflow.core import LLMServingABC
 
 @OPERATOR_REGISTRY.register()
-class QuestionDifficultyClassifier(OperatorABC):
+class ReasoningQuestionDifficultySampleEvaluator(OperatorABC):
     def __init__(self, llm_serving: LLMServingABC = None):
         """
-        Initialize the QuestionCategoryClassifier with the provided configuration.
+        Initialize the ReasoningCategoryDatasetEvaluator with the provided configuration.
         """
         self.logger = get_logger()
         self.prompts = MathQuestionDifficultyPrompt()
@@ -28,7 +28,7 @@ class QuestionDifficultyClassifier(OperatorABC):
                 "输入参数：\n"
                 "- eval_stage：评估阶段标识\n"
                 "- read_min/max_score：分数过滤阈值\n"
-                "- 其他参数同QuestionCategoryClassifier\n\n"
+                "- 其他参数同ReasoningCategoryDatasetEvaluator\n\n"
                 "输出参数：\n"
                 "- difficulty_score：数值型难度评分（1-10）"
             )
@@ -39,7 +39,7 @@ class QuestionDifficultyClassifier(OperatorABC):
                 "Input Parameters:\n"
                 "- eval_stage: Evaluation stage identifier\n"
                 "- read_min/max_score: Score filtering thresholds\n"
-                "- Other params same as QuestionCategoryClassifier\n\n"
+                "- Other params same as ReasoningCategoryDatasetEvaluator\n\n"
                 "Output Parameters:\n"
                 "- difficulty_score: Numerical difficulty rating (1-10)"
             )

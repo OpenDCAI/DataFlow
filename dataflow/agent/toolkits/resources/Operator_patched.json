@@ -5541,7 +5541,7 @@
     },
     {
       "node": 134,
-      "name": "QuestionCategoryClassifier",
+      "name": "ReasoningCategoryDatasetEvaluator",
       "description": "该算子用于对用户问题进行多级分类（主分类和子分类）。通过大语言模型对输入问题进行语义分析，输出分类编码结果。\n\n输入参数：\n- db_port/db_name/table_name：数据库连接参数（存储模式）\n- input_file/output_file：文件路径（文件模式）\n- input_key：输入数据中问题字段的键名\n- generator_type：模型调用方式（aisuite/request）\n\n输出参数：\n- classification_result：包含主分类和子分类的编码结果",
       "command": {
         "init": [
@@ -5575,8 +5575,8 @@
     },
     {
       "node": 135,
-      "name": "QuestionDifficultyClassifier",
-      "description": "该算子用于评估问题的难度等级。通过大语言模型分析问题复杂度，输出1-10级的难度评分。\n\n输入参数：\n- eval_stage：评估阶段标识\n- read_min/max_score：分数过滤阈值\n- 其他参数同QuestionCategoryClassifier\n\n输出参数：\n- difficulty_score：数值型难度评分（1-10）",
+      "name": "ReasoningDifficultyDatasetEvaluator",
+      "description": "该算子用于评估问题的难度等级。通过大语言模型分析问题复杂度，输出1-10级的难度评分。\n\n输入参数：\n- eval_stage：评估阶段标识\n- read_min/max_score：分数过滤阈值\n- 其他参数同ReasoningCategoryDatasetEvaluator\n\n输出参数：\n- difficulty_score：数值型难度评分（1-10）",
       "command": {
         "init": [
           {
@@ -9512,7 +9512,7 @@
     },
     {
       "node": 3,
-      "name": "QuestionDifficultyClassifier",
+      "name": "ReasoningDifficultyDatasetEvaluator",
       "type": "generator",
       "description": "为每个问题确定一个难度分数标签",
       "input": [
@@ -9562,7 +9562,7 @@
     },
     {
       "node": 4,
-      "name": "QuestionCategoryClassifier",
+      "name": "ReasoningCategoryDatasetEvaluator",
       "type": "generator",
       "description": "将所有问题分类到7个大类别，以及每个大类别下的若干的小类别",
       "input": [

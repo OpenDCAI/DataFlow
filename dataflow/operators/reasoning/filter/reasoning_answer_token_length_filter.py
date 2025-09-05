@@ -8,7 +8,7 @@ from tqdm import tqdm
 import pandas as pd
 
 @OPERATOR_REGISTRY.register()
-class AnswerTokenLengthFilter(OperatorABC):
+class ReasoningAnswerTokenLengthFilter(OperatorABC):
     def __init__(self,
                 max_answer_token_length: int = 8192,
                 tokenizer_dir: str = "Qwen/Qwen2.5-0.5B-Instruct"):

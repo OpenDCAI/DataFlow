@@ -9,7 +9,7 @@ import random
 from dataflow.prompts.reasoning.math import MathQuestionSynthesisPrompt
 
 @OPERATOR_REGISTRY.register()
-class QuestionGenerator(OperatorABC):
+class ReasoningQuestionGenerator(OperatorABC):
     def __init__(self,
                 num_prompts: int = 1,
                 llm_serving: LLMServingABC = None,
