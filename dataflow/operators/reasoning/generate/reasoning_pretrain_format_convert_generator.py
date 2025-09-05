@@ -6,7 +6,7 @@ from dataflow import get_logger
 import pandas as pd
 
 @OPERATOR_REGISTRY.register()
-class PretrainFormatConverter(OperatorABC):
+class ReasoningPretrainFormatConvertGenerator(OperatorABC):
     def __init__(self):
         self.logger = get_logger()
 

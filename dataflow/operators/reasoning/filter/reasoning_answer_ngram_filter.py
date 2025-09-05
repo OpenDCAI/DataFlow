@@ -9,7 +9,7 @@ from tqdm import tqdm
 import re
 
 @OPERATOR_REGISTRY.register()
-class AnswerNgramFilter(OperatorABC):
+class ReasoningAnswerNgramFilter(OperatorABC):
     def __init__(self,
                 min_score: float = 0.1,
                 max_score: float = 1.0,

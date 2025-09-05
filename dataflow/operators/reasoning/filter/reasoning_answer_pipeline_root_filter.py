@@ -7,7 +7,7 @@ from dataflow.utils.storage import DataFlowStorage
 import pandas as pd
 
 @OPERATOR_REGISTRY.register()
-class AnswerPipelineRoot(OperatorABC):
+class ReasoningAnswerPipelineRootFilter(OperatorABC):
     def __init__(self):
 
         self.logger = get_logger()

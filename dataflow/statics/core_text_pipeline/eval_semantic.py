@@ -10,7 +10,7 @@
 3. 指定评估数据集路径和缓存路径（Benchs）；
 4. 运行本文件即可自动完成评估流程，最终结果会保存在指定路径下。
 """
-from dataflow.operators.reasoning import AnswerGenerator
+from dataflow.operators.reasoning import ReasoningAnswerGenerator
 from dataflow.operators.core_text import BenchEvaluator
 from dataflow.serving import APILLMServing_request, LocalModelLLMServing_vllm
 from dataflow.prompts.reasoning.diy import DiyAnswerGeneratorPrompt
@@ -51,7 +51,7 @@ class SemanticBenchEvalPipeline():
             cache_type="jsonl",
         )
         
-        self.answer_generator_step1 = AnswerGenerator(
+        self.answer_generator_step1 = ReasoningAnswerGenerator(
             llm_serving=llm_serving,
             prompt_template=DiyAnswerGeneratorPrompt(DIY_PROMPT_ANSWER)
         )

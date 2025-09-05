@@ -9,7 +9,7 @@ from dataflow.core import OperatorABC
 from dataflow.core import LLMServingABC
 
 @OPERATOR_REGISTRY.register()
-class QuestionDifficultyClassifier(OperatorABC):
+class ReasoningQuestionDifficultySampleEvaluator(OperatorABC):
     def __init__(self, llm_serving: LLMServingABC = None):
         """
         Initialize the QuestionCategoryClassifier with the provided configuration.

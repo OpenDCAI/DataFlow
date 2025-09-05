@@ -7,7 +7,7 @@ from dataflow.core import OperatorABC
 from math_verify import parse, verify, LatexExtractionConfig
 
 @OPERATOR_REGISTRY.register()
-class AnswerJudger_MathVerify(OperatorABC):
+class ReasoningAnswerJudgeMathVerifyFilter(OperatorABC):
     def __init__(self, config: dict):
         
         self.logger = get_logger()
