@@ -1,4 +1,5 @@
 from dataflow.utils.reasoning.AnswerExtraction import StringCleaner, UnitTextManager, AnswerExtractor
+from dataflow.prompts.reasoning.general import AnswerJudgePrompt
 from dataflow.utils.registry import OPERATOR_REGISTRY
 from dataflow.utils.storage import DataFlowStorage
 from dataflow.core import LLMServingABC
@@ -9,17 +10,20 @@ from dataflow import get_logger
 from typing import Literal
 import pandas as pd
 import numpy as np
+import os  # 添加os模块导入
 import re
 
 @OPERATOR_REGISTRY.register()
 class BenchEvaluator(OperatorABC):
     def __init__(self,
+                eval_result_path: str = "../eval_result.json",
                 compare_method: Literal["match", "semantic"] = "match",
                 system_prompt: str = "You are a helpful assistant specialized in evaluating answer correctness.",
                 llm_serving: LLMServingABC = None,
                 prompt_template = None
                 ):
         
+        self.eval_result_path = eval_result_path
         self.compare_method = compare_method
         self.empty_responses_count = 0  # 添加空响应计数器
         
@@ -123,6 +127,11 @@ class BenchEvaluator(OperatorABC):
         # 将字典转换为DataFrame
         stats_df = pd.DataFrame([stats])
         
+        # 直接将统计信息写入到self.eval_result_path
+        os.makedirs(os.path.dirname(self.eval_result_path), exist_ok=True)
+        stats_df.to_json(self.eval_result_path, orient="records", force_ascii=False, indent=2)
+        self.logger.success(f"Statistics saved to {self.eval_result_path}")
+        
         return stats_df
         
     def run(
@@ -158,9 +167,8 @@ class BenchEvaluator(OperatorABC):
                     
             output_file = storage.write(dataframe)
             
-            # 生成统计信息并写入JSON文件
+            # 生成统计信息并直接写入JSON文件
             stats = self.statistic(storage.file_name_prefix, dataframe, self.compare_method)
-            stats_file = storage.write_eval(stats)
             
             return [self.test_answer_key, self.gt_answer_key, 'answer_match_result']
         else:
@@ -204,12 +212,8 @@ class BenchEvaluator(OperatorABC):
                 
             output_file = storage.write(dataframe)
             
-            # 生成统计信息并写入JSON文件
+            # 生成统计信息并直接写入JSON文件
             stats = self.statistic(storage.file_name_prefix, dataframe, self.compare_method)
-            stats_file = storage.write_eval(stats)
-            
-            self.logger.info(f"Evaluated data saved to {output_file}")
-            self.logger.info(f"Statistics saved to {stats_file}")
             
             # 重置空响应计数器
             self.empty_responses_count = 0
