@@ -4,14 +4,14 @@ if TYPE_CHECKING:
     # generate
     from .generate.reasoning_answer_generator import ReasoningAnswerGenerator
     from .generate.reasoning_question_generator import ReasoningQuestionGenerator
-    from .generate.reasoning_math_answer_extraction_qwenmatheval_generator import ReasoningAnswerExtractionQwenMathEvalGenerator
+    from .generate.reasoning_answer_extraction_qwenmatheval_generator import ReasoningAnswerExtractionQwenMathEvalGenerator
     from .generate.reasoning_pseudo_answer_generator import ReasoningPseudoAnswerGenerator
     from .generate.reasoning_pretrain_format_converter import ReasoningPretrainFormatConvertGenerator
 
     # eval
     from .eval.reasoning_category_dataset_evaluator import ReasoningCategoryDatasetEvaluator
     from .eval.reasoning_difficulty_dataset_evaluator import ReasoningDifficultyDatasetEvaluator
-    from .eval.reasoning_token_dataset_evaluator import ReasoningToKenDatasetEvaluator
+    from .eval.reasoning_token_dataset_evaluator import ReasoningTokenDatasetEvaluator
     from .eval.reasoning_question_category_sample_evaluator import ReasoningQuestionCategorySampleEvaluator
     from .eval.reasoning_question_difficulty_sample_evaluator import ReasoningQuestionDifficultySampleEvaluator
     
