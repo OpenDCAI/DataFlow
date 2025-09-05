@@ -6,7 +6,7 @@ if TYPE_CHECKING:
     from .generate.reasoning_question_generator import ReasoningQuestionGenerator
     from .generate.reasoning_answer_extraction_qwenmatheval_generator import ReasoningAnswerExtractionQwenMathEvalGenerator
     from .generate.reasoning_pseudo_answer_generator import ReasoningPseudoAnswerGenerator
-    from .generate.reasoning_pretrain_format_converter import ReasoningPretrainFormatConvertGenerator
+    from .generate.reasoning_pretrain_format_convert_generator import ReasoningPretrainFormatConvertGenerator
 
     # eval
     from .eval.reasoning_category_dataset_evaluator import ReasoningCategoryDatasetEvaluator
