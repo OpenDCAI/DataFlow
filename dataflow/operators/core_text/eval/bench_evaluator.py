@@ -79,26 +79,34 @@ class BenchEvaluator(OperatorABC):
     def get_desc(lang: str = "zh"):
         if lang == "zh":
             return (
-                "该算子用于对比预测答案与标准答案的匹配度，支持精确匹配和数学验证两种方式。\n\n"
+                "该算子用于对比预测答案与标准答案的匹配度，支持两种评估模式：\n\n"
+                "1. 字符串匹配（match）：使用数学验证方法比较答案，适用于有明确答案的问题\n"
+                "2. 语义匹配（semantic）：使用LLM评估答案的语义相似度，适用于开放性问题\n\n"
                 "输入参数：\n"
                 "- input_test_answer_key：预测答案字段名\n"
                 "- input_gt_answer_key：标准答案字段名\n"
-                "- compare_method：比较方法（exact/math_verify）\n\n"
+                "- input_question_key：问题字段名（语义匹配模式下必需）\n"
+                "- compare_method：比较方法（match/semantic）\n\n"
                 "输出参数：\n"
-                "- 匹配成功返回1，否则返回0"
+                "- answer_match_result：匹配结果（True/False）\n"
+                "- 统计结果将保存到指定的eval_result_path路径\n"
             )
         elif lang == "en":
             return (
-                "This operator compares predicted answers against ground truth using exact or mathematical verification.\n\n"
+                "This operator compares predicted answers against ground truth using two evaluation modes:\n\n"
+                "1. String Matching (match): Uses mathematical verification to compare answers, suitable for questions with definitive answers\n"
+                "2. Semantic Matching (semantic): Uses LLM to evaluate semantic similarity, suitable for open-ended questions\n\n"
                 "Input Parameters:\n"
-                "- test_answer_key: Predicted answer field\n"
-                "- gt_answer_key: Ground truth field\n"
-                "- compare_method: Comparison method (exact/math_verify)\n\n"
+                "- input_test_answer_key: Predicted answer field\n"
+                "- input_gt_answer_key: Ground truth field\n"
+                "- input_question_key: Question field (required for semantic mode)\n"
+                "- compare_method: Comparison method (match/semantic)\n\n"
                 "Output Parameters:\n"
-                "- Returns 1 for matches, 0 otherwise"
+                "- answer_match_result: Matching result (True/False)\n"
+                "- Statistics will be saved to the specified eval_result_path\n"
             )
         else:
-            return "AnswerGroundTruthFilter performs answer validation"
+            return "BenchEvaluator performs answer validation using string matching or semantic comparison"
         
     def check_column(self, required_columns: list[str], dataframe: pd.DataFrame):
         for column in required_columns:
