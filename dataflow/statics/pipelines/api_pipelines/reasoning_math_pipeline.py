@@ -7,7 +7,7 @@ from dataflow.operators.reasoning import (
 
 from dataflow.operators.reasoning import (
     ReasoningQuestionFilter,
-    MathAnswerFormatterFilter,
+    ReasoningAnswerFormatterFilter,
     ReasoningAnswerGroundTruthFilter,
     ReasoningAnswerTokenLengthFilter,
     ReasoningAnswerNgramFilter
@@ -80,7 +80,7 @@ class ReasoningMath_APIPipeline():
             prompt_template=MathAnswerGeneratorPrompt()
         )
         
-        self.answer_format_filter_step8 = MathAnswerFormatterFilter()
+        self.answer_format_filter_step8 = ReasoningAnswerFormatterFilter()
         
         self.answer_token_length_filter_step9 = ReasoningAnswerTokenLengthFilter(
             max_answer_token_length = 8192,
