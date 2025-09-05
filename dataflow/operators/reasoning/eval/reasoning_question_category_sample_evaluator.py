@@ -15,7 +15,7 @@ from dataflow.core import LLMServingABC
 class ReasoningQuestionCategorySampleEvaluator(OperatorABC):
     def __init__(self, llm_serving: LLMServingABC = None):
         """
-        Initialize the QuestionCategoryClassifier with the provided configuration.
+        Initialize the ReasoningCategoryDatasetEvaluator with the provided configuration.
         """
         self.logger = get_logger()
         self.prompts = MathQuestionCategoryPrompt()
