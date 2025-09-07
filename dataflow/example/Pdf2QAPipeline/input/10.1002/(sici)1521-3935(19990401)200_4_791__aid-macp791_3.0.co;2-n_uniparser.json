@@ -1,0 +1,1379 @@
+{
+    "token": "10.1002__sici_1521-3935_19990401_200_4_791__aid-macp791_3.0.co_2-n",
+    "status": "success",
+    "time_dict": {
+        "save_pdf": 0.013987690210342407,
+        "init_task": 0.009673751890659332,
+        "apply_async": 0.0002760961651802063,
+        "gather_layout": 0.3273700550198555,
+        "collect_textual": 0.04099106416106224,
+        "collect_mol": 0.9239705167710781,
+        "collect_equa": 6.596371531486511e-05,
+        "collect_expr": 5.9023499488830566e-05,
+        "collect_table": 0.00666118785738945,
+        "collect_chart": 6.642565131187439e-05,
+        "collect_figure": 6.993860006332397e-05,
+        "format_objects": 0.0013531967997550964,
+        "save_results": 0.027386870235204697
+    },
+    "description": "",
+    "lang": "en",
+    "dict_model": {
+        "lang": "unknown",
+        "pages": null,
+        "admin_debug": false,
+        "timeout": 40,
+        "table_cls": false,
+        "ordering_method": "gap_tree",
+        "padding_snip": false
+    },
+    "dict_cfg": {
+        "textual": 3,
+        "table": 1,
+        "molecule": 1,
+        "chart": 0,
+        "figure": 0,
+        "expression": 0,
+        "equation": 1
+    },
+    "markush": {
+        "smiles": "",
+        "caption": ""
+    },
+    "proc_page": 8,
+    "total_page": 8,
+    "proc_textual": 93,
+    "total_textual": 93,
+    "proc_mol": 6,
+    "total_mol": 6,
+    "proc_equa": 0,
+    "total_equa": 0,
+    "proc_figure": 0,
+    "total_figure": 0,
+    "proc_chart": 0,
+    "total_chart": 8,
+    "proc_expr": 0,
+    "total_expr": 1,
+    "proc_table": 1,
+    "total_table": 1,
+    "total": 1.3379440903663635,
+    "page": 8,
+    "cost": 0.4,
+    "content": "\\begin{title}\nDifferences in thermo-mechanical properties and intermolecular charge-transfer characteristics of the aromatic polyimide PI(BPDA/PDA) from various precursors\n\\end{title}\n\nHsu Wen Huang*1, Kazuyuki Horie*1, Rikio Yokota2\n\n1 Department of Chemistry and Biotechnology, Graduate School of Engineering, The University of Tokyo, 7-3-1 Hongo, Bunkyo-ku, Tokyo 113-8656, Japan 2 Institute of Space and Astronautical Science, 3-1-1 Yoshinodai, Sagamihara, Kanagawa 229-0022, Japan\n\n(Received: July 6, 1998; revised: November 9, 1998)\n\nSUMMARY: The differences in thermo-mechanical properties and intermolecular charge-transfer (CT) cha- racteristics of an aromatic polyimide, PI(BPDA/PDA), from polyamide acid (PAA), polyamide allyl ester (PAAE), or polyamide benzyl ester (PABE) precursors were studied. The various PI(BPDA/PDA)\u2019s show identical uniformity in chemical structure and thermogravimetric behavior. PI(BPDA/PDA) from PAA how- ever shows higher density and Tg and lower thermal expansion coefficient than those from PAAE and PABE, indicating the higher orderliness of the molecular packing of PI(BPDA/PDA) from PAA. Intermolecular ground-state CT complexes of PI(BPDA/PDA) from PAAE and PABE show fluorescence at longer wave- lengths and wider fluorescence peak wavelength range than the one of PI(BPDA/PDA) from PAA. This sug- gests the wider variety of aggregation structures of PI(BPDA/PDA) from PAAE and PAGE than those of PI(BPDA/PDA) from PAA. The steric hindrance of the bulky substituents of PAAE and PABE would cause an increase in the variety of aggregation structures during imidization. The shorter fluorescence lifetimes of PI(BPDA/PDA) from PAAE and PABE than the one of PI(BPDA/PDA) from PAA also confirm the differen- ces in their intermolecular CT characteristics.\n\n\\begin{title}\nIntroduction\n\\end{title}\n\nAromatic polyimides (PIs) have been of great interest for microelectronic applications owing to their high tempera- ture stability, low dielectric constant, and useful mechan- ical properties1, 2). Traditionally, PIs are generally synthe- sized in a two-step process by the condensation reaction of a diamine and a dianhydride to form a soluble poly- amide acid (PAA). The PAA precursors are then solvent cast to the desired form and thermally treated to cycloimi- dize the precursors, liberating water and forming the final PIs. Understanding the details of the imidization reaction is important to ensure optimal final properties, and criti- cal in the design of a system involving the deposition of consecutive layers. On the other hand, an ester of the PAA, for example, the ethyl ester, can also be cycloimi- dized, producing ethanol rather than water. Such polya- mide alkyl ester precursors have also been developed3\u20138). In contrast to PAA precursors, polyamide alkyl ester pre- cursors have improved solution properties, such as better resistance to hydrolytic degradation, lower viscosity solu- tion with higher solid content3\u20138), and an apparent lack of exchange reactions in solutions containing different pre- cursors9\u201311). Similarly, the polyamide alkyl ester precur- sors can also be cycloimidized to the identical PI by ther- mal treatment, as the corresponding PAA precursors, in spite of their higher imidization temperature than PAA precursors3, 7).\n\nThe remarkable thermal stability and other physical properties of aromatic PIs are well known to be due to the rigidity of polymer chain, and strong charge-transfer (CT) interaction between aromatic moieties (electron donor) and imide moieties (electron acceptor)1, 2). The origin of intermolecular CT complexes of aromatic PIs has been proved12) and studied extensively13, 14). Although Fourier- transform infrared spectroscopy (FTIR) and X-ray dif- fraction have been used to study the degree of imidization and the approximate molecular arrangement of PIs, it is difficult to examine the aggregation structures of PIs by FTIR and X-ray diffraction. On the contrary, by using fluorescence method, it is effective to study the aggrega- tion structures consisting of intermolecular CT complexes directly. Thus, by investigating the change in fluores- cence behavior of the intermolecular CT complexes, the change in molecular aggregation structures of aromatic PIs during imidization have been studied in detail14, 15). According to the above studies, examining the change in CT fluorescence behavior is proved to be useful in study- ing the molecular aggregation structures of aromatic PIs.\n\nThe differences of a polyimide composed of biphenyl- tetracarboxylic dianhydride (BPDA) and p-phenylenedi- amine (PDA), PI(BPDA/PDA), prepared from different precursors, i.e., from PAA, polyamide alkyl esters16\u201318), or photosensitive PI precursor19), have been studied by thermo-mechanical and X-ray diffraction measurements.\n\nHowever, the thermo-mechanical properties and intermo- lecular CT characteristics of PI(BPDA/PDA) from var- ious precursors have not been compared for elucidating the differences of their molecular aggregation structures. In the present paper, precursors with various substituents groups, i.e., a conventional PAA, a photosensitive poly- amide allyl ester (PAAE), and a bulky polyamide benzyl ester (PABE), are prepared for synthesis of PI(BPDA/ PDA). By using thermo-mechanical and fluorescence measurements, we study the differences in thermo- mechanical properties and intermolecular CT characteris- tics of PI(BPDA/PDA) from various precursors after an identical thermal imidization process.\n\n\\begin{title}\nExperimental part\n\\end{title}\n\n\\begin{title}\nSample preparation and materials\n\\end{title}\n\nN-Methylpyrrolidone (NMP, Tokyo Kasei) was dried with molecular sieves (4A) and vacuum distilled before use. The PAA precursor from biphenyltetracarboxylic dianhydride (BPDA) and p-phenylenediamine (PDA) was prepared as reported elsewhere12\u201314). The preparation of PAAE and PABE is based on the reported work5) and presented in Fig. 1. After obtaining the PAA precursor, a stoichiometric amount of triethylamine as the neutralizing base and a 3-fold excess of allyl bromide (Tokyo Kasei) were added into the NMP solu- tion of PAA, the byproduct salts were precipitated, then the solution was kept stirring for 24 h at room temperature. To precipitate and wash the PAAE precursor, 2-propanol, 1%\n\n\\begin{molecule}\nC=CCOC(=O)c1ccc(-c2ccc(C(=O)OCC=C)c(C(=O)Nc3ccc(NC)cc3)c2)cc1C(=O)OCC=C\n\\end{molecule}\n\n\\begin{molecule}\nC=CCBr\n\\end{molecule}\n\n\\begin{molecule}\n*N1C(=O)c2ccc(-c3ccc4c(c3)C(=O)N(c3ccc(*)cc3)C4=O)cc2C1=O\n\\end{molecule}\n\n\\begin{molecule}\n*C(=O)c1cc(-c2ccc(C(=O)O)c(C(=O)Nc3ccc(N*)cc3)c2)ccc1C(=O)O\n\\end{molecule}\n\n\\begin{molecule}\nBrCc1ccccc1\n\\end{molecule}\n\n\\begin{molecule}\n*C(=O)c1cc(-c2ccc(C(=O)OCc3ccccc3)c(C(=O)Nc3ccc(N*)cc3)c2)ccc1C(=O)OCc1ccccc1\n\\end{molecule}\n\nFig. 1. Schematic diagram of preparation of PI(BPDA/PDA) from various precursors with an identical imidiza- tion process\n\naqueous hydrochloric acid, and acetone were added to the solution or precipitates in the above sequence, then the PAAE was vacuum dried for 24 h at 508C. Similarly, by using benzyl bromide (Tokyo Kasei), the PABE precursor was prepared with the same procedure. The various precur- sor were dissolved in NMP again and spin-coated or bar- coated to form films, then vacuum dried for 24 h at 508C. The films of various precursors were then imidized at 1508C for 1 h and at 4508C for 1 h in vacuum to obtain PI(BPDA/ PDA).\n\n\\begin{title}\nMeasurements\n\\end{title}\n\nFTIR spectra were measured with a Jasco FTIR-230S spec- trophotometer.\n\nDSC measurements were performed with a Thermal Ana- lysis Instruments 2010 differential scanning calorimeter. Samples of about 5 mg were examined at a scanning rate of 108C/min under a flow of dry nitrogen.\n\nThe densities of PI films were measured by a density gra- dient column (carbon tetrachloride and xylene system) in a thermostat at 358C.\n\nTG measurements were performed with a Thermal Analy- sis Instruments 2050 thermogravimetric analyzer and exam- ined at a heating rate of 108C/min under nitrogen atmos- phere.\n\nTMA measurements were performed with a Rigaku TAS 200 thermo-mechanical analyzer. Samples in 14 mm63 mm rectangular shape with about 5\u20138 lm thickness were mounted between two chucks and measured at a heating rate of 108C/min under nitrogen atmosphere with a loaded force of 10 g. Since the thermal expansion coefficient (TEC) was\n\ntemperature dependent, the average value between 100 and 2508C was used as a representative value.\n\nFluorescence and its excitation spectra were measured with a Hitachi 850 fluorescence spectrophotometer in a front face arrangement to minimize the self-absorption.\n\nFluorescence lifetime measurements were performed with a Hamamatsu C4780 single-photon counting system. A nitro- gen-laser-pumped dye laser (Laser Photonics Ltd., LN120C) with stilbene solution (Exciton, Inc.), emitting light centered around 420 nm, was used as an excitation pulse source. The excitation pulse was directed to the sample through an opti- cal fiber, and the emitted light was also guided through an optical fiber to a Hamamatsu C4334 streak scope, then trans- formed to streak images. The delay time was controlled by a Hamamatsu C4792 trigger unit. The instrument response function of the whole system was about 1.4\u20131.8 ns (fwhm).\n\n\\begin{title}\nResults and discussion\n\\end{title}\n\n\\begin{title}\nCharacterization of various precursors\n\\end{title}\n\nFig. 2 shows the FTIR spectra for the films of PAA (a), PAAE (b), and PABE (c). As can be seen in Fig. 2a, PAA shows the absorption of C2O stretching for carboxylic acid at 1714 cm\u20131. But PAAE (b) and PABE (c) show the absorption of C2O stretching for allyl ester group and benzyl ester group at 1724 cm\u20131 and 1721 cm\u20131, respec- tively. PAAE (b) also shows two O1C1O stretching\n\n\\begin{legend}\n(a)\n\\end{legend}\n\n\\begin{caption}\nFig. 2. FTIR spectra for the films of PAA (a), PAAE (b), and PABE (c) after vacuum drying for 24 h at 508C\n\\end{caption}\n\n\\begin{legend}\n(a)\n\\end{legend}\n\n\\begin{legend}\n(b)\n\\end{legend}\n\n\\begin{caption}\nFig. 3. DSC curves for PAA (a), PAAE (b), and PABE (c) at a heating rate of 108C/min\n\\end{caption}\n\nbands of allyl ester group at 1265 cm\u20131 and 1132 cm\u20131. Similarly, PABE (c) also exhibits two O1C1O stretching bands of benzyl ester group at 1263 cm\u20131 and 1130 cm\u20131. But this kind of O1C1O stretching band of ester group is not observed for PAA, which is in accord with the results of other workers3, 5, 7). Moreover, PAAE (b) shows an allylic absorption at 931 cm\u20131. According to the above FTIR results, esterification to a substantial extent from PAA to PAAE and PABE is confirmed.\n\nSince it is indispensable to examine the imidization reaction temperature of various precursors for obtaining the completely imidized PI, the DSC curves of various precursors are examined, as shown in Fig. 3. For PAA (a), one can observe two endothermic peaks around 708C and 1688C, which can be regarded as the water vaporization and the imidization reaction temperature, respectively. For PAAE (b), one can also observe the identical water vaporization around 708C, but higher imidization reac- tion temperature at 2048C. Similarly, according to Fig. 3c, the imidization reaction temperature of PABE (2178C) is also higher than that of PAA. This may be because the substituent group of esters (allyl group and benzyl group) are bulkier than the one of acid (hydrogen), and the electrophilicity of ester group is weaker than that of acid group, which is due to the higher electron density of allyl group and benzyl group in comparison with the\n\n\\begin{legend}\n(a)\n\\end{legend}\n\n\\begin{legend}\n(b)\n\\end{legend}\n\n\\begin{legend}\n(c)\n\\end{legend}\n\n\\begin{caption}\nFig. 4. Fluorescence (solid curves) and its excitation spectra (gray curves) for PAA (a), PAAE (b), and PABE (c). Fluores- cence spectra with subscript 1\u20133 are excited at 350 nm, 400 nm, and 450 nm, respectively; fluorescence excitation spectra with subscript 19 and 29 are monitored at 490 nm and 520 nm, respec- tively\n\\end{caption}\n\nhydrogen3, 7). Based on the above DSC results, in order to obtain the same degree of the imidization for PAA, PAAE, and PABE, it is necessary to proceed the imidiza- tion process at much higher temperature than the usual imidization temperature for PAA. Thus, the imidization process was performed at 1508C for 1 h and at 4508C for 1 h in vacuum.\n\nIn order to compare the aggregation structures of var- ious precursors before and after imidization, the fluores- cence (solid curves) and its excitation spectra (gray curves) for PAA (a), PAAE (b), and PABE (c) were meas- ured and depicted in Fig. 4. Independent of the substitu- ent groups of various precursors, all the precursors show a main peak around 350 nm in fluorescence excitation spectra (a91, b91, c91) and a corresponding fluorescence peak around 490 nm (a1, b1, c1), which is due to the molecular interaction of excited BPDA moieties with other moi- eties20). Moreover, by exciting at longer excitation wave- lengths (400\u2013450 nm), all the precursors show slight red shift in fluorescence peak wavelength (a2, a3; b2, b3, c2 c3), and their fluorescence excitation spectra monitored at 520 nm (a92, b92, c92) are in accord with those monitored at\n\n\\begin{legend}\n(a)\n\\end{legend}\n\n\\begin{caption}\nFig. 5. FTIR spectra for PI(BPDA/PDA) films from PAA (a), PAAE (b), and PABE (c) after the identical thermal imidization process\n\\end{caption}\n\n490 nm (a91, b91, c91). This slight red shift may reflect the existence of various kinds of molecular interactions of excited BPDA moieties with other moieties in these amorphous precursors. In spite of the differences of fluor- escence intensity, the fluorescence behavior of these pre- cursors is considered to be identical. The consistency in fluorescence behavior of various precursors also suggests that these precursors are in amorphous state.\n\n\\begin{title}\nCharacterization, thermal stability, and thermo- mechanical properties of PI(BPDA/PDA) from various precursors\n\\end{title}\n\nSince it is necessary to ascertain the same degree of imi- dization for PI(BPDA/PDA) from various precursors, the FTIR spectra for PI(BPDA/PDA) from various precursors after the identical imidization process are presented in Fig. 5. The degree of imidization is estimated by the absorbance ratio of 1773 cm\u20131 band (C2O stretching in imide ring) to the 1517 cm\u20131 band (C2C stretching in benzene ring in PDA) as shown in Fig. 5. As can be seen in Fig. 5, independent of the differences of precursors, all the PI(BPDA/PDA)\u2019s from various precursors show the same FTIR spectra and an almost identical degree of imi-\n\n\\begin{caption}\nFig. 6. TG curves of PI(BPDA/PDA) from PAA (solid curve), PAAE (dashed curve), and PABE (gray curve) after the identical imidization process\n\\end{caption}\n\ndization, which corresponds to the degree of imidization of completely imidized PI(BPDA/PDA) reported by other workers13). This indicates that the chemical structures and degrees of imidization of PI(BPDA/PDA) from various precursors are identical. In order to examine the unifor- mity in chemical structure and evaluate the thermal stabi- lity, TG curves of PI(BPDA/PDA) from various precur- sors after the identical imidization process are depicted in Fig. 6. Independent of the differences of precursors, all the PI(BPDA/PDA)\u2019s from various precursors do not show any thermal degradation of byproducts, and also show identical degradation temperature at about 585\u2013 5918C as summarized in Tab. 1. Based on the above FTIR and TG results, PI(BPDA/PDA)\u2019s from various pre- cursors show identical uniformity in chemical structure and the same degradation stability, and might be assumed to be identical in other physical properties. Nevertheless, the densities of these PI films shown in Tab. 1 are differ- ent from each other and the order of density is arranged as follows: PAA (1.4555 g/cm3) A PAAE (1.4480 g/cm3) A PABE (1.4463 g/cm3). This seems to imply that the\n\n\\begin{caption}\nTab. 1. Thermo-mechanical and fluorescence properties of PI(BPDA/PDA) from various precursors\n\\end{caption}\n\n\\begin{table}\n| ('PI(BPDA/PDA) from various', 'precursors')   | ('Degratation temperaturea)', '$inC$')   | ('Density in g/cm3', '')   | ('$ ) $\\\\crac', '')   | ('TECc) $K -fra}', '')   | ('Fluorescence peak wavelength', 'range in nm')   | ('Fluorescence lifetime (ns)', 'T1')   | ('Fluorescence lifetime (ns)', '$T2$')   |\n|:----------------------------------------------|:-----------------------------------------|:---------------------------|:----------------------|:-------------------------|:--------------------------------------------------|:---------------------------------------|:-----------------------------------------|\n| PAA                                           | 589                                      | 1.4555                     | 455                   | 0.77 \u00d710-5               | 525-567                                           | 1.6                                    | 6.1                                      |\n| PAAE                                          | 585                                      | 1.4480                     | 423                   | 1.62\u00d710-5                | 525-600                                           | 0.8                                    | 3.3                                      |\n| PABE                                          | 591                                      | 1.4463                     | -                     | \u4e00                       | 525-600                                           | 0.8                                    | 3.3                                      |\n\\end{table}\n\na) The onset of weight loss the TG curve. b) The onset of elongation in the TMA curve. c) Thermal expansion coefficient.\n\n\\begin{caption}\nFig. 7. TMA curves of PI(BPDA/PDA) from PAA (solid curve) and PAAE (dashed curve) after the identical imidization process\n\\end{caption}\n\ndensity of PI(BPDA/PDA) from polyamide esters is smal- ler than that from PAA, which would be due to the differ- ence in molecular mobility during thermal cure of various precursors, caused by the differences in hydrogen-bond- ing ability with the solvent, imidization rate, and/or the size of the volatile group outgassed during imidization21).\n\nThermo-mechanical properties of polymers such as dimensional stability and TEC and known to be strongly related to geometry and aggregation structure in addition to chemical structure1, 2). Therefore, the TMA measure- ments were carried out to investigate the differences of density for PI(BPDA/PDA) from various precursors. Fig. 7 shows the TMA curves of PI(BPDA/PDA) from various precursors. In Fig. 7, PI(BPDA/PDA) from PAA (solid curve) reveals elongation for about 200 lm beyond Tg (4558C). But PI(BPDA/PDA) from PAAE (dashed curve) reveals larger elongation for about 400 mm beyond Tg (4238C). Unfortunately, the film of PI(BPDA/ PDA) from PABE was too brittle and unavailable for TMA measurement, which is due to the too large substi- tuent group to hinder the molecular packing. Moreover, according to the TEC values shown in Tab. 1, TEC of PI(BPDA/PDA) from PAA (0.77610\u20135 K\u20131) is smaller than the one from PAAE (1.62610\u20135 K\u20131). These results\n\nare in good accord with the recently reported results18) for PI(BPDA/PDA) prepared from polyamide acid alkyl esters. The difference between the TEC of PI(BPDA/ PDA) from PAA and that from PAAE indicates that the aggregation structures of PI(BPDA/PDA) from PAA arrange in a molecular packing with higher orderliness than those from PAAE and PABE. The interactions between the precursors and the solvent (NMP) have been suggested to lead to large differences in higher order structures of the polyimides, which in turn affect the TEC18). Molecular packing of PI has been demonstrated to be deeply related to the intermolecular CT com- plexes12\u201315). Therefore, it seems effective to use fluores- cence method to study the fluorescence behavior of inter- molecular CT complexes for elucidating the differences of molecular packing of PI(BPDA/PDA) from various precursors.\n\n\\begin{title}\nDifferences in fluorescence behavior of PI(BPDA/ PDA) from various precursors\n\\end{title}\n\nFig. 8 shows the fluorescence (right) and its excitation spectra (left) of PI(BPDA/PDA) from various precursors. At first, we refer to the fluorescence excitation spectra for PI(BPDA/PDA) from PAA (a91, a92, a93). A main peak is observed around 350 nm, and its corresponding fluores- cence peak (a1) appears at much longer wavelength (525 nm) than the one before imidization (490 nm), which is due to the strong CT interaction between excited biphenylbisimide moieties to form the intermolecular excited-state CT complexes14\u201320). Moreover, related to the shoulder around 470\u2013480 nm in the fluorescence excita- tion spectra, by exciting at longer excitation wavelengths (400\u2013520 nm), another group of fluorescence peaks are observed around 538\u2013567 nm (a2, a3, a4), which are due to the intermolecular ground-state CT complexes at lower energy level14). These intermolecular ground-state CT complexes show red-shift phenomenon by excitation at longer wavelengths (400\u2013520 nm). This indicates the existence of various kinds of intermolecular ground-state CT complexes. But this kind of apparent red shift of fluorescence is not observed before imidization (Fig. 4a). This is because the molecular packing changes to be more ordered after imidization, and makes the moieties interact sensitively with each other to reflect the differ- ence of molecular interaction. As to the fluorescence behavior of PI(BPDA/PDA) from PAAE (Fig. 8b), its fluorescence excitation spectra (b91, b92, b93) and fluores- cence peak wavelength of intermolecular excited-state CT complex (b1) are identical to those of PI(BPDA/PDA) from PAA. Similarly, the intermolecular excited-state CT complex of PI(BPDA/PDA) from PABE (c1) also shows fluorescence around 525 nm. This consistency of fluores- cence for the intermolecular excited-state CT complex of\n\n\\begin{legend}\n(a)\n\\end{legend}\n\n\\begin{legend}\n(b)\n\\end{legend}\n\n\\begin{legend}\n(c)\n\\end{legend}\n\n\\begin{caption}\nFig. 8. Fluorescence (right) and its excitation spectra (left) for PI(BPDA/PDA) from PAA (a), PAAE (b), and PABE (c) after the identical imidization process. Fluorescence spectra with sub- script 1\u20134 are excited at 350 nm, 400 nm, 480 nm, and 520 nm, respectively, and the values in the parenthesis are their fluores- cence peak wavelengths. Fluorescence excitation spectra with subscript 1\u20133 are monitored at 525 nm, 550 nm, and 600 nm, respectively\n\\end{caption}\n\nPI(BPDA/PDA) from various precursors indicates the consistency of uniformity in their chemical structure, as studied by FTIR and TG measurements. However, the intermolecular ground-state complexes of PI(BPDA/ PDA) from PAAE (b2, b3, b4) show wder fluorescence peak wavelength range at 550\u2013600 nm than those of PI(BPDA/PDA) from PAA (538\u2013567 nm). In an analo- gous manner, the intermolecular ground-state complexes of PI(BPDA/PDA) from PABE (c2, c3, c4) also show wider fluorescence peak wavelength range at 552\u2013 600 nm than those of PI(BPDA/PDA) from PAA (538\u2013 567 nm). This indicates that the structures of intermolecu- lar ground-state CT complexes of PI(BPDA/PDA) form PAAE and PABE are in wider variety than those of PI(BPDA/PDA) from PAA. In other words, this reflects that the orderliness of molecular packing of PI(BPDA/ PDA) from PAAE and PABE is lower than that of PI(BPDA/PDA) from PAA. The main aggregation struc- tures of PI(BPDA/PDA) from PAAE and PABE strongly\n\n\\begin{legend}\n(a)\n\\end{legend}\n\n\\begin{legend}\n(b)\n\\end{legend}\n\n\\begin{caption}\nFig. 9. Fluorescence decay profiles excited at 420 nm and monitored at 525\u2013630 nm for PI(BPDA/PDA) from PAA (a), PAAE (b), and PABE (c) after the identical imidization process. Solid curves are excitation pulse, dotted curves are the decay profiles of the samples, and bold curves are the convoluted decay profiles\n\\end{caption}\n\nsuffer from the size of bulky substituent groups which interfere with the molecular packing during imidization reaction. Additionally, the fluorescence peak wavelength of the intermolecular ground-state complex excited at 400 nm for PI(BPDA/PDA) from PAA (a2, kf = 538 nm) shows shorter fluorescence peak wavelength than those of PI(BPDA/PDA) form PAAE (b2, kf = 550 nm) or PABE (c2, kf = 552 nm). Similarly, the fluorescence peak wavelengths of other intermolecular ground-state com- plexes excited at longer wavelengths for PI(BPDA/PDA) from PAA (a3, a4) all show shorter fluorescence peak wavelengths than those of PI(BPDA/PDA) from PAAE (b3, b4) or PABE(c3, c4). This may indicate that the defect aggregation structures are in a more polarized electronic state, thus emitting fluorescence at longer wavelength than those in orderly arranged aggregation structures observed in PI(BPDA/PDA) from PAA.\n\nIn order to investigate the fluorescence emission pro- cess of the intermolecular CT complexes of PI(BPDA/ PDA) from various precursors, their fluorescence decay\n\nprofiles were measured and shown in Fig. 9. The fluores- cence decay profile, If(t), can be best fitted with a double exponential function:\n\n\\begin{title}\nIf(t) = A16exp(\u2013t/s1) + A26exp(\u2013t/s2)\n\\end{title}\n\nwhere If(t) is the fluorescence intensity at time t, A1 and A2 are the pre-exponential factors, and s1 and s2 the fluor- escence lifetimes. The fluorescence decay profiles for PI(BPDA/PDA) from various precursors and the results of analysis are presented in Fig. 9 and also given in Tab. 1. According to the analysis for PI(BPDA/PDA) from PAA (Fig. 9a), its fluorescence lifetimes s1 and s2 are 1.6 ns and 6.1 ns, respectively. But PI(BPDA/PDA) from PAAE (Fig. 9b) shows shorter fluorescence life- times, s1 = 0.8 ns and s2 = 3.7 ns. Similarly, PI(BPDA/ PDA) from PABE (Fig. 9c) also shows shorter fluores- cence lifetimes, s1 = 0.8 ns and s2 = 3.3 ns. These differ- ences of fluorescence lifetimes indicate that the fluores- cence emission processes of the intermolecular CT com- plexes of PI(BPDA/PDA) from PAA are different from those of PI(BPDA/PDA) from PAAE and PABE.\n\n\\begin{title}\nConclusions\n\\end{title}\n\nIntermolecular CT fluorescence behavior and thermome- chanical properties of PI(BPDA/PDA) from PAA, PAAE, and PABE after an identical imidization process were compared as summarized in Tab. 1. The uniformity in chemical structure and thermogravimetry of PI(BPDA/ PDA) from various precursors has been confirmed. How- ever, according to Tab. 1, PI(BPDA/PDA) from PAA shows higher density and Tg and lower TCE than those of PI(BPDA/PDA) from PAAE and PABE. This indicates that the orderliness of molecular packing of PI(BPDA/ PDA) from PAA is higher than those of PI(BPDA/PDA) from PAAE and PABE. The intermolecular ground-state CT complexes of PI(BPDA/PDA) from PAAE and PABE show fluorescence at longer wavelengths and wider fluor- escence peak wavelength range than those of PI(BPDA/ PDA) from PAA. This implies the formation of wider variety of aggregation structures of PI(BPDA/PDA) from PAAE and PABE than those of PI(BPDA/PDA) from PAA. The fluorescence emission processes of intermole- cular CT complexes of PI(BPDA/PDA) from various pre- cursors were also confirmed to be different from each other owing to their different fluorescence lifetimes. Study of the intermolecular CT characteristics of PI is proved to be effective in distinguishing the differences of aggregation structures among PI(BPDA/PDA) from var- ious precursors.\n\nAcknowledgement: H. W. H. is greatly indebted to the JSPS Research Fellowship for Young Scientists for supporting his\n\nresearch and Ph.D study in the University of Tokyo. The present work is partly supported by an Grand in Aid from the Ministry of Education, Culture, and Sports of Japan (A-08405060).\n\n1) \u201cPhotosensitive Polyimides: Fundamentals and Applica- tions\u201d, K. Horie, T. Yamashita, Eds., Technomic, Lancaster 1995\n\n2) \u201cPolyimides: Fundamentals and Applications\u201d, M. K. Ghosh, K. L. Mittal, Eds., Dekker, New York 1996\n\n3) S. Nishizaki, T. Moriwaki, J. Chem. Soc. Jpn. 71, 1559 (1967)\n\n4) V. L. Bell, R. A. Jewell, J. Polym. Sci., Part A-1 5, 3043 (1967)\n\n5) \u201cPolyimides: Materials, Chemistry and Characterization\u201d, C. Feger, M. M. Khojasteh, J. E. McGrath, Eds., Elsevier, Amsterdam 1989\n\n6) N. C. Stoffel, E. J. Kramer, W. Volksen, T. P. Russell, Poly- mer 34, 4524 (1993)\n\n7) Y. Okabe, T. Miwa, A. Takahashi, S. Numata, Kobunshi Ron- bunshu 50, 947 (1993)\n\n8) T. M. Moy, C. D. DePorter, J. E. McGrath, Polymer 34, 819 (1993)\n\n9) R. Yokota, R. Horiuchi, M. Kochi, H. Soma, I. Mita, J. Polym. Sci.: Part C: Polym. Lett. 26, 215 (1988)\n\n10) M. Ree, D. Y. Yoon, W. Volksen, J. Polym. Sci., Part B: Polym. Phys. 29, 1203 (1991)\n\n11) S. Rojstaczer, M. Ree, D. Y. Yoon, W. Volksen, J. Polym. Sci., Part B: Polym. Phys. 30, 133 (1992)\n\n12) M. Hasegawa, I. Mita, M. Kochi, R. Yokota, J. Polym. Sci., Part C: Polym. Lett. 27, 263 (1989)\n\n13) M. Hasegawa, H. Arai, I. Mita, R. Yokota, Polym. J. 22, 875 (1990)\n\n14) M. Hasegawa, M. Kochi, I. Mita, R. Yokota, Eur. Polym. J. 25, 349 (1989)\n\n15) E. D. Wachsman, C. W. Frank, Polymer 29, 1191 (1988)\n\n16) U. Goeschel, H. Lee, D. Y. Yoon, R. L. Siemens, B. A. Smith, W. Volksen, Colloid Polym. Sci. 272, 1388 (1994)\n\n17) \u201cPolyimides: Trends in Materials and Applications\u201d, C. Feger, M. M. Khojasteh, S. E. Molis, Eds., Soc. Plast. Eng., Mid-Hudson Section, Hopewell Jct., New York 1996\n\n18) T. Miwa, Y. Okabe, M. Ishida, Polymer 38, 4945 (1997)\n\n19) M. Ree, T. L. Nunes, K. J. R. Chen, J. Polym. Sci., Part B: Polym. Phys. 33, 453 (1995)\n\n20) M. Hasegawa, Y. Shindo, T. Sugimura, S. Ohshima, K. Horie, M. Kochi, R. Yokota, I. Mita, J. Polym. Sci., Part B: Polym. Phys. 31, 1617 (1993)\n\n21) M. Hasegawa, J. Ishii, T. Matano, Y. Shindo, T. Sugimura, T. Miwa, M. Ishida, Y. Okabe, A. Takahashi, ACS Symp. Ser. 614, 395 (1995)\n\n",
+    "objects": [
+        {
+            "class": "title",
+            "confidence": 0.9580078125,
+            "float_xyxy": [
+                0.17633797781808036,
+                0.08593750906103864,
+                0.8684230772387079,
+                0.14394531793662318
+            ],
+            "page": 0,
+            "str": "\\begin{title}\nDifferences in thermo-mechanical properties and intermolecular charge-transfer characteristics of the aromatic polyimide PI(BPDA/PDA) from various precursors\n\\end{title}\n"
+        },
+        {
+            "class": "paragraph",
+            "confidence": 0.66796875,
+            "float_xyxy": [
+                0.17606158857586005,
+                0.16953125362441546,
+                0.5331598362001051,
+                0.18222656612441546
+            ],
+            "page": 0,
+            "str": "Hsu Wen Huang*1, Kazuyuki Horie*1, Rikio Yokota2\n"
+        },
+        {
+            "class": "paragraph",
+            "confidence": 0.57958984375,
+            "float_xyxy": [
+                0.1757851993336397,
+                0.19140626812207728,
+                0.8634480452337185,
+                0.23007812862441546
+            ],
+            "page": 0,
+            "str": "1 Department of Chemistry and Biotechnology, Graduate School of Engineering, The University of Tokyo, 7-3-1 Hongo, Bunkyo-ku, Tokyo 113-8656, Japan 2 Institute of Space and Astronautical Science, 3-1-1 Yoshinodai, Sagamihara, Kanagawa 229-0022, Japan\n"
+        },
+        {
+            "class": "paragraph",
+            "confidence": 0.70751953125,
+            "float_xyxy": [
+                0.17633797781808036,
+                0.23769532699766183,
+                0.521274957737001,
+                0.2501953197488309
+            ],
+            "page": 0,
+            "str": "(Received: July 6, 1998; revised: November 9, 1998)\n"
+        },
+        {
+            "class": "paragraph",
+            "confidence": 0.96826171875,
+            "float_xyxy": [
+                0.1757851993336397,
+                0.27500002174649274,
+                0.8877705037092962,
+                0.44531253624415457
+            ],
+            "page": 0,
+            "str": "SUMMARY: The differences in thermo-mechanical properties and intermolecular charge-transfer (CT) cha- racteristics of an aromatic polyimide, PI(BPDA/PDA), from polyamide acid (PAA), polyamide allyl ester (PAAE), or polyamide benzyl ester (PABE) precursors were studied. The various PI(BPDA/PDA)\u2019s show identical uniformity in chemical structure and thermogravimetric behavior. PI(BPDA/PDA) from PAA how- ever shows higher density and Tg and lower thermal expansion coefficient than those from PAAE and PABE, indicating the higher orderliness of the molecular packing of PI(BPDA/PDA) from PAA. Intermolecular ground-state CT complexes of PI(BPDA/PDA) from PAAE and PABE show fluorescence at longer wave- lengths and wider fluorescence peak wavelength range than the one of PI(BPDA/PDA) from PAA. This sug- gests the wider variety of aggregation structures of PI(BPDA/PDA) from PAAE and PAGE than those of PI(BPDA/PDA) from PAA. The steric hindrance of the bulky substituents of PAAE and PABE would cause an increase in the variety of aggregation structures during imidization. The shorter fluorescence lifetimes of PI(BPDA/PDA) from PAAE and PABE than the one of PI(BPDA/PDA) from PAA also confirm the differen- ces in their intermolecular CT characteristics.\n"
+        },
+        {
+            "class": "title",
+            "confidence": 0.81640625,
+            "float_xyxy": [
+                0.06909795809192817,
+                0.4769531394976618,
+                0.17606158857586005,
+                0.4886718894976618
+            ],
+            "page": 0,
+            "str": "\\begin{title}\nIntroduction\n\\end{title}\n"
+        },
+        {
+            "class": "paragraph",
+            "confidence": 0.9775390625,
+            "float_xyxy": [
+                0.06799238830053506,
+                0.49765627174649274,
+                0.4665494005219275,
+                0.8757812789953237
+            ],
+            "page": 0,
+            "str": "Aromatic polyimides (PIs) have been of great interest for microelectronic applications owing to their high tempera- ture stability, low dielectric constant, and useful mechan- ical properties1, 2). Traditionally, PIs are generally synthe- sized in a two-step process by the condensation reaction of a diamine and a dianhydride to form a soluble poly- amide acid (PAA). The PAA precursors are then solvent cast to the desired form and thermally treated to cycloimi- dize the precursors, liberating water and forming the final PIs. Understanding the details of the imidization reaction is important to ensure optimal final properties, and criti- cal in the design of a system involving the deposition of consecutive layers. On the other hand, an ester of the PAA, for example, the ethyl ester, can also be cycloimi- dized, producing ethanol rather than water. Such polya- mide alkyl ester precursors have also been developed3\u20138). In contrast to PAA precursors, polyamide alkyl ester pre- cursors have improved solution properties, such as better resistance to hydrolytic degradation, lower viscosity solu- tion with higher solid content3\u20138), and an apparent lack of exchange reactions in solutions containing different pre- cursors9\u201311). Similarly, the polyamide alkyl ester precur- sors can also be cycloimidized to the identical PI by ther- mal treatment, as the corresponding PAA precursors, in spite of their higher imidization temperature than PAA precursors3, 7).\n"
+        },
+        {
+            "class": "paragraph",
+            "confidence": 0.9775390625,
+            "float_xyxy": [
+                0.48755518809086135,
+                0.48515627899532365,
+                0.8877705037092962,
+                0.7882812934929855
+            ],
+            "page": 0,
+            "str": "The remarkable thermal stability and other physical properties of aromatic PIs are well known to be due to the rigidity of polymer chain, and strong charge-transfer (CT) interaction between aromatic moieties (electron donor) and imide moieties (electron acceptor)1, 2). The origin of intermolecular CT complexes of aromatic PIs has been proved12) and studied extensively13, 14). Although Fourier- transform infrared spectroscopy (FTIR) and X-ray dif- fraction have been used to study the degree of imidization and the approximate molecular arrangement of PIs, it is difficult to examine the aggregation structures of PIs by FTIR and X-ray diffraction. On the contrary, by using fluorescence method, it is effective to study the aggrega- tion structures consisting of intermolecular CT complexes directly. Thus, by investigating the change in fluores- cence behavior of the intermolecular CT complexes, the change in molecular aggregation structures of aromatic PIs during imidization have been studied in detail14, 15). According to the above studies, examining the change in CT fluorescence behavior is proved to be useful in study- ing the molecular aggregation structures of aromatic PIs.\n"
+        },
+        {
+            "class": "paragraph",
+            "confidence": 0.95751953125,
+            "float_xyxy": [
+                0.48783159015559346,
+                0.7906250579906473,
+                0.8877705037092962,
+                0.8750000724883091
+            ],
+            "page": 0,
+            "str": "The differences of a polyimide composed of biphenyl- tetracarboxylic dianhydride (BPDA) and p-phenylenedi- amine (PDA), PI(BPDA/PDA), prepared from different precursors, i.e., from PAA, polyamide alkyl esters16\u201318), or photosensitive PI precursor19), have been studied by thermo-mechanical and X-ray diffraction measurements.\n"
+        },
+        {
+            "class": "paragraph",
+            "confidence": 0.9765625,
+            "float_xyxy": [
+                0.06826877754275539,
+                0.08554687862441546,
+                0.4668258025866597,
+                0.2734375181220773
+            ],
+            "page": 1,
+            "str": "However, the thermo-mechanical properties and intermo- lecular CT characteristics of PI(BPDA/PDA) from var- ious precursors have not been compared for elucidating the differences of their molecular aggregation structures. In the present paper, precursors with various substituents groups, i.e., a conventional PAA, a photosensitive poly- amide allyl ester (PAAE), and a bulky polyamide benzyl ester (PABE), are prepared for synthesis of PI(BPDA/ PDA). By using thermo-mechanical and fluorescence measurements, we study the differences in thermo- mechanical properties and intermolecular CT characteris- tics of PI(BPDA/PDA) from various precursors after an identical thermal imidization process.\n"
+        },
+        {
+            "class": "title",
+            "confidence": 0.84814453125,
+            "float_xyxy": [
+                0.06771599905831473,
+                0.3007812681220773,
+                0.22636490509289653,
+                0.3156250072488309
+            ],
+            "page": 1,
+            "str": "\\begin{title}\nExperimental part\n\\end{title}\n"
+        },
+        {
+            "class": "title",
+            "confidence": 0.8017578125,
+            "float_xyxy": [
+                0.06826877754275539,
+                0.33203125,
+                0.29076420118828783,
+                0.3441406394976618
+            ],
+            "page": 1,
+            "str": "\\begin{title}\nSample preparation and materials\n\\end{title}\n"
+        },
+        {
+            "class": "paragraph",
+            "confidence": 0.9716796875,
+            "float_xyxy": [
+                0.06799238830053506,
+                0.35058597374415457,
+                0.46710215336134453,
+                0.5085937789953237
+            ],
+            "page": 1,
+            "str": "N-Methylpyrrolidone (NMP, Tokyo Kasei) was dried with molecular sieves (4A) and vacuum distilled before use. The PAA precursor from biphenyltetracarboxylic dianhydride (BPDA) and p-phenylenediamine (PDA) was prepared as reported elsewhere12\u201314). The preparation of PAAE and PABE is based on the reported work5) and presented in Fig. 1. After obtaining the PAA precursor, a stoichiometric amount of triethylamine as the neutralizing base and a 3-fold excess of allyl bromide (Tokyo Kasei) were added into the NMP solu- tion of PAA, the byproduct salts were precipitated, then the solution was kept stirring for 24 h at room temperature. To precipitate and wash the PAAE precursor, 2-propanol, 1%\n"
+        },
+        {
+            "class": "expression",
+            "confidence": 0.95849609375,
+            "float_xyxy": [
+                0.11553178033908876,
+                0.5171875217464927,
+                0.8490756507681197,
+                0.8484375289953237
+            ],
+            "page": 1,
+            "str": "\n"
+        },
+        {
+            "class": "molecule",
+            "confidence": 0.6749424661882576,
+            "float_xyxy": [
+                0.113873432063255,
+                0.5179687644976618,
+                0.396898644711791,
+                0.5851562934929855
+            ],
+            "page": 1,
+            "is_markush": false,
+            "str": "\\begin{molecule}\nC=CCOC(=O)c1ccc(-c2ccc(C(=O)OCC=C)c(C(=O)Nc3ccc(NC)cc3)c2)cc1C(=O)OCC=C\n\\end{molecule}\n"
+        },
+        {
+            "class": "molecule",
+            "confidence": 1.0,
+            "float_xyxy": [
+                0.1691517934077928,
+                0.6183594184929855,
+                0.25151656976267067,
+                0.634765625
+            ],
+            "page": 1,
+            "is_markush": false,
+            "str": "\\begin{molecule}\nC=CCBr\n\\end{molecule}\n"
+        },
+        {
+            "class": "molecule",
+            "confidence": 1.0,
+            "float_xyxy": [
+                0.6069564178210347,
+                0.6382813079906473,
+                0.8479700937992385,
+                0.6960937789953237
+            ],
+            "page": 1,
+            "is_markush": false,
+            "str": "\\begin{molecule}\n*N1C(=O)c2ccc(-c3ccc4c(c3)C(=O)N(c3ccc(*)cc3)C4=O)cc2C1=O\n\\end{molecule}\n"
+        },
+        {
+            "class": "molecule",
+            "confidence": 1.0,
+            "float_xyxy": [
+                0.14538210059414391,
+                0.64453125,
+                0.3869485550567883,
+                0.7015625144976618
+            ],
+            "page": 1,
+            "is_markush": false,
+            "str": "\\begin{molecule}\n*C(=O)c1cc(-c2ccc(C(=O)O)c(C(=O)Nc3ccc(N*)cc3)c2)ccc1C(=O)O\n\\end{molecule}\n"
+        },
+        {
+            "class": "molecule",
+            "confidence": 1.0,
+            "float_xyxy": [
+                0.1669406666475184,
+                0.7246094474883091,
+                0.25041098714876575,
+                0.7488281539953237
+            ],
+            "page": 1,
+            "is_markush": false,
+            "str": "\\begin{molecule}\nBrCc1ccccc1\n\\end{molecule}\n"
+        },
+        {
+            "class": "molecule",
+            "confidence": 1.0,
+            "float_xyxy": [
+                0.12354714529854911,
+                0.7593750579906473,
+                0.4027028829109769,
+                0.8375000579906473
+            ],
+            "page": 1,
+            "is_markush": false,
+            "str": "\\begin{molecule}\n*C(=O)c1cc(-c2ccc(C(=O)OCc3ccccc3)c(C(=O)Nc3ccc(N*)cc3)c2)ccc1C(=O)OCc1ccccc1\n\\end{molecule}\n"
+        },
+        {
+            "class": "paragraph",
+            "confidence": 0.60205078125,
+            "float_xyxy": [
+                0.1254818828166032,
+                0.8562500289953237,
+                0.8324921423647584,
+                0.8812500144976618
+            ],
+            "page": 1,
+            "str": "Fig. 1. Schematic diagram of preparation of PI(BPDA/PDA) from various precursors with an identical imidiza- tion process\n"
+        },
+        {
+            "class": "paragraph",
+            "confidence": 0.97314453125,
+            "float_xyxy": [
+                0.48755518809086135,
+                0.08540039787383091,
+                0.8866649980304622,
+                0.21660157337324637
+            ],
+            "page": 1,
+            "str": "aqueous hydrochloric acid, and acetone were added to the solution or precipitates in the above sequence, then the PAAE was vacuum dried for 24 h at 508C. Similarly, by using benzyl bromide (Tokyo Kasei), the PABE precursor was prepared with the same procedure. The various precur- sor were dissolved in NMP again and spin-coated or bar- coated to form films, then vacuum dried for 24 h at 508C. The films of various precursors were then imidized at 1508C for 1 h and at 4508C for 1 h in vacuum to obtain PI(BPDA/ PDA).\n"
+        },
+        {
+            "class": "title",
+            "confidence": 0.79931640625,
+            "float_xyxy": [
+                0.48755518809086135,
+                0.23867188949766183,
+                0.5826339593454569,
+                0.24882813587324637
+            ],
+            "page": 1,
+            "str": "\\begin{title}\nMeasurements\n\\end{title}\n"
+        },
+        {
+            "class": "paragraph",
+            "confidence": 0.86279296875,
+            "float_xyxy": [
+                0.48755518809086135,
+                0.2570312572488309,
+                0.8866649980304622,
+                0.2832031431220773
+            ],
+            "page": 1,
+            "str": "FTIR spectra were measured with a Jasco FTIR-230S spec- trophotometer.\n"
+        },
+        {
+            "class": "paragraph",
+            "confidence": 0.94580078125,
+            "float_xyxy": [
+                0.48783159015559346,
+                0.28398438587324637,
+                0.8877705037092962,
+                0.33554689674649274
+            ],
+            "page": 1,
+            "str": "DSC measurements were performed with a Thermal Ana- lysis Instruments 2010 differential scanning calorimeter. Samples of about 5 mg were examined at a scanning rate of 108C/min under a flow of dry nitrogen.\n"
+        },
+        {
+            "class": "paragraph",
+            "confidence": 0.9248046875,
+            "float_xyxy": [
+                0.4881079409302784,
+                0.33671877899532365,
+                0.887217699579832,
+                0.37382815399532365
+            ],
+            "page": 1,
+            "str": "The densities of PI films were measured by a density gra- dient column (carbon tetrachloride and xylene system) in a thermostat at 358C.\n"
+        },
+        {
+            "class": "paragraph",
+            "confidence": 0.93701171875,
+            "float_xyxy": [
+                0.4883843429950105,
+                0.37695316124415457,
+                0.8866649980304622,
+                0.42851565399532365
+            ],
+            "page": 1,
+            "str": "TG measurements were performed with a Thermal Analy- sis Instruments 2050 thermogravimetric analyzer and exam- ined at a heating rate of 108C/min under nitrogen atmos- phere.\n"
+        },
+        {
+            "class": "paragraph",
+            "confidence": 0.9560546875,
+            "float_xyxy": [
+                0.48755518809086135,
+                0.43046877899532365,
+                0.8866649980304622,
+                0.5085937789953237
+            ],
+            "page": 1,
+            "str": "TMA measurements were performed with a Rigaku TAS 200 thermo-mechanical analyzer. Samples in 14 mm63 mm rectangular shape with about 5\u20138 lm thickness were mounted between two chucks and measured at a heating rate of 108C/min under nitrogen atmosphere with a loaded force of 10 g. Since the thermal expansion coefficient (TEC) was\n"
+        },
+        {
+            "class": "paragraph",
+            "confidence": 0.908203125,
+            "float_xyxy": [
+                0.06771599905831473,
+                0.08515625724883091,
+                0.4662729984571954,
+                0.11113281431220773
+            ],
+            "page": 2,
+            "str": "temperature dependent, the average value between 100 and 2508C was used as a representative value.\n"
+        },
+        {
+            "class": "paragraph",
+            "confidence": 0.927734375,
+            "float_xyxy": [
+                0.06757779802594865,
+                0.11230469656103864,
+                0.4665494005219275,
+                0.1509765751854541
+            ],
+            "page": 2,
+            "str": "Fluorescence and its excitation spectra were measured with a Hitachi 850 fluorescence spectrophotometer in a front face arrangement to minimize the self-absorption.\n"
+        },
+        {
+            "class": "paragraph",
+            "confidence": 0.97021484375,
+            "float_xyxy": [
+                0.06799238830053506,
+                0.15224610824766183,
+                0.46710215336134453,
+                0.29765626087324637
+            ],
+            "page": 2,
+            "str": "Fluorescence lifetime measurements were performed with a Hamamatsu C4780 single-photon counting system. A nitro- gen-laser-pumped dye laser (Laser Photonics Ltd., LN120C) with stilbene solution (Exciton, Inc.), emitting light centered around 420 nm, was used as an excitation pulse source. The excitation pulse was directed to the sample through an opti- cal fiber, and the emitted light was also guided through an optical fiber to a Hamamatsu C4334 streak scope, then trans- formed to streak images. The delay time was controlled by a Hamamatsu C4792 trigger unit. The instrument response function of the whole system was about 1.4\u20131.8 ns (fwhm).\n"
+        },
+        {
+            "class": "title",
+            "confidence": 0.81884765625,
+            "float_xyxy": [
+                0.0695816424714417,
+                0.3363281394976618,
+                0.25759718438156515,
+                0.3480468894976618
+            ],
+            "page": 2,
+            "str": "\\begin{title}\nResults and discussion\n\\end{title}\n"
+        },
+        {
+            "class": "title",
+            "confidence": 0.8056640625,
+            "float_xyxy": [
+                0.06971983709255186,
+                0.36718753624415457,
+                0.3510176201828388,
+                0.38046877174649274
+            ],
+            "page": 2,
+            "str": "\\begin{title}\nCharacterization of various precursors\n\\end{title}\n"
+        },
+        {
+            "class": "paragraph",
+            "confidence": 0.970703125,
+            "float_xyxy": [
+                0.06826877754275539,
+                0.38730470924649274,
+                0.4668258025866597,
+                0.4875000434929854
+            ],
+            "page": 2,
+            "str": "Fig. 2 shows the FTIR spectra for the films of PAA (a), PAAE (b), and PABE (c). As can be seen in Fig. 2a, PAA shows the absorption of C2O stretching for carboxylic acid at 1714 cm\u20131. But PAAE (b) and PABE (c) show the absorption of C2O stretching for allyl ester group and benzyl ester group at 1724 cm\u20131 and 1721 cm\u20131, respec- tively. PAAE (b) also shows two O1C1O stretching\n"
+        },
+        {
+            "class": "chart",
+            "confidence": 0.9697265625,
+            "float_xyxy": [
+                0.08540507084181329,
+                0.49609378624415457,
+                0.4425032928210347,
+                0.8507812934929855
+            ],
+            "page": 2,
+            "str": "\n"
+        },
+        {
+            "class": "legend",
+            "confidence": 0.9047402739524841,
+            "float_xyxy": [
+                0.14095983425108324,
+                0.5132812717464927,
+                0.16030726072167148,
+                0.5257812644976618
+            ],
+            "page": 2,
+            "str": "\\begin{legend}\n(a)\n\\end{legend}\n"
+        },
+        {
+            "class": "caption",
+            "confidence": 0.88818359375,
+            "float_xyxy": [
+                0.06799238830053506,
+                0.8546875434929855,
+                0.4665494005219275,
+                0.8796875289953237
+            ],
+            "page": 2,
+            "str": "\\begin{caption}\nFig. 2. FTIR spectra for the films of PAA (a), PAAE (b), and PABE (c) after vacuum drying for 24 h at 508C\n\\end{caption}\n"
+        },
+        {
+            "class": "chart",
+            "confidence": 0.970703125,
+            "float_xyxy": [
+                0.5118776465664391,
+                0.08476562681220773,
+                0.86234243697479,
+                0.45078127174649274
+            ],
+            "page": 2,
+            "str": "\n"
+        },
+        {
+            "class": "legend",
+            "confidence": 0.8276028037071228,
+            "float_xyxy": [
+                0.5627337287454044,
+                0.10019531612441546,
+                0.5826339593454569,
+                0.11269531793662318
+            ],
+            "page": 2,
+            "str": "\\begin{legend}\n(a)\n\\end{legend}\n"
+        },
+        {
+            "class": "legend",
+            "confidence": 0.8607423901557922,
+            "float_xyxy": [
+                0.5627337287454044,
+                0.2082031322488309,
+                0.5848450732832196,
+                0.22148438587324637
+            ],
+            "page": 2,
+            "str": "\\begin{legend}\n(b)\n\\end{legend}\n"
+        },
+        {
+            "class": "caption",
+            "confidence": 0.8857421875,
+            "float_xyxy": [
+                0.48755518809086135,
+                0.4554687644976618,
+                0.8877705037092962,
+                0.4789062644976618
+            ],
+            "page": 2,
+            "str": "\\begin{caption}\nFig. 3. DSC curves for PAA (a), PAAE (b), and PABE (c) at a heating rate of 108C/min\n\\end{caption}\n"
+        },
+        {
+            "class": "paragraph",
+            "confidence": 0.96826171875,
+            "float_xyxy": [
+                0.48755518809086135,
+                0.5015625217464927,
+                0.8866649980304622,
+                0.6296875289953237
+            ],
+            "page": 2,
+            "str": "bands of allyl ester group at 1265 cm\u20131 and 1132 cm\u20131. Similarly, PABE (c) also exhibits two O1C1O stretching bands of benzyl ester group at 1263 cm\u20131 and 1130 cm\u20131. But this kind of O1C1O stretching band of ester group is not observed for PAA, which is in accord with the results of other workers3, 5, 7). Moreover, PAAE (b) shows an allylic absorption at 931 cm\u20131. According to the above FTIR results, esterification to a substantial extent from PAA to PAAE and PABE is confirmed.\n"
+        },
+        {
+            "class": "paragraph",
+            "confidence": 0.97705078125,
+            "float_xyxy": [
+                0.48727878602612923,
+                0.6335937789953237,
+                0.8877705037092962,
+                0.8789063224883091
+            ],
+            "page": 2,
+            "str": "Since it is indispensable to examine the imidization reaction temperature of various precursors for obtaining the completely imidized PI, the DSC curves of various precursors are examined, as shown in Fig. 3. For PAA (a), one can observe two endothermic peaks around 708C and 1688C, which can be regarded as the water vaporization and the imidization reaction temperature, respectively. For PAAE (b), one can also observe the identical water vaporization around 708C, but higher imidization reac- tion temperature at 2048C. Similarly, according to Fig. 3c, the imidization reaction temperature of PABE (2178C) is also higher than that of PAA. This may be because the substituent group of esters (allyl group and benzyl group) are bulkier than the one of acid (hydrogen), and the electrophilicity of ester group is weaker than that of acid group, which is due to the higher electron density of allyl group and benzyl group in comparison with the\n"
+        },
+        {
+            "class": "chart",
+            "confidence": 0.962890625,
+            "float_xyxy": [
+                0.1126296612394958,
+                0.08603515987441546,
+                0.40574320304293593,
+                0.46953127899532365
+            ],
+            "page": 3,
+            "str": "\n"
+        },
+        {
+            "class": "legend",
+            "confidence": 0.8793628811836243,
+            "float_xyxy": [
+                0.1586488996233259,
+                0.10507812862441546,
+                0.1785491174008666,
+                0.11718750906103864
+            ],
+            "page": 3,
+            "str": "\\begin{legend}\n(a)\n\\end{legend}\n"
+        },
+        {
+            "class": "legend",
+            "confidence": 0.8392800688743591,
+            "float_xyxy": [
+                0.15795792010651918,
+                0.22324219112441546,
+                0.178963707675453,
+                0.23574220199766183
+            ],
+            "page": 3,
+            "str": "\\begin{legend}\n(b)\n\\end{legend}\n"
+        },
+        {
+            "class": "legend",
+            "confidence": 0.7742362022399902,
+            "float_xyxy": [
+                0.15809612113888524,
+                0.3292968822488309,
+                0.17799633891642594,
+                0.34179691124415457
+            ],
+            "page": 3,
+            "str": "\\begin{legend}\n(c)\n\\end{legend}\n"
+        },
+        {
+            "class": "caption",
+            "confidence": 0.9599609375,
+            "float_xyxy": [
+                0.06757779802594865,
+                0.47343752899532365,
+                0.4665494005219275,
+                0.5453125144976618
+            ],
+            "page": 3,
+            "str": "\\begin{caption}\nFig. 4. Fluorescence (solid curves) and its excitation spectra (gray curves) for PAA (a), PAAE (b), and PABE (c). Fluores- cence spectra with subscript 1\u20133 are excited at 350 nm, 400 nm, and 450 nm, respectively; fluorescence excitation spectra with subscript 19 and 29 are monitored at 490 nm and 520 nm, respec- tively\n\\end{caption}\n"
+        },
+        {
+            "class": "paragraph",
+            "confidence": 0.9677734375,
+            "float_xyxy": [
+                0.0674396034048385,
+                0.5601562717464927,
+                0.4659965963924632,
+                0.6585937644976618
+            ],
+            "page": 3,
+            "str": "hydrogen3, 7). Based on the above DSC results, in order to obtain the same degree of the imidization for PAA, PAAE, and PABE, it is necessary to proceed the imidiza- tion process at much higher temperature than the usual imidization temperature for PAA. Thus, the imidization process was performed at 1508C for 1 h and at 4508C for 1 h in vacuum.\n"
+        },
+        {
+            "class": "paragraph",
+            "confidence": 0.9755859375,
+            "float_xyxy": [
+                0.06757779802594865,
+                0.6632812934929855,
+                0.4665494005219275,
+                0.8796875289953237
+            ],
+            "page": 3,
+            "str": "In order to compare the aggregation structures of var- ious precursors before and after imidization, the fluores- cence (solid curves) and its excitation spectra (gray curves) for PAA (a), PAAE (b), and PABE (c) were meas- ured and depicted in Fig. 4. Independent of the substitu- ent groups of various precursors, all the precursors show a main peak around 350 nm in fluorescence excitation spectra (a91, b91, c91) and a corresponding fluorescence peak around 490 nm (a1, b1, c1), which is due to the molecular interaction of excited BPDA moieties with other moi- eties20). Moreover, by exciting at longer excitation wave- lengths (400\u2013450 nm), all the precursors show slight red shift in fluorescence peak wavelength (a2, a3; b2, b3, c2 c3), and their fluorescence excitation spectra monitored at 520 nm (a92, b92, c92) are in accord with those monitored at\n"
+        },
+        {
+            "class": "chart",
+            "confidence": 0.97265625,
+            "float_xyxy": [
+                0.5044150985589548,
+                0.08671875181220773,
+                0.86234243697479,
+                0.46171877899532365
+            ],
+            "page": 3,
+            "str": "\n"
+        },
+        {
+            "class": "legend",
+            "confidence": 0.8477519154548645,
+            "float_xyxy": [
+                0.5433863022748162,
+                0.13417969293662318,
+                0.5621809759059874,
+                0.14511719112441546
+            ],
+            "page": 3,
+            "str": "\\begin{legend}\n(a)\n\\end{legend}\n"
+        },
+        {
+            "class": "caption",
+            "confidence": 0.91064453125,
+            "float_xyxy": [
+                0.48672598189666494,
+                0.46562502899532365,
+                0.8866649980304622,
+                0.5015625217464927
+            ],
+            "page": 3,
+            "str": "\\begin{caption}\nFig. 5. FTIR spectra for PI(BPDA/PDA) films from PAA (a), PAAE (b), and PABE (c) after the identical thermal imidization process\n\\end{caption}\n"
+        },
+        {
+            "class": "paragraph",
+            "confidence": 0.97119140625,
+            "float_xyxy": [
+                0.48755518809086135,
+                0.5226562934929855,
+                0.8877705037092962,
+                0.6382813079906473
+            ],
+            "page": 3,
+            "str": "490 nm (a91, b91, c91). This slight red shift may reflect the existence of various kinds of molecular interactions of excited BPDA moieties with other moieties in these amorphous precursors. In spite of the differences of fluor- escence intensity, the fluorescence behavior of these pre- cursors is considered to be identical. The consistency in fluorescence behavior of various precursors also suggests that these precursors are in amorphous state.\n"
+        },
+        {
+            "class": "title",
+            "confidence": 0.90185546875,
+            "float_xyxy": [
+                0.48755518809086135,
+                0.6718750724883091,
+                0.884453781512605,
+                0.7156250289953237
+            ],
+            "page": 3,
+            "str": "\\begin{title}\nCharacterization, thermal stability, and thermo- mechanical properties of PI(BPDA/PDA) from various precursors\n\\end{title}\n"
+        },
+        {
+            "class": "paragraph",
+            "confidence": 0.97216796875,
+            "float_xyxy": [
+                0.48783159015559346,
+                0.7226563224883091,
+                0.8877705037092962,
+                0.8804688079906473
+            ],
+            "page": 3,
+            "str": "Since it is necessary to ascertain the same degree of imi- dization for PI(BPDA/PDA) from various precursors, the FTIR spectra for PI(BPDA/PDA) from various precursors after the identical imidization process are presented in Fig. 5. The degree of imidization is estimated by the absorbance ratio of 1773 cm\u20131 band (C2O stretching in imide ring) to the 1517 cm\u20131 band (C2C stretching in benzene ring in PDA) as shown in Fig. 5. As can be seen in Fig. 5, independent of the differences of precursors, all the PI(BPDA/PDA)\u2019s from various precursors show the same FTIR spectra and an almost identical degree of imi-\n"
+        },
+        {
+            "class": "chart",
+            "confidence": 0.9736328125,
+            "float_xyxy": [
+                0.08955094794265363,
+                0.08662110099883091,
+                0.44112133378742124,
+                0.3273437572488309
+            ],
+            "page": 4,
+            "str": "\n"
+        },
+        {
+            "class": "caption",
+            "confidence": 0.9267578125,
+            "float_xyxy": [
+                0.06868336781734179,
+                0.33593753624415457,
+                0.4665494005219275,
+                0.37109378624415457
+            ],
+            "page": 4,
+            "str": "\\begin{caption}\nFig. 6. TG curves of PI(BPDA/PDA) from PAA (solid curve), PAAE (dashed curve), and PABE (gray curve) after the identical imidization process\n\\end{caption}\n"
+        },
+        {
+            "class": "paragraph",
+            "confidence": 0.974609375,
+            "float_xyxy": [
+                0.06799238830053506,
+                0.39843753624415457,
+                0.4665494005219275,
+                0.7023437934929855
+            ],
+            "page": 4,
+            "str": "dization, which corresponds to the degree of imidization of completely imidized PI(BPDA/PDA) reported by other workers13). This indicates that the chemical structures and degrees of imidization of PI(BPDA/PDA) from various precursors are identical. In order to examine the unifor- mity in chemical structure and evaluate the thermal stabi- lity, TG curves of PI(BPDA/PDA) from various precur- sors after the identical imidization process are depicted in Fig. 6. Independent of the differences of precursors, all the PI(BPDA/PDA)\u2019s from various precursors do not show any thermal degradation of byproducts, and also show identical degradation temperature at about 585\u2013 5918C as summarized in Tab. 1. Based on the above FTIR and TG results, PI(BPDA/PDA)\u2019s from various pre- cursors show identical uniformity in chemical structure and the same degradation stability, and might be assumed to be identical in other physical properties. Nevertheless, the densities of these PI films shown in Tab. 1 are differ- ent from each other and the order of density is arranged as follows: PAA (1.4555 g/cm3) A PAAE (1.4480 g/cm3) A PABE (1.4463 g/cm3). This seems to imply that the\n"
+        },
+        {
+            "class": "caption",
+            "confidence": 0.76611328125,
+            "float_xyxy": [
+                0.0674396034048385,
+                0.7226563224883091,
+                0.6931906820345326,
+                0.7351562789953237
+            ],
+            "page": 4,
+            "str": "\\begin{caption}\nTab. 1. Thermo-mechanical and fluorescence properties of PI(BPDA/PDA) from various precursors\n\\end{caption}\n"
+        },
+        {
+            "class": "table",
+            "confidence": 0.94775390625,
+            "float_xyxy": [
+                0.07186187615915507,
+                0.7398438079906473,
+                0.8888761119682248,
+                0.8304687644976618
+            ],
+            "page": 4,
+            "str": "\\begin{table}\n| ('PI(BPDA/PDA) from various', 'precursors')   | ('Degratation temperaturea)', '$inC$')   | ('Density in g/cm3', '')   | ('$ ) $\\\\crac', '')   | ('TECc) $K -fra}', '')   | ('Fluorescence peak wavelength', 'range in nm')   | ('Fluorescence lifetime (ns)', 'T1')   | ('Fluorescence lifetime (ns)', '$T2$')   |\n|:----------------------------------------------|:-----------------------------------------|:---------------------------|:----------------------|:-------------------------|:--------------------------------------------------|:---------------------------------------|:-----------------------------------------|\n| PAA                                           | 589                                      | 1.4555                     | 455                   | 0.77 \u00d710-5               | 525-567                                           | 1.6                                    | 6.1                                      |\n| PAAE                                          | 585                                      | 1.4480                     | 423                   | 1.62\u00d710-5                | 525-600                                           | 0.8                                    | 3.3                                      |\n| PABE                                          | 591                                      | 1.4463                     | -                     | \u4e00                       | 525-600                                           | 0.8                                    | 3.3                                      |\n\\end{table}\n"
+        },
+        {
+            "class": "paragraph",
+            "confidence": 0.78857421875,
+            "float_xyxy": [
+                0.06716321416261817,
+                0.8445312789953237,
+                0.3526759556361607,
+                0.8812500144976618
+            ],
+            "page": 4,
+            "str": "a) The onset of weight loss the TG curve. b) The onset of elongation in the TMA curve. c) Thermal expansion coefficient.\n"
+        },
+        {
+            "class": "chart",
+            "confidence": 0.974609375,
+            "float_xyxy": [
+                0.4905955082228204,
+                0.08750000362441546,
+                0.8800315536370799,
+                0.2933593894976618
+            ],
+            "page": 4,
+            "str": "\n"
+        },
+        {
+            "class": "caption",
+            "confidence": 0.9208984375,
+            "float_xyxy": [
+                0.48755518809086135,
+                0.3019531503709082,
+                0.8855593897715336,
+                0.33750002174649274
+            ],
+            "page": 4,
+            "str": "\\begin{caption}\nFig. 7. TMA curves of PI(BPDA/PDA) from PAA (solid curve) and PAAE (dashed curve) after the identical imidization process\n\\end{caption}\n"
+        },
+        {
+            "class": "paragraph",
+            "confidence": 0.96142578125,
+            "float_xyxy": [
+                0.48755518809086135,
+                0.3546875072488309,
+                0.8866649980304622,
+                0.4406250072488309
+            ],
+            "page": 4,
+            "str": "density of PI(BPDA/PDA) from polyamide esters is smal- ler than that from PAA, which would be due to the differ- ence in molecular mobility during thermal cure of various precursors, caused by the differences in hydrogen-bond- ing ability with the solvent, imidization rate, and/or the size of the volatile group outgassed during imidization21).\n"
+        },
+        {
+            "class": "paragraph",
+            "confidence": 0.97509765625,
+            "float_xyxy": [
+                0.48755518809086135,
+                0.44218752899532365,
+                0.8877705037092962,
+                0.7015625144976618
+            ],
+            "page": 4,
+            "str": "Thermo-mechanical properties of polymers such as dimensional stability and TEC and known to be strongly related to geometry and aggregation structure in addition to chemical structure1, 2). Therefore, the TMA measure- ments were carried out to investigate the differences of density for PI(BPDA/PDA) from various precursors. Fig. 7 shows the TMA curves of PI(BPDA/PDA) from various precursors. In Fig. 7, PI(BPDA/PDA) from PAA (solid curve) reveals elongation for about 200 lm beyond Tg (4558C). But PI(BPDA/PDA) from PAAE (dashed curve) reveals larger elongation for about 400 mm beyond Tg (4238C). Unfortunately, the film of PI(BPDA/ PDA) from PABE was too brittle and unavailable for TMA measurement, which is due to the too large substi- tuent group to hinder the molecular packing. Moreover, according to the TEC values shown in Tab. 1, TEC of PI(BPDA/PDA) from PAA (0.77610\u20135 K\u20131) is smaller than the one from PAAE (1.62610\u20135 K\u20131). These results\n"
+        },
+        {
+            "class": "paragraph",
+            "confidence": 0.97705078125,
+            "float_xyxy": [
+                0.06771599905831473,
+                0.08554687862441546,
+                0.4668258025866597,
+                0.33164064674649274
+            ],
+            "page": 5,
+            "str": "are in good accord with the recently reported results18) for PI(BPDA/PDA) prepared from polyamide acid alkyl esters. The difference between the TEC of PI(BPDA/ PDA) from PAA and that from PAAE indicates that the aggregation structures of PI(BPDA/PDA) from PAA arrange in a molecular packing with higher orderliness than those from PAAE and PABE. The interactions between the precursors and the solvent (NMP) have been suggested to lead to large differences in higher order structures of the polyimides, which in turn affect the TEC18). Molecular packing of PI has been demonstrated to be deeply related to the intermolecular CT com- plexes12\u201315). Therefore, it seems effective to use fluores- cence method to study the fluorescence behavior of inter- molecular CT complexes for elucidating the differences of molecular packing of PI(BPDA/PDA) from various precursors.\n"
+        },
+        {
+            "class": "title",
+            "confidence": 0.87841796875,
+            "float_xyxy": [
+                0.0674396034048385,
+                0.36679689674649274,
+                0.43061846564797795,
+                0.39453128624415457
+            ],
+            "page": 5,
+            "str": "\\begin{title}\nDifferences in fluorescence behavior of PI(BPDA/ PDA) from various precursors\n\\end{title}\n"
+        },
+        {
+            "class": "paragraph",
+            "confidence": 0.97607421875,
+            "float_xyxy": [
+                0.06799238830053506,
+                0.4007812644976618,
+                0.4665494005219275,
+                0.8796875289953237
+            ],
+            "page": 5,
+            "str": "Fig. 8 shows the fluorescence (right) and its excitation spectra (left) of PI(BPDA/PDA) from various precursors. At first, we refer to the fluorescence excitation spectra for PI(BPDA/PDA) from PAA (a91, a92, a93). A main peak is observed around 350 nm, and its corresponding fluores- cence peak (a1) appears at much longer wavelength (525 nm) than the one before imidization (490 nm), which is due to the strong CT interaction between excited biphenylbisimide moieties to form the intermolecular excited-state CT complexes14\u201320). Moreover, related to the shoulder around 470\u2013480 nm in the fluorescence excita- tion spectra, by exciting at longer excitation wavelengths (400\u2013520 nm), another group of fluorescence peaks are observed around 538\u2013567 nm (a2, a3, a4), which are due to the intermolecular ground-state CT complexes at lower energy level14). These intermolecular ground-state CT complexes show red-shift phenomenon by excitation at longer wavelengths (400\u2013520 nm). This indicates the existence of various kinds of intermolecular ground-state CT complexes. But this kind of apparent red shift of fluorescence is not observed before imidization (Fig. 4a). This is because the molecular packing changes to be more ordered after imidization, and makes the moieties interact sensitively with each other to reflect the differ- ence of molecular interaction. As to the fluorescence behavior of PI(BPDA/PDA) from PAAE (Fig. 8b), its fluorescence excitation spectra (b91, b92, b93) and fluores- cence peak wavelength of intermolecular excited-state CT complex (b1) are identical to those of PI(BPDA/PDA) from PAA. Similarly, the intermolecular excited-state CT complex of PI(BPDA/PDA) from PABE (c1) also shows fluorescence around 525 nm. This consistency of fluores- cence for the intermolecular excited-state CT complex of\n"
+        },
+        {
+            "class": "chart",
+            "confidence": 0.9658203125,
+            "float_xyxy": [
+                0.5091137284992122,
+                0.08593750906103864,
+                0.8595785701976103,
+                0.47031252174649274
+            ],
+            "page": 5,
+            "str": "\n"
+        },
+        {
+            "class": "legend",
+            "confidence": 0.8234251141548157,
+            "float_xyxy": [
+                0.6661043054917279,
+                0.09687500724883091,
+                0.6848989278328519,
+                0.10898437862441546
+            ],
+            "page": 5,
+            "str": "\\begin{legend}\n(a)\n\\end{legend}\n"
+        },
+        {
+            "class": "legend",
+            "confidence": 0.9046072959899902,
+            "float_xyxy": [
+                0.6655515013622637,
+                0.21660157337324637,
+                0.6854517319623161,
+                0.22910156612441546
+            ],
+            "page": 5,
+            "str": "\\begin{legend}\n(b)\n\\end{legend}\n"
+        },
+        {
+            "class": "legend",
+            "confidence": 0.7766265273094177,
+            "float_xyxy": [
+                0.666657058331145,
+                0.33867190399532365,
+                0.6843461749934349,
+                0.35039065399532365
+            ],
+            "page": 5,
+            "str": "\\begin{legend}\n(c)\n\\end{legend}\n"
+        },
+        {
+            "class": "caption",
+            "confidence": 0.966796875,
+            "float_xyxy": [
+                0.48755518809086135,
+                0.4789062644976618,
+                0.8866649980304622,
+                0.5757812717464927
+            ],
+            "page": 5,
+            "str": "\\begin{caption}\nFig. 8. Fluorescence (right) and its excitation spectra (left) for PI(BPDA/PDA) from PAA (a), PAAE (b), and PABE (c) after the identical imidization process. Fluorescence spectra with sub- script 1\u20134 are excited at 350 nm, 400 nm, 480 nm, and 520 nm, respectively, and the values in the parenthesis are their fluores- cence peak wavelengths. Fluorescence excitation spectra with subscript 1\u20133 are monitored at 525 nm, 550 nm, and 600 nm, respectively\n\\end{caption}\n"
+        },
+        {
+            "class": "paragraph",
+            "confidence": 0.982421875,
+            "float_xyxy": [
+                0.48727878602612923,
+                0.6062500289953237,
+                0.8877705037092962,
+                0.8796875289953237
+            ],
+            "page": 5,
+            "str": "PI(BPDA/PDA) from various precursors indicates the consistency of uniformity in their chemical structure, as studied by FTIR and TG measurements. However, the intermolecular ground-state complexes of PI(BPDA/ PDA) from PAAE (b2, b3, b4) show wder fluorescence peak wavelength range at 550\u2013600 nm than those of PI(BPDA/PDA) from PAA (538\u2013567 nm). In an analo- gous manner, the intermolecular ground-state complexes of PI(BPDA/PDA) from PABE (c2, c3, c4) also show wider fluorescence peak wavelength range at 552\u2013 600 nm than those of PI(BPDA/PDA) from PAA (538\u2013 567 nm). This indicates that the structures of intermolecu- lar ground-state CT complexes of PI(BPDA/PDA) form PAAE and PABE are in wider variety than those of PI(BPDA/PDA) from PAA. In other words, this reflects that the orderliness of molecular packing of PI(BPDA/ PDA) from PAAE and PABE is lower than that of PI(BPDA/PDA) from PAA. The main aggregation struc- tures of PI(BPDA/PDA) from PAAE and PABE strongly\n"
+        },
+        {
+            "class": "chart",
+            "confidence": 0.96533203125,
+            "float_xyxy": [
+                0.11221508378742122,
+                0.08681641168662318,
+                0.40574320304293593,
+                0.48046878624415457
+            ],
+            "page": 6,
+            "str": "\n"
+        },
+        {
+            "class": "legend",
+            "confidence": 0.8587830662727356,
+            "float_xyxy": [
+                0.147316838112198,
+                0.09902344293662318,
+                0.1644531378225118,
+                0.11152344474883091
+            ],
+            "page": 6,
+            "str": "\\begin{legend}\n(a)\n\\end{legend}\n"
+        },
+        {
+            "class": "legend",
+            "confidence": 0.9151146411895752,
+            "float_xyxy": [
+                0.1470404488699777,
+                0.22734376087324637,
+                0.16666426458278624,
+                0.2398437717464927
+            ],
+            "page": 6,
+            "str": "\\begin{legend}\n(b)\n\\end{legend}\n"
+        },
+        {
+            "class": "caption",
+            "confidence": 0.9560546875,
+            "float_xyxy": [
+                0.06757779802594865,
+                0.48632816124415457,
+                0.46544384355304624,
+                0.5582031467464927
+            ],
+            "page": 6,
+            "str": "\\begin{caption}\nFig. 9. Fluorescence decay profiles excited at 420 nm and monitored at 525\u2013630 nm for PI(BPDA/PDA) from PAA (a), PAAE (b), and PABE (c) after the identical imidization process. Solid curves are excitation pulse, dotted curves are the decay profiles of the samples, and bold curves are the convoluted decay profiles\n\\end{caption}\n"
+        },
+        {
+            "class": "paragraph",
+            "confidence": 0.9765625,
+            "float_xyxy": [
+                0.06799238830053506,
+                0.5898437862441546,
+                0.4665494005219275,
+                0.8351562934929855
+            ],
+            "page": 6,
+            "str": "suffer from the size of bulky substituent groups which interfere with the molecular packing during imidization reaction. Additionally, the fluorescence peak wavelength of the intermolecular ground-state complex excited at 400 nm for PI(BPDA/PDA) from PAA (a2, kf = 538 nm) shows shorter fluorescence peak wavelength than those of PI(BPDA/PDA) form PAAE (b2, kf = 550 nm) or PABE (c2, kf = 552 nm). Similarly, the fluorescence peak wavelengths of other intermolecular ground-state com- plexes excited at longer wavelengths for PI(BPDA/PDA) from PAA (a3, a4) all show shorter fluorescence peak wavelengths than those of PI(BPDA/PDA) from PAAE (b3, b4) or PABE(c3, c4). This may indicate that the defect aggregation structures are in a more polarized electronic state, thus emitting fluorescence at longer wavelength than those in orderly arranged aggregation structures observed in PI(BPDA/PDA) from PAA.\n"
+        },
+        {
+            "class": "paragraph",
+            "confidence": 0.9345703125,
+            "float_xyxy": [
+                0.0674396034048385,
+                0.8382812644976618,
+                0.4665494005219275,
+                0.8804688079906473
+            ],
+            "page": 6,
+            "str": "In order to investigate the fluorescence emission pro- cess of the intermolecular CT complexes of PI(BPDA/ PDA) from various precursors, their fluorescence decay\n"
+        },
+        {
+            "class": "paragraph",
+            "confidence": 0.93603515625,
+            "float_xyxy": [
+                0.48727878602612923,
+                0.08554687862441546,
+                0.8855593897715336,
+                0.12753906612441546
+            ],
+            "page": 6,
+            "str": "profiles were measured and shown in Fig. 9. The fluores- cence decay profile, If(t), can be best fitted with a double exponential function:\n"
+        },
+        {
+            "class": "title",
+            "confidence": 0.6513671875,
+            "float_xyxy": [
+                0.5320542792312237,
+                0.14296875543662318,
+                0.7926917324547006,
+                0.1554687572488309
+            ],
+            "page": 6,
+            "str": "\\begin{title}\nIf(t) = A16exp(\u2013t/s1) + A26exp(\u2013t/s2)\n\\end{title}\n"
+        },
+        {
+            "class": "paragraph",
+            "confidence": 0.9755859375,
+            "float_xyxy": [
+                0.48700238396139706,
+                0.17070313587324637,
+                0.887217699579832,
+                0.40117190399532365
+            ],
+            "page": 6,
+            "str": "where If(t) is the fluorescence intensity at time t, A1 and A2 are the pre-exponential factors, and s1 and s2 the fluor- escence lifetimes. The fluorescence decay profiles for PI(BPDA/PDA) from various precursors and the results of analysis are presented in Fig. 9 and also given in Tab. 1. According to the analysis for PI(BPDA/PDA) from PAA (Fig. 9a), its fluorescence lifetimes s1 and s2 are 1.6 ns and 6.1 ns, respectively. But PI(BPDA/PDA) from PAAE (Fig. 9b) shows shorter fluorescence life- times, s1 = 0.8 ns and s2 = 3.7 ns. Similarly, PI(BPDA/ PDA) from PABE (Fig. 9c) also shows shorter fluores- cence lifetimes, s1 = 0.8 ns and s2 = 3.3 ns. These differ- ences of fluorescence lifetimes indicate that the fluores- cence emission processes of the intermolecular CT com- plexes of PI(BPDA/PDA) from PAA are different from those of PI(BPDA/PDA) from PAAE and PABE.\n"
+        },
+        {
+            "class": "title",
+            "confidence": 0.8115234375,
+            "float_xyxy": [
+                0.48866074505974266,
+                0.4359375144976618,
+                0.5914785176766019,
+                0.44687502174649274
+            ],
+            "page": 6,
+            "str": "\\begin{title}\nConclusions\n\\end{title}\n"
+        },
+        {
+            "class": "paragraph",
+            "confidence": 0.97900390625,
+            "float_xyxy": [
+                0.48755518809086135,
+                0.4562500072488309,
+                0.8877705037092962,
+                0.8335938079906473
+            ],
+            "page": 6,
+            "str": "Intermolecular CT fluorescence behavior and thermome- chanical properties of PI(BPDA/PDA) from PAA, PAAE, and PABE after an identical imidization process were compared as summarized in Tab. 1. The uniformity in chemical structure and thermogravimetry of PI(BPDA/ PDA) from various precursors has been confirmed. How- ever, according to Tab. 1, PI(BPDA/PDA) from PAA shows higher density and Tg and lower TCE than those of PI(BPDA/PDA) from PAAE and PABE. This indicates that the orderliness of molecular packing of PI(BPDA/ PDA) from PAA is higher than those of PI(BPDA/PDA) from PAAE and PABE. The intermolecular ground-state CT complexes of PI(BPDA/PDA) from PAAE and PABE show fluorescence at longer wavelengths and wider fluor- escence peak wavelength range than those of PI(BPDA/ PDA) from PAA. This implies the formation of wider variety of aggregation structures of PI(BPDA/PDA) from PAAE and PABE than those of PI(BPDA/PDA) from PAA. The fluorescence emission processes of intermole- cular CT complexes of PI(BPDA/PDA) from various pre- cursors were also confirmed to be different from each other owing to their different fluorescence lifetimes. Study of the intermolecular CT characteristics of PI is proved to be effective in distinguishing the differences of aggregation structures among PI(BPDA/PDA) from var- ious precursors.\n"
+        },
+        {
+            "class": "paragraph",
+            "confidence": 0.90283203125,
+            "float_xyxy": [
+                0.48921354918920695,
+                0.8562500289953237,
+                0.887217699579832,
+                0.8812500144976618
+            ],
+            "page": 6,
+            "str": "Acknowledgement: H. W. H. is greatly indebted to the JSPS Research Fellowship for Young Scientists for supporting his\n"
+        },
+        {
+            "class": "paragraph",
+            "confidence": 0.9287109375,
+            "float_xyxy": [
+                0.06854517319623162,
+                0.08530273799941546,
+                0.4665494005219275,
+                0.12128906974883091
+            ],
+            "page": 7,
+            "str": "research and Ph.D study in the University of Tokyo. The present work is partly supported by an Grand in Aid from the Ministry of Education, Culture, and Sports of Japan (A-08405060).\n"
+        },
+        {
+            "class": "paragraph",
+            "confidence": 0.89453125,
+            "float_xyxy": [
+                0.07393481470957523,
+                0.14355469656103864,
+                0.4665494005219275,
+                0.17871095562207728
+            ],
+            "page": 7,
+            "str": "1) \u201cPhotosensitive Polyimides: Fundamentals and Applica- tions\u201d, K. Horie, T. Yamashita, Eds., Technomic, Lancaster 1995\n"
+        },
+        {
+            "class": "paragraph",
+            "confidence": 0.86572265625,
+            "float_xyxy": [
+                0.0740730093306854,
+                0.18027344112441546,
+                0.4665494005219275,
+                0.20371094112441546
+            ],
+            "page": 7,
+            "str": "2) \u201cPolyimides: Fundamentals and Applications\u201d, M. K. Ghosh, K. L. Mittal, Eds., Dekker, New York 1996\n"
+        },
+        {
+            "class": "paragraph",
+            "confidence": 0.86181640625,
+            "float_xyxy": [
+                0.07504037808971245,
+                0.20488282337324637,
+                0.46544384355304624,
+                0.22714844112441546
+            ],
+            "page": 7,
+            "str": "3) S. Nishizaki, T. Moriwaki, J. Chem. Soc. Jpn. 71, 1559 (1967)\n"
+        },
+        {
+            "class": "paragraph",
+            "confidence": 0.8583984375,
+            "float_xyxy": [
+                0.07462579422638196,
+                0.22851564312207728,
+                0.46544384355304624,
+                0.2519531431220773
+            ],
+            "page": 7,
+            "str": "4) V. L. Bell, R. A. Jewell, J. Polym. Sci., Part A-1 5, 3043 (1967)\n"
+        },
+        {
+            "class": "paragraph",
+            "confidence": 0.89892578125,
+            "float_xyxy": [
+                0.0740730093306854,
+                0.25273438587324637,
+                0.4659965963924632,
+                0.2875000144976618
+            ],
+            "page": 7,
+            "str": "5) \u201cPolyimides: Materials, Chemistry and Characterization\u201d, C. Feger, M. M. Khojasteh, J. E. McGrath, Eds., Elsevier, Amsterdam 1989\n"
+        },
+        {
+            "class": "paragraph",
+            "confidence": 0.87255859375,
+            "float_xyxy": [
+                0.0740730093306854,
+                0.2890625181220773,
+                0.4659965963924632,
+                0.3117187572488309
+            ],
+            "page": 7,
+            "str": "6) N. C. Stoffel, E. J. Kramer, W. Volksen, T. P. Russell, Poly- mer 34, 4524 (1993)\n"
+        },
+        {
+            "class": "paragraph",
+            "confidence": 0.87109375,
+            "float_xyxy": [
+                0.0740730093306854,
+                0.3128906394976618,
+                0.46544384355304624,
+                0.3363281394976618
+            ],
+            "page": 7,
+            "str": "7) Y. Okabe, T. Miwa, A. Takahashi, S. Numata, Kobunshi Ron- bunshu 50, 947 (1993)\n"
+        },
+        {
+            "class": "paragraph",
+            "confidence": 0.8603515625,
+            "float_xyxy": [
+                0.07352022443498885,
+                0.3371093822488309,
+                0.46544384355304624,
+                0.3597656394976618
+            ],
+            "page": 7,
+            "str": "8) T. M. Moy, C. D. DePorter, J. E. McGrath, Polymer 34, 819 (1993)\n"
+        },
+        {
+            "class": "paragraph",
+            "confidence": 0.87451171875,
+            "float_xyxy": [
+                0.0740730093306854,
+                0.36093752174649274,
+                0.46544384355304624,
+                0.3851562644976618
+            ],
+            "page": 7,
+            "str": "9) R. Yokota, R. Horiuchi, M. Kochi, H. Soma, I. Mita, J. Polym. Sci.: Part C: Polym. Lett. 26, 215 (1988)\n"
+        },
+        {
+            "class": "paragraph",
+            "confidence": 0.88037109375,
+            "float_xyxy": [
+                0.48921354918920695,
+                0.08564453849883091,
+                0.8861121939009979,
+                0.10878906793662318
+            ],
+            "page": 7,
+            "str": "10) M. Ree, D. Y. Yoon, W. Volksen, J. Polym. Sci., Part B: Polym. Phys. 29, 1203 (1991)\n"
+        },
+        {
+            "class": "paragraph",
+            "confidence": 0.876953125,
+            "float_xyxy": [
+                0.48921354918920695,
+                0.10976563043662318,
+                0.8850065856420694,
+                0.13261719837324637
+            ],
+            "page": 7,
+            "str": "11) S. Rojstaczer, M. Ree, D. Y. Yoon, W. Volksen, J. Polym. Sci., Part B: Polym. Phys. 30, 133 (1992)\n"
+        },
+        {
+            "class": "paragraph",
+            "confidence": 0.88134765625,
+            "float_xyxy": [
+                0.4897663020286239,
+                0.13437500362441546,
+                0.8855593897715336,
+                0.15703126087324637
+            ],
+            "page": 7,
+            "str": "12) M. Hasegawa, I. Mita, M. Kochi, R. Yokota, J. Polym. Sci., Part C: Polym. Lett. 27, 263 (1989)\n"
+        },
+        {
+            "class": "paragraph",
+            "confidence": 0.869140625,
+            "float_xyxy": [
+                0.4897663020286239,
+                0.15810548324766183,
+                0.8855593897715336,
+                0.1803711009988309
+            ],
+            "page": 7,
+            "str": "13) M. Hasegawa, H. Arai, I. Mita, R. Yokota, Polym. J. 22, 875 (1990)\n"
+        },
+        {
+            "class": "paragraph",
+            "confidence": 0.869140625,
+            "float_xyxy": [
+                0.4903191061580882,
+                0.18203126449766183,
+                0.8861121939009979,
+                0.20507814312207728
+            ],
+            "page": 7,
+            "str": "14) M. Hasegawa, M. Kochi, I. Mita, R. Yokota, Eur. Polym. J. 25, 349 (1989)\n"
+        },
+        {
+            "class": "paragraph",
+            "confidence": 0.78515625,
+            "float_xyxy": [
+                0.4897663020286239,
+                0.20585938587324637,
+                0.8568146521303834,
+                0.21679689312207728
+            ],
+            "page": 7,
+            "str": "15) E. D. Wachsman, C. W. Frank, Polymer 29, 1191 (1988)\n"
+        },
+        {
+            "class": "paragraph",
+            "confidence": 0.88134765625,
+            "float_xyxy": [
+                0.4900427040933561,
+                0.21738281612441546,
+                0.8855593897715336,
+                0.24121095562207728
+            ],
+            "page": 7,
+            "str": "16) U. Goeschel, H. Lee, D. Y. Yoon, R. L. Siemens, B. A. Smith, W. Volksen, Colloid Polym. Sci. 272, 1388 (1994)\n"
+        },
+        {
+            "class": "paragraph",
+            "confidence": 0.91357421875,
+            "float_xyxy": [
+                0.48921354918920695,
+                0.24218751812207728,
+                0.887217699579832,
+                0.2773437681220773
+            ],
+            "page": 7,
+            "str": "17) \u201cPolyimides: Trends in Materials and Applications\u201d, C. Feger, M. M. Khojasteh, S. E. Molis, Eds., Soc. Plast. Eng., Mid-Hudson Section, Hopewell Jct., New York 1996\n"
+        },
+        {
+            "class": "paragraph",
+            "confidence": 0.7900390625,
+            "float_xyxy": [
+                0.4889371471244748,
+                0.2783203306220773,
+                0.8534979299336922,
+                0.28964845924649274
+            ],
+            "page": 7,
+            "str": "18) T. Miwa, Y. Okabe, M. Ishida, Polymer 38, 4945 (1997)\n"
+        },
+        {
+            "class": "paragraph",
+            "confidence": 0.8583984375,
+            "float_xyxy": [
+                0.4889371471244748,
+                0.28984376087324637,
+                0.8822426675748425,
+                0.31328127899532365
+            ],
+            "page": 7,
+            "str": "19) M. Ree, T. L. Nunes, K. J. R. Chen, J. Polym. Sci., Part B: Polym. Phys. 33, 453 (1995)\n"
+        },
+        {
+            "class": "paragraph",
+            "confidence": 0.900390625,
+            "float_xyxy": [
+                0.48755518809086135,
+                0.31406252174649274,
+                0.8855593897715336,
+                0.3488281322488309
+            ],
+            "page": 7,
+            "str": "20) M. Hasegawa, Y. Shindo, T. Sugimura, S. Ohshima, K. Horie, M. Kochi, R. Yokota, I. Mita, J. Polym. Sci., Part B: Polym. Phys. 31, 1617 (1993)\n"
+        },
+        {
+            "class": "paragraph",
+            "confidence": 0.9091796875,
+            "float_xyxy": [
+                0.48727878602612923,
+                0.3500000144976618,
+                0.8855593897715336,
+                0.3851562644976618
+            ],
+            "page": 7,
+            "str": "21) M. Hasegawa, J. Ishii, T. Matano, Y. Shindo, T. Sugimura, T. Miwa, M. Ishida, Y. Okabe, A. Takahashi, ACS Symp. Ser. 614, 395 (1995)\n"
+        }
+    ]
+}

@@ -73,22 +73,20 @@ class ExtractSmiles():
     def __init__(self):
         self.storage = FileStorage(
             first_entry_file_name="../example_data/chemistry/matched_sample_10.json",
-            #first_entry_file_name="/Users/lianghao/Desktop/dataflow_code/test_dataflow/test/matched_sample_10.json",
-            cache_path="./cache_all_3",
+            #first_entry_file_name="/Users/lianghao/Desktop/dataflow_code/test_0901/example_data/chemistry/matched_sample_10.json",
+            cache_path="./cache_all_17_24_gpt_5",
             file_name_prefix="math_QA",
             cache_type="json",
         )
         self.model_cache_dir = './dataflow_cache'
         self.llm_serving = APILLMServing_request(
                 api_url="https://api.openai.com/v1/chat/completions",
-                model_name="gpt-4o",
+                model_name="gemini-2.5-flash",
                 max_workers=200,
-                response_format = response_format,
-                temperature = 0.0,
         )
         self.prompt_smile_extractor = ExtractSmilesFromText(
             llm_serving = self.llm_serving, 
-            prompt_template=ExtractSmilesFromTextPrompt(smiles_prompt)
+            prompt_template=ExtractSmilesFromTextPrompt(smiles_prompt),
         )
         self.smile_eval = EvaluateSmilesEquivalence()
 

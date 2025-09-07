@@ -35,6 +35,7 @@ Usage:
     result = local_tool_for_debug_and_exe_operator(request, dry_run=False)
 
 """
+import time
 from dataflow.utils.registry import OPERATOR_REGISTRY
 OPERATOR_REGISTRY._get_all()
 import importlib
@@ -137,7 +138,7 @@ def generate_operator_py(
                 llm_serving = APILLMServing_request(
                     api_url="{request.chat_api_url}",
                     key_name_of_api_key = 'DF_API_KEY',
-                    model_name="gpt-4o",
+                    model_name="{request.model}",
                     max_workers=100,
                 )
                 # 若需本地模型，请改用 LocalModelLLMServing 并设置 local=True
@@ -181,6 +182,7 @@ def generate_operator_py(
     return full_code
 
 def local_tool_for_get_match_operator_code(pre_task_result: Dict[str, Any]) -> str:
+    start_time = time.time()
     if not pre_task_result or not isinstance(pre_task_result, dict):
         return "# ❗ pre_task_result is empty, cannot extract operator names"
 
@@ -188,7 +190,7 @@ def local_tool_for_get_match_operator_code(pre_task_result: Dict[str, Any]) -> s
     _NAME2CLS = {name: cls for name, cls in OPERATOR_REGISTRY}
 
     blocks: list[str] = []
-    for op_name in pre_task_result.get("match_operators", []):
+    for op_name in pre_task_result.get("match_operators", [])[:2]:
         cls = _NAME2CLS.get(op_name)
         if cls is None:
             blocks.append(f"# --- {op_name} is not registered in OPERATOR_REGISTRY ---")
@@ -208,7 +210,8 @@ def local_tool_for_get_match_operator_code(pre_task_result: Dict[str, Any]) -> s
             blocks.append(src_block)
         except (OSError, TypeError) as e:
             blocks.append(f"# --- Failed to get the source code of {op_name}: {e} ---")
-
+    elapsed = time.time() - start_time
+    logger.warning(f"[local_tool_for_get_match_operator_code] Time used: {elapsed:.4f} seconds")
     return "\n\n".join(blocks)
 
 def local_tool_for_debug_and_exe_operator(

@@ -17,20 +17,17 @@ class APILLMServing_request(LLMServingABC):
         return
     
     def __init__(self, 
-                api_url: str = "https://api.openai.com/v1/chat/completions",
-                key_name_of_api_key: str = "DF_API_KEY",
-                model_name: str = "gpt-4o",
-                max_workers: int = 10,
-                max_retries: int = 5,
-                response_format: str = "", 
-                temperature: float = 0.0
-                ):
+                 api_url: str = "https://api.openai.com/v1/chat/completions",
+                 key_name_of_api_key: str = "DF_API_KEY",
+                 model_name: str = "gpt-4o",
+                 max_workers: int = 10,
+                 max_retries: int = 5
+                 ):
         # Get API key from environment variable or config
         self.api_url = api_url
         self.model_name = model_name
         self.max_workers = max_workers
         self.max_retries = max_retries
-        self.response_format = response_format
         self.logger = get_logger()
 
         # config api_key in os.environ global, since safty issue.
@@ -69,8 +66,7 @@ class APILLMServing_request(LLMServingABC):
                     {"role": "system", "content": system_info},
                     {"role": "user", "content": messages}
                 ],
-                "response_format" : self.response_format,
-                "temperature": self.temperature,
+                "temperature": 0.0   
             })
 
             headers = {
