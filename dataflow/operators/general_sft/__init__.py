@@ -1,13 +1,13 @@
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from .eval.alpagasus_scorer import AlpagasusSampleEvaluator
-    from .eval.deita_quality_scorer import DeitaQualitySampleEvaluator
-    from .eval.deita_complexity_scorer import DeitaComplexitySampleEvaluator
-    from .eval.instag_scorer import InstagSampleEvaluator
-    from .eval.rm_scorer import RMSampleEvaluator
-    from .eval.superfiltering_scorer import SuperfilteringSampleEvaluator
-    from .eval.treeinstruct_scorer import TreeinstructSampleEvaluator
+    from .eval.alpagasus_sample_evaluator import AlpagasusSampleEvaluator
+    from .eval.deita_quality_sample_evaluator import DeitaQualitySampleEvaluator
+    from .eval.deita_complexity_sample_evaluator import DeitaComplexitySampleEvaluator
+    from .eval.instag_sample_evaluator import InstagSampleEvaluator
+    from .eval.rm_sample_evaluator import RMSampleEvaluator
+    from .eval.superfiltering_sample_evaluator import SuperfilteringSampleEvaluator
+    from .eval.treeinstruct_sample_evaluator import TreeinstructSampleEvaluator
 
 
     from .filter.alpagasus_filter import AlpagasusFilter
