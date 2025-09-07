@@ -4,9 +4,26 @@ if TYPE_CHECKING:
     from .generate.prompted_generator import PromptedGenerator
     from .generate.paired_prompted_generator import PairedPromptedGenerator
     from .generate.random_domain_knowledge_row_generator import RandomDomainKnowledgeRowGenerator
+    
     from .eval.prompted_eval import PromptedEvaluator
-    from .filter.prompted_filter import PromptedFilter
+    from .eval.perspective_scorer import PerspectiveSampleEvaluator
+    from .eval.task2vec_scorer import Task2VecDatasetEvaluator
+    from .eval.vendi_scorer import VendiDatasetEvaluator
     from .refine.prompted_refiner import PromptedRefiner
+    
+    from .filter.prompted_filter import PromptedFilter
+    from .filter.general_filter import GeneralFilter
+    from .filter.minhash_deduplicator import MinHashDeduplicateFilter
+    from .filter.ngramhash_deduplicator import NgramHashDeduplicateFilter
+    from .filter.sem_deduplicator import SemDeduplicateFilter
+    from .filter.simhash_deduplicator import SimHashDeduplicateFilter
+    from .filter.hash_deduplicator import HashDeduplicateFilter
+    from .filter.blocklist_filter import BlocklistFilter
+    from .filter.word_number_filter import WordNumberFilter
+    from .filter.perspective_filter import PerspectiveFilter
+    from .filter.language_filter import LanguageFilter
+    from .filter.llm_language_filter import LLMLanguageFilter
+    
 else:
     import sys
     from dataflow.utils.registry import LazyLoader, generate_import_structure_from_type_checking

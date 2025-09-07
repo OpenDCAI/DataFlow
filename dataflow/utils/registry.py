@@ -205,8 +205,9 @@ OPERATOR_REGISTRY = Registry(
         'core_text',
         'core_vision',
         'db',
-        'general_text',
         'knowledge_cleaning',
+        'general_pt',
+        'general_sft',
         'rare',
         'reasoning',
         'text2sql'

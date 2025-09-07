@@ -1,5 +1,7 @@
-from dataflow.operators.general_text import (
+from dataflow.operators.core_text import (
     WordNumberFilter,
+)
+from dataflow.operators.general_sft import (
     SuperfilteringFilter,
     DeitaQualityFilter,
     InstagFilter

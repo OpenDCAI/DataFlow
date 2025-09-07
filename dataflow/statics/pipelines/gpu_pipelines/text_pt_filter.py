@@ -1,9 +1,11 @@
-from dataflow.operators.general_text import (
-    MinHashDeduplicator,
+from dataflow.operators.core_text import (
+    MinHashDeduplicateFilter,
     LanguageFilter,
-    ColonEndFilter,
     WordNumberFilter,
     BlocklistFilter,
+)
+from dataflow.operators.general_pt import (
+    ColonEndFilter,
     SentenceNumberFilter,
     LineEndWithEllipsisFilter,
     ContentNullFilter,
@@ -23,7 +25,7 @@ from dataflow.operators.general_text import (
     LineWithJavascriptFilter,
     PairQualFilter
 )
-from dataflow.operators.general_text import (
+from dataflow.operators.general_pt import (
     HtmlUrlRemoverRefiner,
     RemoveEmojiRefiner,
     RemoveExtraSpacesRefiner
@@ -44,7 +46,7 @@ class PTTextFilter_GPUPipeline():
         self.remove_extra_spaces_refiner = RemoveExtraSpacesRefiner()
         self.remove_emoji_refiner = RemoveEmojiRefiner()
         self.html_remove_refiner = HtmlUrlRemoverRefiner()
-        self.minhash_deduplicator = MinHashDeduplicator(num_perm=128, threshold=0.9, use_n_gram=True, ngram=5)
+        self.minhash_deduplicator = MinHashDeduplicateFilter(num_perm=128, threshold=0.9, use_n_gram=True, ngram=5)
         self.blocklist_filter = BlocklistFilter()
         self.word_number_filter = WordNumberFilter(min_words=20, max_words=100000)
         self.colon_end_filter = ColonEndFilter()

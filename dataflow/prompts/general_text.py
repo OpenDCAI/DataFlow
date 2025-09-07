@@ -1,7 +1,7 @@
 '''
 A collection of prompts for the general text operator.
 '''
-class PretrainGeneratorPrompt:
+class Phi4QAGeneratorPrompt:
     
     def __init__(self):
         pass
