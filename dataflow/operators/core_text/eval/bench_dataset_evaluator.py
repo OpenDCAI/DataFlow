@@ -26,7 +26,7 @@ class BenchDatasetEvaluator(OperatorABC):
         
         if eval_result_path is None:
             timestamp = int(time.time())
-            eval_result_path = f"BenchDatasetEvaluator_result_{timestamp}.json"
+            eval_result_path = f"result_bencheval/BenchDatasetEvaluator_result_{timestamp}.json"
     
         self.eval_result_path = eval_result_path
         self.compare_method = compare_method
