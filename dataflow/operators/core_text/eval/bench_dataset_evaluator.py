@@ -14,7 +14,7 @@ import os  # 添加os模块导入
 import re
 
 @OPERATOR_REGISTRY.register()
-class BenchEvaluator(OperatorABC):
+class BenchDatasetEvaluator(OperatorABC):
     def __init__(self,
                 eval_result_path: str = "../eval_result.json",
                 compare_method: Literal["match", "semantic"] = "match",

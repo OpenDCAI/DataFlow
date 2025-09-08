@@ -11,7 +11,7 @@
 4. 运行本文件即可自动完成评估流程，最终结果会保存在指定路径下。
 """
 from dataflow.operators.reasoning import ReasoningAnswerGenerator
-from dataflow.operators.core_text import BenchEvaluator
+from dataflow.operators.core_text import BenchDatasetEvaluator
 from dataflow.serving import APILLMServing_request, LocalModelLLMServing_vllm
 from dataflow.prompts.reasoning.diy import DiyAnswerGeneratorPrompt
 from dataflow.utils.storage import FileStorage
@@ -56,7 +56,7 @@ class BenchEvalPipeline():
             prompt_template=DiyAnswerGeneratorPrompt(DIY_PROMPT_ANSWER)
         )
 
-        self.eval_step2 = BenchEvaluator(
+        self.eval_step2 = BenchDatasetEvaluator(
             eval_result_path="../eval_result.json",
             compare_method="match"
             )
