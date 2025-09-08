@@ -97,7 +97,7 @@ class APILLMServing_request(LLMServingABC):
                     payload = {
                         "model": model,
                         "messages": payload,
-                        "response_format": self.response_format
+                        # "response_format": self.response_format
                     }
                 headers = {
                     'Authorization': f"Bearer {self.api_key}",

@@ -1,8 +1,8 @@
 from dataflow.operators.knowledge_cleaning import (
-    CorpusTextSplitterBatch,
+    KBCChunkGeneratorBatch,
     FileOrURLToMarkdownConverterBatch,
-    KnowledgeCleanerBatch,
-    MultiHopQAGeneratorBatch,
+    KBCTextCleanerBatch,
+    KBCMultiHopQAGeneratorBatch,
 )
 from dataflow.utils.storage import FileStorage
 from dataflow.serving import LocalModelLLMServing_vllm, LocalModelLLMServing_sglang
@@ -24,7 +24,7 @@ class KBCleaning_batchvllm_GPUPipeline():
             mineru_backend="vlm-sglang-engine",
         )
 
-        self.knowledge_cleaning_step2 = CorpusTextSplitterBatch(
+        self.knowledge_cleaning_step2 = KBCChunkGeneratorBatch(
             split_method="token",
             chunk_size=512,
             tokenizer_name="Qwen/Qwen2.5-7B-Instruct",
@@ -47,12 +47,12 @@ class KBCleaning_batchvllm_GPUPipeline():
             vllm_repetition_penalty=1.2
         )
 
-        self.knowledge_cleaning_step3 = KnowledgeCleanerBatch(
+        self.knowledge_cleaning_step3 = KBCTextCleanerBatch(
             llm_serving=self.llm_serving,
             lang="en"
         )
 
-        self.knowledge_cleaning_step4 = MultiHopQAGeneratorBatch(
+        self.knowledge_cleaning_step4 = KBCMultiHopQAGeneratorBatch(
             llm_serving=self.llm_serving,
             lang="en"
         )

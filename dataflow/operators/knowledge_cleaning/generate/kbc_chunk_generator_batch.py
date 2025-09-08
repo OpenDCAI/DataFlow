@@ -17,7 +17,7 @@ from dataflow.core import OperatorABC
 
 
 @OPERATOR_REGISTRY.register()
-class CorpusTextSplitterBatch(OperatorABC):
+class KBCChunkGeneratorBatch(OperatorABC):
     def __init__(self,
                  chunk_size: int = 512,
                  chunk_overlap: int = 50,

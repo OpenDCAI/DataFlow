@@ -12,8 +12,7 @@ import json
 from tqdm import tqdm
 import re
 
-
-class MultiHopQAGeneratorBatch(OperatorABC):
+class KBCMultiHopQAGenerator(OperatorABC):
     r"""A processor for generating multi-hop question-answer pairs from user
     data.
 
@@ -26,6 +25,7 @@ class MultiHopQAGeneratorBatch(OperatorABC):
                  llm_serving: LLMServingABC,
                  seed: int = 0,
                  lang="en",
+                 prompt_template = None
                  ):
         r"""Initialize the UserDataProcessor.
 
@@ -37,6 +37,10 @@ class MultiHopQAGeneratorBatch(OperatorABC):
         self.llm_serving = llm_serving
         self.lang = lang
         self.logger = get_logger()
+        if prompt_template:
+            self.prompt_template = prompt_template
+        else:
+            self.prompt_template = MultiHopQAGeneratorPrompt()
 
     @staticmethod
     def get_desc(lang: str = "zh") -> tuple:
@@ -109,6 +113,8 @@ class MultiHopQAGeneratorBatch(OperatorABC):
                 "}"
             )
 
+
+        
     def process_text(
         self, text: str, source: str = "user_input"
     ) -> List[Dict[str, Any]]:
@@ -132,8 +138,7 @@ class MultiHopQAGeneratorBatch(OperatorABC):
         ]
 
         # Construct examples
-        constructor = ExampleConstructor(
-            lang=self.lang, llm_serving=self.llm_serving)
+        constructor = ExampleConstructor(lang=self.lang, llm_serving=self.llm_serving)
         examples = constructor.construct_examples(raw_data)
 
         # Manage data
@@ -174,7 +179,10 @@ class MultiHopQAGeneratorBatch(OperatorABC):
 
         # Construct examples
         constructor = ExampleConstructor(
-            lang=self.lang, llm_serving=self.llm_serving)
+            lang=self.lang, 
+            llm_serving=self.llm_serving, 
+            prompt_template = self.prompt_template
+        )
         examples = constructor.construct_examples(raw_data)
 
         # # Manage data
@@ -182,7 +190,7 @@ class MultiHopQAGeneratorBatch(OperatorABC):
         # final_dataset = curator.curate_dataset(examples)
 
         return examples
-
+    
     def _validate_dataframe(self, dataframe: pd.DataFrame):
         required_keys = [self.input_key]
         forbidden_keys = [self.output_key]
@@ -193,63 +201,26 @@ class MultiHopQAGeneratorBatch(OperatorABC):
         if missing:
             raise ValueError(f"Missing required column(s): {missing}")
         if conflict:
-            raise ValueError(
-                f"The following column(s) already exist and would be overwritten: {conflict}")
-
+            raise ValueError(f"The following column(s) already exist and would be overwritten: {conflict}")
+        
     def run(
             self,
-            input_key: str = 'chunk_path',
-            output_key: str = 'enhanced_chunk_path',
-            storage: DataFlowStorage = None,
+            input_key:str='',
+            output_key:str='',
+            storage: DataFlowStorage=None,
     ):
         self.input_key, self.output_key = input_key, output_key
         dataframe = storage.read("dataframe")
         self._validate_dataframe(dataframe)
-        chunk_paths = dataframe[self.input_key].tolist()
-
-        for chunk_path in chunk_paths:
-            if(chunk_path):
-                texts = []
-
-                if str(chunk_path).endswith(".json"):
-                    with open(chunk_path, "r", encoding="utf-8") as f:
-                        data = json.load(f)
-                    texts = [item["cleaned_chunk"] for item in data]
-
-                elif str(chunk_path).endswith(".jsonl"):
-                    with open(chunk_path, "r", encoding="utf-8") as f:
-                        data = [json.loads(line) for line in f]
-                    texts = [item["cleaned_chunk"] for item in data]
-
-                else:
-                    print(f"Unsupported file format: {chunk_path}")
-                    continue
-
-                # 生成 QA 对
-                qa_pairs_batch = self.process_batch(texts)
-
-                # 写入到原数据中
-                for item, qa_pairs in zip(data, qa_pairs_batch):
-                    item["qa_pairs"] = qa_pairs
-
-                # 回写到原始文件中（覆盖写入）
-                with open(chunk_path, "w", encoding="utf-8") as f:
-                    if str(chunk_path).endswith(".json"):
-                        json.dump(data, f, ensure_ascii=False, indent=4)
-                    else:  # jsonl
-                        for item in data:
-                            f.write(json.dumps(item, ensure_ascii=False) + "\n")
-
-                self.logger.info(f"constructed {len(qa_pairs)} multihop QA for {chunk_path}")
-
-        dataframe[self.output_key] = chunk_paths
+        texts = dataframe[self.input_key].tolist()
+        qa_pairs=self.process_batch(texts)
+        dataframe[self.output_key] = qa_pairs
         output_file = storage.write(dataframe)
-        
         self.logger.info(f"Results saved to {output_file}")
 
         return [output_key]
 
-
+        
 class ExampleConstructor:
     r"""Constructs training examples from raw text data.
 
@@ -263,6 +234,7 @@ class ExampleConstructor:
         llm_serving: LLMServingABC = None,
         min_text_length: int = 100,
         max_text_length: int = 200000,
+        prompt_template = None
     ):
         r"""Initialize the ExampleConstructor.
 
@@ -276,7 +248,11 @@ class ExampleConstructor:
         self.logger = get_logger()
         self.max_length = max_text_length
         self.min_length = min_text_length
-        self.prompt = MultiHopQAGeneratorPrompt(lang=self.lang)
+        # self.prompt = MultiHopQAGeneratorPrompt(lang=self.lang)
+        if prompt_template:
+            self.prompt_template = prompt_template
+        else:
+            self.prompt_template = MultiHopQAGeneratorPrompt()
 
     def construct_examples(
         self, raw_data: List[Dict[str, Any]]
@@ -332,7 +308,7 @@ class ExampleConstructor:
 
             examples.append(example)
 
-        # self.logger.info(f"Successfully constructed {len(examples)} examples")
+        self.logger.info(f"Successfully constructed {len(examples)} examples")
         return examples
 
     def _preprocess_text(self, text: str) -> str:
@@ -366,7 +342,7 @@ class ExampleConstructor:
 
         return text
 
-    def _calculate_special_char_ratio(self, text):
+    def _calculate_special_char_ratio(self,text):
         # 中文字符的Unicode范围（基本汉字+扩展）
         chinese_ranges = [
             (0x4E00, 0x9FFF),    # 基本汉字
@@ -376,17 +352,16 @@ class ExampleConstructor:
             (0x2B740, 0x2B81F),  # 扩展D
             (0x2B820, 0x2CEAF)   # 扩展E
         ]
-
+        
         special_count = 0
         for c in text:
             # 检查是否为中文、字母数字或空格
-            is_chinese = any(start <= ord(c) <= end for start,
-                             end in chinese_ranges)
+            is_chinese = any(start <= ord(c) <= end for start, end in chinese_ranges)
             if not (c.isalnum() or c.isspace() or is_chinese):
                 special_count += 1
-
+        
         return special_count / len(text) if text else 0
-
+    
     def _check_text_quality(self, text: str) -> bool:
         r"""Check the quality of input text.
 
@@ -397,11 +372,11 @@ class ExampleConstructor:
             bool: True if text passes quality checks, False otherwise.
         """
         # 1. Basic quality check
-        if (self.lang == "en" and text.count('.') < 2):  # Must have at least 2 sentences
+        if (self.lang=="en" and text.count('.') < 2):  # Must have at least 2 sentences
             return False
-        elif (self.lang in ["zh", "ch"] and text.count("。") < 2):
+        elif(self.lang in ["zh","ch"] and text.count("。") < 2):
             return False
-
+        
         # 2. Special character ratio check
         special_char_ratio = self._calculate_special_char_ratio(text)
         if special_char_ratio > 0.3:  # No more than 30% special characters
@@ -420,7 +395,7 @@ class ExampleConstructor:
                 premise, intermediate, conclusion, and related contexts.
         """
         # Split into sentences
-        if (self.lang == "en"):
+        if(self.lang=="en"):
             sentences = [s.strip() for s in text.split('.') if s.strip()]
         else:
             sentences = [s.strip() for s in text.split('。') if s.strip()]
@@ -460,7 +435,7 @@ class ExampleConstructor:
         Returns:
             List[Dict[str, str]]: List of generated QA pairs.
         """
-        user_inputs = []
+        user_inputs=[]
         for pair in info_pairs:
             # 1. Generate multi-hop question-answer pair using AI
             # Construct full context
@@ -468,17 +443,15 @@ class ExampleConstructor:
                 f"{pair['premise']}. {pair['intermediate']}."
                 f" {pair['conclusion']}"
             )
-            user_inputs.append(
-                self.prompt._multihop_qa_generator_user_prompt(context))
+            user_inputs.append(self.prompt_template.build_prompt(context))
 
-        sys_prompt = self.prompt.system_text
-
-        responses = self.llm_sering.generate_from_input(
-            user_inputs=user_inputs, system_prompt=sys_prompt)
-        qa_pairs = self._extract_qa_pairs(responses)
+        sys_prompt=self.prompt_template.build_system_prompt()
+        
+        responses = self.llm_sering.generate_from_input(user_inputs=user_inputs,system_prompt=sys_prompt)
+        qa_pairs=self._extract_qa_pairs(responses)
 
         return qa_pairs
-
+    
     def _extract_qa_pairs(self, responses: List[str]) -> List[Dict[str, Any]]:
         """
         从原始响应中精确提取符合结构的QA对
@@ -487,7 +460,7 @@ class ExampleConstructor:
         qa_pairs = []
         for response in responses:
             # self.logger.info(f"generated qa: {response}")
-
+            
             # 方法1：尝试直接解析整个响应为JSON
             try:
                 qa_pair = json.loads(response)
@@ -501,17 +474,17 @@ class ExampleConstructor:
                     continue
             except json.JSONDecodeError:
                 pass
-
+            
             # 方法2：使用正则表达式查找所有JSON对象
             try:
                 # 查找所有以 { 开始的JSON对象
                 json_pattern = r'\{[^{}]*(?:\{[^{}]*\}[^{}]*)*\}'
-
+                
                 # 更精确的模式，匹配完整的JSON对象
                 brace_count = 0
                 start_pos = -1
                 json_objects = []
-
+                
                 for i, char in enumerate(response):
                     if char == '{':
                         if brace_count == 0:
@@ -523,56 +496,49 @@ class ExampleConstructor:
                             json_str = response[start_pos:i+1]
                             json_objects.append(json_str)
                             start_pos = -1
-
+                
                 # 尝试解析找到的每个JSON字符串
                 for json_str in json_objects:
                     try:
                         qa_pair = json.loads(json_str)
-                        if (isinstance(qa_pair, dict) and
-                            "question" in qa_pair and
-                            "reasoning_steps" in qa_pair and
-                            "answer" in qa_pair and
-                            "supporting_facts" in qa_pair and
-                                "type" in qa_pair):
+                        if (isinstance(qa_pair, dict) and \
+                            "question" in qa_pair and \
+                            "reasoning_steps" in qa_pair and \
+                            "answer" in qa_pair and \
+                            "supporting_facts" in qa_pair and \
+                            "type" in qa_pair):
                             qa_pairs.append(qa_pair)
-                            # self.logger.info(
-                            #     f"Successfully extracted QA pair: {qa_pair['question']}")
+                            self.logger.info(f"Successfully extracted QA pair: {qa_pair['question']}")
                     except json.JSONDecodeError as e:
-                        self.logger.debug(
-                            f"Failed to parse JSON object: {json_str[:100]}... Error: {e}")
+                        self.logger.debug(f"Failed to parse JSON object: {json_str[:100]}... Error: {e}")
                         continue
-
-                        # 对qa_pairs中重复的question进行去重
+                
+                            # 对qa_pairs中重复的question进行去重
                 if qa_pairs:
                     seen_questions = set()
                     unique_qa_pairs = []
-
+                    
                     for qa_pair in qa_pairs:
                         question = qa_pair.get("question", "").strip().lower()
                         if question and question not in seen_questions:
                             seen_questions.add(question)
                             unique_qa_pairs.append(qa_pair)
-                            self.logger.debug(
-                                f"Added unique question: {qa_pair['question']}")
+                            self.logger.debug(f"Added unique question: {qa_pair['question']}")
                         else:
-                            self.logger.debug(
-                                f"Skipped duplicate question: {qa_pair.get('question', 'N/A')}")
-
+                            self.logger.debug(f"Skipped duplicate question: {qa_pair.get('question', 'N/A')}")
+                    
                     qa_pairs = unique_qa_pairs
-                    # self.logger.info(
-                    #     f"After deduplication: {len(qa_pairs)} unique QA pairs")
+                    self.logger.info(f"After deduplication: {len(qa_pairs)} unique QA pairs")
 
                 # 如果没有找到有效的JSON对象，记录警告
                 if not json_objects:
-                    self.logger.warning(
-                        "No JSON objects found in model response.")
-
+                    self.logger.warning("No JSON objects found in model response.")
+                    
             except Exception as e:
-                self.logger.warning(
-                    f"Failed to parse QA information from model response. Error: {e}")
-
+                self.logger.warning(f"Failed to parse QA information from model response. Error: {e}")
+        
         return qa_pairs
-
+    
     def _calculate_complexity(self, qa_pairs: List[Dict[str, Any]]) -> float:
         r"""Calculate the complexity score for a set of QA pairs.
 
@@ -616,3 +582,5 @@ class ExampleConstructor:
             complexities.append(qa_complexity)
 
         return sum(complexities) / len(complexities)
+
+
