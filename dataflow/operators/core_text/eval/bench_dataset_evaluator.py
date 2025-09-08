@@ -10,19 +10,24 @@ from dataflow import get_logger
 from typing import Literal
 import pandas as pd
 import numpy as np
+import time
 import os  # 添加os模块导入
 import re
 
 @OPERATOR_REGISTRY.register()
 class BenchDatasetEvaluator(OperatorABC):
     def __init__(self,
-                eval_result_path: str = "../eval_result.json",
+                eval_result_path: str = None,
                 compare_method: Literal["match", "semantic"] = "match",
                 system_prompt: str = "You are a helpful assistant specialized in evaluating answer correctness.",
                 llm_serving: LLMServingABC = None,
                 prompt_template = None
                 ):
         
+        if eval_result_path is None:
+            timestamp = int(time.time())
+            eval_result_path = f"BenchDatasetEvaluator_result_{timestamp}.json"
+    
         self.eval_result_path = eval_result_path
         self.compare_method = compare_method
         self.empty_responses_count = 0  # 添加空响应计数器
