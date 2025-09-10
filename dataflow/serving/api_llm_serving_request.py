@@ -43,7 +43,6 @@ class APILLMServing_request(LLMServingABC):
             embedding = response['data'][0]['embedding']
             return embedding
         content = response['choices'][0]['message']['content']
-        
         if re.search(r'<think>.*</think>.*<answer>.*</answer>', content):
             return content
         
@@ -89,23 +88,22 @@ class APILLMServing_request(LLMServingABC):
     def _api_chat_with_id(self, id, payload, model, is_embedding: bool = False):
             try:
                 if is_embedding:
-                    payload = {
+                    payload = json.dumps({
                         "model": model,
                         "input": payload
-                    }
+                    })
                 else:
-                    payload = {
+                    payload = json.dumps({
                         "model": model,
-                        "messages": payload,
-                        # "response_format": self.response_format
-                    }
+                        "messages": payload
+                    })
                 headers = {
                     'Authorization': f"Bearer {self.api_key}",
                     'Content-Type': 'application/json',
                     'User-Agent': 'Apifox/1.0.0 (https://apifox.com)'
                 }
                 # Make a POST request to the API
-                response = requests.post(self.api_url, headers=headers, json=payload, timeout=1800)
+                response = requests.post(self.api_url, headers=headers, data=payload, timeout=1800)
                 if response.status_code == 200:
                     # logging.info(f"API request successful")
                     response_data = response.json()
