@@ -4,12 +4,11 @@ from dataflow.utils.storage import DataFlowStorage
 from dataflow.core import OperatorABC
 from dataflow.core import LLMServingABC
 
-from typing import Literal
 import pandas as pd
 from dataflow.prompts.reasoning.math import MathAnswerGeneratorPrompt
 
 @OPERATOR_REGISTRY.register()
-class AnswerGenerator(OperatorABC):
+class ReasoningAnswerGenerator(OperatorABC):
     '''
     Answer Generator is a class that generates answers for given questions.
     '''
