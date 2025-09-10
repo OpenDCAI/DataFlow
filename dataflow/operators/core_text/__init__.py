@@ -6,24 +6,11 @@ if TYPE_CHECKING:
     from .generate.random_domain_knowledge_row_generator import RandomDomainKnowledgeRowGenerator
     
     from .eval.prompted_eval import PromptedEvaluator
-    from .eval.perspective_sample_evaluator import PerspectiveSampleEvaluator
-    from .eval.task2vec_dataset_evaluator import Task2VecDatasetEvaluator
-    from .eval.vendi_dataset_evaluator import VendiDatasetEvaluator
+
     from .refine.prompted_refiner import PromptedRefiner
     
     from .filter.prompted_filter import PromptedFilter
     from .filter.general_filter import GeneralFilter
-    from .filter.minhash_deduplicate_filter import MinHashDeduplicateFilter
-    from .filter.ngramhash_deduplicate_filter import NgramHashDeduplicateFilter
-    from .filter.sem_deduplicate_filter import SemDeduplicateFilter
-    from .filter.simhash_deduplicate_filter import SimHashDeduplicateFilter
-    from .filter.hash_deduplicate_filter import HashDeduplicateFilter
-    from .filter.blocklist_filter import BlocklistFilter
-    from .filter.word_number_filter import WordNumberFilter
-    from .filter.perspective_filter import PerspectiveFilter
-    from .filter.language_filter import LanguageFilter
-    from .filter.llm_language_filter import LLMLanguageFilter
-    
 else:
     import sys
     from dataflow.utils.registry import LazyLoader, generate_import_structure_from_type_checking

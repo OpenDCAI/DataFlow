@@ -4,7 +4,7 @@ from dataflow.operators.core_text import (
     WordNumberFilter,
     BlocklistFilter,
 )
-from dataflow.operators.general_pt import (
+from dataflow.operators.text_pt import (
     ColonEndFilter,
     SentenceNumberFilter,
     LineEndWithEllipsisFilter,
@@ -25,7 +25,7 @@ from dataflow.operators.general_pt import (
     LineWithJavascriptFilter,
     PairQualFilter
 )
-from dataflow.operators.general_pt import (
+from dataflow.operators.text_pt import (
     HtmlUrlRemoverRefiner,
     RemoveEmojiRefiner,
     RemoveExtraSpacesRefiner

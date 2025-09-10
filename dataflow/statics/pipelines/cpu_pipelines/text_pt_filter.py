@@ -3,7 +3,7 @@ from dataflow.operators.core_text import (
     BlocklistFilter,
     MinHashDeduplicateFilter
 )
-from dataflow.operators.general_pt import (
+from dataflow.operators.text_pt import (
     MetaSampleEvaluator,
     ColonEndFilter,
     SentenceNumberFilter,
@@ -24,7 +24,7 @@ from dataflow.operators.general_pt import (
     LineStartWithBulletpointFilter,
     LineWithJavascriptFilter
 )
-from dataflow.operators.general_pt import (
+from dataflow.operators.text_pt import (
     HtmlUrlRemoverRefiner,
     RemoveEmojiRefiner,
     RemoveExtraSpacesRefiner

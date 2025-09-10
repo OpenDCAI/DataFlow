@@ -4,7 +4,7 @@ from dataflow.operators.core_text import (
     WordNumberFilter,
     BlocklistFilter,
 )
-from dataflow.operators.general_pt import (
+from dataflow.operators.text_pt import (
     ColonEndFilter,
     SentenceNumberFilter,
     LineEndWithEllipsisFilter,
@@ -26,12 +26,12 @@ from dataflow.operators.general_pt import (
     PairQualFilter,
     QuratingFilter
 )
-from dataflow.operators.general_pt import (
+from dataflow.operators.text_pt import (
     HtmlUrlRemoverRefiner,
     RemoveEmojiRefiner,
     RemoveExtraSpacesRefiner
 )
-from dataflow.operators.general_pt import Phi4QAGenerator
+from dataflow.operators.text_pt import Phi4QAGenerator
 from dataflow.serving import LocalModelLLMServing_vllm, LocalModelLLMServing_sglang
 from dataflow.utils.storage import FileStorage
 

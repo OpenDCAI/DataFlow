@@ -4,7 +4,7 @@ from dataflow.operators.core_text import (
     WordNumberFilter,
     BlocklistFilter,
 )
-from dataflow.operators.general_pt import (
+from dataflow.operators.text_pt import (
     ColonEndFilter,
     SentenceNumberFilter,
     LineEndWithEllipsisFilter,
@@ -25,17 +25,17 @@ from dataflow.operators.general_pt import (
     LineWithJavascriptFilter,
     PairQualFilter,
 )
-from dataflow.operators.general_sft import (
+from dataflow.operators.text_sft import (
     SuperfilteringFilter,
     DeitaQualityFilter,
     InstagFilter,
 )
-from dataflow.operators.general_pt import (
+from dataflow.operators.text_pt import (
     HtmlUrlRemoverRefiner,
     RemoveEmojiRefiner,
     RemoveExtraSpacesRefiner
 )
-from dataflow.operators.general_sft import SFTGeneratorSeed
+from dataflow.operators.text_sft import SFTGeneratorSeed
 from dataflow.serving import LocalModelLLMServing_vllm, LocalModelLLMServing_sglang
 from dataflow.utils.storage import FileStorage
 
