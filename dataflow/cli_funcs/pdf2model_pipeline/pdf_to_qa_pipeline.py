@@ -4,10 +4,10 @@ import argparse
 import os
 from pathlib import Path
 from dataflow.operators.knowledge_cleaning import (
-    CorpusTextSplitterBatch,
+    KBCChunkGeneratorBatch as CorpusTextSplitterBatch,
     FileOrURLToMarkdownConverterBatch,
-    KnowledgeCleanerBatch,
-    MultiHopQAGeneratorBatch,
+    KBCTextCleanerBatch as KnowledgeCleanerBatch,
+    KBCMultiHopQAGeneratorBatch as MultiHopQAGeneratorBatch,
 )
 from dataflow.utils.storage import FileStorage
 from dataflow.serving import LocalModelLLMServing_vllm, LocalModelLLMServing_sglang

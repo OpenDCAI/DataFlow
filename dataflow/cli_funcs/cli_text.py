@@ -206,8 +206,12 @@ def verify_environment():
         missing_deps.append("dataflow")
 
     try:
-        # 修复: 使用正确的算子导入路径
-        from dataflow.operators.knowledge_cleaning import CorpusTextSplitterBatch, KnowledgeCleanerBatch
+        # 修复: 使用正确的算子导入路径和类名
+        from dataflow.operators.knowledge_cleaning import (
+            KBCChunkGeneratorBatch as CorpusTextSplitterBatch,
+            KBCTextCleanerBatch as KnowledgeCleanerBatch,
+            KBCMultiHopQAGeneratorBatch as MultiHopQAGeneratorBatch
+        )
         print("✅ DataFlow operators available")
     except ImportError:
         missing_deps.append("dataflow operators")
@@ -317,12 +321,6 @@ def cli_text2model_init(cache_path: str = "./") -> bool:
     0. Check for existing scripts and copy any missing templates
     1. Create train_config.yaml in .cache directory
     """
-    print("Starting Text2Model initialization...")
-    print(f"Cache directory: {cache_path}")
-    print(f"Model: Qwen/Qwen2.5-7B-Instruct (default)")
-    print(f"Output directory: text2model_cache_<timestamp>")
-    print("Workflow: Text2QA generation and training")
-    print("-" * 60)
 
     if not verify_environment():
         return False
@@ -566,7 +564,6 @@ def _run_text2qa_workflow(current_dir: Path, cache_path_obj: Path, config_path_o
 
 def cli_text2model_chat(model_path=None):
     """Start LlamaFactory chat interface for text2model"""
-    print("Starting chat interface...")
 
     current_dir = Path(os.getcwd())
 
@@ -658,7 +655,6 @@ def cli_text2model_chat(model_path=None):
 
     print(f"Base model: {base_model}")
     print(f"Adapter path: {model_path}")
-    print(f"Command: {' '.join(chat_cmd)}")
     print("-" * 60)
     print("Starting chat session...")
     print("-" * 60)
