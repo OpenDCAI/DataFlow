@@ -4,10 +4,14 @@ if TYPE_CHECKING:
     from .generate.prompted_generator import PromptedGenerator
     from .generate.paired_prompted_generator import PairedPromptedGenerator
     from .generate.random_domain_knowledge_row_generator import RandomDomainKnowledgeRowGenerator
+    
     from .eval.prompted_eval import PromptedEvaluator
     from .eval.bench_dataset_evaluator import BenchDatasetEvaluator
-    from .filter.prompted_filter import PromptedFilter
+    
     from .refine.prompted_refiner import PromptedRefiner
+    
+    from .filter.prompted_filter import PromptedFilter
+    from .filter.general_filter import GeneralFilter
 else:
     import sys
     from dataflow.utils.registry import LazyLoader, generate_import_structure_from_type_checking

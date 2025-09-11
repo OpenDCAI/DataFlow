@@ -1,8 +1,8 @@
 from dataflow.operators.general_text import (
-    MinHashDeduplicator,
-    ColonEndFilter,
     WordNumberFilter,
     BlocklistFilter,
+    MinHashDeduplicateFilter,
+    ColonEndFilter,
     SentenceNumberFilter,
     LineEndWithEllipsisFilter,
     ContentNullFilter,
@@ -19,12 +19,13 @@ from dataflow.operators.general_text import (
     UniqueWordsFilter,
     CharNumberFilter,
     LineStartWithBulletpointFilter,
-    LineWithJavascriptFilter
-)
-from dataflow.operators.refine import (
+    LineWithJavascriptFilter,
     HtmlUrlRemoverRefiner,
     RemoveEmojiRefiner,
     RemoveExtraSpacesRefiner
+)
+from dataflow.operators.text_pt import (
+    MetaSampleEvaluator,
 )
 
 from dataflow.utils.storage import FileStorage
@@ -40,7 +41,7 @@ class PTTextFilter_CPUPipeline():
         self.remove_extra_spaces_refiner = RemoveExtraSpacesRefiner()
         self.remove_emoji_refiner = RemoveEmojiRefiner()
         self.html_remove_refiner = HtmlUrlRemoverRefiner()
-        self.minhash_deduplicator = MinHashDeduplicator(num_perm=128, threshold=0.9, use_n_gram=True, ngram=5)
+        self.minhash_deduplicator = MinHashDeduplicateFilter(num_perm=128, threshold=0.9, use_n_gram=True, ngram=5)
         self.blocklist_filter = BlocklistFilter()
         self.word_number_filter = WordNumberFilter(min_words=20, max_words=100000)
         self.colon_end_filter = ColonEndFilter()

@@ -2,7 +2,7 @@ from dataflow import get_logger
 from dataflow.core import OperatorABC
 from dataflow.utils.storage import DataFlowStorage
 from dataflow.utils.registry import OPERATOR_REGISTRY
-from dataflow.operators.general_text import NgramScorer
+from dataflow.operators.general_text import NgramSampleEvaluator
 
 @OPERATOR_REGISTRY.register()
 class NgramFilter(OperatorABC):
@@ -11,7 +11,7 @@ class NgramFilter(OperatorABC):
         self.logger = get_logger()
         self.min_score = min_score
         self.max_score = max_score
-        self.scorer = NgramScorer(ngrams)
+        self.scorer = NgramSampleEvaluator(ngrams)
         self.logger.info(f"Initializing {self.__class__.__name__} with min_scores: {self.min_score} and max_scores: {self.max_score}...")  
     
     @staticmethod

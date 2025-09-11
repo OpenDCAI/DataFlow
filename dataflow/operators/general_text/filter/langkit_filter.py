@@ -4,7 +4,7 @@ from dataflow import get_logger
 from dataflow.core import OperatorABC
 from dataflow.utils.storage import DataFlowStorage
 from dataflow.utils.registry import OPERATOR_REGISTRY
-from dataflow.operators.general_text import LangkitScorer
+from dataflow.operators.general_text import LangkitSampleEvaluator
 
 @OPERATOR_REGISTRY.register()
 class LangkitFilter(OperatorABC):
@@ -66,7 +66,7 @@ class LangkitFilter(OperatorABC):
         if not self.min_scores.keys() == self.max_scores.keys():
             raise ValueError("min_scores and max_scores must have the same keys")  
         self.logger = get_logger()
-        self.scorer = LangkitScorer()
+        self.scorer = LangkitSampleEvaluator()
         self.logger.info(f"Initializing {self.__class__.__name__} with min_scores: {self.min_scores} and max_scores: {self.max_scores}...")
     
     @staticmethod

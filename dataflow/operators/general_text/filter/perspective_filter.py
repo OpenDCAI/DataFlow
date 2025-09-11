@@ -3,7 +3,7 @@ from dataflow import get_logger
 from dataflow.core import OperatorABC
 from dataflow.utils.storage import DataFlowStorage
 from dataflow.utils.registry import OPERATOR_REGISTRY
-from dataflow.operators.general_text import PerspectiveScorer
+from dataflow.operators.general_text import PerspectiveSampleEvaluator
 from dataflow.serving import PerspectiveAPIServing
 
 @OPERATOR_REGISTRY.register()
@@ -14,7 +14,7 @@ class PerspectiveFilter(OperatorABC):
         self.min_score = min_score
         self.max_score = max_score
         self.serving = PerspectiveAPIServing(max_workers=10)
-        self.scorer = PerspectiveScorer(serving=self.serving)
+        self.scorer = PerspectiveSampleEvaluator(serving=self.serving)
     
     @staticmethod
     def get_desc(lang: str = "zh"):
