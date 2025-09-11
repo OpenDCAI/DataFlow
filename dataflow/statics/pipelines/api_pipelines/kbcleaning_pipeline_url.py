@@ -1,8 +1,8 @@
 from dataflow.operators.knowledge_cleaning import (
-    CorpusTextSplitter,
+    KBCChunkGenerator,
     FileOrURLToMarkdownConverter,
-    KnowledgeCleaner,
-    MultiHopQAGenerator,
+    KBCTextCleaner,
+    KBCMultiHopQAGenerator,
 )
 from dataflow.utils.storage import FileStorage
 from dataflow.serving import APILLMServing_request
@@ -30,18 +30,18 @@ class KBCleaningURL_APIPipeline():
             url = url,
         )
 
-        self.knowledge_cleaning_step2 = CorpusTextSplitter(
+        self.knowledge_cleaning_step2 = KBCChunkGenerator(
             split_method="token",
             chunk_size=512,
             tokenizer_name="Qwen/Qwen2.5-7B-Instruct",
         )
 
-        self.knowledge_cleaning_step3 = KnowledgeCleaner(
+        self.knowledge_cleaning_step3 = KBCTextCleaner(
             llm_serving=self.llm_serving,
             lang="en"
         )
 
-        self.knowledge_cleaning_step4 = MultiHopQAGenerator(
+        self.knowledge_cleaning_step4 = KBCMultiHopQAGenerator(
             llm_serving=self.llm_serving,
             lang="en"
         )

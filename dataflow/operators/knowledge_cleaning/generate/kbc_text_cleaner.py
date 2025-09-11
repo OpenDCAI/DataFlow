@@ -8,14 +8,18 @@ from dataflow.core import OperatorABC
 from dataflow.core import LLMServingABC
 
 @OPERATOR_REGISTRY.register()
-class KnowledgeCleaner(OperatorABC):
+class KBCTextCleaner(OperatorABC):
     '''
         KnowledgeCleaner is a class that cleans knowledge for RAG to make them more accurate, reliable and readable.
     '''
-    def __init__(self, llm_serving: LLMServingABC, lang="en"):
+    def __init__(self, llm_serving: LLMServingABC, lang="en", prompt_template = None):
         self.logger = get_logger()
         self.prompts = KnowledgeCleanerPrompt(lang=lang)    
         self.llm_serving = llm_serving
+        if prompt_template:
+            self.prompt_template = prompt_template
+        else:
+            self.prompt_template = KnowledgeCleanerPrompt()
     
     @staticmethod
     def get_desc(lang: str = "zh"):
@@ -92,7 +96,7 @@ class KnowledgeCleaner(OperatorABC):
         Reformat the prompts in the dataframe to generate questions.
         """
         raw_contents = dataframe[self.input_key].tolist()
-        inputs = [self.prompts.Classic_COT_Prompt(raw_content) for raw_content in raw_contents]
+        inputs = [self.prompt_template.build_prompt(raw_content) for raw_content in raw_contents]
 
         return inputs
 

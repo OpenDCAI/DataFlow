@@ -1,5 +1,5 @@
 from dataflow.operators.reasoning import (
-    AnswerNgramFilter
+    ReasoningAnswerNgramFilter
 )
 
 from dataflow.utils.storage import FileStorage
@@ -22,7 +22,7 @@ class RemoteDataLoader():
             cache_type="jsonl",
         )
 
-        self.answer_ngram_filter_step1 = AnswerNgramFilter(
+        self.answer_ngram_filter_step1 = ReasoningAnswerNgramFilter(
             min_score = 0.1,
             max_score = 1.0,
             ngrams = 5

@@ -6,7 +6,7 @@ import pandas as pd
 from transformers import AutoTokenizer
 
 @OPERATOR_REGISTRY.register()
-class ToKenInfo(OperatorABC):
+class ReasoningTokenDatasetEvaluator(OperatorABC):
     def __init__(self):
         self.logger = get_logger()
         self.logger.info(f'Initializing {self.__class__.__name__}...')

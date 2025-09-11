@@ -11,7 +11,7 @@ from dataflow.utils.reasoning.AnswerExtraction import StringCleaner, UnitTextMan
 
 # The main class to manage the entire extraction process
 @OPERATOR_REGISTRY.register()
-class AnswerExtraction_QwenMathEval(OperatorABC):
+class ReasoningAnswerExtractionQwenMathEvalGenerator(OperatorABC):
     """
     A class to handle the process of extracting answers from a dataset.
     """

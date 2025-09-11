@@ -8,9 +8,9 @@ class MultiHopQAGeneratorPrompt:
     '''
     def __init__(self, lang: str = "en"):
         self.lang = lang
-        self.system_text = self._build_system_prompt()
+        self.system_text = self.build_system_prompt()
         
-    def _build_system_prompt(self) -> str:
+    def build_system_prompt(self) -> str:
         """构建专业级多跳问答提示"""
         if self.lang == "en":
             return textwrap.dedent("""\
@@ -24,7 +24,8 @@ class MultiHopQAGeneratorPrompt:
                    - Show clear causal/progressive relationships
                    - Each step must reference specific facts
                 4. Final answer must synthesize all reasoning conclusions
-
+                5. Focus solely on the main text and avoid synthesizing Q&A based on content found in links, references, or other supplementary sources.
+                                   
                 █ Output Specifications
                 1. Only pure JSON in this structure:
                 {
@@ -79,7 +80,8 @@ class MultiHopQAGeneratorPrompt:
                     - 每个步骤明确标注序号
                     - 步骤间存在因果或递进关系
                 4. 最终答案必须整合所有推理结论
-
+                5. 只关注正文内容，避免根据链接、参考文献等附加信息合成问答。
+                
                 █ 输出规范
                 1. 仅允许输出以下结构的纯JSON：
                 {
@@ -123,7 +125,7 @@ class MultiHopQAGeneratorPrompt:
                 - JSON外出现任何附加文本
                 """)
 
-    def _multihop_qa_generator_user_prompt(self, text: str) -> str:
+    def build_prompt(self, text: str) -> str:
         """生成完全专业化的用户提示"""
         if self.lang == "en":
             user_prompt = textwrap.dedent(f"""\

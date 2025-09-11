@@ -9,7 +9,7 @@ import pandas as pd
 import numpy as np
 
 @OPERATOR_REGISTRY.register()
-class AnswerModelJudge(OperatorABC):
+class ReasoningAnswerModelJudgeFilter(OperatorABC):
     def __init__(self,
                  system_prompt: str = "You are a helpful assistant specialized in evaluating answer correctness.",
                  llm_serving: LLMServingABC = None,

@@ -1,5 +1,5 @@
 from dataflow.operators.knowledge_cleaning import (
-    CorpusTextSplitter,
+    KBCChunkGenerator,
     FileOrURLToMarkdownConverter,
 )
 from dataflow.utils.storage import FileStorage
@@ -19,7 +19,7 @@ class KBCleaning_CPUPipeline():
             url = url,
         )
 
-        self.knowledge_cleaning_step2 = CorpusTextSplitter(
+        self.knowledge_cleaning_step2 = KBCChunkGenerator(
             split_method="token",
             chunk_size=512,
             tokenizer_name="Qwen/Qwen2.5-7B-Instruct",

@@ -8,7 +8,7 @@ from dataflow.prompts.reasoning.math import MathQuestionFilterPrompt
 import re
 
 @OPERATOR_REGISTRY.register()
-class QuestionFilter(OperatorABC):
+class ReasoningQuestionFilter(OperatorABC):
     def __init__(self,
                  system_prompt: str = "You are a helpful assistant.",
                  llm_serving: LLMServingABC = None,

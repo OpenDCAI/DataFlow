@@ -7,7 +7,7 @@ from dataflow.utils.storage import DataFlowStorage
 from dataflow.core import OperatorABC
 
 @OPERATOR_REGISTRY.register()
-class AnswerFormatterFilter(OperatorABC):
+class ReasoningAnswerFormatterFilter(OperatorABC):
     def __init__(self):
         
         self.logger = get_logger()
@@ -72,7 +72,7 @@ class AnswerFormatterFilter(OperatorABC):
         indexes =  np.zeros(len(dataframe)).astype(int)
         for i, item in dataframe.iterrows():
             answer = item[self.input_key]
-            if AnswerFormatterFilter.is_valid_answer(answer):
+            if ReasoningAnswerFormatterFilter.is_valid_answer(answer):
                 indexes[i] = 1
         dataframe = dataframe[np.array(indexes) == 1]
 
