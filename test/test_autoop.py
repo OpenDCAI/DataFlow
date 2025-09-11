@@ -1,5 +1,5 @@
 from dataflow.pipeline import PipelineABC
-from dataflow.operators.core_text import (
+from dataflow.operators.general_text import (
     LLMLanguageFilter,
 )
 from dataflow.operators.text_pt import MetaSampleEvaluator

@@ -1,10 +1,8 @@
-from dataflow.operators.core_text import (
+from dataflow.operators.general_text import (
     MinHashDeduplicateFilter,
     LanguageFilter,
     WordNumberFilter,
     BlocklistFilter,
-)
-from dataflow.operators.text_pt import (
     ColonEndFilter,
     SentenceNumberFilter,
     LineEndWithEllipsisFilter,
@@ -23,12 +21,12 @@ from dataflow.operators.text_pt import (
     CharNumberFilter,
     LineStartWithBulletpointFilter,
     LineWithJavascriptFilter,
-    PairQualFilter
+    RemoveExtraSpacesRefiner,
+    RemoveEmojiRefiner,
+    HtmlUrlRemoverRefiner,
 )
 from dataflow.operators.text_pt import (
-    HtmlUrlRemoverRefiner,
-    RemoveEmojiRefiner,
-    RemoveExtraSpacesRefiner
+    PairQualFilter
 )
 
 from dataflow.utils.storage import FileStorage

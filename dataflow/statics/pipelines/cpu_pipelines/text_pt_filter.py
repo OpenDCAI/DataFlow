@@ -1,10 +1,7 @@
-from dataflow.operators.core_text import (
+from dataflow.operators.general_text import (
     WordNumberFilter,
     BlocklistFilter,
-    MinHashDeduplicateFilter
-)
-from dataflow.operators.text_pt import (
-    MetaSampleEvaluator,
+    MinHashDeduplicateFilter,
     ColonEndFilter,
     SentenceNumberFilter,
     LineEndWithEllipsisFilter,
@@ -22,12 +19,13 @@ from dataflow.operators.text_pt import (
     UniqueWordsFilter,
     CharNumberFilter,
     LineStartWithBulletpointFilter,
-    LineWithJavascriptFilter
-)
-from dataflow.operators.text_pt import (
+    LineWithJavascriptFilter,
     HtmlUrlRemoverRefiner,
     RemoveEmojiRefiner,
     RemoveExtraSpacesRefiner
+)
+from dataflow.operators.text_pt import (
+    MetaSampleEvaluator,
 )
 
 from dataflow.utils.storage import FileStorage

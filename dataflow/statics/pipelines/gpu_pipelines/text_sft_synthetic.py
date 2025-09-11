@@ -1,10 +1,11 @@
-from dataflow.operators.core_text import (
+from dataflow.operators.general_text import (
     MinHashDeduplicateFilter,
     LanguageFilter,
     WordNumberFilter,
     BlocklistFilter,
-)
-from dataflow.operators.text_pt import (
+    HtmlUrlRemoverRefiner,
+    RemoveEmojiRefiner,
+    RemoveExtraSpacesRefiner,
     ColonEndFilter,
     SentenceNumberFilter,
     LineEndWithEllipsisFilter,
@@ -23,17 +24,14 @@ from dataflow.operators.text_pt import (
     CharNumberFilter,
     LineStartWithBulletpointFilter,
     LineWithJavascriptFilter,
+)
+from dataflow.operators.text_pt import (
     PairQualFilter,
 )
 from dataflow.operators.text_sft import (
     SuperfilteringFilter,
     DeitaQualityFilter,
     InstagFilter,
-)
-from dataflow.operators.text_pt import (
-    HtmlUrlRemoverRefiner,
-    RemoveEmojiRefiner,
-    RemoveExtraSpacesRefiner
 )
 from dataflow.operators.text_sft import SFTGeneratorSeed
 from dataflow.serving import LocalModelLLMServing_vllm, LocalModelLLMServing_sglang
