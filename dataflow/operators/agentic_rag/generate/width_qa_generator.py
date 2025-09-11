@@ -1,4 +1,10 @@
-from dataflow.prompts.agenticrag import WidthQAGeneratorPrompt
+from dataflow.prompts.agenticrag import (
+    WidthQAGeneratorMergePrompt,
+    WidthQAGeneratorOriginCheckPrompt,
+    WidthQAGeneratorQuestionVerifyPrompt,
+    WidthQAGeneratorAnswerPrompt,
+    WidthQAGeneratorRecallScorePrompt
+)
 from dataflow.utils.registry import OPERATOR_REGISTRY
 from dataflow  import get_logger
 from dataflow.utils.storage import DataFlowStorage
@@ -9,12 +15,11 @@ import pandas as pd
 import json
 
 @OPERATOR_REGISTRY.register()
-class WidthQAGenerator(OperatorABC):
+class AgenticRAGWidthQAGenerator(OperatorABC):
     def __init__(self,
                  llm_serving: LLMServingABC = None
                  ):
         self.logger= get_logger()
-        self.prompts = WidthQAGeneratorPrompt()
         self.llm_serving = llm_serving
 
     @staticmethod
@@ -57,12 +62,14 @@ class WidthQAGenerator(OperatorABC):
         Reformat the prompts in the dataframe to generate questions.
         """
         if prompt_type == "merge_prompt":
-            system_prompts = self.prompts.merge_prompt_system_prompt()
+            self.prompts = WidthQAGeneratorMergePrompt()
+            system_prompts = self.prompts.build_system_prompt()
             prompts = [
-                self.prompts.merge_prompt_prompt([input_batch[i], input_batch[i + 1]])
+                self.prompts.build_prompt([input_batch[i], input_batch[i + 1]])
                 for i in range(len(input_batch) - 1)
             ]
         elif prompt_type == "check_origin":
+            self.prompts = WidthQAGeneratorOriginCheckPrompt()
             input_batch = []
             for idx, q, ori_q in zip(dataframe["index"], dataframe["question"], dataframe["original_question"]):
                 input_batch.append({
@@ -70,24 +77,26 @@ class WidthQAGenerator(OperatorABC):
                     "complex_question": q,
                     "original_questions": ori_q if isinstance(ori_q, list) else [ori_q]
                 })
-            system_prompts = self.prompts.check_origin_system_prompt()
-            prompts = [self.prompts.check_origin_prompt(input) for input in input_batch]
+            system_prompts = self.prompts.build_system_prompt()
+            prompts = [self.prompts.build_prompt(input) for input in input_batch]
             return system_prompts, prompts
         elif prompt_type == "question_verify":
+            self.prompts = WidthQAGeneratorQuestionVerifyPrompt()
             input_batch = []
             for idx, q in zip(dataframe["index"], dataframe[self.output_question_key]):
                 input_batch.append({
                     "index": idx,
                     "complex_question": q,
                 })
-            system_prompts = self.prompts.question_verify_system_prompt()
-            prompts = [self.prompts.question_verify_prompt(input) for input in input_batch]
+            system_prompts = self.prompts.build_system_prompt()
+            prompts = [self.prompts.build_prompt(input) for input in input_batch]
         elif prompt_type == "get_recall_score":
+            self.prompts = WidthQAGeneratorRecallScorePrompt()
             golden_answers = dataframe["original_answer"].tolist()
             llm_answers = dataframe["llm_answer"]
-            system_prompts = self.prompts.recall_system_prompt()
+            system_prompts = self.prompts.build_system_prompt()
             prompts = [
-                self.prompts.recall_prompt(golden_answer, llm_answer) for golden_answer, llm_answer in zip(golden_answers, llm_answers)
+                self.prompts.build_prompt(golden_answer, llm_answer) for golden_answer, llm_answer in zip(golden_answers, llm_answers)
             ]
         else:
             raise ValueError(f"Unknown prompt_type: {prompt_type}")

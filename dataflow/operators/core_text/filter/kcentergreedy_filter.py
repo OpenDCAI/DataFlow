@@ -15,7 +15,7 @@ class KCenterGreedy:
     """Implements k-center-greedy method.
 
     Args:
-        embedding (Tensor): Embedding vector extracted from a CNN
+        embedding (Tensor): Embedding vector extracted from a LLM
         sampling_ratio (float): Ratio to choose coreset size from the embedding size.
 
     Example:
@@ -137,10 +137,9 @@ class KCenterGreedy:
         return coreset
 
 @OPERATOR_REGISTRY.register()
-class ContentChooser(OperatorABC):
-    def __init__(self, num_samples: int, method: str = "random", embedding_serving : LLMServingABC = None):
+class KCenterGreedyFilter(OperatorABC):
+    def __init__(self, num_samples: int, embedding_serving : LLMServingABC = None):
         self.num_samples = num_samples
-        self.method = method
         self.embedding_serving = embedding_serving
         self.logger = get_logger()
 
@@ -200,16 +199,13 @@ class ContentChooser(OperatorABC):
         texts = dataframe[self.input_key].tolist()
         indexes =  np.zeros(len(dataframe)).astype(int)
         
-        if self.method == "random":
-            chooss_indexes = random.sample(range(len(texts)), self.num_samples)
-        elif self.method == "kcenter":
-            embeddings_list = self.embedding_serving.generate_embedding_from_input(texts)
-            embeddings = torch.tensor(embeddings_list)
 
-            sampler = KCenterGreedy(embedding=embeddings, sampling_ratio= self.num_samples / len(texts))
-            chooss_indexes = sampler.select_coreset_idxs()
-        else:
-            raise ValueError(f"Invalid method: {self.method}")
+        embeddings_list = self.embedding_serving.generate_embedding_from_input(texts)
+        embeddings = torch.tensor(embeddings_list)
+
+        sampler = KCenterGreedy(embedding=embeddings, sampling_ratio= self.num_samples / len(texts))
+        chooss_indexes = sampler.select_coreset_idxs()
+
 
         for index in chooss_indexes:
             indexes[index] = 1
