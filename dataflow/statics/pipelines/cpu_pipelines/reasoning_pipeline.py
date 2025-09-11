@@ -1,7 +1,7 @@
 from dataflow.operators.reasoning import (
-    AnswerFormatterFilter,
-    AnswerGroundTruthFilter,
-    AnswerNgramFilter,
+    ReasoningAnswerFormatterFilter,
+    ReasoningAnswerGroundTruthFilter,
+    ReasoningAnswerNgramFilter,
 )
 from dataflow.utils.storage import FileStorage
 
@@ -15,11 +15,11 @@ class Reasoning_CPUPipeline():
             cache_type="jsonl",
         )
     
-        self.answer_format_filter_step1 = AnswerFormatterFilter()
+        self.answer_format_filter_step1 = ReasoningAnswerFormatterFilter()
         
-        self.answer_groundtruth_filter_step2 = AnswerGroundTruthFilter()
+        self.answer_groundtruth_filter_step2 = ReasoningAnswerGroundTruthFilter()
         
-        self.answer_ngram_filter_step3 = AnswerNgramFilter(
+        self.answer_ngram_filter_step3 = ReasoningAnswerNgramFilter(
             min_score = 0.1,
             max_score = 1.0,
             ngrams = 5

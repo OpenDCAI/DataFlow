@@ -1,14 +1,14 @@
 from dataflow.operators.reasoning import (
-    QuestionGenerator,
-    AnswerGenerator,
-    PretrainFormatConverter
+    ReasoningQuestionGenerator,
+    ReasoningAnswerGenerator,
+    ReasoningPretrainFormatConvertGenerator
 )
 from dataflow.prompts.reasoning.math import (
     MathQuestionFilterPrompt,
     MathQuestionSynthesisPrompt,
     MathAnswerGeneratorPrompt
 )
-from dataflow.operators.reasoning import QuestionFilter, AnswerNgramFilter, AnswerPipelineRoot
+from dataflow.operators.reasoning import ReasoningQuestionFilter, ReasoningAnswerNgramFilter, ReasoningAnswerPipelineRootFilter
 from dataflow.utils.storage import FileStorage
 from dataflow.serving import APILLMServing_request
 
@@ -39,32 +39,32 @@ class Reasoning_APIPipeline_Pretrain():
             #     model_source="local"
             # )
         
-        self.question_filter_step1 = QuestionFilter(
+        self.question_filter_step1 = ReasoningQuestionFilter(
             system_prompt="You are an expert in evaluating mathematical problems. Follow the user's instructions strictly and output your final judgment in the required JSON format.",
             llm_serving=self.llm_serving,
             prompt_template=MathQuestionFilterPrompt()
         )
-        self.question_gen_step2 =  QuestionGenerator(
+        self.question_gen_step2 =  ReasoningQuestionGenerator(
             num_prompts=3,
             llm_serving=self.llm_serving,
             prompt_template=MathQuestionSynthesisPrompt()
         )
         
         ########################## branch ############################
-        self.answer_pipeline_root_step3 = AnswerPipelineRoot()
+        self.answer_pipeline_root_step3 = ReasoningAnswerPipelineRootFilter()
         ########################## answer ############################
-        self.answer_generator_step4 = AnswerGenerator(
+        self.answer_generator_step4 = ReasoningAnswerGenerator(
             llm_serving=self.llm_serving,
             prompt_template=MathAnswerGeneratorPrompt()
         )
         
-        self.answer_ngram_filter_step5 = AnswerNgramFilter(
+        self.answer_ngram_filter_step5 = ReasoningAnswerNgramFilter(
             min_score = 0.1,
             max_score = 1.0,
             ngrams = 5
         )
         
-        self.sft_to_pretrain_step6 = PretrainFormatConverter()
+        self.sft_to_pretrain_step6 = ReasoningPretrainFormatConvertGenerator()
                 
         # 未来或许可以维护一个类似nn.sequential的容器，方便添加并实例化多个算子
     def forward(self):

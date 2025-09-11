@@ -5,6 +5,7 @@ if TYPE_CHECKING:
     from .generate.paired_prompted_generator import PairedPromptedGenerator
     from .generate.random_domain_knowledge_row_generator import RandomDomainKnowledgeRowGenerator
     from .eval.prompted_eval import PromptedEvaluator
+    from .eval.bench_dataset_evaluator import BenchDatasetEvaluator
     from .filter.prompted_filter import PromptedFilter
     from .refine.prompted_refiner import PromptedRefiner
 else:

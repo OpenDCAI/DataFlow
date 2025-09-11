@@ -16,7 +16,7 @@ from dataflow.utils.storage import DataFlowStorage
 from dataflow.core import OperatorABC
 
 @OPERATOR_REGISTRY.register()
-class CorpusTextSplitter(OperatorABC):
+class KBCChunkGenerator(OperatorABC):
     def __init__(self,
                  chunk_size: int = 512,
                  chunk_overlap: int = 50,
