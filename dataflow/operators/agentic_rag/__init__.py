@@ -4,11 +4,11 @@ if TYPE_CHECKING:
     # filter
 
     # eval
-    from eval.f1_eval import AgenticRAGQAF1Evaluator
+    from DataFlow.dataflow.operators.agentic_rag.eval.agenticrag_qaf1_sample_evaluator import AgenticRAGQAF1SampleEvaluator
     # generate
-    from generate.atomic_task_generator import AgenticRAGAtomicTaskGenerator
-    from generate.depth_qa_generator import AgenticRAGDepthQAGenerator
-    from generate.width_qa_generator import AgenticRAGWidthQAGenerator
+    from DataFlow.dataflow.operators.agentic_rag.generate.agenticrag_atomic_task_generator import AgenticRAGAtomicTaskGenerator
+    from DataFlow.dataflow.operators.agentic_rag.generate.agenticrag_depth_qa_generator import AgenticRAGDepthQAGenerator
+    from DataFlow.dataflow.operators.agentic_rag.generate.agenticrag_width_qa_generator import AgenticRAGWidthQAGenerator
 
 else:
     import sys

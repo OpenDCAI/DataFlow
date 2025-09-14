@@ -10,7 +10,7 @@ from dataflow import get_logger
 
 
 @OPERATOR_REGISTRY.register()
-class AgenticRAGQAF1Evaluator(OperatorABC):
+class AgenticRAGQAF1SampleEvaluator(OperatorABC):
 
     def __init__(self):
         self.logger = get_logger()

@@ -1,5 +1,5 @@
 import pandas as pd
-from dataflow.operators.agentic_rag import AgenticRAGQAF1Evaluator
+from dataflow.operators.agentic_rag import AgenticRAGQAF1SampleEvaluator
 
 from dataflow.operators.agentic_rag import (
     AgenticRAGAtomicTaskGenerator,
@@ -32,7 +32,7 @@ class AgenticRAGEval_APIPipeline():
             llm_serving=self.llm_serving
         )
 
-        self.task_step2 = AgenticRAGQAF1Evaluator()
+        self.task_step2 = AgenticRAGQAF1SampleEvaluator()
         
     def forward(self):
 

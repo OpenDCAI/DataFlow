@@ -6,7 +6,7 @@ if TYPE_CHECKING:
     from .generate.random_domain_knowledge_row_generator import RandomDomainKnowledgeRowGenerator
     from .generate.doc2prompt_generator import Doc2PromptGenerator
     from .generate.doc2qa_generator import Doc2QAGenerator
-    from .eval.doc2qa_eval import Doc2QAEvaluator
+    from .eval.doc2qa_sample_evaluator import Doc2QASampleEvaluator
     from .eval.prompted_eval import PromptedEvaluator
     from .filter.prompted_filter import PromptedFilter
     from .filter.kcentergreedy_filter import KCenterGreedyFilter

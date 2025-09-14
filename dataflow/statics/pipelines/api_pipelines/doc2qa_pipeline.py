@@ -1,6 +1,6 @@
 from dataflow.operators.core_text import (
     Doc2PromptGenerator,
-    Doc2QAEvaluator,
+    Doc2QASampleEvaluator,
     Doc2QAGenerator,
     KCenterGreedyFilter
 )
@@ -38,7 +38,7 @@ class AgenticRAG_APIPipeline():
 
         self.doc2qa_generator_step3 = Doc2QAGenerator(self.llm_serving)
 
-        self.doc2qa_scorer_step4 = Doc2QAEvaluator(self.llm_serving)
+        self.doc2qa_scorer_step4 = Doc2QASampleEvaluator(self.llm_serving)
         
     def forward(self):
 
