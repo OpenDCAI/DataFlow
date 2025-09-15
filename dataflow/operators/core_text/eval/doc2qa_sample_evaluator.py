@@ -1,4 +1,9 @@
-from dataflow.prompts.agenticrag import QAScorerPrompt
+from dataflow.prompts.doc2qa import (
+    Doc2QAQuestionQualityPrompt,
+    Doc2QAAnswerAlignmentPrompt,
+    Doc2QAAnswerVerifiabilityPrompt,
+    Doc2QADownstreamValuePrompt
+)
 import pandas as pd
 from dataflow.utils.registry import OPERATOR_REGISTRY
 from dataflow import get_logger
@@ -8,13 +13,12 @@ from dataflow.core import OperatorABC
 from dataflow.core import LLMServingABC
 
 @OPERATOR_REGISTRY.register()
-class QAScorer(OperatorABC):
+class Doc2QASampleEvaluator(OperatorABC):
     '''
     Answer Generator is a class that generates answers for given questions.
     '''
     def __init__(self, llm_serving: LLMServingABC):
-        self.logger = get_logger()
-        self.prompts = QAScorerPrompt()    
+        self.logger = get_logger()   
         self.llm_serving = llm_serving
     
     @staticmethod
@@ -67,13 +71,17 @@ class QAScorer(OperatorABC):
         Reformat the prompts in the dataframe to generate questions.
         """
         question_quality_inputs = []
-        question_quality_prompt = self.prompts.question_quality_prompt()
+        self.prompts = Doc2QAQuestionQualityPrompt()
+        question_quality_prompt = self.prompts.build_prompt()
         answer_alignment_inputs = []
-        answer_alignment_prompt = self.prompts.answer_alignment_prompt()
+        self.prompts = Doc2QAAnswerAlignmentPrompt()
+        answer_alignment_prompt = self.prompts.build_prompt()
         answer_verifiability_inputs = []
-        answer_verifiability_prompt = self.prompts.answer_verifiability_prompt()
+        self.prompts = Doc2QAAnswerVerifiabilityPrompt()
+        answer_verifiability_prompt = self.prompts.build_prompt()
         downstream_value_inputs = []
-        downstream_value_prompt = self.prompts.downstream_value_prompt()
+        self.prompts = Doc2QADownstreamValuePrompt()
+        downstream_value_prompt = self.prompts.build_prompt()
 
         for index, row in dataframe.iterrows():
             question_quality_content = question_quality_prompt + "Question: " + row[self.input_question_key] + "\n" + "Answer: " + row[self.input_answer_key]

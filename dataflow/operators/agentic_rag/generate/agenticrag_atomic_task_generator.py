@@ -1,4 +1,13 @@
-from dataflow.prompts.agenticrag import AtomicTaskGeneratorPrompt
+from dataflow.prompts.agenticrag import (
+AtomicTaskGeneratorGetIdentifierPrompt, 
+AtomicTaskGeneratorGetConlcusionPrompt, 
+AtomicTaskGeneratorQuestionPrompt, 
+AtomicTaskGeneratorCleanQAPrompt, 
+AtomicTaskGeneratorAnswerPrompt, 
+AtomicTaskGeneratorRecallScorePrompt, 
+AtomicTaskGeneratorOptionalAnswerPrompt, 
+AtomicTaskGeneratorGoldenDocAnswerPrompt
+)
 from dataflow.utils.registry import OPERATOR_REGISTRY
 from dataflow  import get_logger
 from dataflow.utils.storage import DataFlowStorage
@@ -13,7 +22,7 @@ import re
 from collections import Counter
 
 @OPERATOR_REGISTRY.register()
-class AtomicTaskGenerator(OperatorABC):
+class AgenticRAGAtomicTaskGenerator(OperatorABC):
     def __init__(self,
                  llm_serving: LLMServingABC = None,
                  data_num : int = 100,
@@ -21,7 +30,6 @@ class AtomicTaskGenerator(OperatorABC):
                  max_question: int = 10  # Limit the question of each doc
                  ):
         self.logger= get_logger()
-        self.prompts = AtomicTaskGeneratorPrompt()
         self.llm_serving = llm_serving
         self.data_num, self.max_per_task, self.max_question = data_num, max_per_task, max_question
 
@@ -70,19 +78,22 @@ class AtomicTaskGenerator(OperatorABC):
         All input columns are expected to be strings.
         """
         if prompt_type == "get_identifier":
+            self.prompts = AtomicTaskGeneratorGetIdentifierPrompt()
             input_prompts = dataframe[self.input_key].tolist()
-            system_prompt = self.prompts.get_identifier_system_prompt()
-            prompts = [self.prompts.get_identifier_prompt(p) for p in input_prompts]
+            system_prompt = self.prompts.build_system_prompt()
+            prompts = [self.prompts.build_prompt(p) for p in input_prompts]
 
         elif prompt_type == "get_conclusion":
+            self.prompts = AtomicTaskGeneratorGetConlcusionPrompt()
             input_prompts = dataframe[self.input_key].tolist()
-            system_prompt = self.prompts.initial_conclusion_system_prompt()
-            prompts = [self.prompts.initial_conclusion_prompt(p) for p in input_prompts]
+            system_prompt = self.prompts.build_system_prompt()
+            prompts = [self.prompts.build_prompt(p) for p in input_prompts]
 
         elif prompt_type == "init_question":
+            self.prompts = AtomicTaskGeneratorQuestionPrompt()
             candidate_strs = dataframe["candidate_tasks_str"].tolist()
             raw_identifiers = dataframe["identifier"].tolist()
-            system_prompt = self.prompts.initial_question_system_prompt()
+            system_prompt = self.prompts.build_system_prompt()
             prompts = []
             for s, raw_id in zip(candidate_strs, raw_identifiers):
                 try:
@@ -95,64 +106,58 @@ class AtomicTaskGenerator(OperatorABC):
                     identifier = identifier_obj.get("content_identifier", "Unknown")
 
                     prompts.append(
-                        self.prompts.initial_question_prompt(identifier, task_item["conclusion"], task_item["R"])
+                        self.prompts.build_prompt(identifier, task_item["conclusion"], task_item["R"])
                     )
                 except Exception as e:
                     print(f"[WARN] Failed to parse candidate_tasks_str or identifier: {e} | value: {s} | id: {raw_id}")
                     prompts.append("")  # fallback
 
-            # candidate_strs = dataframe["candidate_tasks_str"].tolist()
-            # identifiers = dataframe["identifier"].tolist()
-            # system_prompt = self.prompts.initial_question_system_prompt()
-            # prompts = []
-            # for s in candidate_strs:
-            #     try:
-            #         item = json.loads(self._clean_json_block(s))
-            #         prompts.append(self.prompts.initial_question_prompt(item['conclusion'], item['R']))
-            #     except Exception as e:
-            #         print(f"[WARN] Failed to parse candidate_tasks_str: {e} | value: {s}")
-            #         prompts.append("")  # fallback to empty string or you can `continue`
-
         elif prompt_type == "clean_qa":
+            self.prompts = AtomicTaskGeneratorCleanQAPrompt()
             questions = dataframe[self.output_question_key].tolist()
             answers = dataframe[self.output_answer_key].tolist()
-            system_prompt = self.prompts.clean_qa_system_prompt()
+            system_prompt = self.prompts.build_system_prompt()
             prompts = [
-                self.prompts.clean_qa_prompt({"question": q, "original_answer": a})
+                self.prompts.build_prompt({"question": q, "original_answer": a})
                 for q, a in zip(questions, answers)
             ]
         elif prompt_type == "llm_answer":
+            self.prompts = AtomicTaskGeneratorAnswerPrompt()
             questions = dataframe[self.output_question_key].tolist()
             system_prompt = ""
             prompts = [
-                self.prompts.llm_answer_prompt(question) for question in questions
+                self.prompts.build_prompt(question) for question in questions
             ]
         elif prompt_type == "get_recall_score":
+            self.prompts = AtomicTaskGeneratorRecallScorePrompt()
             golden_answers = dataframe[self.output_refined_answer_key].tolist()
             llm_answers = dataframe[self.output_llm_answer_key]
-            system_prompt = self.prompts.recall_system_prompt()
+            system_prompt = self.prompts.build_system_prompt()
             prompts = [
-                self.prompts.recall_prompt(golden_answer, llm_answer) for golden_answer, llm_answer in zip(golden_answers, llm_answers)
+                self.prompts.build_prompt(golden_answer, llm_answer) for golden_answer, llm_answer in zip(golden_answers, llm_answers)
             ]
         elif prompt_type == "get_golden_answer_score":
+            self.prompts = AtomicTaskGeneratorRecallScorePrompt()
             golden_answers = dataframe[self.output_refined_answer_key].tolist()
             llm_answers = dataframe[self.output_golden_doc_answer_key]
-            system_prompt = self.prompts.recall_system_prompt()
+            system_prompt = self.prompts.build_system_prompt()
             prompts = [
-                self.prompts.recall_prompt(golden_answer, llm_answer) for golden_answer, llm_answer in zip(golden_answers, llm_answers)
+                self.prompts.build_prompt(golden_answer, llm_answer) for golden_answer, llm_answer in zip(golden_answers, llm_answers)
             ]
         elif prompt_type == "more_optional_answer":
+            self.prompts = AtomicTaskGeneratorOptionalAnswerPrompt()
             answers = dataframe[self.output_refined_answer_key].tolist()
-            system_prompt = self.prompts.more_optional_answer_system_prompt()
+            system_prompt = self.prompts.build_system_prompt()
             prompts = [
-                self.prompts.more_optional_answer_prompt(answer) for answer in answers
+                self.prompts.build_prompt(answer) for answer in answers
             ]
         elif prompt_type == "golden_doc_answer":
+            self.prompts = AtomicTaskGeneratorGoldenDocAnswerPrompt()
             golden_docs = dataframe[self.input_key].tolist()
             questions = dataframe[self.output_question_key].tolist()
             system_prompt = ""
             prompts = [
-                self.prompts.golden_doc_prompt(golden_doc, question) 
+                self.prompts.build_prompt(golden_doc, question) 
                 for golden_doc, question in zip(golden_docs, questions)
             ]
         else:

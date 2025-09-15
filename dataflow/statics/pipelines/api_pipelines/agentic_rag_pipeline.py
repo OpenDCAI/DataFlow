@@ -1,10 +1,10 @@
 import pandas as pd
-from dataflow.operators.agentic_rag import F1Scorer
+from dataflow.operators.agentic_rag import AgenticRAGQAF1SampleEvaluator
 
 from dataflow.operators.agentic_rag import (
-    AtomicTaskGenerator,
-    DepthQAGenerator,
-    WidthQAGenerator
+    AgenticRAGAtomicTaskGenerator,
+    AgenticRAGDepthQAGenerator,
+    AgenticRAGWidthQAGenerator
 )
 
 from dataflow.utils.storage import FileStorage
@@ -28,11 +28,11 @@ class AgenticRAGEval_APIPipeline():
             max_workers=500
         )
 
-        self.task_step1 = AtomicTaskGenerator(
+        self.task_step1 = AgenticRAGAtomicTaskGenerator(
             llm_serving=self.llm_serving
         )
 
-        self.task_step2 = F1Scorer()
+        self.task_step2 = AgenticRAGQAF1SampleEvaluator()
         
     def forward(self):
 
