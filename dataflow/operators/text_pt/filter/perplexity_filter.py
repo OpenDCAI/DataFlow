@@ -15,17 +15,31 @@ class PerplexityFilter(OperatorABC):
         self.logger.info(f"Initializing {self.__class__.__name__} with min_score = {self.min_score} and max_score = {self.max_score}")
     
     @staticmethod
-    def get_desc():
-        return (
-            "基于PerplexityScorer打分器的得分对数据进行过滤。使用Hugging Face语言模型计算文本的困惑度，困惑度越低，文本的流畅性和可理解性越高。\n"
-            "输入参数：\n"
-            "- min_score：最小困惑度阈值\n"
-            "- max_score：最大困惑度阈值\n"
-            "- model_name：Hugging Face模型路径或名称\n"
-            "输出参数：\n"
-            "- 过滤后的DataFrame，仅保留困惑度在指定范围内的文本\n"
-            "- 返回包含困惑度得分字段名的列表"
-        )
+    def get_desc(lang: str = "zh"):
+        if lang == "zh":
+            return (
+                "基于PerplexityScorer打分器的得分对数据进行过滤。基于Huggingface模型计算文本的困惑度，困惑度越低，文本的流畅性和可理解性越高。\n"
+                "输入参数：\n"
+                "- min_score：最小困惑度阈值\n"
+                "- max_score：最大困惑度阈值\n"
+                "- model_name：Huggingface模型路径或名称\n"
+                "- device：模型运行设备\n"
+                "输出参数：\n"
+                "- 过滤后的DataFrame，仅保留困惑度在指定范围内的文本\n"
+                "- 返回包含困惑度得分字段名的列表"
+            )
+        else:
+            return (
+                "Filter data using scores from the PerplexityScorer. Uses Huggingface model to calculate text perplexity; lower scores indicate better fluency and understandability.\n"
+                "Input Parameters:\n"
+                "- min_score: Minimum perplexity threshold\n"
+                "- max_score: Maximum perplexity threshold\n"
+                "- model_name: Huggingface model path or name\n"
+                "- device: Model device\n\n"
+                "Output Parameters:\n"
+                "- Filtered DataFrame containing only texts with perplexity within specified range\n"
+                "- List containing perplexity score field name"
+            )
         
     def run(self, storage: DataFlowStorage, input_key: str, output_key: str = 'PerplexityScore'):
         self.input_key = input_key

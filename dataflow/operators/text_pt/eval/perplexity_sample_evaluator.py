@@ -25,15 +25,25 @@ class PerplexitySampleEvaluator(OperatorABC):
             raise RuntimeError(f"Model loading failed. Please ensure the model is available from Hugging Face.")
 
     @staticmethod
-    def get_desc():
-        return (
-            "使用Hugging Face语言模型计算文本的困惑度（Perplexity）。困惑度越低表示文本的流畅性和可理解性越高。\n"
-            "输入参数：\n"
-            "- text：待评估的文本字符串\n"
-            "- model_name：Hugging Face 模型路径或名称（默认'gpt2'）\n"
-            "输出参数：\n"
-            "- float：困惑度值，越低表示文本流畅性越好"
-        )
+    def get_desc(lang: str = "zh"):
+        if lang == "zh":
+            return (
+                "基于Huggingface语言模型计算文本的困惑度(Perplexity)，困惑度越低表示文本的流畅性和可理解性越高。" 
+                "输入参数：\n" 
+                "- model_name：Huggingface模型路径或名称\n"
+                "- device：模型运行设备\n"
+                "输出参数：\n" 
+                "- float: 困惑度值，越低表示文本流畅性越好"
+            )
+        else:
+            return (
+                "Calculate text perplexity using a Huggingface language model; lower perplexity indicates better fluency and understandability."
+                "Input Parameters:\n"
+                "- model_name: Huggingface model path or name\n"
+                "- device: Model device\n\n"
+                "Output Parameters:\n"
+                "- float: Perplexity score, lower values indicate better fluency and understandability"
+            )
 
     def eval(self, dataframe, input_key):
         input_texts = dataframe.get(input_key, '').to_list()
