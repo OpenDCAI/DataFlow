@@ -53,7 +53,7 @@ class BlocklistFilter(OperatorABC):
         
     def load_blocklist(self):
         dataflow_dir = DataFlowPath.get_dataflow_dir()
-        file_path = f"{dataflow_dir}/operators/general_text/filter/blocklist/{self.language}.txt"
+        file_path = f"{dataflow_dir}/operators/filter/GeneralText/blocklist/{self.language}.txt"
         self.logger.info(f"Loading blocklist for language '{self.language}' from {file_path}...")
         with open(file_path, 'r', encoding='utf-8') as file:
             blocklist = set(line.strip().lower() for line in file if line.strip())
@@ -74,6 +74,8 @@ class BlocklistFilter(OperatorABC):
                     text = text.lower().split()
                 blocklist_count = sum(1 for word in text if word in self.blocklist)
                 valid_checks.append(blocklist_count <= self.threshold)
+            else:
+                valid_checks.append(0)
         valid_checks = np.array(valid_checks, dtype=int)
         dataframe[self.output_key] = valid_checks
         filtered_dataframe = dataframe[valid_checks == 1]
