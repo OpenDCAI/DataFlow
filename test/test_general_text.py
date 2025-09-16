@@ -1,7 +1,5 @@
-from dataflow.operators.eval import MetaScorer
-from dataflow.operators.refine import RemoveEmojiRefiner
+from dataflow.operators.text_pt import PerplexityFilter
 from dataflow.utils.storage import FileStorage
-from dataflow.serving import APILLMServing_request 
 class TextPipeline():
     def __init__(self):
         self.storage = FileStorage(
@@ -11,7 +9,7 @@ class TextPipeline():
             cache_type="jsonl",
         )
         self.model_cache_dir = './dataflow_cache'
-        self.processor = RemoveEmojiRefiner()
+        self.processor = PerplexityFilter(min_score=20, model_name='gpt2')
 
     def forward(self):
         self.processor.run(

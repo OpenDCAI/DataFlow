@@ -1,68 +1,70 @@
+import torch
+from transformers import AutoTokenizer, AutoModelForCausalLM
+from tqdm import tqdm
 from dataflow.core import OperatorABC
-from dataflow.operators.text_pt.eval.Kenlm.model import KenlmModel
 from dataflow.utils.registry import OPERATOR_REGISTRY
 from dataflow.utils.storage import DataFlowStorage
 from dataflow.utils.utils import get_logger
-# Kenlm models perplexity evaluation
+
 @OPERATOR_REGISTRY.register()
 class PerplexitySampleEvaluator(OperatorABC):
-    # Need to download model first!
-    def __init__(self, lang='en', model_name='dataflow/operators/general_pt/eval/Kenlm/wikipeia'):
+    def __init__(self, model_name: str = 'gpt2', device='cuda'):
         self.logger = get_logger()
         self.logger.info(f'Initializing {self.__class__.__name__}...')
         self.model_name = model_name
-        self.language = lang
         self.score_name = 'PerplexityScore'
+        self.device = device or ('cuda' if torch.cuda.is_available() else 'cpu')
+        # Load Hugging Face model and tokenizer
         try:
-            self.model = KenlmModel.from_pretrained(self.model_name, self.language)
-            self.logger.info(f'{self.__class__.__name__} initialized.')
+            self.tokenizer = AutoTokenizer.from_pretrained(self.model_name)
+            self.model = AutoModelForCausalLM.from_pretrained(self.model_name).to(self.device)
+            self.model.eval()  # Set the model to evaluation mode
+            self.logger.info(f'{self.__class__.__name__} initialized with model {self.model_name}.')
         except Exception as e:
             self.logger.error(f"Error loading model: {e}")
-            self.logger.error("The model has not been downloaded yet.")
-            self.logger.error("Please download the model from: https://huggingface.co/edugp/kenlm/tree/main")
-            raise RuntimeError(f"Model loading failed. Please download the model from the provided link: https://huggingface.co/edugp/kenlm/tree/main. For default configuration, you can download en.arpa.bin, en.sp.model and en.sp.vocab, and put them in the folder dataflow/operators/GeneralText/models/Kenlm/wikipedia")
-        
+            raise RuntimeError(f"Model loading failed. Please ensure the model is available from Hugging Face.")
+
     @staticmethod
-    def get_desc(lang: str = "zh"):
-        if lang == "zh":
-            return (
-                "基于Kenlm语言模型计算文本的困惑度(Perplexity)，困惑度越低表示文本的流畅性和可理解性越高。支持多语言模型，" 
-                "默认使用维基百科训练的英文模型。需要先从HuggingFace下载模型文件(en.arpa.bin, en.sp.model和en.sp.vocab)。\n" 
-                "输入参数：\n" 
-                "- text: 待评估的文本字符串\n" 
-                "- lang: 语言类型，默认为'en'\n" 
-                "- model_name: 模型路径，默认为'dataflow/operators/eval/GeneralText/models/Kenlm/wikipedia'\n" 
-                "输出参数：\n" 
-                "- float: 困惑度值，越低表示文本流畅性越好"
-            )
-        else:
-            return (
-                "Calculate text perplexity using the Kenlm language model. Lower perplexity indicates better fluency and comprehensibility. Supports multilingual models, " 
-                "defaulting to an English model trained on Wikipedia. Requires downloading model files (en.arpa.bin, en.sp.model, and en.sp.vocab) from HuggingFace first.\n" 
-                "Input parameters:\n" 
-                "- text: Text string to be evaluated\n" 
-                "- lang: Language type, default 'en'\n" 
-                "- model_name: Model path, default 'dataflow/operators/eval/GeneralText/models/Kenlm/wikipedia'\n" 
-                "Output parameters:\n" 
-                "- float: Perplexity value, lower values indicate better text fluency"
-            )
+    def get_desc():
+        return (
+            "使用Hugging Face语言模型计算文本的困惑度（Perplexity）。困惑度越低表示文本的流畅性和可理解性越高。\n"
+            "输入参数：\n"
+            "- text：待评估的文本字符串\n"
+            "- model_name：Hugging Face 模型路径或名称（默认'gpt2'）\n"
+            "输出参数：\n"
+            "- float：困惑度值，越低表示文本流畅性越好"
+        )
 
     def eval(self, dataframe, input_key):
         input_texts = dataframe.get(input_key, '').to_list()
         self.logger.info(f"Evaluating {self.score_name}...")
         results = []
-        for text in input_texts:
-            perplexity = self.model.get_perplexity(text)
+        
+        # Use tqdm to show progress
+        for text in tqdm(input_texts, desc="Evaluating perplexity", unit="text"):
+            perplexity = self.calculate_perplexity(text)
             results.append(perplexity)
+        
         self.logger.info("Evaluation complete!")
         return results
+
+    def calculate_perplexity(self, text: str) -> float:
+        """ 使用Hugging Face模型计算困惑度 """
+        # Encode the input text
+        inputs = self.tokenizer(text, return_tensors='pt', padding="longest", truncation=True).to(self.device)
+        # Calculate log probability
+        with torch.no_grad():
+            outputs = self.model(**inputs, labels=inputs['input_ids'])
+            log_likelihood = outputs.loss * inputs['input_ids'].size(1)
+
+        # Perplexity calculation formula: exp(log_prob / N) -> Perplexity = exp(-average log probability)
+        perplexity = torch.exp(log_likelihood / inputs['input_ids'].size(1)).item()
+        return perplexity
     
     def run(self, storage: DataFlowStorage, input_key: str = 'raw_content', output_key: str = 'PerplexityScore'):
-        # Read the dataframe, evaluate scores, and store results
+        # Read the data, evaluate the score, and save the results
         dataframe = storage.read("dataframe")
         self.logger.info(f"Perplexity score ready to evaluate.")
         scores = self.eval(dataframe, input_key)
         dataframe[output_key] = scores      
         storage.write(dataframe)
-
-
