@@ -2,26 +2,26 @@ from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     # filter
-    from .filter.heuristics_filter import ColonEndFilter
-    from .filter.heuristics_filter import SentenceNumberFilter
-    from .filter.heuristics_filter import LineEndWithEllipsisFilter
-    from .filter.heuristics_filter import ContentNullFilter
-    from .filter.heuristics_filter import SymbolWordRatioFilter
-    from .filter.heuristics_filter import AlphaWordsFilter
-    from .filter.heuristics_filter import HtmlEntityFilter
-    from .filter.heuristics_filter import IDCardFilter
-    from .filter.heuristics_filter import NoPuncFilter
-    from .filter.heuristics_filter import SpecialCharacterFilter
-    from .filter.heuristics_filter import WatermarkFilter
-    from .filter.heuristics_filter  import MeanWordLengthFilter
-    from .filter.heuristics_filter import StopWordFilter
-    from .filter.heuristics_filter import CurlyBracketFilter
-    from .filter.heuristics_filter import CapitalWordsFilter
-    from .filter.heuristics_filter import LoremIpsumFilter
-    from .filter.heuristics_filter import UniqueWordsFilter
-    from .filter.heuristics_filter import CharNumberFilter
-    from .filter.heuristics_filter import LineStartWithBulletpointFilter
-    from .filter.heuristics_filter import LineWithJavascriptFilter
+    from .filter.rule_based_filter import ColonEndFilter
+    from .filter.rule_based_filter import SentenceNumberFilter
+    from .filter.rule_based_filter import LineEndWithEllipsisFilter
+    from .filter.rule_based_filter import ContentNullFilter
+    from .filter.rule_based_filter import SymbolWordRatioFilter
+    from .filter.rule_based_filter import AlphaWordsFilter
+    from .filter.rule_based_filter import HtmlEntityFilter
+    from .filter.rule_based_filter import IDCardFilter
+    from .filter.rule_based_filter import NoPuncFilter
+    from .filter.rule_based_filter import SpecialCharacterFilter
+    from .filter.rule_based_filter import WatermarkFilter
+    from .filter.rule_based_filter  import MeanWordLengthFilter
+    from .filter.rule_based_filter import StopWordFilter
+    from .filter.rule_based_filter import CurlyBracketFilter
+    from .filter.rule_based_filter import CapitalWordsFilter
+    from .filter.rule_based_filter import LoremIpsumFilter
+    from .filter.rule_based_filter import UniqueWordsFilter
+    from .filter.rule_based_filter import CharNumberFilter
+    from .filter.rule_based_filter import LineStartWithBulletpointFilter
+    from .filter.rule_based_filter import LineWithJavascriptFilter
     from .filter.langkit_filter import LangkitFilter
     from .filter.lexical_diversity_filter import LexicalDiversityFilter
     from .filter.ngram_filter import NgramFilter
