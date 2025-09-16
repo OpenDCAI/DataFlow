@@ -1,12 +1,12 @@
-from dataflow.operators.generate.Vqa.PromptedVQAGenerator import PromptedVQAGenerator
+from dataflow.operators.core_vision import PromptedVQAGenerator
 from dataflow.serving.APIVLMServing_openai import APIVLMServing_openai
 from dataflow.utils.storage import FileStorage
 
-class Vqa_generator():
+class VQA_generator():
     def __init__(self):
         self.prompt = "Describe the image in detail."
         self.storage = FileStorage(
-            first_entry_file_name="dataflow/example/Vqa/pic_path.json",
+            first_entry_file_name="../example_data/VQA/pic_path.json",
             cache_path="./cache",
             file_name_prefix="vqa",
             cache_type="json",
@@ -28,5 +28,5 @@ class Vqa_generator():
         )
 
 if __name__ == "__main__":
-    vqa_generator = Vqa_generator()
-    vqa_generator.forward()
+    VQA_generator = VQA_generator()
+    VQA_generator.forward()

@@ -105,11 +105,27 @@ class ConsistentChatGenerator(OperatorABC):
             try:
                 category = query_data['category']
                 turns = query_data['turns']
+                
+                # Ensure the number of turns matches the number of responses
+                num_user_turns = len(turns)
+                num_assistant_responses = len(response_data)
+                
+                if num_user_turns > num_assistant_responses:
+                    turns = turns[:num_assistant_responses]
+
                 conversation = []
                 for i in range(len(turns)):
                     conversation.append({"role": "user", "value": turns[i]})
                     if i < len(response_data):
                         conversation.append({"role": "assistant", "value": response_data[i]['response']})
+                
+                # Ensure conversation does not end with a user message
+                if conversation and conversation[-1]["role"] == "user":
+                    conversation.pop()
+
+                if not conversation:
+                    continue
+
                 formatted_data.append({
                     "category": category,
                     "conversation": conversation

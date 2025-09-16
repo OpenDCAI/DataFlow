@@ -1,7 +1,7 @@
  
-from dataflow.operators.filter import AlpagasusFilter
-from dataflow.operators.generate import CondorGenerator
-from dataflow.operators.refine import CondorRefiner
+from dataflow.operators.text_sft import AlpagasusFilter
+from dataflow.operators.text_sft import CondorGenerator
+from dataflow.operators.text_sft import CondorRefiner
 from dataflow.utils.storage import FileStorage
 from dataflow.serving import APILLMServing_request
 

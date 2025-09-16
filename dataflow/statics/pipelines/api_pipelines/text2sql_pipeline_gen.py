@@ -1,13 +1,13 @@
-from dataflow.operators.generate import (
+from dataflow.operators.text2sql import (
     SQLGenerator,
     Text2SQLQuestionGenerator,
     Text2SQLPromptGenerator,
     Text2SQLCoTGenerator
 )
-from dataflow.operators.filter import (
+from dataflow.operators.text2sql import (
     SQLExecutionFilter
 )
-from dataflow.operators.eval import (
+from dataflow.operators.text2sql import (
     SQLComponentClassifier,
     SQLExecutionClassifier
 )
@@ -45,10 +45,12 @@ class Text2SQLGeneration_APIPipeline():
             max_workers=100
         )
 
-        # You can customize the difficulty config here, but it must contain 'thresholds' and 'labels' keys
+        # You can customize the difficulty config here, but it must contain 'num_generations', 'thresholds' and 'labels' keys
+        # 'num_generations' key is the number of generations for each question, SQL will be classified based on the number of correct executions
         execution_difficulty_config = {
+            "num_generations": 10,
             'thresholds': [2, 5, 9],
-            'labels': ['easy', 'medium', 'hard', 'extra']
+            'labels': ['extra', 'hard', 'medium', 'easy']
         }
 
         component_difficulty_config = {
@@ -142,7 +144,7 @@ class Text2SQLGeneration_APIPipeline():
             llm_serving=self.llm_serving,
             database_manager=database_manager,
             difficulty_config=execution_difficulty_config,
-            num_generations=5,
+            num_generations=execution_difficulty_config["num_generations"],
             timeout=sql_execution_timeout
         )
         

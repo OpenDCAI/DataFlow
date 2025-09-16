@@ -1,5 +1,5 @@
-from dataflow.operators.filter import (
-    AnswerNgramFilter
+from dataflow.operators.reasoning import (
+    ReasoningAnswerNgramFilter
 )
 
 from dataflow.utils.storage import FileStorage
@@ -22,7 +22,7 @@ class RemoteDataLoader():
             cache_type="jsonl",
         )
 
-        self.answer_ngram_filter_step1 = AnswerNgramFilter(
+        self.answer_ngram_filter_step1 = ReasoningAnswerNgramFilter(
             min_score = 0.1,
             max_score = 1.0,
             ngrams = 5
@@ -31,14 +31,14 @@ class RemoteDataLoader():
     def forward(self):
         self.answer_ngram_filter_step1.run(
             storage = self.storage_1.step(),
-            question_key = "question",
-            answer_key = "answer"
+            input_question_key = "question",
+            input_answer_key = "answer"
         )
 
         self.answer_ngram_filter_step1.run(
             storage = self.storage_2.step(),
-            question_key = "question",
-            answer_key = "answer"
+            input_question_key = "question",
+            input_answer_key = "answer"
         )
 @pytest.mark.gpu  
 def test_remote_data_loader():

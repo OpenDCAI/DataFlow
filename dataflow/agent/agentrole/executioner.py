@@ -178,7 +178,7 @@ def run_function_isolated(
     *,
     args: tuple = (),
     kwargs: Dict[str, Any] | None = None,
-    timeout: int = 120,
+    timeout: int = 3600,
 ) -> SandboxResult:
     """
     Run `func` in a **fully isolated** subprocess. Even if the function internally forks or spawns

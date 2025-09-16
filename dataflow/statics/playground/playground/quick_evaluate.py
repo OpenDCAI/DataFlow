@@ -1,4 +1,4 @@
-from dataflow.operators.eval import MetaScorer
+from dataflow.operators.general_text import MetaScorer
 from dataflow.serving import APILLMServing_request
 from dataflow.utils.storage import FileStorage
 

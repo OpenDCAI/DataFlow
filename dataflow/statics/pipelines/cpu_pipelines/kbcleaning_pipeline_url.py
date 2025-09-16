@@ -1,10 +1,10 @@
-from dataflow.operators.generate import (
-    CorpusTextSplitter,
+from dataflow.operators.knowledge_cleaning import (
+    KBCChunkGenerator,
     FileOrURLToMarkdownConverter,
 )
 from dataflow.utils.storage import FileStorage
 class KBCleaning_CPUPipeline():
-    def __init__(self):
+    def __init__(self, url:str=None, raw_file:str=None):
 
         self.storage = FileStorage(
             first_entry_file_name="../example_data/KBCleaningPipeline/kbc_placeholder.json",
@@ -16,19 +16,18 @@ class KBCleaning_CPUPipeline():
         self.knowledge_cleaning_step1 = FileOrURLToMarkdownConverter(
             intermediate_dir="../example_data/KBCleaningPipeline/raw/",
             lang="en",
+            url = url,
         )
 
-        self.knowledge_cleaning_step2 = CorpusTextSplitter(
+        self.knowledge_cleaning_step2 = KBCChunkGenerator(
             split_method="token",
             chunk_size=512,
             tokenizer_name="Qwen/Qwen2.5-7B-Instruct",
         )
 
-    def forward(self, url:str=None, raw_file:str=None):
+    def forward(self):
         extracted=self.knowledge_cleaning_step1.run(
             storage=self.storage,
-            raw_file=raw_file,
-            url=url,
         )
         
         self.knowledge_cleaning_step2.run(
@@ -38,6 +37,6 @@ class KBCleaning_CPUPipeline():
         )
 
 if __name__ == "__main__":
-    model = KBCleaning_CPUPipeline()
-    model.forward(url="https://trafilatura.readthedocs.io/en/latest/quickstart.html")
+    model = KBCleaning_CPUPipeline(url="https://trafilatura.readthedocs.io/en/latest/quickstart.html")
+    model.forward()
 

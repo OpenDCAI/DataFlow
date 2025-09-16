@@ -1,11 +1,11 @@
-from dataflow.operators.generate import SFTGeneratorSeed
+from dataflow.operators.general_text import SFTGeneratorSeed
 from dataflow.utils.storage import FileStorage
 from dataflow.serving import APILLMServing_request
 
 class TextPipeline():
     def __init__(self):
         self.storage = FileStorage(
-            first_entry_file_name="./example_data/GeneralTextPipeline/pt_input.jsonl",
+            first_entry_file_name="../example_data/GeneralTextPipeline/pt_input.jsonl",
             cache_path="./cache",
             file_name_prefix="dataflow_cache_step",
             cache_type="jsonl",

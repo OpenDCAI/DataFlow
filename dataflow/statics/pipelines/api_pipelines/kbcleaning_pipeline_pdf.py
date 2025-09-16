@@ -1,14 +1,14 @@
-from dataflow.operators.generate import (
-    CorpusTextSplitter,
+from dataflow.operators.knowledge_cleaning import (
+    KBCChunkGenerator,
     FileOrURLToMarkdownConverter,
-    KnowledgeCleaner,
-    MultiHopQAGenerator,
+    KBCTextCleaner,
+    KBCMultiHopQAGenerator,
 )
 from dataflow.utils.storage import FileStorage
 from dataflow.serving import APILLMServing_request
 
 class KBCleaningPDF_APIPipeline():
-    def __init__(self):
+    def __init__(self, url:str=None, raw_file:str=None):
 
         self.storage = FileStorage(
             first_entry_file_name="../example_data/KBCleaningPipeline/kbc_placeholder.json",
@@ -27,29 +27,28 @@ class KBCleaningPDF_APIPipeline():
             intermediate_dir="../example_data/KBCleaningPipeline/raw/",
             lang="en",
             mineru_backend="vlm-sglang-engine",
+            raw_file = raw_file,
         )
 
-        self.knowledge_cleaning_step2 = CorpusTextSplitter(
+        self.knowledge_cleaning_step2 = KBCChunkGenerator(
             split_method="token",
             chunk_size=512,
             tokenizer_name="Qwen/Qwen2.5-7B-Instruct",
         )
 
-        self.knowledge_cleaning_step3 = KnowledgeCleaner(
+        self.knowledge_cleaning_step3 = KBCTextCleaner(
             llm_serving=self.llm_serving,
             lang="en"
         )
 
-        self.knowledge_cleaning_step4 = MultiHopQAGenerator(
+        self.knowledge_cleaning_step4 = KBCMultiHopQAGenerator(
             llm_serving=self.llm_serving,
             lang="en"
         )
 
-    def forward(self, url:str=None, raw_file:str=None):
+    def forward(self):
         extracted=self.knowledge_cleaning_step1.run(
             storage=self.storage,
-            raw_file=raw_file,
-            url=url,
         )
         
         self.knowledge_cleaning_step2.run(
@@ -70,5 +69,5 @@ class KBCleaningPDF_APIPipeline():
         )
         
 if __name__ == "__main__":
-    model = KBCleaningPDF_APIPipeline()
-    model.forward(raw_file="../example_data/KBCleaningPipeline/test.pdf")
+    model = KBCleaningPDF_APIPipeline(raw_file="../example_data/KBCleaningPipeline/test.pdf")
+    model.forward()

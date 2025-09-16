@@ -26,6 +26,8 @@ test/test_cli
 
 dist
 build
+*.html
 
+*.xlsx
 
-
+lib

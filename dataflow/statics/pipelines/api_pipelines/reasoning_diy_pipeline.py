@@ -1,10 +1,11 @@
-from dataflow.operators.generate import (
-    QuestionGenerator,
-    AnswerGenerator,
+from dataflow.operators.reasoning import (
+    ReasoningQuestionGenerator,
+    ReasoningAnswerGenerator,
 )
-from dataflow.operators.filter import QuestionFilter, AnswerNgramFilter
+from dataflow.operators.reasoning import ReasoningQuestionFilter, ReasoningAnswerNgramFilter
+
 from dataflow.utils.storage import FileStorage
-from dataflow.serving import APILLMServing_request, LocalModelLLMServing
+from dataflow.serving import APILLMServing_request
 from dataflow.core import LLMServingABC
 from dataflow.prompts.reasoning.diy import (
     DiyQuestionFilterPrompt,
@@ -59,24 +60,24 @@ class DiyReasoning_APIPipeline():
                     max_workers=30
         )
 
-        self.question_filter_step1 = QuestionFilter(
+        self.question_filter_step1 = ReasoningQuestionFilter(
             system_prompt="You are an expert in evaluating mathematical problems. Follow the user's instructions strictly and output your final judgment in the required JSON format.",
             llm_serving=self.llm_serving,
             prompt_template=DiyQuestionFilterPrompt(DIY_PROMPT_QUESTION)
         )
         
-        self.question_gen_step2 =  QuestionGenerator(
+        self.question_gen_step2 =  ReasoningQuestionGenerator(
             num_prompts=1,
             llm_serving=self.llm_serving,
             prompt_template=DiyQuestionSynthesisPrompt(DIY_PROMPT_SYNTHESIS)
         )
         
-        self.answer_generator_step3 = AnswerGenerator(
+        self.answer_generator_step3 = ReasoningAnswerGenerator(
             llm_serving=self.llm_serving,
             prompt_template=DiyAnswerGeneratorPrompt(DIY_PROMPT_ANSWER)
         )
         
-        self.answer_ngram_filter_step4 = AnswerNgramFilter(
+        self.answer_ngram_filter_step4 = ReasoningAnswerNgramFilter(
             min_score = 0.1,
             max_score = 1.0,
             ngrams = 5
@@ -99,8 +100,8 @@ class DiyReasoning_APIPipeline():
         )
         self.answer_ngram_filter_step4.run(
             storage = self.storage.step(),
-            question_key = "instruction",
-            answer_key = "generated_cot"
+            input_question_key = "instruction",
+            input_answer_key = "generated_cot"
         )
 
 if __name__ == "__main__":

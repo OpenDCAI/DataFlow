@@ -274,7 +274,8 @@ def generate_pipeline_py(
     json_file: str = "",
     *,
     local: bool = False,
-    local_model_name_or_path: str= ""
+    local_model_name_or_path: str= "",
+    chat_api_url: str = ""
 ) -> str:
     """Generate an executable Python pipeline script."""
 
@@ -313,8 +314,11 @@ def generate_pipeline_py(
         parts = []
         for p in node["command"]["init"]:
             pname, pdef = p["name"], p["default"]
+
             if pname == "llm_serving":
                 parts.append("llm_serving=llm_serving")
+            elif pname == "prompt_template":
+                parts.append("prompt_template=None")
             else:
                 parts.append(f"{pname}={_py_literal(pdef)}")
         init_operator_lines.append(f"        self.{var_name} = {cls_name}({', '.join(parts)})")
@@ -346,7 +350,7 @@ def generate_pipeline_py(
         llm_block = f"""
         # -------- LLM Serving (Remote) --------
         llm_serving = APILLMServing_request(
-            api_url="http://123.129.219.111:3000/v1/chat/completions",
+            api_url="{chat_api_url}",
             key_name_of_api_key='DF_API_KEY',
             model_name="gpt-4o",
             max_workers=100,
@@ -362,13 +366,15 @@ def generate_pipeline_py(
 
     code = "\n".join(
         [
+            "from dataflow.pipeline import PipelineABC",
             "import pytest",
             *import_lines,
             *extra_imports,
             "",
             "",
-            "class RecommendPipeline():",
+            "class RecommendPipeline(PipelineABC):",
             "    def __init__(self):",
+            "        super().__init__()",
             textwrap.indent(
                 textwrap.dedent(
                     f"""
@@ -392,6 +398,7 @@ def generate_pipeline_py(
             "",
             'if __name__ == "__main__":',
             "    pipeline = RecommendPipeline()",
+            "    pipeline.compile()",
             "    pipeline.forward()",
             "",
         ]
@@ -425,6 +432,7 @@ def local_tool_for_execute_the_recommended_pipeline(
                 """
                 if __name__ == "__main__":
                     pipeline = RecommendPipeline()
+                    pipeline.compile()
                     pipeline.forward()
                 """
             )
@@ -443,6 +451,7 @@ def local_tool_for_execute_the_recommended_pipeline(
             json_file=request.json_file,
             local=request.use_local_model,
             local_model_name_or_path=request.local_model_name_or_path,
+            chat_api_url=request.chat_api_url   
         )
     logger.info(f"[Agent generated Pipeline Code]: {code}")
     if request.execute_the_pipeline and not dry_run:
@@ -485,5 +494,5 @@ if __name__ == "__main__":
     #     "/mnt/h_h_public/lh/lz/DataFlow/dataflow/agent/toolkits/resources/Operator.json",
     #     save_as="/mnt/h_h_public/lh/lz/DataFlow/dataflow/agent/toolkits/resources/Operator_patched.json"
     # )
-    # pre_result = {'edges': [{'source': 'node0', 'target': 'node1'}, {'source': 'node1', 'target': 'node2'}, {'source': 'node2', 'target': 'node3'}, {'source': 'node3', 'target': 'node4'}, {'source': 'node4', 'target': 'node5'}, {'source': 'node5', 'target': 'node6'}, {'source': 'node6', 'target': 'node7'}, {'source': 'node7', 'target': 'node8'}], 'reason': "The pipeline is designed to process mathematics and science content with a focus on prediction without deduplication. Starting with QuestionGenerator to create new questions, followed by QuestionFilter to ensure correctness. Then, QuestionDifficultyClassifier and QuestionCategoryClassifier are used to categorize and label the questions. AnswerPipelineRoot separates data with and without answers. PseudoAnswerGenerator generates candidate answers, and AnswerFormatterFilter ensures the answers meet format requirements. Finally, AnswerTokenLengthFilter checks for appropriate answer lengths. This sequence ensures comprehensive processing while adhering to the user's requirements.", 'outputs': [], 'nodes': [{'name': 'QuestionGenerator', 'type': 'generator', 'description': '基于现有的问题数据，每个问题合成1-5个新问题', 'command': {'init': [{'name': 'num_prompts', 'default': 1, 'kind': 'POSITIONAL_OR_KEYWORD'}, {'name': 'llm_serving', 'default': None, 'kind': 'POSITIONAL_OR_KEYWORD'}], 'run': [{'name': 'storage', 'default': None, 'kind': 'POSITIONAL_OR_KEYWORD'}, {'name': 'input_key', 'default': None, 'kind': 'POSITIONAL_OR_KEYWORD'}]}, 'required': True, 'depends_on': [], 'mode': 'GPU', 'id': 'node1'}, {'name': 'QuestionFilter', 'type': 'filter', 'description': '检查每个问题的正确性', 'command': {'init': [{'name': 'system_prompt', 'default': 'You are a helpful assistant.', 'kind': 'POSITIONAL_OR_KEYWORD'}, {'name': 'llm_serving', 'default': None, 'kind': 'POSITIONAL_OR_KEYWORD'}], 'run': [{'name': 'storage', 'default': None, 'kind': 'POSITIONAL_OR_KEYWORD'}, {'name': 'input_key', 'default': 'math_problem', 'kind': 'POSITIONAL_OR_KEYWORD'}]}, 'required': True, 'depends_on': [], 'mode': 'GPU', 'id': 'node2'}, {'name': 'QuestionDifficultyClassifier', 'type': 'generator', 'description': '为每个问题确定一个难度分数标签', 'command': {'init': [{'name': 'llm_serving', 'default': None, 'kind': 'POSITIONAL_OR_KEYWORD'}], 'run': [{'name': 'storage', 'default': None, 'kind': 'POSITIONAL_OR_KEYWORD'}, {'name': 'input_key', 'default': None, 'kind': 'POSITIONAL_OR_KEYWORD'}, {'name': 'output_key', 'default': 'difficulty_score', 'kind': 'POSITIONAL_OR_KEYWORD'}]}, 'required': True, 'depends_on': [], 'mode': 'GPU', 'id': 'node3'}, {'name': 'QuestionCategoryClassifier', 'type': 'generator', 'description': '将所有问题分类到7个大类别，以及每个大类别下的若干的小类别', 'command': {'init': [{'name': 'llm_serving', 'default': None, 'kind': 'POSITIONAL_OR_KEYWORD'}], 'run': [{'name': 'storage', 'default': None, 'kind': 'POSITIONAL_OR_KEYWORD'}, {'name': 'input_key', 'default': 'instruction', 'kind': 'POSITIONAL_OR_KEYWORD'}, {'name': 'output_key', 'default': 'question_category', 'kind': 'POSITIONAL_OR_KEYWORD'}]}, 'required': True, 'depends_on': [], 'mode': 'GPU', 'id': 'node4'}, {'name': 'AnswerPipelineRoot', 'type': 'generator', 'description': '用于检查数据是否包含Answer、groundtruth，并分离有答案和没答案的数据，方便后续分别处理', 'command': {'init': [], 'run': [{'name': 'storage', 'default': None, 'kind': 'POSITIONAL_OR_KEYWORD'}, {'name': 'input_answer_key', 'default': 'output', 'kind': 'POSITIONAL_OR_KEYWORD'}, {'name': 'input_gt_key', 'default': 'golden_answer', 'kind': 'POSITIONAL_OR_KEYWORD'}]}, 'required': True, 'depends_on': [], 'mode': '', 'id': 'node5'}, {'name': 'PseudoAnswerGenerator', 'type': 'generator', 'description': '该算子能够生成多个候选答案，并通过统计方法选择最优解，从而实现伪答案的生成。其输入参数包括：输入文件路径（input_file）、输出文件路径（output_file）、最大生成次数（max_times）以及统计选择模式（selection_mode，可选frequency或consistency）。输出参数包括：最终选择的答案字段（final_answer）和候选答案列表字段（candidate_answers）。该算子能够生成多个候选答案，并通过统计方法选择最优解，从而实现伪答案的生成。其输入参数包括：输入文件路径（input_file）、输出文件路径（output_file）、最大生成次数（max_times）以及统计选择模式（selection_mode，可选frequency或consistency）。输出参数包括：最终选择的答案字段（final_answer）和候选答案列表字段（candidate_answers）。', 'command': {'init': [{'name': 'llm_serving', 'default': None, 'kind': 'POSITIONAL_OR_KEYWORD'}, {'name': 'max_times', 'default': 3, 'kind': 'POSITIONAL_OR_KEYWORD'}], 'run': [{'name': 'storage', 'default': None, 'kind': 'POSITIONAL_OR_KEYWORD'}, {'name': 'input_key', 'default': 'instruction', 'kind': 'POSITIONAL_OR_KEYWORD'}, {'name': 'output_key_answer', 'default': 'pseudo_answers', 'kind': 'POSITIONAL_OR_KEYWORD'}, {'name': 'output_key_answer_value', 'default': 'pseudo_answer_value', 'kind': 'POSITIONAL_OR_KEYWORD'}, {'name': 'output_key_solutions', 'default': 'pseudo_solutions', 'kind': 'POSITIONAL_OR_KEYWORD'}, {'name': 'output_key_correct_solution_example', 'default': 'pseudo_correct_solution_example', 'kind': 'POSITIONAL_OR_KEYWORD'}]}, 'required': True, 'depends_on': [], 'mode': 'GPU', 'id': 'node6'}, {'name': 'AnswerFormatterFilter', 'type': 'processor', 'description': '按照给定的格式，基于规则过滤掉不符合格式要求的数据', 'command': {'init': [], 'run': [{'name': 'storage', 'default': None, 'kind': 'POSITIONAL_OR_KEYWORD'}, {'name': 'input_key', 'default': 'generated_cot', 'kind': 'POSITIONAL_OR_KEYWORD'}]}, 'required': True, 'depends_on': [], 'mode': '', 'id': 'node7'}, {'name': 'AnswerTokenLengthFilter', 'type': 'processor', 'description': '过滤掉Answer长度不合适的数据', 'command': {'init': [{'name': 'max_answer_token_length', 'default': 8192, 'kind': 'POSITIONAL_OR_KEYWORD'}, {'name': 'tokenizer_dir', 'default': 'Qwen/Qwen2.5-0.5B-Instruct', 'kind': 'POSITIONAL_OR_KEYWORD'}], 'run': [{'name': 'storage', 'default': None, 'kind': 'POSITIONAL_OR_KEYWORD'}, {'name': 'input_key', 'default': 'generated_cot', 'kind': 'POSITIONAL_OR_KEYWORD'}]}, 'required': True, 'depends_on': [], 'mode': '', 'id': 'node8'}], 'name': 'fcfa5825-d28b-4eba-ad17-7a46d7cc2fc7_pipeline'}
+    # pre_result = {'edges': [{'source': 'node0', 'target': 'node1'}, {'source': 'node1', 'target': 'node2'}, {'source': 'node2', 'target': 'node3'}, {'source': 'node3', 'target': 'node4'}, {'source': 'node4', 'target': 'node5'}, {'source': 'node5', 'target': 'node6'}, {'source': 'node6', 'target': 'node7'}, {'source': 'node7', 'target': 'node8'}], 'reason': "The pipeline is designed to process mathematics and science content with a focus on prediction without deduplication. Starting with QuestionGenerator to create new questions, followed by QuestionFilter to ensure correctness. Then, ReasoningDifficultyDatasetEvaluator and ReasoningCategoryDatasetEvaluator are used to categorize and label the questions. AnswerPipelineRoot separates data with and without answers. PseudoAnswerGenerator generates candidate answers, and AnswerFormatterFilter ensures the answers meet format requirements. Finally, AnswerTokenLengthFilter checks for appropriate answer lengths. This sequence ensures comprehensive processing while adhering to the user's requirements.", 'outputs': [], 'nodes': [{'name': 'QuestionGenerator', 'type': 'generator', 'description': '基于现有的问题数据，每个问题合成1-5个新问题', 'command': {'init': [{'name': 'num_prompts', 'default': 1, 'kind': 'POSITIONAL_OR_KEYWORD'}, {'name': 'llm_serving', 'default': None, 'kind': 'POSITIONAL_OR_KEYWORD'}], 'run': [{'name': 'storage', 'default': None, 'kind': 'POSITIONAL_OR_KEYWORD'}, {'name': 'input_key', 'default': None, 'kind': 'POSITIONAL_OR_KEYWORD'}]}, 'required': True, 'depends_on': [], 'mode': 'GPU', 'id': 'node1'}, {'name': 'QuestionFilter', 'type': 'filter', 'description': '检查每个问题的正确性', 'command': {'init': [{'name': 'system_prompt', 'default': 'You are a helpful assistant.', 'kind': 'POSITIONAL_OR_KEYWORD'}, {'name': 'llm_serving', 'default': None, 'kind': 'POSITIONAL_OR_KEYWORD'}], 'run': [{'name': 'storage', 'default': None, 'kind': 'POSITIONAL_OR_KEYWORD'}, {'name': 'input_key', 'default': 'math_problem', 'kind': 'POSITIONAL_OR_KEYWORD'}]}, 'required': True, 'depends_on': [], 'mode': 'GPU', 'id': 'node2'}, {'name': 'ReasoningDifficultyDatasetEvaluator', 'type': 'generator', 'description': '为每个问题确定一个难度分数标签', 'command': {'init': [{'name': 'llm_serving', 'default': None, 'kind': 'POSITIONAL_OR_KEYWORD'}], 'run': [{'name': 'storage', 'default': None, 'kind': 'POSITIONAL_OR_KEYWORD'}, {'name': 'input_key', 'default': None, 'kind': 'POSITIONAL_OR_KEYWORD'}, {'name': 'output_key', 'default': 'difficulty_score', 'kind': 'POSITIONAL_OR_KEYWORD'}]}, 'required': True, 'depends_on': [], 'mode': 'GPU', 'id': 'node3'}, {'name': 'ReasoningCategoryDatasetEvaluator', 'type': 'generator', 'description': '将所有问题分类到7个大类别，以及每个大类别下的若干的小类别', 'command': {'init': [{'name': 'llm_serving', 'default': None, 'kind': 'POSITIONAL_OR_KEYWORD'}], 'run': [{'name': 'storage', 'default': None, 'kind': 'POSITIONAL_OR_KEYWORD'}, {'name': 'input_key', 'default': 'instruction', 'kind': 'POSITIONAL_OR_KEYWORD'}, {'name': 'output_key', 'default': 'question_category', 'kind': 'POSITIONAL_OR_KEYWORD'}]}, 'required': True, 'depends_on': [], 'mode': 'GPU', 'id': 'node4'}, {'name': 'AnswerPipelineRoot', 'type': 'generator', 'description': '用于检查数据是否包含Answer、groundtruth，并分离有答案和没答案的数据，方便后续分别处理', 'command': {'init': [], 'run': [{'name': 'storage', 'default': None, 'kind': 'POSITIONAL_OR_KEYWORD'}, {'name': 'input_answer_key', 'default': 'output', 'kind': 'POSITIONAL_OR_KEYWORD'}, {'name': 'input_gt_key', 'default': 'golden_answer', 'kind': 'POSITIONAL_OR_KEYWORD'}]}, 'required': True, 'depends_on': [], 'mode': '', 'id': 'node5'}, {'name': 'PseudoAnswerGenerator', 'type': 'generator', 'description': '该算子能够生成多个候选答案，并通过统计方法选择最优解，从而实现伪答案的生成。其输入参数包括：输入文件路径（input_file）、输出文件路径（output_file）、最大生成次数（max_times）以及统计选择模式（selection_mode，可选frequency或consistency）。输出参数包括：最终选择的答案字段（final_answer）和候选答案列表字段（candidate_answers）。该算子能够生成多个候选答案，并通过统计方法选择最优解，从而实现伪答案的生成。其输入参数包括：输入文件路径（input_file）、输出文件路径（output_file）、最大生成次数（max_times）以及统计选择模式（selection_mode，可选frequency或consistency）。输出参数包括：最终选择的答案字段（final_answer）和候选答案列表字段（candidate_answers）。', 'command': {'init': [{'name': 'llm_serving', 'default': None, 'kind': 'POSITIONAL_OR_KEYWORD'}, {'name': 'max_times', 'default': 3, 'kind': 'POSITIONAL_OR_KEYWORD'}], 'run': [{'name': 'storage', 'default': None, 'kind': 'POSITIONAL_OR_KEYWORD'}, {'name': 'input_key', 'default': 'instruction', 'kind': 'POSITIONAL_OR_KEYWORD'}, {'name': 'output_key_answer', 'default': 'pseudo_answers', 'kind': 'POSITIONAL_OR_KEYWORD'}, {'name': 'output_key_answer_value', 'default': 'pseudo_answer_value', 'kind': 'POSITIONAL_OR_KEYWORD'}, {'name': 'output_key_solutions', 'default': 'pseudo_solutions', 'kind': 'POSITIONAL_OR_KEYWORD'}, {'name': 'output_key_correct_solution_example', 'default': 'pseudo_correct_solution_example', 'kind': 'POSITIONAL_OR_KEYWORD'}]}, 'required': True, 'depends_on': [], 'mode': 'GPU', 'id': 'node6'}, {'name': 'AnswerFormatterFilter', 'type': 'processor', 'description': '按照给定的格式，基于规则过滤掉不符合格式要求的数据', 'command': {'init': [], 'run': [{'name': 'storage', 'default': None, 'kind': 'POSITIONAL_OR_KEYWORD'}, {'name': 'input_key', 'default': 'generated_cot', 'kind': 'POSITIONAL_OR_KEYWORD'}]}, 'required': True, 'depends_on': [], 'mode': '', 'id': 'node7'}, {'name': 'AnswerTokenLengthFilter', 'type': 'processor', 'description': '过滤掉Answer长度不合适的数据', 'command': {'init': [{'name': 'max_answer_token_length', 'default': 8192, 'kind': 'POSITIONAL_OR_KEYWORD'}, {'name': 'tokenizer_dir', 'default': 'Qwen/Qwen2.5-0.5B-Instruct', 'kind': 'POSITIONAL_OR_KEYWORD'}], 'run': [{'name': 'storage', 'default': None, 'kind': 'POSITIONAL_OR_KEYWORD'}, {'name': 'input_key', 'default': 'generated_cot', 'kind': 'POSITIONAL_OR_KEYWORD'}]}, 'required': True, 'depends_on': [], 'mode': '', 'id': 'node8'}], 'name': 'fcfa5825-d28b-4eba-ad17-7a46d7cc2fc7_pipeline'}
     # print(local_tool_for_execute_the_recommended_pipeline(pre_result,dry_run=True))
