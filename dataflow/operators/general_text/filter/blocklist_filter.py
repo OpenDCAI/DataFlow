@@ -53,7 +53,7 @@ class BlocklistFilter(OperatorABC):
         
     def load_blocklist(self):
         dataflow_dir = DataFlowPath.get_dataflow_dir()
-        file_path = f"{dataflow_dir}/operators/filter/GeneralText/blocklist/{self.language}.txt"
+        file_path = f"{dataflow_dir}/operators/filter/general_text/blocklist/{self.language}.txt"
         self.logger.info(f"Loading blocklist for language '{self.language}' from {file_path}...")
         with open(file_path, 'r', encoding='utf-8') as file:
             blocklist = set(line.strip().lower() for line in file if line.strip())
