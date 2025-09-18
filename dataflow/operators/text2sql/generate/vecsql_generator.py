@@ -1,0 +1,159 @@
+import os
+import random
+from typing import Dict, List, Optional
+import numpy as np
+import pandas as pd
+import re
+from dataflow.prompts.text2sql import SelectVecSQLGeneratorPrompt
+from tqdm import tqdm
+from dataflow.utils.registry import OPERATOR_REGISTRY
+from dataflow import get_logger
+from dataflow.core import OperatorABC
+from dataflow.core import LLMServingABC
+from dataflow.utils.storage import DataFlowStorage
+from dataflow.utils.text2sql.database_manager import DatabaseManager
+
+
+@OPERATOR_REGISTRY.register()
+class VecSQLGenerator(OperatorABC):
+    def __init__(self,
+                 llm_serving: LLMServingABC,
+                 database_manager: DatabaseManager,
+                 generate_num: int = 8,
+                 prompt_template = None
+        ):
+        self.llm_serving = llm_serving
+        self.logger = get_logger()
+        self.database_manager = database_manager
+        self.generate_num = generate_num
+        if prompt_template is None:
+            self.prompt_template = SelectVecSQLGeneratorPrompt()
+        else:
+            self.prompt_template = prompt_template
+        random.seed(42)
+
+    @staticmethod
+    def get_desc(lang):
+        if lang == "zh":
+            return (
+                "基于数据库信息，合成VecSQL，覆盖不同的难度、数据库Schema、函数和风格。\n\n"
+                "输出参数：\n"
+                "- output_sql_key: 输出SQL列名\n"
+                "- output_db_id_key: 数据库ID列名\n\n"
+                "注意： 这个类会统计数据库以\"_embedding\"结尾的列的数量sum_embed。\n"
+                "并为每个数据库生成generate_num * sum_embed条vecsql\n"
+                "因此你必须确保数据库中有这种以\"_embedding\"结尾的列"
+            )
+        elif lang == "en":
+            return (
+                "This operator synthesizes VecSQL based on database information, covering different complexities, schemas, functions, and styles.\n\n"
+                "Output parameters:\n"
+                "- output_sql_key: The name of the output SQL column\n"
+                "- output_db_id_key: The name of the database ID column\n\n"
+                "Note: This class will count the number of columns ending with \"_embedding\" \n"
+                "in the database and store the sum in sum_embed, and generate\n" 
+                "generate_num * sum_embed vecsql entries for each database.\n"
+                "Therefore, you must ensure that there is a column in the database that ends with \"_embedding\""
+            )
+        else:
+            return "VecSQL generator for Text2VecSQL tasks."
+
+    def get_create_statements_and_insert_statements(self, db_id: str) -> str:
+        return self.database_manager.get_create_statements_and_insert_statements(db_id)
+
+    def count_embedding_columns(self, db_id: str) -> int:
+        """
+        统计数据库中所有表中以 "_embedding" 结尾的列的数量。
+        """
+        count = 0
+        try:
+            # 获取数据库的完整结构信息
+            schema = self.database_manager._get_schema(db_id)
+            
+            # 从schema中获取所有的表信息
+            tables = schema.get('tables', {})
+            
+            # 遍历每一个表
+            for table_name, table_info in tables.items():
+                # 从表信息中获取所有的列名列表
+                columns = table_info.get('columns', [])
+                
+                # 直接遍历列名字符串列表
+                for column_name in columns:
+                    # 检查变量是否为字符串，以及其是否以 "_embedding" 结尾
+                    if isinstance(column_name, str) and column_name.endswith("_embedding"):
+                        count += 1
+                        
+        except Exception as e:
+            self.logger.error(f"Error counting embedding columns for db {db_id}: {e}")
+        return count
+    
+    def parse_response(self, response):
+        if not response:
+            return ""
+        pattern = r"```sql\s*(.*?)\s*```"
+        sql_blocks = re.findall(pattern, response, re.DOTALL)
+
+        if sql_blocks:
+            last_sql = sql_blocks[-1].strip()
+            return last_sql
+        else:
+            self.logger.warning("No SQL code block found in the response")
+            return ""
+
+    def run(self, storage: DataFlowStorage,
+            output_sql_key: str = "sql",
+            output_db_id_key: str = "db_id"
+        ):
+        self.output_sql_key = output_sql_key
+        self.output_db_id_key = output_db_id_key
+        raw_dataframe = storage.read("dataframe")
+
+        db_names = self.database_manager.list_databases()
+        prompts = []
+        self.logger.info(f"Generating VecSQLs for each database based on embedding columns")
+
+        for db_name in tqdm(db_names, desc="Processing Databases"):
+            embedding_col_count = self.count_embedding_columns(db_name)
+            if embedding_col_count == 0:
+                self.logger.warning(f"No columns ending with '_embedding' found in database '{db_name}'. Skipping.")
+                continue
+
+            sum_generate_num = embedding_col_count * self.generate_num
+            self.logger.info(f"Database '{db_name}' has {embedding_col_count} embedding columns. "
+                           f"Generating {sum_generate_num} VecSQLs.")
+
+            create_statements, insert_statements = self.get_create_statements_and_insert_statements(db_name)
+
+            for _ in range(sum_generate_num):
+                # Unpack the tuple here, taking only the first element (the prompt string)
+                prompt, _ = self.prompt_template.build_prompt(
+                    insert_statements=insert_statements,
+                    create_statements=create_statements,
+                    db_engine=self.database_manager.db_type
+                )
+                prompts.append({"prompt": prompt, "db_id": db_name})
+
+        if not prompts:
+            self.logger.warning("No prompts generated, please check the database path and file")
+            return [self.output_sql_key, self.output_db_id_key]
+
+        db_ids = [data["db_id"] for data in prompts]
+        prompt_list = [data["prompt"] for data in prompts]
+
+        try:
+            responses = self.llm_serving.generate_from_input(prompt_list, "")
+        except Exception as e:
+            self.logger.error(f"Failed to generate SQLs: {e}")
+            responses = [""] * len(prompt_list)
+
+        results = [
+            {
+                self.output_db_id_key: db_id,
+                self.output_sql_key: self.parse_response(response)
+            }
+            for db_id, response in zip(db_ids, responses)
+        ]
+
+        output_file = storage.write(pd.DataFrame(results))
+        return [self.output_sql_key, self.output_db_id_key]
