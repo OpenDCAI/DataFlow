@@ -57,9 +57,9 @@ if __name__ == "__main__":
     # 全局table，看所有注册的算子的str名称和对应的module路径
     # 获得所有算子的类名2class映射
     # Get the operator map
-    # OPERATOR_REGISTRY._get_all()
+    OPERATOR_REGISTRY._get_all()
     print(OPERATOR_REGISTRY)
-    from dataflow.operators.chemistry import ExtractSmilesFromText
+    # from dataflow.operators.chemistry import ExtractSmilesFromText
     dataflow_obj_map = OPERATOR_REGISTRY.get_obj_map()
     print(OPERATOR_REGISTRY)
     # print count

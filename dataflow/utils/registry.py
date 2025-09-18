@@ -57,15 +57,21 @@ class Registry():
         BACKBONE_REGISTRY.register(MyBackbone)
     """
 
-    def __init__(self, name, sub_modules: list[str] = []):
+    def __init__(self, name):
         """
         Args:
             name (str): the name of this registry
         """
         self._name = name
         self._obj_map = {}
-        if len(sub_modules) > 0:
-            self.loader_map = dict(zip(sub_modules, [None] * len(sub_modules)))
+        self._base_folder = Path(__file__).resolve().parents[1]
+        self._sub_modules = list(os.listdir(self._base_folder / name))
+        if "__init__.py" in self._sub_modules:
+            self._sub_modules.remove("__init__.py")
+        if "__pycache__" in self._sub_modules:
+            self._sub_modules.remove("__pycache__")
+        if len(self._sub_modules) > 0:
+            self.loader_map = dict(zip(self._sub_modules, [None] * len(self._sub_modules)))
         
     def _init_loaders(self):
         for module_name in self.loader_map.keys():
@@ -171,25 +177,7 @@ class Registry():
             object_types_dict[name] = parts[1:]
         return object_types_dict
 
-OPERATOR_REGISTRY = Registry(
-    name='operators', 
-    sub_modules=[
-        'agentic_rag',
-        'chemistry',
-        'conversations',
-        'core_speech',
-        'core_text',
-        'core_vision',
-        'db',
-        'knowledge_cleaning',
-        'general_text',
-        'text_pt',
-        'text_sft',
-        'rare',
-        'reasoning',
-        'text2sql'
-    ]
-)
+OPERATOR_REGISTRY = Registry(name='operators')
 
 PROMPT_REGISTRY = Registry(name='prompts')
 
