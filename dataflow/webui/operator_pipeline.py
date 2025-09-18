@@ -156,13 +156,13 @@ class DynamicOperatorSystem:
             api_url = kwargs.get("api_url", "https://api.openai.com/v1/chat/completions")
             if api_key:
                 os.environ["DF_API_KEY"] = api_key
-            from dataflow.serving.APILLMServing_request import APILLMServing_request
+            from dataflow.serving import APILLMServing_request
             return APILLMServing_request(
                 api_url=api_url,
                 model_name=kwargs.get("model_name"),
                 max_workers=int(kwargs.get("max_workers", 2)),
             )
-        from dataflow.serving.LocalModelLLMServing import LocalModelLLMServing_vllm
+        from dataflow.serving import LocalModelLLMServing_vllm
         return LocalModelLLMServing_vllm(
             hf_model_name_or_path=kwargs.get("model_path"),
             vllm_tensor_parallel_size=int(kwargs.get("tensor_parallel_size", 1)),
