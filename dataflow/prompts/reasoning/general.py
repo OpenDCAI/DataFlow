@@ -1,8 +1,11 @@
+from dataflow.utils.registry import PROMPT_REGISTRY
+from dataflow.core.prompt import PromptABC
 '''
 A collection of prompts for the general reasoning operator.
 '''
 
-class GeneralAnswerGeneratorPrompt:
+@PROMPT_REGISTRY.register()
+class GeneralAnswerGeneratorPrompt(PromptABC):
     '''
     The prompt for the answer generator.
     '''
@@ -50,8 +53,8 @@ class GeneralAnswerGeneratorPrompt:
         )
         return prompt + question + r'''Your response must start directly with "Solution:" without any preamble. Finish your response immediately after the solution.'''
 
-
-class GeneralQuestionSynthesisPrompt:
+@PROMPT_REGISTRY.register()
+class GeneralQuestionSynthesisPrompt(PromptABC):
     '''
     The prompt for the question synthesis.
     '''
@@ -75,8 +78,8 @@ class GeneralQuestionSynthesisPrompt:
         Generate a fully self‑contained new task inspired by the above. Start directly with the task statement; do NOT include any framing phrases like “Here is a new task inspired by…”. End your response immediately after the task description.
         """
         return prompt
-    
-class GeneralQuestionFilterPrompt:
+@PROMPT_REGISTRY.register()
+class GeneralQuestionFilterPrompt(PromptABC):
     def __init__(self):
         pass
     
@@ -101,8 +104,9 @@ class GeneralQuestionFilterPrompt:
         -------------------------------
         """
         return prompt
-
-class AnswerJudgePrompt:
+    
+@PROMPT_REGISTRY.register()
+class AnswerJudgePrompt(PromptABC):
     """
     用于构建答案评判的提示词模板
     """

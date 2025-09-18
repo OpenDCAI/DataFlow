@@ -16,7 +16,7 @@ def test_all_operator_registry():
     pprint(dataflow_obj_map)
     # print typedict of all operators
     print("\nTypedict of all operators:")
-    type_dict = OPERATOR_REGISTRY.get_type_of_operator()
+    type_dict = OPERATOR_REGISTRY.get_type_of_objects()
     pprint(type_dict)   
     print(len(dataflow_obj_map), "operators registered in the registry.")
 
@@ -57,13 +57,26 @@ if __name__ == "__main__":
     # 全局table，看所有注册的算子的str名称和对应的module路径
     # 获得所有算子的类名2class映射
     # Get the operator map
-    OPERATOR_REGISTRY._get_all()
+    # OPERATOR_REGISTRY._get_all()
     print(OPERATOR_REGISTRY)
+    from dataflow.operators.chemistry import ExtractSmilesFromText
     dataflow_obj_map = OPERATOR_REGISTRY.get_obj_map()
-
+    print(OPERATOR_REGISTRY)
     # print count
     print("Total number of OPERATORS:",len(dataflow_obj_map))
 
+
+    from dataflow.utils.registry import PROMPT_REGISTRY
+    print(PROMPT_REGISTRY)
+
+
+    from dataflow.operators.core_text import PromptedGenerator
+
+    from pprint import pprint
+    pprint(OPERATOR_REGISTRY.get_type_of_objects())
+    # 因为多个prompt在同一个路径下，所以最后一个module的字段是总的，而非具体prompt的名字。
+    pprint(PROMPT_REGISTRY.get_type_of_objects())
+    
     # pprint(dataflow_obj_map)
     # # print typedict of all operators
     # print("\nTypedict of all operators:")
