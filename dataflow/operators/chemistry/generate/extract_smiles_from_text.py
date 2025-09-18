@@ -166,10 +166,14 @@ class ExtractSmilesFromText(OperatorABC):
             self.logger.error(f"Error during text generation: {e}")
             return
 
-        # Add the generated content back to the dataframe
-        #dataframe[output_key] = json.loads(generated_outputs)
-        parsed_outputs = [self._safe_json_load(item) for item in generated_outputs]
-
+        parsed_outputs = []
+        for item in generated_outputs:
+            try:
+                parsed_outputs.append(self._safe_json_load(item))
+            except Exception:
+                parsed_outputs.append([])
+        #parsed_outputs = [self._safe_json_load(item)['chemical_structures'] for item in generated_outputs]
+        # print(parsed_outputs)
         dataframe[output_key] = parsed_outputs
 
         # Save the updated dataframe to the output file

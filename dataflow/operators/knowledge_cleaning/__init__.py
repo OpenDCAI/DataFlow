@@ -2,15 +2,15 @@ from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     # filter
-    from .generate.corpus_text_splitter import CorpusTextSplitter
-    from .generate.corpus_text_splitter_batch import CorpusTextSplitterBatch
+    from .generate.kbc_chunk_generator import KBCChunkGenerator
+    from .generate.kbc_chunk_generator_batch import KBCChunkGeneratorBatch
     from .generate.file_or_url_to_markdown_converter import FileOrURLToMarkdownConverter
     from .generate.file_or_url_to_markdown_converter_batch import FileOrURLToMarkdownConverterBatch
-    from .generate.knowledge_cleaner import KnowledgeCleaner
-    from .generate.knowledge_cleaner_batch import KnowledgeCleanerBatch
+    from .generate.kbc_text_cleaner import KBCTextCleaner
+    from .generate.kbc_text_cleaner_batch import KBCTextCleanerBatch
     from .generate.mathbook_question_extract import MathBookQuestionExtract
-    from .generate.multihop_qa_generator import MultiHopQAGenerator
-    from .generate.multihop_qa_generator_batch import MultiHopQAGeneratorBatch
+    from .generate.kbc_multihop_qa_generator import KBCMultiHopQAGenerator
+    from .generate.kbc_multihop_qa_generator_batch import KBCMultiHopQAGeneratorBatch
 
 
 else:

@@ -1,7 +1,7 @@
 '''
 A collection of prompts for the general text operator.
 '''
-class PretrainGeneratorPrompt:
+class Phi4QAGeneratorPrompt:
     
     def __init__(self):
         pass
@@ -274,8 +274,7 @@ class ConsistentChatPrompt:
                 "Solving battery drain issues in electric vehicles",
                 "Resetting a smart TV to factory settings",
                 "Troubleshooting a wireless keyboard that won't connect",
-                "How to install a backup camera in a car",
-                "Diagnosing a home circuit breaker that keeps tripping"
+                "How to install a backup camera in a car"
             ],
             "Educational Interaction": [
                 "Learning a new language online",
@@ -326,9 +325,9 @@ class ConsistentChatPrompt:
                 "Introduction to cybersecurity principles",
                 "Understanding different learning styles",
                 "Basics of health and nutrition science",
-                "Learning how to debate effectively",
-                "Introduction to robotics and automation"
+                "Learning how to debate effectively"
             ],
+
             "Health Consultation Interaction": [
                 "Tips for maintaining a healthy diet",
                 "Analyzing symptoms of the common cold",
@@ -378,8 +377,7 @@ class ConsistentChatPrompt:
                 "Navigating food labels and nutrition facts",
                 "Identifying signs of eating disorders",
                 "How to stay active while traveling",
-                "The role of gut health in overall wellness",
-                "When to seek professional mental health support"
+                "The role of gut health in overall wellness"
             ],
             "Exploratory Interaction": [
                 "Exploring the concept of time travel",
@@ -430,8 +428,7 @@ class ConsistentChatPrompt:
                 "The psychology behind conspiracy theories",
                 "Exploring the idea of digital immortality",
                 "How ancient seafaring changed the world map",
-                "The role of chaos theory in understanding the universe",
-                "How major inventions changed human history"
+                "The role of chaos theory in understanding the universe"
             ],
             "Entertainment Interaction": [
                 "Creating a video game character",
@@ -482,8 +479,7 @@ class ConsistentChatPrompt:
                 "Writing dialogue for an animated series",
                 "Planning a short film festival with friends",
                 "Exploring sound design for entertainment media",
-                "Building a fan community around fictional works",
-                "Creating a cinematic trailer for a book or game"
+                "Building a fan community around fictional works"
             ],
             "Simulation Interaction": [
                 "Business negotiations and decision-making",
@@ -535,9 +531,9 @@ class ConsistentChatPrompt:
                 "Virtual museum curation and exhibition planning",
                 "Simulating interpersonal communication in therapy sessions",
                 "Simulating AI behavior in self-driving vehicles",
-                "Virtual internship simulation for workplace readiness",
-                "Simulating marine ecosystem conservation planning"
+                "Virtual internship simulation for workplace readiness"
             ],
+
             "Emotional Support Interaction": [
                 "Coping with the death of a loved one",
                 "Supporting a friend through a breakup",
@@ -587,8 +583,7 @@ class ConsistentChatPrompt:
                 "Dealing with emotional triggers in daily life",
                 "Finding peace with an unresolved conflict",
                 "Managing emotions after relocation or immigration",
-                "Coping with fear of abandonment",
-                "Practicing self-compassion during recovery"
+                "Coping with fear of abandonment"
             ],
             "Information Retrieval Interaction": [
                 "Finding the best tech product reviews online",
@@ -640,8 +635,7 @@ class ConsistentChatPrompt:
                 "Researching funding opportunities for small businesses",
                 "Searching for media coverage on social justice issues",
                 "Finding open data sets for machine learning training",
-                "Looking up safety information on household chemicals",
-                "Researching legal precedents in constitutional law"
+                "Looking up safety information on household chemicals"
             ],
             "Transaction Interaction": [
                 "Booking a flight online for a vacation",
@@ -692,8 +686,7 @@ class ConsistentChatPrompt:
                 "Paying for parking through a mobile parking app",
                 "Ordering prescription medication online",
                 "Reserving coworking space for remote work",
-                "Paying for tutoring or online lessons",
-                "Booking professional photography or videography services"
+                "Paying for tutoring or online lessons"
             ]
         }
         

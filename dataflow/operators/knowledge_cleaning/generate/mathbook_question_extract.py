@@ -8,24 +8,28 @@ from pathlib import Path
 import json
 import shutil
 import fitz # pip install pymupdf
-from dataflow.prompts.kbcleaning import KnowledgeCleanerPrompt
+from dataflow.prompts.kbcleaning import MathbookQuestionExtractPrompt
 import re
 from openai import OpenAI
 import base64
 from typing import List, Literal
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from dataflow.core import LLMServingABC
-from dataflow.serving.APIVLMServing_openai import APIVLMServing_openai
+from dataflow.serving import APIVLMServing_openai
 
 
 
 @OPERATOR_REGISTRY.register()
 class MathBookQuestionExtract(OperatorABC):
-    def __init__(self, llm_serving: APIVLMServing_openai):
+    def __init__(self, llm_serving: APIVLMServing_openai, prompt_template = None):
         self.logger = get_logger()
         self.llm_serving = llm_serving
-    
-    @staticmethod
+        if prompt_template:
+            self.prompt_template = prompt_template
+        else:
+            self.prompt_template = MathbookQuestionExtractPrompt()
+
+    @staticmethod   
     def get_desc(lang: str = "zh"):
         if lang == "zh":
             return (
@@ -307,7 +311,7 @@ Please make sure you have GPU on your machine.
         full_input_image_list,full_input_label_list = self.process_input(pdf2images_folder_name, output_json_file)
 
         # 5. init server and generate
-        system_prompt = KnowledgeCleanerPrompt().mathbook_question_extract_prompt()
+        system_prompt = self.prompt_template.build_prompt()
         result_text_list = self.llm_serving.generate_from_input_multi_images(
             list_of_image_paths=full_input_image_list,
             list_of_image_labels=full_input_label_list,

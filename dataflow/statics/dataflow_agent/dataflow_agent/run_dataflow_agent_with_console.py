@@ -95,7 +95,7 @@ if __name__ == "__main__":
         test_req = ChatAgentRequest(
             language="zh",
             target="帮我针对数据推荐一个的pipeline!!!不需要去重的算子 ！",
-            model="deepseek-v3",
+            model="gpt-4o-mini",
             sessionKEY="dataflow_demo",
             **pipeline_recommend_params
         )
@@ -106,7 +106,7 @@ if __name__ == "__main__":
         test_req = ChatAgentRequest(
             language="zh",
             target="我需要一个算子，直接使用llm_serving，实现语言翻译，把英文翻译成中文！",
-            model="deepseek-v3",
+            model="gpt-4o-mini",
             sessionKEY="dataflow_demo",
             ** operator_write_params
         )

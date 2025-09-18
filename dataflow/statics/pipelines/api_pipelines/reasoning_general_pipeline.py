@@ -1,10 +1,10 @@
 from dataflow.operators.reasoning import (
-    QuestionGenerator,
-    AnswerGenerator,
+    ReasoningQuestionGenerator,
+    ReasoningAnswerGenerator,
 )
-from dataflow.operators.reasoning import QuestionFilter, AnswerNgramFilter, AnswerModelJudge
+from dataflow.operators.reasoning import ReasoningQuestionFilter, ReasoningAnswerNgramFilter, ReasoningAnswerModelJudgeFilter
 from dataflow.utils.storage import FileStorage
-from dataflow.serving import APILLMServing_request, LocalModelLLMServing
+from dataflow.serving import APILLMServing_request
 from dataflow.core import LLMServingABC
 from dataflow.prompts.reasoning.general import (
     GeneralQuestionFilterPrompt,
@@ -30,28 +30,28 @@ class GeneralReasoning_APIPipeline():
                     max_workers=30
         )
 
-        self.question_filter_step1 = QuestionFilter(
+        self.question_filter_step1 = ReasoningQuestionFilter(
             system_prompt="You are an expert in evaluating mathematical problems. Follow the user's instructions strictly and output your final judgment in the required JSON format.",
             llm_serving=self.llm_serving,
             prompt_template=GeneralQuestionFilterPrompt()
         )
         
-        self.question_gen_step2 = QuestionGenerator(
+        self.question_gen_step2 = ReasoningQuestionGenerator(
             num_prompts=1,
             llm_serving=self.llm_serving,
             prompt_template=GeneralQuestionSynthesisPrompt()
         )
         
-        self.answer_generator_step3 = AnswerGenerator(
+        self.answer_generator_step3 = ReasoningAnswerGenerator(
             llm_serving=self.llm_serving,
             prompt_template=GeneralAnswerGeneratorPrompt()
         )
-        self.answer_model_judge_step4 = AnswerModelJudge(
+        self.answer_model_judge_step4 = ReasoningAnswerModelJudgeFilter(
             llm_serving=self.llm_serving,
             prompt_template=AnswerJudgePrompt(),
             keep_all_samples=True
         )
-        self.answer_ngram_filter_step5 = AnswerNgramFilter(
+        self.answer_ngram_filter_step5 = ReasoningAnswerNgramFilter(
             min_score = 0.1,
             max_score = 1.0,
             ngrams = 5

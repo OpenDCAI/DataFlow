@@ -1,33 +1,20 @@
-from dataflow.operators.general_text import SFTGeneratorSeed
-from dataflow.operators.general_text import CondorRefiner
+from dataflow.operators.text_pt import PerplexityFilter
 from dataflow.utils.storage import FileStorage
-from dataflow.serving import APILLMServing_request 
-
 class TextPipeline():
     def __init__(self):
         self.storage = FileStorage(
-            first_entry_file_name="",
+            first_entry_file_name="./dataflow/example/GeneralTextPipeline/pt_input.jsonl",
             cache_path="./cache",
             file_name_prefix="dataflow_cache_step",
             cache_type="jsonl",
         )
-        serving = APILLMServing_request(
-            api_url="http://123.129.219.111:3000/v1/chat/completions",
-            model_name="gpt-4o",
-            max_workers=100
-        )
         self.model_cache_dir = './dataflow_cache'
-        self.processor = SFTGeneratorSeed(llm_serving=serving)
-        self.refiner = CondorRefiner(llm_serving=serving)
+        self.processor = PerplexityFilter(min_score=20, model_name='gpt2')
 
     def forward(self):
         self.processor.run(
-            storage=self.storage.step()
-        )
-        self.refiner.run(
             storage=self.storage.step(),
-            input_instruction_key='instruction',
-            input_output_key='output'
+            input_key='raw_content'
         )
 
 if __name__ == "__main__":

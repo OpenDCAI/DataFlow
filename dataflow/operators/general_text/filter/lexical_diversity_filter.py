@@ -4,7 +4,7 @@ from dataflow import get_logger
 from dataflow.core import OperatorABC
 from dataflow.utils.storage import DataFlowStorage
 from dataflow.utils.registry import OPERATOR_REGISTRY
-from dataflow.operators.general_text import LexicalDiversityScorer
+from dataflow.operators.general_text import LexicalDiversitySampleEvaluator
 
 @OPERATOR_REGISTRY.register()
 class LexicalDiversityFilter(OperatorABC):
@@ -20,7 +20,7 @@ class LexicalDiversityFilter(OperatorABC):
             'hdd': 'LexicalDiversityHD-DScore',
             'mtld': 'LexicalDiversityMTLDScore',
         }
-        self.scorer = LexicalDiversityScorer()
+        self.scorer = LexicalDiversitySampleEvaluator()
     
     @staticmethod
     def get_desc(lang: str = "zh"):
