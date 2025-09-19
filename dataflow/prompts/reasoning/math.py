@@ -1,8 +1,10 @@
+from dataflow.utils.registry import PROMPT_REGISTRY
+from dataflow.core.prompt import PromptABC
 '''
 A collection of prompts for the math reasoning operator.
 '''
-
-class MathAnswerGeneratorPrompt:
+@PROMPT_REGISTRY.register()
+class MathAnswerGeneratorPrompt(PromptABC):
     '''
     The prompt for the answer generator.
     '''
@@ -55,8 +57,8 @@ class MathAnswerGeneratorPrompt:
         )
         return prompt + question + r'''Your response must directly start with "Solution:" without any preamble, After the answer is generated finish your response right away.'''
 
-
-class MathQuestionSynthesisPrompt:
+@PROMPT_REGISTRY.register()
+class MathQuestionSynthesisPrompt(PromptABC):
     '''
     The prompt for the question synthesis.
     '''
@@ -81,8 +83,8 @@ class MathQuestionSynthesisPrompt:
         After the problem is generated finish your response right away.
         """
         return prompt
-    
-class MathQuestionCategoryPrompt:
+@PROMPT_REGISTRY.register()
+class MathQuestionCategoryPrompt(PromptABC):
     '''
     The prompt for the question synthesis.
     '''
@@ -141,8 +143,8 @@ class MathQuestionCategoryPrompt:
         """
         return prompt
 
-    
-class MathQuestionDifficultyPrompt:
+@PROMPT_REGISTRY.register()
+class MathQuestionDifficultyPrompt(PromptABC):
     '''
     The prompt for the question synthesis.
     '''
@@ -286,8 +288,8 @@ class MathQuestionDifficultyPrompt:
         """
 
         return prompt + question
-
-class MathQuestionFilterPrompt:
+@PROMPT_REGISTRY.register()
+class MathQuestionFilterPrompt(PromptABC):
     '''
     The prompt for the question filter.
     '''

@@ -1,15 +1,12 @@
 from abc import ABC, abstractmethod
 from dataflow.logger import get_logger
+from .prompt import DIYPromptABC, PromptABC
 
 class OperatorABC(ABC):
+    def __init__(self):
+        self.logger = get_logger()
+        self.ALLOWED_PROMPTS = tuple([type[DIYPromptABC | PromptABC]])
 
-    # @abstractmethod
-    # def check_config(self, config: dict) -> None:
-    #     """
-    #     Check the config of the operator. If config lacks any required keys, raise an error.
-    #     """
-    #     pass
-    
     @abstractmethod
     def run(self) -> None:
         """

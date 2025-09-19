@@ -1,9 +1,11 @@
 from dataflow import get_logger
+from dataflow.utils.registry import PROMPT_REGISTRY
+from dataflow.core.prompt import PromptABC
 '''
 A collection of prompts for the diy reasoning operator.
 '''
-
-class DiyAnswerGeneratorPrompt:
+@PROMPT_REGISTRY.register()
+class DiyAnswerGeneratorPrompt(PromptABC):
     def __init__(self, prompt_template):
         self.prompt_template = prompt_template
         self.logger = get_logger()
@@ -14,7 +16,8 @@ class DiyAnswerGeneratorPrompt:
         except:
             self.logger.debug(f"Please check if the symbol {{question}} in prompt is missing.")
 
-class DiyQuestionFilterPrompt:
+@PROMPT_REGISTRY.register()
+class DiyQuestionFilterPrompt(PromptABC):
     def __init__(self, prompt_template):
         self.prompt_template = prompt_template
         self.logger = get_logger()
@@ -25,7 +28,8 @@ class DiyQuestionFilterPrompt:
         except:
             self.logger.debug(f"Please check if the symbol {{question}} in prompt is missing.")
             
-class DiyQuestionSynthesisPrompt:
+@PROMPT_REGISTRY.register()
+class DiyQuestionSynthesisPrompt(PromptABC):
     def __init__(self, prompt_template):
         self.prompt_template = prompt_template
         self.logger = get_logger()

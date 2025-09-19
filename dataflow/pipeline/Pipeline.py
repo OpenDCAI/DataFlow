@@ -5,7 +5,7 @@ import webbrowser
 from http.server import HTTPServer, SimpleHTTPRequestHandler
 from abc import ABC, abstractmethod
 from collections import Counter, defaultdict
-from dataflow.core.Operator import OperatorABC
+from dataflow.core.operator import OperatorABC
 from dataflow.pipeline.nodes import OperatorNode, KeyNode
 from dataflow.wrapper.auto_op import AutoOP, OPRuntime
 from dataflow.utils.storage import DataFlowStorage

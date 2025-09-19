@@ -1,6 +1,6 @@
-from .Operator import OperatorABC, get_operator
-from .LLMServing import LLMServingABC
-from .Wrapper import WrapperABC
+from .operator import OperatorABC, get_operator
+from .llm_serving import LLMServingABC
+from .wrapper import WrapperABC
 
 from typing import Union, TypeAlias
 
