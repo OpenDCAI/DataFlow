@@ -172,7 +172,7 @@ class Registry():
         object_types_dict = {}
         for name, obj in self._obj_map.items():
             module_str = obj.__module__
-            print(obj.__name__, module_str)
+            # print(obj.__name__, module_str)
             parts = module_str.split(".")
             object_types_dict[name] = parts[1:]
         return object_types_dict
