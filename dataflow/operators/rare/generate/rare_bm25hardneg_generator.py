@@ -1,8 +1,8 @@
 import pandas as pd
 from dataflow.utils.registry import OPERATOR_REGISTRY
-from dataflow import get_logger
+from dataflow.logger import get_logger # Simplified import
 from dataflow.utils.storage import DataFlowStorage
-from dataflow.core import OperatorABC
+from dataflow.core.Operator import OperatorABC # New import for OperatorABC
 
 class BM25Miner():
     """
