@@ -1,7 +1,7 @@
 from dataflow.operators.rare import (
-    Doc2Query,
-    BM25HardNeg,
-    ReasonDistill,
+    Doc2QueryGenerator,
+    BM25HardNegGenerator,
+    ReasonDistillGenerator,
 )
 from dataflow.utils.storage import FileStorage
 from dataflow.serving.api_llm_serving_request import APILLMServing_request
@@ -25,9 +25,9 @@ class RAREPipeline():
                 max_workers=1
         )
 
-        self.doc2query_step1 = Doc2Query(llm_serving)
-        self.bm25hardneg_step2 = BM25HardNeg()
-        self.reasondistill_step3 = ReasonDistill(llm_serving)
+        self.doc2query_step1 = Doc2QueryGenerator(llm_serving)
+        self.bm25hardneg_step2 = BM25HardNegGenerator()
+        self.reasondistill_step3 = ReasonDistillGenerator(llm_serving)
         
     def forward(self):
 

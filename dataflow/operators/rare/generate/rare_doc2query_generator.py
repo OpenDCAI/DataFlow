@@ -9,7 +9,7 @@ from dataflow.prompts.rare import Doc2QueryGenertorPrompt # New import for Promp
 
 
 @OPERATOR_REGISTRY.register() # Changed decorator to OPERATOR_REGISTRY
-class Doc2Query(OperatorABC): # Inherit from OperatorABC
+class Doc2QueryGenerator(OperatorABC): # Inherit from OperatorABC
     '''
     Doc2Query uses LLMs to generate reasoning-intensive questions for given documents.
     '''

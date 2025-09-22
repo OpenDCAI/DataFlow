@@ -9,7 +9,7 @@ from dataflow.prompts.rare import ReasonDistillGenertorPrompt # New import for P
 
 
 @OPERATOR_REGISTRY.register()
-class ReasonDistill(OperatorABC):
+class ReasonDistillGenerator(OperatorABC):
     '''
     ReasonDistill distills reasoning capabilities from LLMs by generating a step-by-step thought process.
     It takes a question, a scenario, a positive document, and several hard negative documents as input.
