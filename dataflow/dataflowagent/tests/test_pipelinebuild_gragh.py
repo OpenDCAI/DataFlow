@@ -241,17 +241,19 @@ async def main() -> None:
 
     final_state = await pipeline_graph.ainvoke(state)
 
-    if final_state.get("execution_result", {}).get("success"):
-        print("\n================ 最终 Pipeline 执行成功 ================\n")
-        print(final_state["execution_result"]["stdout"])
+    if req.need_debug:
+        if final_state.get("execution_result", {}).get("success"):
+            print("\n================ 最终 Pipeline 执行成功 ================\n")
+            print(f"================ 可通过 python {req.python_file_path} 处理你的完整数据！ ================")
+            print(final_state["execution_result"]["stdout"])
+        else:
+            print("\n================== 调试失败，放弃 ==================\n")
+            print(final_state.get("execution_result", {}))
+            assert final_state.get("execution_result", {}).get("success") is True
+            assert isinstance(final_state.get("code_debug_result", {}), dict)
+            assert isinstance(final_state.get("rewrite_result", {}), dict)
     else:
-        print("\n================== 调试失败，放弃 ==================\n")
-        print(final_state.get("execution_result", {}))
-
-    # 断言
-    assert final_state.get("execution_result", {}).get("success") is True
-    assert isinstance(final_state.get("code_debug_result", {}), dict)
-    assert isinstance(final_state.get("rewrite_result", {}), dict)
+        print(f"================== 不需要调试，只进行组装，结果在 {req.python_file_path} ==================")
 
 # --------------------------------------------------------------------
 if __name__ == "__main__":

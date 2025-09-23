@@ -44,12 +44,16 @@ async def main() -> None:
     graph = create_pipeline_graph().build()
     final_state: DFState = await graph.ainvoke(state)
 
-    if final_state.get("execution_result", {}).get("success"):
-        print("\n================ 最终 Pipeline 执行成功 ================\n")
-        print(final_state["execution_result"]["stdout"])
+    if req.need_debug:
+        if final_state.get("execution_result", {}).get("success"):
+            print("\n================ 最终 Pipeline 执行成功 ================\n")
+            print(f"================ 可通过 python {req.python_file_path} 处理你的完整数据！ ================")
+            print(final_state["execution_result"]["stdout"])
+        else:
+            print("\n================== 调试失败，放弃 ==================\n")
+            print(final_state.get("execution_result", {}))
     else:
-        print("\n================== 调试失败，放弃 ==================\n")
-        print(final_state.get("execution_result", {}))
+        print(f"================== 不需要调试，只进行组装，结果在 {req.python_file_path} ==================")
 
 if __name__ == "__main__":
     asyncio.run(main())

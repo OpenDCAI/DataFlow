@@ -9,12 +9,13 @@ from dataflow.operators.reasoning.generate.reasoning_answer_generator import Rea
 from dataflow.operators.reasoning.generate.reasoning_question_generator import ReasoningQuestionGenerator
 
 
+
 class RecommendPipeline(PipelineABC):
     def __init__(self):
         super().__init__()
         # -------- FileStorage --------
         self.storage = FileStorage(
-            first_entry_file_name="/mnt/h_h_public/lh/lz/DataFlow/dataflow/example/DataflowAgent/mq_test_data.jsonl",
+            first_entry_file_name="/tmp/mq_test_data_sample_10.jsonl",
             cache_path="./cache_local",
             file_name_prefix="dataflow_cache_step",
             cache_type="jsonl",
@@ -27,31 +28,16 @@ class RecommendPipeline(PipelineABC):
             max_workers=100,
         )
 
-        self.reasoning_answer_generator = ReasoningAnswerGenerator(
-            llm_serving=self.llm_serving,
-            prompt_template=None,
-        )
-        self.reasoning_question_generator = ReasoningQuestionGenerator(
-            num_prompts=1,
-            llm_serving=self.llm_serving,
-            prompt_template=None,
-        )
+        self.reasoning_answer_generator = ReasoningAnswerGenerator(llm_serving=self.llm_serving, prompt_template=None)
+        self.reasoning_question_generator = ReasoningQuestionGenerator(num_prompts=1, llm_serving=self.llm_serving, prompt_template=None)
 
     def forward(self):
-        # Generate chain-of-thought (CoT) answers based on the existing "question" column.
         self.reasoning_answer_generator.run(
-            storage=self.storage.step(),
-            input_key="question",
-            output_key="generated_cot",
+            storage=self.storage.step(), input_key='instruction', output_key='generated_cot'
         )
-
-        # Generate reasoning questions using the same "question" column as input.
         self.reasoning_question_generator.run(
-            storage=self.storage.step(),
-            input_key="question",
-            output_synth_or_input_flag="Synth_or_Input",
+            storage=self.storage.step(), input_key=None, output_synth_or_input_flag='Synth_or_Input'
         )
-
 
 if __name__ == "__main__":
     pipeline = RecommendPipeline()
