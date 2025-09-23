@@ -300,27 +300,27 @@ def smart_chat_command(model_path=None, cache_path="./"):
 
 
 # ---------------- 新的eval命令处理函数 ----------------
-def handle_python_config_init(eval_type: str, output_file: str = None):
+def handle_python_config_init():
     """处理Python配置文件初始化"""
     try:
         from dataflow.cli_funcs.cli_eval import DataFlowEvalCLI
         
         cli = DataFlowEvalCLI()
-        success = cli.init_eval_file(eval_type, output_file)
+        success = cli.init_eval_files()  # 使用正确的方法名（复数）且无参数
         
         if success:
-            print("✅ 配置文件初始化成功")
+            print("Configuration files initialized successfully")
         else:
-            print("❌ 配置文件初始化失败")
+            print("Configuration files initialization failed")
             
         return success
         
     except ImportError as e:
-        print(f"Python配置评估模块不可用：{e}")
-        print("请检查 dataflow.cli_funcs.cli_eval 模块是否存在")
+        print(f"Python config evaluation module unavailable: {e}")
+        print("Please check if dataflow.cli_funcs.cli_eval module exists")
         return False
     except Exception as e:
-        print(f"配置文件初始化失败：{e}")
+        print(f"Configuration file initialization failed: {e}")
         return False
 
 
@@ -334,24 +334,24 @@ def handle_python_config_eval(eval_type: str, args=None):
         # 使用默认文件名
         eval_file = f"eval_{eval_type}.py"
         
-        print(f"🚀 开始{eval_type}模型评估：{eval_file}")
+        print(f"Starting {eval_type} model evaluation: {eval_file}")
         
         # 传递命令行参数到评估器
         success = cli.run_eval_file(eval_type, eval_file, args)
         
         if success:
-            print(f"✅ {eval_type}模型评估完成")
+            print(f"{eval_type.upper()} model evaluation completed successfully")
         else:
-            print(f"❌ {eval_type}模型评估失败")
+            print(f"{eval_type.upper()} model evaluation failed")
             
         return success
         
     except ImportError as e:
-        print(f"Python配置评估模块不可用：{e}")
-        print("请检查 dataflow.cli_funcs.cli_eval 模块是否存在")
+        print(f"Python config evaluation module unavailable: {e}")
+        print("Please check if dataflow.cli_funcs.cli_eval module exists")
         return False
     except Exception as e:
-        print(f"Python配置评估失败：{e}")
+        print(f"Python config evaluation failed: {e}")
         return False
 
 
@@ -365,21 +365,21 @@ def list_eval_files():
         return True
         
     except ImportError:
-        print("Python配置评估模块不可用")
+        print("Python config evaluation module unavailable")
         return False
     except Exception as e:
-        print(f"列出配置文件失败：{e}")
+        print(f"Failed to list config files: {e}")
         return False
 
 
 def handle_eval_command(args):
-    """Handle evaluation command - 支持自动检测和模型指定"""
+    """处理评估命令 - 支持自动检测和模型指定"""
     try:
         eval_action = getattr(args, 'eval_action', None)
         
         # 处理 init 子命令
         if eval_action == 'init':
-            return handle_python_config_init(args.type, args.output)
+            return handle_python_config_init()
         
         # 处理 api 子命令（增强版）
         elif eval_action == 'api':
@@ -395,29 +395,29 @@ def handle_eval_command(args):
         
         # 如果没有指定子命令，显示帮助
         else:
-            print("DataFlow 评估工具")
+            print("DataFlow Evaluation Tool")
             print()
-            print("可用命令:")
-            print("  dataflow eval init [--type api/local]     # 初始化评估配置文件")
-            print("  dataflow eval api                         # 运行API模型评估（自动检测模型）")
-            print("  dataflow eval local                       # 运行本地模型评估（自动检测模型）")
-            print("  dataflow eval list                        # 列出配置文件")
+            print("Available commands:")
+            print("  dataflow eval init                        # Initialize evaluation config files")
+            print("  dataflow eval api                         # Run API model evaluation (auto-detect models)")
+            print("  dataflow eval local                       # Run local model evaluation (auto-detect models)")
+            print("  dataflow eval list                        # List config files")
             print()
-            print("高级用法:")
-            print("  dataflow eval api --models model1,model2  # 指定特定模型进行评估")
-            print("  dataflow eval api --no-auto               # 禁用自动检测，使用配置文件中的模型")
+            print("Advanced usage:")
+            print("  dataflow eval api --models model1,model2  # Specify models to evaluate")
+            print("  dataflow eval api --no-auto               # Disable auto-detection, use config file models")
             print()
-            print("完整评估流程:")
-            print("  1. dataflow eval api                      # 自动检测本地模型并评估")
-            print("  2. 查看生成的评估报告                      # model_comparison_report.json")
+            print("Complete evaluation workflow:")
+            print("  1. dataflow eval local                     # Auto-detect and evaluate local models")
+            print("  2. View generated evaluation report        # model_comparison_report.json")
             print()
-            print("配置文件说明:")
-            print("  - eval_api.py: API评估器配置（GPT-4o等）")
-            print("  - eval_local.py: 本地评估器配置")
+            print("Config file descriptions:")
+            print("  - eval_api.py: API evaluator config (GPT-4o etc.)")
+            print("  - eval_local.py: Local evaluator config")
             return False
         
     except Exception as e:
-        print(f"评估命令执行失败: {e}")
+        print(f"Evaluation command execution failed: {e}")
         import traceback
         traceback.print_exc()
         return False
@@ -455,8 +455,6 @@ def build_arg_parser() -> argparse.ArgumentParser:
 
     # eval init 子命令
     eval_init = eval_sub.add_parser("init", help="Initialize evaluation configuration file")
-    eval_init.add_argument("--type", choices=["api", "local"], default="api",
-                          help="Configuration type: api (API models) or local (local models)")
     eval_init.add_argument("--output", help="Output file name (default: eval_api.py or eval_local.py)")
 
     # eval api 子命令（增强版）

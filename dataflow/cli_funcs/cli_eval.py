@@ -1,19 +1,45 @@
 # dataflow/cli_funcs/cli_eval.py
-"""DataFlow 评估工具 - 重构版本"""
+"""DataFlow 评估工具 - 修复版本"""
 
 import os
 import json
 import shutil
 import subprocess
 import argparse
+import importlib.util
 from pathlib import Path
 from typing import List, Dict, Any, Optional
-import importlib.util
+from datetime import datetime
 
 from dataflow import get_logger
 from dataflow.serving import LocalModelLLMServing_vllm
+from dataflow.operators.reasoning import ReasoningAnswerGenerator
+from dataflow.prompts.reasoning.diy import DiyAnswerGeneratorPrompt
+from dataflow.utils.storage import FileStorage
+
+# LoRA合并依赖
+try:
+    from transformers import AutoModelForCausalLM, AutoTokenizer
+    from peft import PeftModel
+
+    LORA_SUPPORT = True
+except ImportError:
+    LORA_SUPPORT = False
+    logger.warning("LoRA support not available. Install transformers and peft to enable LoRA adapter merging.")
 
 logger = get_logger()
+
+# 默认的答案生成提示词模板
+DEFAULT_ANSWER_PROMPT = """Please answer the following question based on the provided academic literature. Your response should:
+1. Provide accurate information from the source material
+2. Include relevant scientific reasoning and methodology
+3. Reference specific findings, data, or conclusions when applicable
+4. Maintain academic rigor and precision in your explanation
+
+Question: {question}
+
+Answer:"""
+
 
 # =============================================================================
 # 评估管道核心逻辑
@@ -21,488 +47,511 @@ logger = get_logger()
 
 class EvaluationPipeline:
     """评估管道：从模型检测到评估报告的完整流程"""
-    
+
     def __init__(self, config: Dict[str, Any], cli_args=None):
         self.config = config
         self.cli_args = cli_args or argparse.Namespace()
         self.detected_models = []
         self.prepared_models = []
         self.generated_files = []
-        
+
     def run(self) -> bool:
         """执行完整的评估流程"""
         try:
             # 1. 模型检测和准备
-            logger.info("开始模型检测...")
+            logger.info("Starting model detection...")
             self.detected_models = self._detect_models()
             if not self.detected_models:
                 self._show_no_models_help()
                 return False
-                
+
             self.prepared_models = self._prepare_models()
-            
+
             # 2. 生成答案
-            logger.info("开始生成答案...")
+            logger.info("Starting answer generation...")
             self.generated_files = self._generate_answers()
-            
+
             # 3. 执行评估
-            logger.info("开始执行评估...")
+            logger.info("Starting evaluation...")
             results = self._run_evaluation()
-            
+
             # 4. 生成报告
-            logger.info("生成评估报告...")
             self._generate_report(results)
-            
-            logger.info("评估流程完成")
+
             return True
-            
+
         except Exception as e:
-            logger.error(f"评估失败：{str(e)}")
-            import traceback
-            traceback.print_exc()
+            logger.error(f"Evaluation pipeline failed: {e}")
             return False
-    
-    def _detect_models(self) -> List[Dict[str, Any]]:
-        """检测可用的模型"""
-        models = []
-        
-        # Check command line arguments
-        if hasattr(self.cli_args, 'models') and self.cli_args.models:
-            logger.info("Using models specified via command line...")
-            model_list = self.cli_args.models.split(',')
-            for model_spec in model_list:
-                model_spec = model_spec.strip()
-                models.append({
-                    "name": Path(model_spec).name,
-                    "path": model_spec,
-                    "type": "manual",
-                    "needs_merge": False
-                })
-        elif self.config.get("TARGET_MODELS", {}).get("auto_detect", True):
-            logger.info("Auto-detection mode...")
-            models = self._auto_detect_models()
-        else:
-            # Use manually specified models from config file
-            manual_models = self.config.get("TARGET_MODELS", {}).get("models", [])
-            for model_spec in manual_models:
-                models.append({
-                    "name": Path(model_spec).name,
-                    "path": model_spec,
-                    "type": "manual",
-                    "needs_merge": False
-                })
-        
-        if models:
-            logger.info(f"Detected {len(models)} models:")
-            for i, model in enumerate(models, 1):
-                logger.info(f"  {i}. {model['name']}")
-        
-        return models
-    
-    def _auto_detect_models(self) -> List[Dict[str, Any]]:
-        """自动检测模型 - 优先使用已merge的模型，避免重复merge"""
-        all_models = []
-        lora_models = []
-        merged_models = []
-        
-        # 检测所有模型
-        saves_dir = Path("./.cache/saves")
-        if saves_dir.exists():
-            for model_dir in saves_dir.iterdir():
-                if model_dir.is_dir():
-                    model_info = self._analyze_model_dir(model_dir)
-                    if model_info:
-                        all_models.append(model_info)
-                        if model_info['type'] == 'lora_adapter':
-                            lora_models.append(model_info)
-                        elif model_info['name'].endswith('_merged'):
-                            merged_models.append(model_info)
-        
-        # 优选策略：优先使用已merged的模型，避免重复merge
-        final_models = []
-        
-        # 找到一个base model
-        base_model = None
-        if lora_models:
-            base_model = self._find_base_model_for_finetuned(lora_models[0])
-        elif merged_models:
-            # 从merged模型推断base model
-            base_model = self._find_base_model_for_finetuned(merged_models[0])
-        
-        if base_model:
-            final_models.append(base_model)
-        
-        # 优先选择已merged的模型
-        if merged_models:
-            # 按时间排序，选择最新的一个merged模型进行对比
-            merged_models.sort(key=lambda x: x['name'])
-            final_models.append({
-                **merged_models[-1],  # 选择最新的
-                'needs_merge': False  # 确保不再merge
-            })
-            
-            if base_model:
-                logger.info(f"Detected comparison pair (using existing merged model):")
-                logger.info(f"  Base model: {base_model['name']}")
-                logger.info(f"  Fine-tuned (merged): {merged_models[-1]['name']}")
-        elif lora_models:
-            # If no merged models exist, select one LoRA for merging
-            lora_models.sort(key=lambda x: x['name'])
-            final_models.append(lora_models[-1])  # Select the latest LoRA
-            
-            if base_model:
-                logger.info(f"Detected comparison pair (requires merging):")
-                logger.info(f"  Base model: {base_model['name']}")
-                logger.info(f"  Fine-tuned: {lora_models[-1]['name']}")
-        
-        return final_models
-    
-    def _analyze_model_dir(self, model_dir: Path) -> Optional[Dict[str, Any]]:
-        """分析模型目录，判断模型类型"""
-        if not model_dir.exists():
-            return None
-            
-        # 检查LoRA适配器文件
-        adapter_files = ["adapter_config.json", "adapter_model.bin", "adapter_model.safetensors"]
-        has_adapter = any((model_dir / f).exists() for f in adapter_files)
-        
-        # 检查基础模型文件
-        model_files = ["config.json", "pytorch_model.bin", "model.safetensors"]
-        has_model = any((model_dir / f).exists() for f in model_files)
-        
-        if has_adapter and not model_dir.name.endswith('_merged'):
-            # 原始LoRA适配器
-            return {
-                "name": model_dir.name,
-                "path": str(model_dir),
-                "type": "lora_adapter",
-                "needs_merge": True
-            }
-        elif has_model:
-            # 完整模型（可能是base model或merged model）
-            if model_dir.name.endswith('_merged'):
-                return {
-                    "name": model_dir.name,
-                    "path": str(model_dir),
-                    "type": "merged_model",
-                    "needs_merge": False
-                }
-            else:
-                return {
-                    "name": model_dir.name,
-                    "path": str(model_dir),
-                    "type": "full_model",
-                    "needs_merge": False
-                }
-        
-        return None
-    
-    def _find_base_model_for_finetuned(self, fine_tuned_model: Dict[str, Any]) -> Optional[Dict[str, Any]]:
-        """为微调模型寻找对应的base model"""
-        if fine_tuned_model.get("type") == "lora_adapter":
-            adapter_config_file = Path(fine_tuned_model["path"]) / "adapter_config.json"
-            if adapter_config_file.exists():
-                try:
-                    with open(adapter_config_file, 'r') as f:
-                        adapter_config = json.load(f)
-                    base_model_path = adapter_config.get("base_model_name_or_path")
-                    
-                    if base_model_path:
-                        return {
-                            "name": Path(base_model_path).name,
-                            "path": base_model_path,
-                            "type": "base_model",
-                            "needs_merge": False
-                        }
-                except Exception as e:
-                    logger.warning(f"读取adapter配置失败: {e}")
-        
-        return None
-    
-    def _prepare_models(self) -> List[Dict[str, Any]]:
-        """准备模型：处理merge等预处理步骤"""
-        prepared = []
-        
-        for model in self.detected_models:
-            try:
-                if model.get("needs_merge"):
-                    logger.info(f"Merging model: {model['name']}")
-                    merged_path = self._merge_lora_model(model["path"])
-                    model["path"] = merged_path
-                    model["name"] = Path(merged_path).name
-                    model["needs_merge"] = False
-                    logger.info(f"Merge completed: {merged_path}")
-                
-                prepared.append(model)
-                
-            except Exception as e:
-                logger.error(f"Model {model['name']} preparation failed, skipping: {e}")
-                continue
-        
-        return prepared
-    
-    def _merge_lora_model(self, adapter_path: str, force_remerge: bool = True) -> str:
-        """合并LoRA适配器 - 支持强制重新merge"""
+
+    def _detect_models(self) -> List[str]:
+        """智能检测模型 - 自动找到微调模型对应的base model"""
+        target_config = self.config.get("TARGET_MODELS", {})
+
+        if not target_config.get("auto_detect", True):
+            models = target_config.get("models", [])
+            logger.info(f"Using specified models: {models}")
+            return models
+
+        detected = []
+        base_models = set()  # 避免重复添加相同的base model
+
+        # 扫描微调模型
+        cache_dirs = ["./.cache/saves", "./saves"]
+        for cache_dir in cache_dirs:
+            cache_path = Path(cache_dir)
+            if cache_path.exists():
+                logger.info(f"Scanning directory: {cache_path}")
+                for model_dir in cache_path.iterdir():
+                    if model_dir.is_dir() and self._is_lora_adapter(model_dir):
+                        # 检测到LoRA适配器，尝试合并
+                        try:
+                            merged_model_path = self._merge_lora_adapter(model_dir)
+                            detected.append(merged_model_path)
+                            logger.info(f"Found LoRA adapter, merged to: {Path(merged_model_path).name}")
+
+                            # 也尝试找到对应的base model
+                            base_model_path = self._get_base_model_path(model_dir)
+                            if base_model_path and base_model_path not in base_models:
+                                if self._validate_base_model(base_model_path):
+                                    detected.append(base_model_path)
+                                    base_models.add(base_model_path)
+                                    logger.info(f"Auto-discovered base model: {base_model_path}")
+
+                        except Exception as e:
+                            logger.error(f"Failed to merge LoRA adapter {model_dir.name}: {e}")
+                            continue
+
+        if detected:
+            logger.info(
+                f"Total detected {len(detected)} models (including fine-tuned models and corresponding base models)")
+            return detected
+
+        # 如果没找到微调模型，退回到原来的检测逻辑
+        logger.info("No fine-tuned models found, trying fallback detection...")
+        return self._fallback_detection()
+
+    def _is_lora_adapter(self, model_path: Path) -> bool:
+        """检查是否是LoRA适配器"""
+        adapter_files = ["adapter_config.json", "adapter_model.safetensors", "adapter_model.bin"]
+        has_adapter_config = (model_path / "adapter_config.json").exists()
+        has_adapter_model = any((model_path / f).exists() for f in adapter_files[1:])
+        return has_adapter_config and has_adapter_model
+
+    def _get_base_model_path(self, adapter_path: Path) -> str:
+        """从adapter配置中获取base model路径"""
+        adapter_config_file = adapter_path / "adapter_config.json"
+
         try:
-            adapter_dir = Path(adapter_path)
-            merged_dir = adapter_dir.parent / f"{adapter_dir.name}_merged"
-            
-            # 如果强制重新merge或目录不存在，则删除已有目录重新merge
-            if force_remerge or not (merged_dir.exists() and (merged_dir / "config.json").exists()):
-                if merged_dir.exists():
-                    logger.info(f"删除已存在的merged目录进行重新merge: {merged_dir}")
-                    shutil.rmtree(merged_dir)
-                else:
-                    logger.info(f"merged目录不存在，开始新的merge: {merged_dir}")
+            with open(adapter_config_file, 'r', encoding='utf-8') as f:
+                config = json.load(f)
+
+            base_model_path = config.get("base_model_name_or_path", "")
+            if base_model_path:
+                logger.info(f"Read base model path from {adapter_path.name}: {base_model_path}")
+                return base_model_path
             else:
-                logger.info(f"使用已存在的merged模型: {merged_dir}")
-                return str(merged_dir)
-            
-            # 读取adapter配置
-            adapter_config_file = adapter_dir / "adapter_config.json"
-            if not adapter_config_file.exists():
-                raise Exception(f"找不到adapter_config.json: {adapter_config_file}")
-                
-            with open(adapter_config_file, 'r') as f:
-                adapter_config = json.load(f)
-            base_model_path = adapter_config.get("base_model_name_or_path")
-            
-            if not base_model_path:
-                raise Exception("adapter_config.json中缺少base_model_name_or_path")
-            
-            logger.info(f"开始merge LoRA适配器: {adapter_dir.name}")
-            
-            # 使用transformers进行merge
-            from transformers import AutoModelForCausalLM, AutoTokenizer
-            from peft import PeftModel
-            import torch
-            
-            # 加载base model
-            logger.info(f"加载base model: {base_model_path}")
+                logger.warning(f"base_model_name_or_path field not found in adapter_config.json")
+                return None
+
+        except Exception as e:
+            logger.error(f"Failed to read adapter config: {e}")
+            return None
+
+    def _validate_base_model(self, model_path: str) -> bool:
+        """验证base model是否存在且有效"""
+        # 如果是HuggingFace模型ID，假设有效
+        if not model_path.startswith(('.', '/')):
+            logger.info(f"Detected HuggingFace model ID: {model_path}")
+            return True
+
+        # 如果是本地路径，检查文件是否存在
+        model_path_obj = Path(model_path)
+        if not model_path_obj.exists():
+            logger.warning(f"Local model path does not exist: {model_path}")
+            return False
+
+        # 检查是否有config.json
+        has_config = (model_path_obj / "config.json").exists()
+        if not has_config:
+            logger.warning(f"Missing config.json in {model_path}")
+            return False
+
+        # 检查模型权重文件（支持多种格式）
+        weight_files = ["pytorch_model.bin", "model.safetensors"]
+        has_single_weights = any((model_path_obj / f).exists() for f in weight_files)
+
+        # 检查分片模型（pytorch格式）
+        has_sharded_pytorch = bool(list(model_path_obj.glob("pytorch_model-*.bin")))
+
+        # 检查分片模型（safetensors格式）
+        has_sharded_safetensors = bool(list(model_path_obj.glob("model-*-of-*.safetensors")))
+
+        if has_single_weights or has_sharded_pytorch or has_sharded_safetensors:
+            logger.info(f"Found valid model at: {model_path}")
+            return True
+
+        logger.warning(f"No valid model weights found in {model_path}")
+        return False
+
+    def _fallback_detection(self) -> List[str]:
+        """回退检测逻辑 - 原来的检测方法"""
+        detected = []
+        cache_dirs = ["./.cache/saves", "./saves"]
+
+        for cache_dir in cache_dirs:
+            cache_path = Path(cache_dir)
+            if cache_path.exists():
+                for model_dir in cache_path.iterdir():
+                    if model_dir.is_dir() and self._is_valid_model_dir_fallback(model_dir):
+                        detected.append(str(model_dir))
+                        logger.info(f"Found model: {model_dir.name}")
+
+        return detected
+
+    def _is_valid_model_dir_fallback(self, model_path: Path) -> bool:
+        """回退的模型检测方法"""
+        # 检查LoRA适配器
+        if self._is_lora_adapter(model_path):
+            return True
+
+        # 检查完整模型
+        has_config = (model_path / "config.json").exists()
+        weight_files = ["pytorch_model.bin", "model.safetensors"]
+        has_weights = any((model_path / f).exists() for f in weight_files)
+        has_sharded = bool(list(model_path.glob("pytorch_model-*.bin")) or
+                           list(model_path.glob("model-*-of-*.safetensors")))
+
+        return has_config and (has_weights or has_sharded)
+
+    def _merge_lora_adapter(self, adapter_path: Path) -> str:
+        """合并LoRA适配器与基础模型"""
+        if not LORA_SUPPORT:
+            raise RuntimeError("LoRA merging requires transformers and peft libraries. Please install them.")
+
+        # 读取适配器配置
+        adapter_config_file = adapter_path / "adapter_config.json"
+        with open(adapter_config_file, 'r') as f:
+            adapter_config = json.load(f)
+
+        base_model_path = adapter_config["base_model_name_or_path"]
+
+        # 生成合并后模型的保存路径
+        merged_model_name = f"{adapter_path.name}_merged"
+        merged_model_path = adapter_path.parent / merged_model_name
+
+        # 如果已经存在合并后的模型，直接返回路径
+        if merged_model_path.exists() and (merged_model_path / "config.json").exists():
+            logger.info(f"Found existing merged model: {merged_model_path}")
+            return str(merged_model_path)
+
+        logger.info(f"Merging LoRA adapter {adapter_path.name} with base model {base_model_path}")
+
+        try:
+            # 加载基础模型和分词器
+            logger.info("Loading base model...")
             base_model = AutoModelForCausalLM.from_pretrained(
                 base_model_path,
-                torch_dtype=torch.bfloat16,
-                device_map="auto",
-                trust_remote_code=True,
-                low_cpu_mem_usage=True
+                torch_dtype="auto",
+                device_map="cpu"  # 先加载到CPU，避免GPU内存不足
             )
-            
+
+            tokenizer = AutoTokenizer.from_pretrained(base_model_path)
+
             # 加载LoRA适配器
-            logger.info(f"加载LoRA适配器: {adapter_dir}")
-            model = PeftModel.from_pretrained(
-                base_model,
-                str(adapter_dir),
-                torch_dtype=torch.bfloat16,
-                is_trainable=False
-            )
-            
-            # 执行merge
-            logger.info("执行merge_and_unload...")
-            model = model.merge_and_unload(progressbar=True)
-            
-            # 保存merged模型
-            logger.info(f"保存merged模型到: {merged_dir}")
-            merged_dir.mkdir(parents=True, exist_ok=True)
-            
-            model.save_pretrained(
-                str(merged_dir),
-                torch_dtype=torch.bfloat16,
-                safe_serialization=True,
-                max_shard_size="2GB"
-            )
-            
-            # 保存tokenizer
-            tokenizer = AutoTokenizer.from_pretrained(
-                base_model_path,
-                trust_remote_code=True
-            )
-            tokenizer.save_pretrained(str(merged_dir))
-            
-            # 验证merge结果
-            if not (merged_dir / "config.json").exists():
-                raise Exception("Merge完成但config.json不存在")
-            
-            logger.info(f"LoRA merge成功完成: {merged_dir}")
-            
+            logger.info("Loading LoRA adapter...")
+            model = PeftModel.from_pretrained(base_model, str(adapter_path))
+
+            # 合并适配器到基础模型
+            logger.info("Merging adapter with base model...")
+            merged_model = model.merge_and_unload()
+
+            # 保存合并后的模型
+            logger.info(f"Saving merged model to {merged_model_path}...")
+            merged_model_path.mkdir(exist_ok=True)
+
+            merged_model.save_pretrained(str(merged_model_path))
+            tokenizer.save_pretrained(str(merged_model_path))
+
+            logger.info(f"Successfully merged LoRA adapter. Merged model saved to: {merged_model_path}")
+
             # 清理内存
-            del model, base_model, tokenizer
+            del base_model, model, merged_model
+            import torch
             if torch.cuda.is_available():
                 torch.cuda.empty_cache()
-            
-            return str(merged_dir)
-                
+
+            return str(merged_model_path)
+
         except Exception as e:
-            logger.error(f"LoRA merge失败: {e}")
-            # 清理可能的失败残留
-            if merged_dir.exists():
-                shutil.rmtree(merged_dir, ignore_errors=True)
-            raise e
-        
-    def _generate_answers(self) -> List[Dict[str, str]]:
-        """为所有模型生成答案"""
+            logger.error(f"Failed to merge LoRA adapter {adapter_path}: {e}")
+            raise
+
+    def _is_valid_model_dir(self, model_path: Path) -> bool:
+        """检查是否是有效的模型目录"""
+        return self._is_lora_adapter(model_path) or self._is_valid_model_dir_fallback(model_path)
+
+    def _prepare_models(self) -> List[Dict[str, str]]:
+        """准备模型信息"""
+        prepared = []
+        for model_path in self.detected_models:
+            model_name = Path(model_path).name
+            prepared.append({
+                "name": model_name,
+                "path": model_path,
+                "type": "local"
+            })
+        return prepared
+
+    def _generate_answers(self) -> List[Dict[str, Any]]:
+        """生成模型答案 - 修复版本：真正调用模型推理"""
+        generated_files = []
         data_config = self.config.get("DATA_CONFIG", {})
         input_file = data_config.get("input_file", "./.cache/data/qa.json")
-        
+
         if not Path(input_file).exists():
-            raise FileNotFoundError(f"数据文件不存在：{input_file}")
-        
-        # 读取问题数据
-        with open(input_file, 'r', encoding='utf-8') as f:
-            data = json.load(f)
-        
-        question_key = data_config.get("question_key", "input")
-        questions = [item[question_key] for item in data]
-        
-        generated_files = []
-        batch_size = self.config.get("EVAL_CONFIG", {}).get("batch_size", 8)
-        max_tokens = self.config.get("EVAL_CONFIG", {}).get("max_tokens", 512)
-        
-        for model in self.prepared_models:
-            logger.info(f"Generating answers for model: {model['name']}")
-            
+            logger.error(f"Evaluation data file does not exist: {input_file}")
+            return []
+
+        for model_info in self.prepared_models:
             try:
-                # Get VLLM configuration
-                eval_config = self.config.get("EVAL_CONFIG", {})
-                
-                # Load model with supported GPU memory management configuration only
-                model_serving = LocalModelLLMServing_vllm(
-                    hf_model_name_or_path=model["path"],
-                    vllm_tensor_parallel_size=1,
-                    vllm_max_tokens=max_tokens,
-                    # Only use supported GPU memory management parameters
-                    vllm_gpu_memory_utilization=eval_config.get("vllm_gpu_memory_utilization", 0.75),
-                    vllm_max_model_len=eval_config.get("vllm_max_model_len", 16384),
+                logger.info(f"Loading model for inference: {model_info['name']}")
+
+                # 确保评估缓存目录存在
+                Path("./.cache/eval").mkdir(parents=True, exist_ok=True)
+                output_file = f"./.cache/eval/answers_{model_info['name']}.json"
+
+                # 检查是否已存在答案文件，如果是占位符则重新生成
+                skip_generation = False
+                if Path(output_file).exists():
+                    # 检查是否是占位符答案，如果是就重新生成
+                    try:
+                        with open(output_file, 'r', encoding='utf-8') as f:
+                            existing_data = json.load(f)
+
+                        # 检查是否包含占位符格式的答案
+                        is_placeholder = False
+                        if isinstance(existing_data, list) and existing_data:
+                            sample_answer = existing_data[0].get("model_generated_answer", "")
+                            if sample_answer.startswith("Generated answer for:"):
+                                is_placeholder = True
+                                logger.info(f"Found placeholder answers for {model_info['name']}, will regenerate")
+
+                        if not is_placeholder:
+                            logger.info(f"Found existing real answers for {model_info['name']}, skipping inference")
+                            skip_generation = True
+                    except Exception as e:
+                        logger.warning(
+                            f"Could not check existing answers for {model_info['name']}: {e}, will regenerate")
+
+                if skip_generation:
+                    generated_files.append({
+                        "model_name": model_info['name'],
+                        "model_path": model_info['path'],
+                        "file_path": output_file
+                    })
+                    continue
+
+                # 创建LLM服务
+                try:
+                    llm_serving = LocalModelLLMServing_vllm(
+                        hf_model_name_or_path=model_info['path'],
+                        vllm_tensor_parallel_size=2,  # 根据GPU数量调整
+                        vllm_max_tokens=1024,
+                        vllm_gpu_memory_utilization=0.8
+                    )
+                    logger.info(f"Model loaded: {model_info['name']}")
+
+                except Exception as e:
+                    logger.error(f"Failed to load model {model_info['name']}: {e}")
+                    continue
+
+                # 创建答案生成器
+                answer_generator = ReasoningAnswerGenerator(
+                    llm_serving=llm_serving,
+                    prompt_template=DiyAnswerGeneratorPrompt(DEFAULT_ANSWER_PROMPT)
                 )
-                
-                # Generate answers in batches
-                answers = []
-                for i in range(0, len(questions), batch_size):
-                    batch_questions = questions[i:i+batch_size]
-                    batch_answers = model_serving.generate_from_input(batch_questions)
-                    answers.extend(batch_answers)
-                    logger.info(f"  Progress: {min(i+batch_size, len(questions))}/{len(questions)}")
-                
-                # Save data with answers
-                output_data = data.copy()
-                for i, item in enumerate(output_data):
-                    item["model_generated_answer"] = answers[i]
-                
-                # Generate safe filename
-                safe_name = "".join(c for c in model['name'] if c.isalnum() or c in ('-', '_'))
-                output_file = f"qa_{safe_name}_answers.json"
-                
-                with open(output_file, 'w', encoding='utf-8') as f:
-                    json.dump(output_data, f, ensure_ascii=False, indent=2)
-                
+
+                # 创建存储
+                cache_path = f"./.cache/eval/{model_info['name']}_generation"
+                storage = FileStorage(
+                    first_entry_file_name=input_file,
+                    cache_path=cache_path,
+                    file_name_prefix="answer_gen",
+                    cache_type="json"
+                )
+
+                # 生成答案
+                logger.info(f"Generating answers for {model_info['name']}...")
+                data_config = self.config.get("DATA_CONFIG", {})
+                question_key = data_config.get("question_key", "input")
+
+                answer_generator.run(
+                    storage=storage.step(),
+                    input_key=question_key,
+                    output_key="model_generated_answer"
+                )
+
+                # 读取生成的结果并保存到最终位置
+                try:
+                    # storage.read() 返回最后写入的文件路径
+                    generated_data_path = f"./.cache/eval/{model_info['name']}_generation/answer_gen_step1.json"
+                    if Path(generated_data_path).exists():
+                        # 复制到标准输出位置
+                        shutil.copy2(generated_data_path, output_file)
+                        logger.info(f"Answers generated and saved to: {output_file}")
+                    else:
+                        logger.error(f"Generated file not found: {generated_data_path}")
+                        continue
+                except Exception as e:
+                    logger.error(f"Failed to process generated answers for {model_info['name']}: {e}")
+                    continue
+
                 generated_files.append({
-                    "model_name": model['name'],
+                    "model_name": model_info['name'],
+                    "model_path": model_info['path'],
                     "file_path": output_file
                 })
-                
-                logger.info(f"Answers saved: {output_file}")
-                
+
             except Exception as e:
-                logger.error(f"Answer generation failed for model {model['name']}: {e}")
+                logger.error(f"Failed to generate answers for model {model_info['name']}: {e}")
                 continue
-        
+
         return generated_files
+
+    def _create_eval_result_path(self, model_name: str) -> str:
+        """创建基于时间的评估结果路径"""
+        timestamp = datetime.now()
+        date_str = timestamp.strftime("%Y-%m-%d")
+        time_str = timestamp.strftime("%H-%M-%S")
+
+        # 清理模型名称
+        clean_model_name = "".join(c for c in model_name if c.isalnum() or c in ('-', '_'))
+
+        # 创建目录结构
+        eval_dir = Path("./eval_results") / date_str / f"{time_str}_{clean_model_name}"
+        eval_dir.mkdir(parents=True, exist_ok=True)
+
+        return str(eval_dir / "eval_result.json")
+
+    def _save_model_info(self, model_name: str, eval_dir: Path, model_path: str = ""):
+        """保存模型信息和配置"""
+        model_info = {
+            "model_name": model_name,
+            "model_path": model_path,
+            "evaluation_time": datetime.now().isoformat(),
+            "eval_config": self.config.get("EVAL_CONFIG", {}),
+            "judge_model": self.config.get("JUDGE_MODEL_CONFIG", {}).get("model_name", "unknown")
+        }
+
+        with open(eval_dir / "model_info.json", 'w', encoding='utf-8') as f:
+            json.dump(model_info, f, ensure_ascii=False, indent=2)
 
     def _run_evaluation(self) -> List[Dict[str, Any]]:
         """运行评估"""
         data_config = self.config.get("DATA_CONFIG", {})
-        
-        # 创建评估器LLM服务
-        logger.info("创建评估器LLM服务...")
+
+        # 创建judge serving
         try:
             judge_serving = self.config["create_judge_serving"]()
-            logger.info("评估器服务创建成功")
         except Exception as e:
-            logger.error(f"评估器服务创建失败: {e}")
+            logger.error(f"Failed to create evaluation service: {e}")
             return []
-        
+
         results = []
-        
+
         for file_info in self.generated_files:
-            logger.info(f"评估模型：{file_info['model_name']}")
-            
+            logger.info(f"Evaluating model: {file_info['model_name']}")
+
             try:
-                # 创建存储
+                # 创建基于时间的结果路径
+                result_file = self._create_eval_result_path(file_info['model_name'])
+                eval_dir = Path(result_file).parent
+
+                # 保存模型信息
+                self._save_model_info(file_info['model_name'], eval_dir, file_info.get('model_path', ''))
+
+                # 创建存储（使用.cache/eval目录）
                 cache_name = "".join(c for c in file_info['model_name'] if c.isalnum() or c in ('-', '_'))
                 storage = self.config["create_storage"](
                     file_info["file_path"],
-                    f"./eval_cache_{cache_name}"
+                    f"./.cache/eval/{cache_name}"
                 )
-                
+
                 # 创建评估器
-                result_file = f"./eval_result_{cache_name}.json"
                 evaluator = self.config["create_evaluator"](judge_serving, result_file)
-                
+
                 # 运行评估
+                evaluator_config = self.config.get("EVALUATOR_RUN_CONFIG", {})
                 evaluator.run(
                     storage=storage.step(),
-                    input_test_answer_key="model_generated_answer",
-                    input_gt_answer_key=data_config.get("reference_answer_key", "output"),
-                    input_question_key=data_config.get("question_key", "input")
+                    input_test_answer_key=evaluator_config.get("input_test_answer_key", "model_generated_answer"),
+                    input_gt_answer_key=evaluator_config.get("input_gt_answer_key", "output"),
+                    input_question_key=evaluator_config.get("input_question_key", "input")
                 )
-                
+
                 # 读取结果
                 if Path(result_file).exists():
                     with open(result_file, 'r', encoding='utf-8') as f:
                         result_data = json.load(f)
                         if isinstance(result_data, list) and result_data:
                             result_data[0]["model_name"] = file_info['model_name']
+                            result_data[0]["result_file"] = result_file
                             results.append(result_data[0])
-                            
+
             except Exception as e:
-                logger.error(f"模型 {file_info['model_name']} 评估失败：{e}")
+                logger.error(f"Failed to evaluate model {file_info['model_name']}: {e}")
                 continue
-        
+
         return results
 
     def _generate_report(self, results: List[Dict[str, Any]]):
         """生成对比报告"""
         if not results:
-            logger.warning("没有有效的评估结果")
+            logger.warning("No valid evaluation results")
             return
-        
-        print("\n" + "="*60)
-        print("模型评估结果对比")
-        print("="*60)
-        
+
+        print("\n" + "=" * 60)
+        print("Model Evaluation Results Comparison")
+        print("=" * 60)
+
         # 按准确率排序
         sorted_results = sorted(results, key=lambda x: x.get("accuracy", 0), reverse=True)
-        
+
         for i, result in enumerate(sorted_results, 1):
             print(f"{i}. {result.get('model_name', 'Unknown')}")
-            print(f"   准确率: {result.get('accuracy', 0):.3f}")
-            print(f"   样本数: {result.get('total_samples', 0)}")
-            print(f"   匹配数: {result.get('matched_samples', 0)}")
+            print(f"   Accuracy: {result.get('accuracy', 0):.3f}")
+            print(f"   Total samples: {result.get('total_samples', 0)}")
+            print(f"   Matched samples: {result.get('matched_samples', 0)}")
+            print(f"   Result file: {result.get('result_file', 'N/A')}")
             print()
-        
+
         # 保存详细报告
         report = {
             "evaluation_summary": {
                 "total_models": len(results),
+                "evaluation_time": datetime.now().isoformat(),
                 "results": sorted_results
             }
         }
-        
-        report_file = "model_comparison_report.json"
+
+        report_file = "./eval_results/model_comparison_report.json"
+        Path(report_file).parent.mkdir(parents=True, exist_ok=True)
         with open(report_file, 'w', encoding='utf-8') as f:
             json.dump(report, f, ensure_ascii=False, indent=2)
-        
-        print(f"详细报告已保存：{report_file}")
-        print("="*60)
+
+        print(f"Detailed report saved: {report_file}")
+        print("=" * 60)
 
     def _show_no_models_help(self):
         """显示无模型时的帮助信息"""
-        print("未检测到可用的模型进行评估")
+        print("No available models detected for evaluation")
         print()
-        print("解决方案:")
-        print("1. 训练模型:")
+        print("Solutions:")
+        print("1. Train models:")
         print("   dataflow text2model init && dataflow text2model train")
         print()
-        print("2. 手动指定模型 - 编辑配置文件:")
+        print("2. Manually specify models - edit config file:")
         print("   TARGET_MODELS = {")
         print("       'auto_detect': False,")
         print("       'models': [")
@@ -511,200 +560,154 @@ class EvaluationPipeline:
         print("       ]")
         print("   }")
 
+
 # =============================================================================
 # CLI工具类
 # =============================================================================
 
-# 内置模板
-EVAL_API_TEMPLATE = '''# eval_api.py - 评估配置文件
-"""DataFlow API评估配置"""
-
-import os
-from dataflow.operators.core_text import BenchDatasetEvaluator
-from dataflow.serving import APILLMServing_request
-from dataflow.utils.storage import FileStorage
-
-class FairAnswerJudgePrompt:
-    """公平的答案评判提示词模板"""
-    
-    def build_prompt(self, question, answer, reference_answer):
-        prompt = f"""
-You are an expert evaluator assessing answer quality.
-
-**Question:**
-{question}
-
-**Answer to Evaluate:**
-{answer}
-
-Judge based on: factual accuracy, completeness, relevance.
-Reference: {reference_answer}
-
-Return JSON: {{"judgement_result": true/false}}
-
-Your judgment:
-"""
-        return prompt
-
-# 配置参数
-JUDGE_MODEL_CONFIG = {
-    "model_name": "gpt-4o-mini",
-    "api_url": "http://123.129.219.111:3000/v1/chat/completions",
-    "api_key_env": "DF_API_KEY",
-    "max_workers": 3
-}
-
-TARGET_MODELS = {
-    "auto_detect": True,
-    "models": []
-}
-
-DATA_CONFIG = {
-    "input_file": "./.cache/data/qa.json",
-    "question_key": "input",
-    "reference_answer_key": "output"
-}
-
-EVAL_CONFIG = {
-    "compare_method": "semantic",
-    "batch_size": 8,
-    "max_tokens": 512,
-    # VLLM GPU memory management configuration - only supported parameters
-    "vllm_gpu_memory_utilization": 0.75,  # GPU memory utilization (reduced to 75%)
-    "vllm_max_model_len": 16384,           # Maximum sequence length (reduced for memory)
-}
-
-def create_judge_serving():
-    api_key_env = JUDGE_MODEL_CONFIG["api_key_env"]
-    if api_key_env not in os.environ:
-        raise ValueError(f"环境变量 {api_key_env} 未设置")
-    
-    return APILLMServing_request(
-        api_url=JUDGE_MODEL_CONFIG["api_url"],
-        key_name_of_api_key=api_key_env,
-        model_name=JUDGE_MODEL_CONFIG["model_name"],
-        max_workers=JUDGE_MODEL_CONFIG["max_workers"]
-    )
-
-def create_evaluator(judge_serving, eval_result_path):
-    return BenchDatasetEvaluator(
-        compare_method=EVAL_CONFIG["compare_method"],
-        llm_serving=judge_serving,
-        prompt_template=FairAnswerJudgePrompt(),
-        eval_result_path=eval_result_path
-    )
-
-def create_storage(data_file, cache_path):
-    return FileStorage(
-        first_entry_file_name=data_file,
-        cache_path=cache_path,
-        file_name_prefix="eval_result",
-        cache_type="json"
-    )
-
-def get_evaluator_config():
-    return {
-        "JUDGE_MODEL_CONFIG": JUDGE_MODEL_CONFIG,
-        "TARGET_MODELS": TARGET_MODELS,
-        "DATA_CONFIG": DATA_CONFIG,
-        "EVAL_CONFIG": EVAL_CONFIG,
-        "create_judge_serving": create_judge_serving,
-        "create_evaluator": create_evaluator,
-        "create_storage": create_storage
-    }
-
-if __name__ == "__main__":
-    from dataflow.cli_funcs.cli_eval import run_evaluation
-    config = get_evaluator_config()
-    run_evaluation(config)
-'''
-
 class DataFlowEvalCLI:
     """DataFlow 评估命令行工具"""
-    
+
     def __init__(self):
         self.current_dir = Path.cwd()
-    
-    def init_eval_file(self, eval_type: str = "api", output_file: str = None):
-        """生成评估配置文件"""
-        if eval_type not in ["api", "local"]:
-            logger.error("评估类型必须是 'api' 或 'local'")
-            return False
-        
-        if output_file is None:
-            output_file = f"eval_{eval_type}.py"
-        
-        output_path = self.current_dir / output_file
-        
-        # 检查是否已存在
-        if output_path.exists():
-            logger.warning(f"文件 {output_file} 已存在，是否覆盖？(y/n)")
-            user_input = input().strip().lower()
+
+    def _get_template_path(self, eval_type: str) -> Path:
+        """获取模板文件路径"""
+        # 直接硬编码路径
+        current_file = Path(__file__)  # cli_eval.py的路径
+        dataflow_dir = current_file.parent.parent  # dataflow目录
+        template_path = dataflow_dir / "cli_funcs" / "eval_pipeline" / f"eval_{eval_type}.py"
+        return template_path
+
+    def init_eval_files(self):
+        """生成评估配置文件 - 一次性复制两个模板"""
+        files_to_create = [
+            ("eval_api.py", "api"),
+            ("eval_local.py", "local")
+        ]
+
+        created_files = []
+        existing_files = []
+
+        # 检查已存在的文件
+        for filename, eval_type in files_to_create:
+            output_path = self.current_dir / filename
+            if output_path.exists():
+                existing_files.append(filename)
+
+        # 如果有文件已存在，询问是否覆盖
+        if existing_files:
+            logger.warning(f"Following files already exist: {', '.join(existing_files)}")
+            user_input = input("Overwrite? (y/n): ").strip().lower()
             if user_input != 'y':
-                logger.info("操作取消")
+                logger.info("Operation cancelled")
                 return False
-        
-        try:
-            # 写入模板内容
-            template_content = EVAL_API_TEMPLATE if eval_type == "api" else EVAL_API_TEMPLATE
-            with open(output_path, 'w', encoding='utf-8') as f:
-                f.write(template_content)
-                
-            logger.info(f"评估配置文件已生成：{output_path}")
-            logger.info(f"请编辑 {output_file} 文件配置您的评估参数，然后运行：")
-            logger.info(f"python {output_file}")
+
+        # 复制文件
+        for filename, eval_type in files_to_create:
+            try:
+                output_path = self.current_dir / filename
+
+                # 获取内置模板文件路径
+                template_path = self._get_template_path(eval_type)
+
+                if not template_path.exists():
+                    logger.error(f"Built-in template file does not exist: {template_path}")
+                    continue
+
+                # 复制文件
+                shutil.copy2(template_path, output_path)
+                created_files.append(filename)
+                logger.info(f"Created: {filename}")
+
+            except Exception as e:
+                logger.error(f"Failed to create {filename}: {e}")
+                continue
+
+        if created_files:
+            logger.info(f"\nEvaluation config files initialization complete!")
+            logger.info("Created files:")
+            for filename in created_files:
+                logger.info(f"  - {filename}")
+            logger.info("\nUsage:")
+            logger.info("  dataflow eval api    # API model evaluation")
+            logger.info("  dataflow eval local  # Local model evaluation")
+            logger.info("\nYou can edit these files to customize evaluation configuration")
             return True
-            
-        except Exception as e:
-            logger.error(f"生成文件失败：{str(e)}")
+        else:
+            logger.error("No config files created successfully")
             return False
-    
-    def run_eval_file(self, eval_type: str, eval_file: str, cli_args=None):
-        """运行评估文件"""
-        eval_path = Path(eval_file)
-        
+
+    def run_eval_file(self, eval_type: str, eval_file: str, cli_args):
+        """运行评估 - 动态导入用户配置"""
+        eval_path = self.current_dir / eval_file
+
         if not eval_path.exists():
-            logger.error(f"评估文件不存在：{eval_file}")
-            logger.info(f"请先运行 'dataflow eval init --type {eval_type}' 生成配置文件")
+            logger.error(f"Evaluation config file does not exist: {eval_path}")
+            logger.info(f"Please run first: dataflow eval init")
             return False
-        
+
         try:
-            logger.info(f"开始运行 {eval_type} 模型评估：{eval_file}")
-            
-            # 动态导入配置文件
-            spec = importlib.util.spec_from_file_location("user_eval_config", eval_path.resolve())
-            if spec is None or spec.loader is None:
-                logger.error(f"无法加载配置文件：{eval_file}")
+            # 动态导入用户的配置文件
+            config = self._import_user_config(eval_path)
+            if not config:
                 return False
-                
+
+            # 应用CLI参数覆盖
+            if hasattr(cli_args, 'models') and cli_args.models:
+                model_list = [m.strip() for m in cli_args.models.split(',')]
+                config["TARGET_MODELS"]["auto_detect"] = False
+                config["TARGET_MODELS"]["models"] = model_list
+                logger.info(f"Using specified models: {model_list}")
+
+            # 运行评估
+            success = run_evaluation(config, cli_args)
+            return success
+
+        except Exception as e:
+            logger.error(f"Failed to run evaluation: {e}")
+            return False
+
+    def _import_user_config(self, config_path: Path):
+        """动态导入用户配置文件"""
+        try:
+            # 创建模块规范
+            spec = importlib.util.spec_from_file_location("user_eval_config", config_path)
+            if spec is None:
+                logger.error(f"Cannot create module spec: {config_path}")
+                return None
+
+            # 创建模块
             user_config_module = importlib.util.module_from_spec(spec)
+
+            # 执行模块
             spec.loader.exec_module(user_config_module)
-            
-            # 获取配置并运行
+
+            # 获取配置
             if hasattr(user_config_module, 'get_evaluator_config'):
                 config = user_config_module.get_evaluator_config()
-                pipeline = EvaluationPipeline(config, cli_args)
-                return pipeline.run()
+                logger.info(f"Successfully loaded config: {config_path}")
+                return config
             else:
-                logger.error(f"配置文件 {eval_file} 中没有找到 get_evaluator_config 函数")
-                return False
-                
+                logger.error(f"Config file missing get_evaluator_config() function: {config_path}")
+                return None
+
         except Exception as e:
-            logger.error(f"运行评估文件失败：{str(e)}")
-            import traceback
-            traceback.print_exc()
-            return False
-    
+            logger.error(f"Failed to import config file: {e}")
+            logger.error(f"Please check config file syntax: {config_path}")
+            return None
+
     def list_eval_files(self):
         """列出当前目录下的评估文件"""
         eval_files = list(self.current_dir.glob("eval_*.py"))
         if eval_files:
-            logger.info("找到以下评估配置文件：")
+            logger.info("Found following evaluation config files:")
             for eval_file in eval_files:
                 logger.info(f"  - {eval_file.name}")
         else:
-            logger.info("当前目录下没有找到评估配置文件")
-            logger.info("请运行 'dataflow eval init' 生成配置文件")
+            logger.info("No evaluation config files found in current directory")
+            logger.info("Please run 'dataflow eval init' to generate config files")
+
 
 # =============================================================================
 # 简化的执行接口
@@ -712,74 +715,109 @@ class DataFlowEvalCLI:
 
 def run_evaluation(config, cli_args=None):
     """运行评估"""
-    logger.info("DataFlow 模型评估开始")
-    
+    logger.info("DataFlow model evaluation started")
+
     try:
         pipeline = EvaluationPipeline(config, cli_args)
         success = pipeline.run()
-        
+
         if success:
-            logger.info("模型评估完成")
+            logger.info("Model evaluation completed")
         else:
-            logger.error("模型评估失败")
-            
+            logger.error("Model evaluation failed")
+
         return success
-        
+
     except Exception as e:
-        logger.error(f"评估失败：{str(e)}")
+        logger.error(f"Evaluation failed: {str(e)}")
         raise
 
+
 def cli_eval():
-    """评估命令行入口函数 - 简化版"""
-    parser = argparse.ArgumentParser(description="DataFlow 评估工具")
-    subparsers = parser.add_subparsers(dest="command", help="可用命令")
-    
-    # init 子命令
-    init_parser = subparsers.add_parser("init", help="生成评估配置文件")
-    init_parser.add_argument("--type", choices=["api", "local"], default="api", help="配置类型")
-    init_parser.add_argument("--output", help="输出文件名")
-    
+    """评估命令行入口函数"""
+    parser = argparse.ArgumentParser(description="DataFlow Evaluation Tool")
+    subparsers = parser.add_subparsers(dest="command", help="Available commands")
+
+    # init 子命令 - 简化，不需要type参数
+    init_parser = subparsers.add_parser("init",
+                                        help="Initialize evaluation config files (creates eval_api.py and eval_local.py)")
+
     # api 子命令
-    api_parser = subparsers.add_parser("api", help="使用API模型评估")
-    api_parser.add_argument("--models", help="逗号分隔的模型列表")
-    api_parser.add_argument("eval_file", nargs='?', default="eval_api.py", help="评估配置文件")
-    
+    api_parser = subparsers.add_parser("api", help="API model evaluation")
+    api_parser.add_argument("--models", help="Comma-separated list of models")
+    api_parser.add_argument("eval_file", nargs='?', default="eval_api.py", help="Evaluation config file")
+
     # local 子命令
-    local_parser = subparsers.add_parser("local", help="使用本地模型评估")
-    local_parser.add_argument("--models", help="逗号分隔的模型列表")
-    local_parser.add_argument("eval_file", nargs='?', default="eval_local.py", help="评估配置文件")
-    
+    local_parser = subparsers.add_parser("local", help="Local model evaluation")
+    local_parser.add_argument("--models", help="Comma-separated list of models")
+    local_parser.add_argument("eval_file", nargs='?', default="eval_local.py", help="Evaluation config file")
+
     # list 子命令
-    list_parser = subparsers.add_parser("list", help="列出评估配置文件")
-    
+    list_parser = subparsers.add_parser("list", help="List evaluation config files")
+
+    # 新增：清除缓存命令
+    clear_parser = subparsers.add_parser("clear-cache", help="Clear evaluation cache files")
+
     args = parser.parse_args()
-    
+
     if not args.command:
         parser.print_help()
         return
-    
+
     cli = DataFlowEvalCLI()
-    
+
     try:
         if args.command == "init":
-            success = cli.init_eval_file(args.type, args.output)
+            success = cli.init_eval_files()
             if success:
-                logger.info("配置文件初始化成功")
-                
+                logger.info("Config files initialization successful")
+
         elif args.command in ["api", "local"]:
             success = cli.run_eval_file(args.command, args.eval_file, args)
             if success:
-                logger.info("评估完成")
+                logger.info("Evaluation completed")
             else:
-                logger.error("评估失败")
-                
+                logger.error("Evaluation failed")
+
         elif args.command == "list":
             cli.list_eval_files()
-            
+
+        elif args.command == "clear-cache":
+            cli.clear_evaluation_cache()
+
     except KeyboardInterrupt:
-        logger.info("用户中断操作")
+        logger.info("User interrupted operation")
     except Exception as e:
-        logger.error(f"执行过程中发生错误: {str(e)}")
+        logger.error(f"Error occurred during execution: {str(e)}")
+
+
+# 为DataFlowEvalCLI类添加清除缓存方法
+def clear_evaluation_cache(self):
+    """清除评估缓存文件"""
+    cache_paths = [
+        "./.cache/eval",
+        "./eval_results"
+    ]
+
+    cleared_count = 0
+    for cache_path in cache_paths:
+        cache_dir = Path(cache_path)
+        if cache_dir.exists():
+            try:
+                shutil.rmtree(cache_dir)
+                logger.info(f"Cleared cache directory: {cache_path}")
+                cleared_count += 1
+            except Exception as e:
+                logger.error(f"Failed to clear {cache_path}: {e}")
+
+    if cleared_count > 0:
+        logger.info(f"Successfully cleared {cleared_count} cache directories")
+    else:
+        logger.info("No cache directories found to clear")
+
+
+# 添加方法到类中
+DataFlowEvalCLI.clear_evaluation_cache = clear_evaluation_cache
 
 if __name__ == "__main__":
     cli_eval()

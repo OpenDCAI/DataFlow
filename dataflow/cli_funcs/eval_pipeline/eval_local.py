@@ -1,27 +1,71 @@
-# eval_local.py - 包含算子配置的本地评估配置文件
-"""DataFlow 本地评估配置 - 包含算子实例化"""
+# eval_local.py - 本地评估配置文件
+"""DataFlow Local Evaluation Configuration - Enhanced Version"""
 
 from pathlib import Path
 from dataflow.operators.core_text import BenchDatasetEvaluator
 from dataflow.serving import LocalModelLLMServing_vllm
 from dataflow.utils.storage import FileStorage
 
-# ============================================================================= 
-# 基础配置参数
+
+# =============================================================================
+# Fair Evaluation Prompt Template
 # =============================================================================
 
-# 评估器配置（本地强模型作为裁判）
+class FairAnswerJudgePrompt:
+    """Fair answer evaluation prompt template with English prompts"""
+
+    def build_prompt(self, question, answer, reference_answer):
+        prompt = f"""You are an expert evaluator assessing answer quality for academic questions.
+
+**Question:**
+{question}
+
+**Answer to Evaluate:**
+{answer}
+
+**Evaluation Instructions:**
+Judge this answer based on:
+1. **Factual Accuracy**: Is the information correct?
+2. **Completeness**: Does it address the key aspects of the question?
+3. **Relevance**: Is it directly related to what was asked?
+4. **Academic Quality**: Is the reasoning sound and appropriate?
+
+**Important Guidelines:**
+- Focus on content correctness, not writing style
+- A good answer may be longer, shorter, or differently structured
+- Accept different valid approaches or explanations
+- Judge based on whether the answer demonstrates correct understanding
+- Consider partial credit for answers that are mostly correct
+
+**Reference Answer (for context only):** {reference_answer}
+
+**Output Format:**
+Return your judgment in JSON format:
+{{"judgement_result": true}} if the answer is factually correct and adequately addresses the question
+{{"judgement_result": false}} if the answer contains significant errors or fails to address the question
+
+**Your Judgment:**"""
+        return prompt
+
+
+# =============================================================================
+# Configuration Parameters
+# =============================================================================
+
+# Judge Model Configuration (local strong model as judge)
 JUDGE_MODEL_CONFIG = {
-    "model_path": "./Qwen2.5-14B-Instruct",  # 用更强的模型做裁判
+    "model_path": "./Qwen2.5-7B-Instruct",  # 用更强的模型做裁判
     "tensor_parallel_size": 2,
     "max_tokens": 512,
-    "gpu_memory_utilization": 0.8
+    "gpu_memory_utilization": 0.8,
 }
 
-# 被评估模型配置（与API模式相同）
+# Target Models Configuration (same as API mode)
 TARGET_MODELS = {
-    "auto_detect": True,
+    "auto_detect": False,
     "models": [
+        "./Qwen2.5-3B-Instruct",
+        "./Qwen2.5-7B-Instruct"
         # 当 auto_detect=False 时，手动指定要评估的模型
         # "Qwen/Qwen2.5-7B-Instruct",
         # "meta-llama/Llama-3-8B-Instruct",
@@ -30,56 +74,78 @@ TARGET_MODELS = {
     ]
 }
 
-# 数据配置（与API模式相同）
+# Data Configuration (same as API mode)
 DATA_CONFIG = {
     "input_file": "./.cache/data/qa.json",
-    "output_dir": "./eval_results", 
+    "output_dir": "./eval_results",
     "question_key": "input",
     "reference_answer_key": "output"
 }
 
+# Evaluator Run Configuration (parameters passed to BenchDatasetEvaluator.run)
 EVALUATOR_RUN_CONFIG = {
     "input_test_answer_key": "model_generated_answer",  # 模型生成的答案字段名
-    "input_gt_answer_key": "output",                    # 标准答案字段名（对应原始数据）
-    "input_question_key": "input"                       # 问题字段名（对应原始数据）
+    "input_gt_answer_key": "output",  # 标准答案字段名（对应原始数据）
+    "input_question_key": "input"  # 问题字段名（对应原始数据）
 }
 
-# 评估配置（与API模式相同）
+# Evaluation Configuration (same as API mode)
 EVAL_CONFIG = {
     "compare_method": "semantic",  # "semantic" 或 "match"
     "batch_size": 8,
     "max_tokens": 512
 }
 
+
 # =============================================================================
-# 算子实例化 - DataFlow 风格
+# Component Creation Functions - DataFlow Style
 # =============================================================================
 
 def create_judge_serving():
     """创建本地评估器LLM服务"""
     model_path = JUDGE_MODEL_CONFIG["model_path"]
-    
-    # 检查本地模型路径（对于HuggingFace模型ID，跳过检查）
-    if not model_path.startswith(("Qwen", "meta-llama", "microsoft", "google")) and not Path(model_path).exists():
-        raise ValueError(f"模型路径不存在：{model_path}")
-    
-    return LocalModelLLMServing_vllm(
-        hf_model_name_or_path=model_path,
-        vllm_tensor_parallel_size=JUDGE_MODEL_CONFIG.get("tensor_parallel_size", 1),
-        vllm_max_tokens=JUDGE_MODEL_CONFIG.get("max_tokens", 512),
-        vllm_gpu_memory_utilization=JUDGE_MODEL_CONFIG.get("gpu_memory_utilization", 0.8)
-    )
+
+    # Enhanced model path validation
+    if not model_path.startswith(("Qwen", "meta-llama", "microsoft", "google", "huggingface.co")):
+        model_path_obj = Path(model_path)
+        if not model_path_obj.exists():
+            raise FileNotFoundError(f"Local model path does not exist: {model_path}")
+
+        # Check for required model files
+        required_files = ["config.json"]
+        missing_files = [f for f in required_files if not (model_path_obj / f).exists()]
+        if missing_files:
+            raise ValueError(f"Missing required model files in {model_path}: {missing_files}")
+
+    # Enhanced VLLM configuration
+    vllm_config = {
+        "hf_model_name_or_path": model_path,
+        "vllm_tensor_parallel_size": JUDGE_MODEL_CONFIG.get("tensor_parallel_size", 1),
+        "vllm_max_tokens": JUDGE_MODEL_CONFIG.get("max_tokens", 512),
+        "vllm_gpu_memory_utilization": JUDGE_MODEL_CONFIG.get("gpu_memory_utilization", 0.8)
+    }
+
+    # Add optional VLLM parameters if they exist
+    optional_params = ["dtype", "trust_remote_code", "enforce_eager", "disable_log_stats"]
+    for param in optional_params:
+        if param in JUDGE_MODEL_CONFIG:
+            vllm_config[f"vllm_{param}"] = JUDGE_MODEL_CONFIG[param]
+
+    return LocalModelLLMServing_vllm(**vllm_config)
+
 
 def create_evaluator(judge_serving, eval_result_path):
     """创建评估算子"""
     return BenchDatasetEvaluator(
         compare_method=EVAL_CONFIG["compare_method"],
         llm_serving=judge_serving,
+        prompt_template=FairAnswerJudgePrompt(),
         eval_result_path=eval_result_path
     )
 
+
 def create_storage(data_file, cache_path):
-    """创建存储算子"""  
+    """创建存储算子"""
     return FileStorage(
         first_entry_file_name=data_file,
         cache_path=cache_path,
@@ -87,8 +153,9 @@ def create_storage(data_file, cache_path):
         cache_type="json"
     )
 
+
 # =============================================================================
-# 配置获取函数
+# Main Configuration Function
 # =============================================================================
 
 def get_evaluator_config():
@@ -104,19 +171,26 @@ def get_evaluator_config():
         "create_storage": create_storage
     }
 
+
 # =============================================================================
-# 如果直接运行此文件
+# Direct Execution Support
 # =============================================================================
 
 if __name__ == "__main__":
     # 直接运行时的简单评估
-    print("开始评估...")
+    print("Starting local evaluation...")
     from dataflow.cli_funcs.cli_eval import run_evaluation
-    
-    config = get_evaluator_config()
-    success = run_evaluation(config)
-    
-    if success:
-        print("评估完成")
-    else:
-        print("评估失败")
+
+    try:
+        config = get_evaluator_config()
+        success = run_evaluation(config)
+
+        if success:
+            print("Local evaluation completed successfully")
+        else:
+            print("Local evaluation failed")
+    except Exception as e:
+        print(f"Evaluation error: {e}")
+        import traceback
+
+        traceback.print_exc()
