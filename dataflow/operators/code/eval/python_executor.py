@@ -19,9 +19,14 @@ from contextlib import redirect_stdout
 import base64
 from io import BytesIO
 from PIL import Image
-import matplotlib
-matplotlib.use('Agg')
-import matplotlib.pyplot as plt
+try:
+    import matplotlib
+    matplotlib.use('Agg')
+    import matplotlib.pyplot as plt
+    MATPLOTLIB_AVAILABLE = True
+except ImportError:
+    MATPLOTLIB_AVAILABLE = False
+    plt = None
 import numpy as np
 import time
 import queue
@@ -262,7 +267,7 @@ class GenericRuntime:
             raise RuntimeError("Forbidden function calls detected")
         
         # Detect and modify plt.show() calls
-        if "plt.show()" in code_piece:
+        if "plt.show()" in code_piece and MATPLOTLIB_AVAILABLE:
             modified_code = code_piece.replace("plt.show()", """
 # Capture current figure
 buf = io.BytesIO()
@@ -298,9 +303,14 @@ plt.close()
 
 class ImageRuntime(GenericRuntime):
     HEADERS = [
-        "import matplotlib",
-        "matplotlib.use('Agg')",  # Use non-interactive backend
-        "import matplotlib.pyplot as plt",
+        "try:",
+        "    import matplotlib",
+        "    matplotlib.use('Agg')",  # Use non-interactive backend
+        "    import matplotlib.pyplot as plt",
+        "    MATPLOTLIB_AVAILABLE = True",
+        "except ImportError:",
+        "    MATPLOTLIB_AVAILABLE = False",
+        "    plt = None",
         "from PIL import Image",
         "import io",
         "import base64",
