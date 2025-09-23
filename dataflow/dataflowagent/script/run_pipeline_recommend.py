@@ -18,7 +18,7 @@ async def main() -> None:
         json_file=f"{DATAFLOW_DIR}/dataflow/example/DataflowAgent/mq_test_data.jsonl",
         target="我需要 2 个reasoning的算子！",
         python_file_path = f"{DATAFLOW_DIR}/dataflow/dataflowagent/tests/my_pipeline.py",  # pipeline的输出脚本路径
-        need_debug = True,
+        need_debug = False,
         max_debug_rounds = 3, #Debug的轮次数量
     )
     state = DFState(request=req, messages=[])

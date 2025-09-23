@@ -177,21 +177,25 @@ def create_pipeline_graph() -> GenericGraphBuilder:
     # Ⅲ. 条件函数
     # ------------------------------------------------------------------
     def builder_condition(s: DFState):
-        # ① 仅当调试阶段成功，才回到 builder
-        if (
-            s.execution_result.get("success")
-            and s.temp_data.pop("debug_sample_file", None)  
-        ):
-            return "builder"
+        if s.request.need_debug:
+            # ① 仅当调试阶段成功，才回到 builder
+            if (
+                s.execution_result.get("success")
+                and s.temp_data.pop("debug_sample_file", None)  
+            ):
+                return "builder"
 
-        # ② 正式流程成功 → 结束
-        if s.execution_result.get("success"):
-            return "__end__"
+            # ② 正式流程成功 → 结束
+            if s.execution_result.get("success"):
+                return "__end__"
 
-        # ③ 其它情况照旧
-        if s.temp_data.get("round", 0) >= s.request.max_debug_rounds:
+            # ③ 其它情况照旧
+            if s.temp_data.get("round", 0) >= s.request.max_debug_rounds:
+                return "__end__"
+            return "code_debugger"
+        else:
+            # 非调试模式，成功就结束，失败也结束
             return "__end__"
-        return "code_debugger"
 
     # ------------------------------------------------------------------
     # Ⅳ. 组图
