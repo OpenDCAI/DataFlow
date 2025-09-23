@@ -638,8 +638,80 @@ class DataFlowEvalCLI:
             logger.error("No config files created successfully")
             return False
 
+    def _validate_config(self, config: Dict[str, Any], eval_type: str = None) -> bool:
+        """验证配置文件的必要参数 - 根据评估类型区分验证"""
+        required_keys = [
+            "TARGET_MODELS",
+            "JUDGE_MODEL_CONFIG",
+            "DATA_CONFIG",
+            "create_judge_serving",
+            "create_evaluator",
+            "create_storage"
+        ]
+
+        for key in required_keys:
+            if key not in config:
+                logger.error(f"Missing required config key: {key}")
+                return False
+
+        # 验证 TARGET_MODELS 结构
+        target_models = config.get("TARGET_MODELS", {})
+        if not isinstance(target_models, dict):
+            logger.error("TARGET_MODELS must be a dictionary")
+            return False
+
+        if "auto_detect" not in target_models:
+            logger.error("TARGET_MODELS missing 'auto_detect' parameter")
+            return False
+
+        # 验证 JUDGE_MODEL_CONFIG - 根据评估类型区分
+        judge_config = config.get("JUDGE_MODEL_CONFIG", {})
+        if not isinstance(judge_config, dict):
+            logger.error("JUDGE_MODEL_CONFIG must be a dictionary")
+            return False
+
+        # 修复：确保正确处理不同的评估类型
+        if eval_type == "api":
+            # API 模式验证 - 需要 model_name, api_url, api_key_env
+            required_judge_keys = ["model_name", "api_url", "api_key_env"]
+            for key in required_judge_keys:
+                if key not in judge_config:
+                    logger.error(f"JUDGE_MODEL_CONFIG missing required key for API mode: {key}")
+                    return False
+
+            # 验证API密钥环境变量
+            api_key_env = judge_config.get("api_key_env")
+            if api_key_env and api_key_env not in os.environ:
+                logger.error(f"❌ API key environment variable not set: {api_key_env}")
+                logger.info(f"💡 Please set: export {api_key_env}='your_api_key'")
+                return False
+
+        elif eval_type == "local":
+            # Local 模式验证 - 需要 model_path（不是 model_name！）
+            required_judge_keys = ["model_path"]
+            for key in required_judge_keys:
+                if key not in judge_config:
+                    logger.error(f"JUDGE_MODEL_CONFIG missing required key for Local mode: {key}")
+                    logger.info(f"💡 Local mode should use 'model_path', not 'model_name'")
+                    return False
+
+            # 验证本地模型路径
+            model_path = judge_config.get("model_path")
+            if model_path and not model_path.startswith(("Qwen", "meta-llama", "microsoft", "google")):
+                # 如果是本地路径，检查是否存在
+                model_path_obj = Path(model_path)
+                if not model_path_obj.exists():
+                    logger.error(f"❌ Local model path does not exist: {model_path}")
+                    logger.info(f"💡 Please check your model path in eval_local.py")
+                    return False
+        else:
+            logger.warning(f"Unknown eval_type: {eval_type}, skipping specific validation")
+
+        logger.debug("✅ Configuration validation passed")
+        return True
+
     def run_eval_file(self, eval_type: str, eval_file: str, cli_args):
-        """运行评估 - 动态导入用户配置"""
+        """运行评估 - 修复版本，确保正确传递评估类型"""
         eval_path = self.current_dir / eval_file
 
         if not eval_path.exists():
@@ -651,6 +723,15 @@ class DataFlowEvalCLI:
             # 动态导入用户的配置文件
             config = self._import_user_config(eval_path)
             if not config:
+                logger.error("❌ Configuration file parameters are incorrect")
+                logger.info("💡 Please check your config file contains get_evaluator_config() function")
+                return False
+
+            # 验证配置文件必要参数 - 修复：确保传入正确的评估类型
+            logger.debug(f"Validating config for eval_type: {eval_type}")
+            if not self._validate_config(config, eval_type):
+                logger.error("❌ Configuration file parameters are incorrect")
+                logger.info("💡 Please run 'dataflow eval init' to regenerate config files")
                 return False
 
             # 应用CLI参数覆盖
@@ -660,12 +741,33 @@ class DataFlowEvalCLI:
                 config["TARGET_MODELS"]["models"] = model_list
                 logger.info(f"Using specified models: {model_list}")
 
+            # 处理 --no-auto 参数
+            if hasattr(cli_args, 'no_auto') and cli_args.no_auto:
+                config["TARGET_MODELS"]["auto_detect"] = False
+                logger.info("Auto-detection disabled by --no-auto parameter")
+
+                # 如果既没有 --models 也没有配置文件中的模型，给出警告
+                if not config["TARGET_MODELS"].get("models"):
+                    logger.warning("❌ No models specified and auto-detection disabled")
+                    logger.info("💡 Solutions:")
+                    logger.info("   1. Add models to config file: TARGET_MODELS['models'] = ['model1', 'model2']")
+                    logger.info("   2. Use --models parameter: dataflow eval local --models 'model1,model2'")
+                    logger.info("   3. Remove --no-auto to enable auto-detection")
+                    return False
+
             # 运行评估
             success = run_evaluation(config, cli_args)
             return success
 
         except Exception as e:
-            logger.error(f"Failed to run evaluation: {e}")
+            logger.error(f"❌ Configuration file parameters are incorrect: {e}")
+            logger.info("💡 Troubleshooting steps:")
+            logger.info(f"   1. Check config file syntax: python -m py_compile {eval_file}")
+            logger.info("   2. Regenerate config: dataflow eval init")
+            if eval_type == "api":
+                logger.info("   3. Verify API keys: echo $DF_API_KEY")
+            else:
+                logger.info("   3. Check local model paths in config")
             return False
 
     def _import_user_config(self, config_path: Path):

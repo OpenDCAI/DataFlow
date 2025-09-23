@@ -17,34 +17,34 @@ class FairAnswerJudgePrompt:
     def build_prompt(self, question, answer, reference_answer):
         prompt = f"""You are an expert evaluator assessing answer quality for academic questions.
 
-**Question:**
-{question}
-
-**Answer to Evaluate:**
-{answer}
-
-**Evaluation Instructions:**
-Judge this answer based on:
-1. **Factual Accuracy**: Is the information correct?
-2. **Completeness**: Does it address the key aspects of the question?
-3. **Relevance**: Is it directly related to what was asked?
-4. **Academic Quality**: Is the reasoning sound and appropriate?
-
-**Important Guidelines:**
-- Focus on content correctness, not writing style
-- A good answer may be longer, shorter, or differently structured
-- Accept different valid approaches or explanations
-- Judge based on whether the answer demonstrates correct understanding
-- Consider partial credit for answers that are mostly correct
-
-**Reference Answer (for context only):** {reference_answer}
-
-**Output Format:**
-Return your judgment in JSON format:
-{{"judgement_result": true}} if the answer is factually correct and adequately addresses the question
-{{"judgement_result": false}} if the answer contains significant errors or fails to address the question
-
-**Your Judgment:**"""
+        **Question:**
+        {question}
+        
+        **Answer to Evaluate:**
+        {answer}
+        
+        **Evaluation Instructions:**
+        Judge this answer based on:
+        1. **Factual Accuracy**: Is the information correct?
+        2. **Completeness**: Does it address the key aspects of the question?
+        3. **Relevance**: Is it directly related to what was asked?
+        4. **Academic Quality**: Is the reasoning sound and appropriate?
+        
+        **Important Guidelines:**
+        - Focus on content correctness, not writing style
+        - A good answer may be longer, shorter, or differently structured
+        - Accept different valid approaches or explanations
+        - Judge based on whether the answer demonstrates correct understanding
+        - Consider partial credit for answers that are mostly correct
+        
+        **Reference Answer (for context only):** {reference_answer}
+        
+        **Output Format:**
+        Return your judgment in JSON format:
+        {{"judgement_result": true}} if the answer is factually correct and adequately addresses the question
+        {{"judgement_result": false}} if the answer contains significant errors or fails to address the question
+        
+        **Your Judgment:**"""
         return prompt
 
 
