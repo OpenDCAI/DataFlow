@@ -1,4 +1,6 @@
-# shared_vis_python_exe.py
+# This code is referenced from PyVision: Agentic Vision with Dynamic Tooling
+# GitHub: https://github.com/agents-x-project/PyVision
+# Paper: PyVision: Agentic Vision with Dynamic Tooling (arXiv:2507.07998)
 
 import os
 import io

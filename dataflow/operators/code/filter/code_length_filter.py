@@ -1,32 +1,29 @@
 import pandas as pd
+import numpy as np
 from typing import List
 
 from dataflow.utils.registry import OPERATOR_REGISTRY
 from dataflow import get_logger
 from dataflow.utils.storage import DataFlowStorage
 from dataflow.core import OperatorABC
+from dataflow.operators.code.eval.code_length_sample_evaluator import CodeLengthSampleEvaluator
 
 @OPERATOR_REGISTRY.register()
-class CodeLengthFilter(OperatorABC):
+class CodeLengthSampleFilter(OperatorABC):
     """
-    CodeLengthFilter is an operator for filtering code files that are too long.
-    It filters inappropriate samples by analyzing the number of lines, average line length,
-    and maximum line length of the code.
-    Mainly used to remove low-quality samples such as oversized files and auto-generated
-    long-line code.
+    CodeLengthSampleFilter filters code samples based on length characteristics using
+    CodeLengthSampleEvaluator scores. It removes oversized files and poorly formatted code.
     """
 
-    # List of languages that require special handling (these languages allow longer line lengths)
-    EXCLUDED_LANGS = {
-        "HTML", "JSON", "Markdown", "Roff", "Roff Manpage", 
-        "SMT", "TeX", "Text", "XML"
-    }
-
-    def __init__(self):
+    def __init__(self, min_score: float = 1.0, max_score: float = 1.0):
         """
-        Initialize the operator and set up the logger.
+        Initialize the operator with evaluator and thresholds.
         """
+        self.min_score = min_score
+        self.max_score = max_score
         self.logger = get_logger()
+        self.logger.info(f"Initializing {self.__class__.__name__} with min_score: {self.min_score} and max_score: {self.max_score}...")
+        self.scorer = CodeLengthSampleEvaluator()
 
     @staticmethod
     def get_desc(lang: str = "en"):
@@ -35,111 +32,63 @@ class CodeLengthFilter(OperatorABC):
         """
         if lang == "zh":
             return (
-                "该算子基于代码长度特征进行过滤，去除不合适的样本。\n\n"
-                "过滤规则：\n"
-                "- 所有语言：文件超过10万行直接过滤\n"
-                "- 普通语言：平均行长>100或最大行长>1000过滤\n"
-                "- 特殊语言：最大行长>10万过滤\n\n"
+                "基于CodeLengthSampleEvaluator的得分过滤代码样本，移除超大文件和格式不良的代码。\n\n"
+                "评估指标：\n"
+                "- 总行数：检查是否超过100,000行\n"
+                "- 平均行长：普通语言>100字符，特殊语言>100,000字符\n"
+                "- 最大行长：普通语言>1,000字符\n\n"
                 "输入参数：\n"
-                "- input_lines_key: 代码行列表的字段名 (默认: 'lines')\n"
-                "- input_language_key: 编程语言的字段名 (默认: 'language')\n"
+                "- input_key: 输入字段名（需要包含'lines'和'language'列）\n"
+                "- output_key: 输出标签字段名 (默认: 'length_filter_label')\n"
+                "- min_score: 最小长度得分阈值 (默认: 1.0)\n"
+                "- max_score: 最大长度得分阈值 (默认: 1.0)\n\n"
                 "输出参数：\n"
-                "- output_pass_key: 过滤结果的字段名 (默认: 'length_filter_pass')\n"
+                "- 过滤后的DataFrame，仅保留长度得分在指定范围内的代码样本\n"
+                "- 返回包含长度得分标签字段名的列表"
             )
-        return (
-            "This operator filters code samples based on length characteristics.\n\n"
-            "Filtering Rules:\n"
-            "- All languages: filter if total lines > 100k\n"
-            "- Normal languages: filter if avg length > 100 or max length > 1000\n"
-            "- Special languages: filter if max length > 100k\n\n"
-            "Input Parameters:\n"
-            "- input_lines_key: Field name containing code lines (default: 'lines')\n"
-            "- input_language_key: Field name for programming language (default: 'language')\n"
-            "Output Parameters:\n"
-            "- output_pass_key: Field name for filter results (default: 'length_filter_pass')\n"
-        )
+        else:
+            return (
+                "Filter code samples using scores from CodeLengthSampleEvaluator to remove oversized files and poorly formatted code.\n\n"
+                "Evaluation Metrics:\n"
+                "- Total lines: Check if exceeds 100,000 lines\n"
+                "- Average line length: Normal languages >100 chars, special languages >100,000 chars\n"
+                "- Maximum line length: Normal languages >1,000 chars\n\n"
+                "Input Parameters:\n"
+                "- input_key: Input field name (requires 'lines' and 'language' columns)\n"
+                "- output_key: Output label field name (default: 'length_filter_label')\n"
+                "- min_score: Minimum length score threshold (default: 1.0)\n"
+                "- max_score: Maximum length score threshold (default: 1.0)\n\n"
+                "Output Parameters:\n"
+                "- Filtered DataFrame containing only code samples with length scores within specified range\n"
+                "- List containing length score label field name"
+            )
 
-    def _validate_dataframe(self, dataframe: pd.DataFrame):
-        """
-        Validate DataFrame to ensure required columns exist.
-        """
-        required_keys = [self.input_lines_key, self.input_language_key]
-        missing = [k for k in required_keys if k not in dataframe.columns]
 
-        if missing:
-            raise ValueError(f"CodeLengthFilter missing required columns: {missing}")
-
-    def run(
-        self,
-        storage: DataFlowStorage,
-        input_lines_key: str = "lines",
-        input_language_key: str = "language",
-        output_pass_key: str = "length_filter_pass"
-    ) -> List[str]:
-        """
-        Execute code length filtering.
-
-        Args:
-            storage: Data storage object
-            input_lines_key: Field name containing code lines
-            input_language_key: Field name containing programming language
-            output_pass_key: Field name for filter results
-
-        Returns:
-            List[str]: List containing new output column names
-        """
-        self.logger.info("Running CodeLengthFilter operator...")
-
-        # Store key names for use by helper methods
-        self.input_lines_key = input_lines_key
-        self.input_language_key = input_language_key
-
-        # 1. Read data
+    def run(self, storage: DataFlowStorage, input_key: str, output_key: str = 'length_filter_label'):
+        self.input_key = input_key
+        self.output_key = output_key
+        self.logger.info(f"Running {self.__class__.__name__} with input_key: {self.input_key} and output_key: {self.output_key}...")
+        
         dataframe = storage.read("dataframe")
-        if dataframe.empty:
-            self.logger.warning("Input data is empty, skipping processing.")
-            storage.write(dataframe)
-            return [output_pass_key]
-
-        original_count = len(dataframe)
-
-        # 2. Validate data
-        self._validate_dataframe(dataframe)
-
-        # 3. Define length checking function
-        def check_length(lines: List[str], language: str) -> bool:
-            """Check if code length meets requirements"""
-            # Check total number of lines
-            n_lines = len(lines)
-            if n_lines > 100_000:
-                return False
-
-            # Calculate line length statistics
-            avg_len = sum(len(l) for l in lines) / max(1, n_lines)
-            max_len = max((len(l) for l in lines), default=0)
-
-            # Apply different rules based on language type
-            if language not in self.EXCLUDED_LANGS:
-                if avg_len > 100 or max_len > 1000:
-                    return False
-            else:
-                if max_len > 100_000:
-                    return False
-            return True
-
-        # 4. Apply length checking
-        self.logger.info("Checking code length characteristics...")
-        dataframe[output_pass_key] = dataframe.apply(
-            lambda row: check_length(row[input_lines_key], row[input_language_key]),
-            axis=1
-        )
-
-        # 5. Count results
-        passed_count = dataframe[output_pass_key].sum()
-        self.logger.info(f"Filtering completed. {passed_count}/{original_count} samples passed length check.")
-
-        # 6. Write back results
-        output_file = storage.write(dataframe)
-        self.logger.success(f"CodeLengthFilter completed. Results saved to {output_file}")
-
-        return [output_pass_key]
+        scores = self.scorer.eval(dataframe, self.input_key)
+        
+        # Add scores to dataframe
+        for idx, score_dict in enumerate(scores):
+            for key, value in score_dict.items():
+                dataframe.at[idx, key] = value
+        
+        # Apply filtering based on CodeLengthScore
+        results = np.ones(len(dataframe), dtype=int)
+        score_filter = (dataframe["CodeLengthScore"] >= self.min_score) & (dataframe["CodeLengthScore"] <= self.max_score)
+        nan_filter = np.isnan(dataframe["CodeLengthScore"])
+        metric_filter = score_filter | nan_filter
+        results = results & metric_filter.astype(int)
+        
+        self.logger.debug(f"Filtered by length score, {np.sum(results)} data remained")
+        dataframe[f"{self.output_key}"] = metric_filter.astype(int)
+        
+        filtered_dataframe = dataframe[results == 1]
+        storage.write(filtered_dataframe)
+        self.logger.info(f"Filtering completed. Total records passing filter: {len(filtered_dataframe)}.")
+        
+        return [self.output_key]

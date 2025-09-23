@@ -1,69 +1,77 @@
 import pandas as pd
+import numpy as np
 from typing import List, Dict, Any
 
 from dataflow.utils.registry import OPERATOR_REGISTRY
 from dataflow import get_logger
 from dataflow.utils.storage import DataFlowStorage
 from dataflow.core import OperatorABC
+from dataflow.operators.code.eval.code_document_quality_sample_evaluator import CodeDocumentQualitySampleEvaluator
 
 import re
 from collections import Counter
 
 @OPERATOR_REGISTRY.register()
-class DocQualityFilter(OperatorABC):
-    def _frac_duplicate_ngrams_n(self, text: str, n: int) -> float:
-        """Calculate the fraction of duplicate n-grams in the text"""
-        words = re.findall(r'\b\w+\b', text)
-        if len(words) < n:
-            return 0.0
-        ngrams = [' '.join(words[i:i+n]) for i in range(len(words)-n+1)]
-        ngram2count = Counter(ngrams)
-        count = sum([v for v in ngram2count.values() if v != 1])
-        total = sum([v for v in ngram2count.values()])
-        return count / total if total else 0.0
-
+class CodeDocumentQualityFilter(OperatorABC):
     """
-    DocQualityFilter applies a set of document-level quality filtering rules to a dataset.
-    These include natural language, general code, and document repetition/statistics rules.
-    Each rule is implemented as a method and can be configured via thresholds.
-    
-    The filter helps remove low-quality documents by checking various quality metrics
-    such as character/word counts, duplicate content ratios, and text composition.
+    CodeDocumentQualityFilter applies comprehensive document-level quality filtering
+    rules using CodeDocumentQualitySampleEvaluator scores to remove low-quality code and text samples.
     """
 
-    def __init__(self):
-        """Initialize the operator and set up default thresholds"""
+    def __init__(self, min_score: float = 1.0, max_score: float = 1.0, thresholds: Dict[str, Any] = None):
+        """
+        Initialize the operator with evaluator and thresholds.
+        
+        Args:
+            min_score: Minimum document quality score threshold
+            max_score: Maximum document quality score threshold
+            thresholds: Optional thresholds dictionary to override default thresholds
+        """
+        self.min_score = min_score
+        self.max_score = max_score
         self.logger = get_logger()
-        # Default thresholds for each rule (can be overridden via run params)
-        self.thresholds = {
-            'min_num_chars': 1,
-            'max_num_chars': 100000,
-            'min_num_words': 1,
-            'max_num_words': 100000,
-            'max_frac_duplicate_lines': 1.0,
-            'max_frac_duplicate_2gram': 1.0,
-            'max_frac_duplicate_3gram': 1.0,
-            'max_frac_duplicate_4gram': 1.0,
-            'max_frac_duplicate_5gram': 1.0,
-            'max_frac_duplicate_6gram': 1.0,
-            'max_frac_duplicate_7gram': 1.0,
-            'max_frac_duplicate_8gram': 1.0,
-            'max_frac_duplicate_9gram': 1.0,
-            'max_frac_duplicate_10gram': 1.0,
-            'max_frac_curly_bracket': 1.0,
-            'max_frac_all_caps_words': 1.0,
-            'min_entropy_unigram': 0.0,
-        }   
+        self.logger.info(f"Initializing {self.__class__.__name__} with min_score: {self.min_score} and max_score: {self.max_score}...")
+        self.scorer = CodeDocumentQualitySampleEvaluator(thresholds)   
 
     @staticmethod
     def get_desc(lang: str = "en"):
         if lang == "zh":
             return (
-                "该算子对文档级别的质量信号进行过滤，包括字符数、词数、重复行比例、n-gram重复、括号比例等。"
+                "基于CodeDocumentQualitySampleEvaluator的得分应用综合文档级质量过滤规则，移除低质量代码和文本样本。\n\n"
+                "评估指标：\n"
+                "- 内容长度：字符数、词数、行数范围检查\n"
+                "- 重复模式：重复行比例、2-10gram重复比例\n"
+                "- 字符组成：花括号比例、全大写单词比例\n"
+                "- 文本熵值：单字符熵值检查\n"
+                "- 综合文档质量得分：0-1，1表示通过所有质量检查\n\n"
+                "输入参数：\n"
+                "- input_key: 输入字段名（需要包含'text'、'filename'、'language'列）\n"
+                "- output_key: 输出标签字段名 (默认: 'doc_quality_filter_label')\n"
+                "- min_score: 最小文档质量得分阈值 (默认: 1.0)\n"
+                "- max_score: 最大文档质量得分阈值 (默认: 1.0)\n"
+                "- thresholds: 可选的阈值字典，用于覆盖默认阈值\n\n"
+                "输出参数：\n"
+                "- 过滤后的DataFrame，仅保留文档质量得分在指定范围内的样本\n"
+                "- 返回包含文档质量得分标签字段名的列表"
             )
         else:
             return (
-                "This operator applies document-level quality filtering rules, including character/word count, duplicate line ratio, n-gram repetition, bracket ratio, etc."
+                "Apply comprehensive document-level quality filtering rules using scores from CodeDocumentQualitySampleEvaluator to remove low-quality code and text samples.\n\n"
+                "Evaluation Metrics:\n"
+                "- Content length: character/word/line count range checks\n"
+                "- Repetition patterns: duplicate line ratio, 2-10gram repetition ratios\n"
+                "- Character composition: curly bracket ratio, all-caps word ratio\n"
+                "- Text entropy: unigram entropy checks\n"
+                "- Comprehensive document quality score: 0-1, 1 means passes all quality checks\n\n"
+                "Input Parameters:\n"
+                "- input_key: Input field name (requires 'text', 'filename', 'language' columns)\n"
+                "- output_key: Output label field name (default: 'doc_quality_filter_label')\n"
+                "- min_score: Minimum document quality score threshold (default: 1.0)\n"
+                "- max_score: Maximum document quality score threshold (default: 1.0)\n"
+                "- thresholds: Optional thresholds dictionary to override default thresholds\n\n"
+                "Output Parameters:\n"
+                "- Filtered DataFrame containing only samples with document quality scores within specified range\n"
+                "- List containing document quality score label field name"
             )
 
     def _num_chars(self, text: str) -> int:
@@ -255,23 +263,34 @@ class DocQualityFilter(OperatorABC):
         # 其它规则同前
         return True
 
-    def run(self, storage: DataFlowStorage, thresholds: Dict[str, Any] = None) -> List[str]:
+    def run(self, storage: DataFlowStorage, input_key: str, output_key: str = "doc_quality_filter_label") -> List[str]:
         """
-        Applies document-level quality filtering rules to the input dataframe.
+        Applies document-level quality filtering rules using evaluator scores.
         """
-        self.logger.info("Running DocQualityFilter...")
-        if thresholds is not None:
-            self.thresholds.update(thresholds)
-        df = storage.read("dataframe")
-        if df.empty:
-            self.logger.warning("Input dataframe for DocQualityFilter is empty. Skipping.")
-            storage.write(df)
-            return []
-        original_count = len(df)
-        # Apply all rules row-wise
-        filtered_df = df[df.apply(lambda row: self._apply_rules(row, self.thresholds), axis=1)]
-        filtered_count = len(filtered_df)
-        self.logger.info(f"Filtering complete. Kept {filtered_count} / {original_count} rows.")
-        output_file = storage.write(filtered_df)
-        self.logger.success(f"DocQualityFilter finished. Filtered data saved to {output_file}")
-        return []
+        self.input_key = input_key
+        self.output_key = output_key
+        self.logger.info(f"Running {self.__class__.__name__} with input_key: {self.input_key} and output_key: {self.output_key}...")
+        
+        dataframe = storage.read("dataframe")
+        scores = self.scorer.eval(dataframe, self.input_key)
+        
+        # Add scores to dataframe
+        for idx, score_dict in enumerate(scores):
+            for key, value in score_dict.items():
+                dataframe.at[idx, key] = value
+        
+        # Apply filtering based on CodeDocumentQualityScore
+        results = np.ones(len(dataframe), dtype=int)
+        score_filter = (dataframe["CodeDocumentQualityScore"] >= self.min_score) & (dataframe["CodeDocumentQualityScore"] <= self.max_score)
+        nan_filter = np.isnan(dataframe["CodeDocumentQualityScore"])
+        metric_filter = score_filter | nan_filter
+        results = results & metric_filter.astype(int)
+        
+        self.logger.debug(f"Filtered by document quality score, {np.sum(results)} data remained")
+        dataframe[f"{self.output_key}"] = metric_filter.astype(int)
+        
+        filtered_dataframe = dataframe[results == 1]
+        storage.write(filtered_dataframe)
+        self.logger.info(f"Filtering completed. Total records passing filter: {len(filtered_dataframe)}.")
+        
+        return [self.output_key]

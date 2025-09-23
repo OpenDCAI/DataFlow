@@ -7,11 +7,16 @@ from dataflow.utils.storage import DataFlowStorage
 from dataflow.core import OperatorABC
 
 @OPERATOR_REGISTRY.register()
-class FileTypeFilter(OperatorABC):
+class CodeFileTypeContentFilter(OperatorABC):
     """
-    FileTypeFilter is an operator that filters data based on file types and content characteristics.
-    It implements specific filtering rules for different file types, such as large file filtering,
-    HTML visible text filtering, etc.
+    CodeFileTypeContentFilter filters code samples based on file types and content characteristics,
+    applying different rules for different file formats to ensure quality and relevance.
+    
+    This filter directly applies filtering rules without using evaluator scores:
+    - Removes oversized text files (>512 lines for Text/JSON/YAML files)
+    - Removes HTML files with insufficient visible text content
+    - Removes text files with inappropriate filenames (not documentation-related)
+    - Keeps files that meet format-specific quality criteria
     """
 
     # File types that require size checking
@@ -38,25 +43,32 @@ class FileTypeFilter(OperatorABC):
         """
         if lang == "zh":
             return (
-                "该算子根据文件类型和内容特征进行过滤，支持多种过滤规则：\n\n"
+                "基于文件类型和内容特征直接过滤代码样本，针对不同文件格式应用特定规则。\n\n"
                 "过滤规则：\n"
-                "1. 对特定类型文件（如Text/JSON等）进行大小过滤（>512行）\n"
-                "2. 对HTML文件进行可见文本质量过滤\n"
-                "3. 对Text文件进行文件名规则过滤\n\n"
+                "- Text/JSON/YAML/Graphviz文件：行数 > 512 行\n"
+                "- HTML文件：可见文本长度 < 100字符 或 可见文本比例 < 20%\n"
+                "- Text文件：文件名不符合文档规范（非readme/notes/todo等）\n\n"
                 "输入参数：\n"
-                "- input_dataframe_key: 输入数据的键名 (默认: 'dataframe')\n"
-                "- output_dataframe_key: 输出数据的键名 (默认: 'filtered_dataframe')\n"
+                "- input_key: 输入字段名（需要包含'filetype'、'filename'、'line_count'等列）\n"
+                "- output_key: 输出标签字段名 (默认: 'file_type_content_filter_label')\n\n"
+                "输出参数：\n"
+                "- 过滤后的DataFrame，仅保留符合文件类型规则的样本\n"
+                "- 返回包含输出标签字段名的列表"
             )
-        return (
-            "This operator filters data based on file types and content characteristics:\n\n"
-            "Filtering Rules:\n"
-            "1. Size filtering for specific file types (Text/JSON etc.)\n"
-            "2. Visible text quality filtering for HTML files\n"
-            "3. Filename rule filtering for Text files\n\n"
-            "Input Parameters:\n"
-            "- input_dataframe_key: Key for input data (default: 'dataframe')\n"
-            "- output_dataframe_key: Key for output data (default: 'filtered_dataframe')\n"
-        )
+        else:
+            return (
+                "Filter code samples based on file types and content characteristics, applying specific rules for different file formats.\n\n"
+                "Filtering Rules:\n"
+                "- Text/JSON/YAML/Graphviz files: line count > 512\n"
+                "- HTML files: visible text length < 100 chars OR visible text ratio < 20%\n"
+                "- Text files: filename doesn't follow documentation conventions (not readme/notes/todo etc.)\n\n"
+                "Input Parameters:\n"
+                "- input_key: Input field name (requires 'filetype', 'filename', 'line_count' columns)\n"
+                "- output_key: Output label field name (default: 'file_type_content_filter_label')\n\n"
+                "Output Parameters:\n"
+                "- Filtered DataFrame containing only samples meeting file type rules\n"
+                "- List containing output label field name"
+            )
 
     def _validate_dataframe(self, dataframe: pd.DataFrame):
         """
@@ -66,7 +78,7 @@ class FileTypeFilter(OperatorABC):
         missing = [k for k in required_keys if k not in dataframe.columns]
 
         if missing:
-            raise ValueError(f"FileTypeFilter missing required columns: {missing}")
+            raise ValueError(f"{self.__class__.__name__} missing required columns: {missing}")
 
     def _is_large_file(self, row: pd.Series) -> bool:
         """
@@ -97,28 +109,30 @@ class FileTypeFilter(OperatorABC):
     def run(
         self,
         storage: DataFlowStorage,
-        input_dataframe_key: str = "dataframe",
-        output_dataframe_key: str = "filtered_dataframe"
+        input_key: str,
+        output_key: str = "file_type_content_filter_label"
     ) -> List[str]:
         """
         Execute file type filtering operation.
 
         Args:
             storage: Data storage object
-            input_dataframe_key: Key name for input data
-            output_dataframe_key: Key name for output data
+            input_key: Key name for input data
+            output_key: Key name for output label
 
         Returns:
-            List[str]: List containing newly generated output key names
+            List[str]: List containing output key name
         """
-        self.logger.info("Running FileTypeFilter operator...")
+        self.input_key = input_key
+        self.output_key = output_key
+        self.logger.info(f"Running {self.__class__.__name__} with input_key: {self.input_key} and output_key: {self.output_key}...")
 
         # 1. Read data
-        dataframe = storage.read(input_dataframe_key)
+        dataframe = storage.read("dataframe")
         if dataframe.empty:
             self.logger.warning("Input data is empty, skipping processing.")
             storage.write(dataframe)
-            return [output_dataframe_key]
+            return [self.output_key]
 
         original_count = len(dataframe)
 
@@ -138,18 +152,16 @@ class FileTypeFilter(OperatorABC):
                 return self._is_text_filename_valid(filename)
             return True
 
-        # 4. Apply filtering
-        filtered_df = dataframe[dataframe.apply(filter_row, axis=1)].reset_index(drop=True)
+        # 4. Apply filtering and add label
+        filter_mask = dataframe.apply(filter_row, axis=1)
+        dataframe[self.output_key] = filter_mask.astype(int)
+        filtered_df = dataframe[filter_mask].reset_index(drop=True)
 
         # 5. Count results
         filtered_count = len(filtered_df)
-        self.logger.info(
-            f"Filtering completed. Kept {filtered_count}/{original_count} samples "
-            f"(removed {original_count - filtered_count})."
-        )
+        self.logger.info(f"Filtering completed. Total records passing filter: {filtered_count}.")
 
         # 6. Write back results
-        output_file = storage.write(filtered_df)
-        self.logger.success(f"FileTypeFilter completed. Results saved to {output_file}")
+        storage.write(filtered_df)
 
-        return [output_dataframe_key]
+        return [self.output_key]
