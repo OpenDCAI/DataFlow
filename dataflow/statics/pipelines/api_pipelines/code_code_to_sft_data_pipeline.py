@@ -13,8 +13,7 @@ class CodeSFTSynthesis_APIPipeline():
     def __init__(self, llm_serving: LLMServingABC = None):
         
         self.storage = FileStorage(
-            first_entry_file_name="/mnt/public_2/data/lh/code/DataFlow/dataflow/example/CodePipeline/code_synthesis_input.jsonl",
-            # first_entry_file_name="../example_data/CodePipeline/code_synthesis_input.jsonl",
+            first_entry_file_name="../example_data/CodePipeline/code_synthesis_input.jsonl",
             cache_path="./cache",
             file_name_prefix="dataflow_cache_step",
             cache_type="jsonl",
@@ -22,8 +21,7 @@ class CodeSFTSynthesis_APIPipeline():
         
         # use API server as LLM serving
         self.llm_serving = APILLMServing_request(
-            api_url="http://123.129.219.111:3000/v1/chat/completions",
-            # api_url="https://api.openai.com/v1/chat/completions",
+            api_url="https://api.openai.com/v1/chat/completions",
             model_name="gpt-4o",
             max_workers=100
         )
