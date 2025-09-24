@@ -18,7 +18,11 @@ from .base_agent import BaseAgent
 
 class DataContentClassifier(BaseAgent):
     """数据内容分类器 - 继承自BaseAgent"""
-    
+    # 后续都改成类方法
+    @classmethod
+    def create(cls, tool_manager: Optional[ToolManager] = None, **kwargs):
+        return cls(tool_manager=tool_manager, **kwargs)
+
     @property
     def role_name(self) -> str:
         return "classifier"
