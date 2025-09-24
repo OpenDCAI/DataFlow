@@ -1,7 +1,7 @@
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from .func_call_operators import (
+    from .generate.func_call_operators import (
         ScenarioExtractor,
         ScenarioExpander,
         AtomTaskGenerator,
@@ -11,7 +11,7 @@ if TYPE_CHECKING:
         FunctionGenerator,
         MultiTurnConversationGenerator,
     )
-    from .consistent_chat import ConsistentChatGenerator
+    from .generate.consistent_chat import ConsistentChatGenerator
 else:
     import sys
     from dataflow.utils.registry import LazyLoader, generate_import_structure_from_type_checking

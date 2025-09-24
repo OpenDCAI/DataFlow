@@ -13,7 +13,7 @@ if TYPE_CHECKING:
     from .filter.kcentergreedy_filter import KCenterGreedyFilter    
     from .filter.general_filter import GeneralFilter
     from .refine.prompted_refiner import PromptedRefiner
-    from pandas_operator import PandasOperator
+    from .refine.pandas_operator import PandasOperator
 else:
     import sys
     from dataflow.utils.registry import LazyLoader, generate_import_structure_from_type_checking
