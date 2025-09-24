@@ -20,8 +20,8 @@ if TYPE_CHECKING:
     from .eval.code_document_quality_sample_evaluator import CodeDocumentQualitySampleEvaluator
     from .eval.code_encoded_data_sample_evaluator import CodeEncodedDataSampleEvaluator
     from .eval.code_length_sample_evaluator import CodeLengthSampleEvaluator
-    from .eval.code_quality_evaluator import CodeQualityEvaluator
-    from .eval.code_sandbox_evaluator import CodeSandboxEvaluator
+    from .eval.code_quality_sample_evaluator import CodeQualitySampleEvaluator
+    from .eval.code_sandbox_sample_evaluator import CodeSandboxSampleEvaluator
     from .eval.code_text_composition_sample_evaluator import CodeTextCompositionSampleEvaluator
     from .eval.python_executor import (
         ImageRuntime,

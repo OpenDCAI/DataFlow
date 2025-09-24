@@ -5,7 +5,7 @@ from dataflow.core import OperatorABC
 from dataflow.utils.storage import DataFlowStorage
 from dataflow.utils.registry import OPERATOR_REGISTRY
 from dataflow.core import LLMServingABC
-from dataflow.operators.code.eval.code_quality_evaluator import CodeQualityEvaluator
+from dataflow.operators.code.eval.code_quality_sample_evaluator import CodeQualitySampleEvaluator
 
 @OPERATOR_REGISTRY.register()
 class CodeQualityScoreFilter(OperatorABC):

@@ -11,9 +11,9 @@ from dataflow.core import LLMServingABC
 from dataflow.prompts.code import CodeQualityEvaluatorPrompt, DiyCodePrompt
 
 @OPERATOR_REGISTRY.register()
-class CodeQualityEvaluator(OperatorABC):
+class CodeQualitySampleEvaluator(OperatorABC):
     """
-    CodeQualityEvaluator is an operator that evaluates the quality of a generated code snippet
+    CodeQualitySampleEvaluator is an operator that evaluates the quality of a generated code snippet
     against its source instruction. It uses an LLM to provide both a numerical score
     and textual feedback, acting as an automated code reviewer.
     """
@@ -73,9 +73,9 @@ class CodeQualityEvaluator(OperatorABC):
         conflict = [k for k in forbidden_keys if k in dataframe.columns]
 
         if missing:
-            raise ValueError(f"Missing required column(s) for CodeQualityEvaluator: {missing}")
+            raise ValueError(f"Missing required column(s) for CodeQualitySampleEvaluator: {missing}")
         if conflict:
-            raise ValueError(f"The following column(s) already exist and would be overwritten by CodeQualityEvaluator: {conflict}")
+            raise ValueError(f"The following column(s) already exist and would be overwritten by CodeQualitySampleEvaluator: {conflict}")
 
     def _build_prompts(self, dataframe: pd.DataFrame) -> List[str]:
         """

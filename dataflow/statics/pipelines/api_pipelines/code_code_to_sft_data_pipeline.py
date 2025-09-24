@@ -1,9 +1,9 @@
 from dataflow.operators.code import (
     CodeCodeToInstructionGenerator,
     CodeInstructionToCodeGenerator,
-    CodeQualityEvaluator,
+    CodeQualitySampleEvaluator,
     CodeQualityScoreFilter,
-    CodeSandboxEvaluator,
+    CodeSandboxSampleEvaluator,
 )
 from dataflow.utils.storage import FileStorage
 from dataflow.serving import APILLMServing_request
@@ -37,7 +37,7 @@ class CodeSFTSynthesis_APIPipeline():
         )
         
         # Step 3: Quality evaluator for (instruction, code) pairs
-        self.pair_evaluator_step3 = CodeQualityEvaluator(
+        self.pair_evaluator_step3 = CodeQualitySampleEvaluator(
             llm_serving=self.llm_serving
         )
         
@@ -49,7 +49,7 @@ class CodeSFTSynthesis_APIPipeline():
         )
         
         # Step 5: Sandbox evaluator
-        self.sandbox_evaluator_step5 = CodeSandboxEvaluator(
+        self.sandbox_evaluator_step5 = CodeSandboxSampleEvaluator(
             language='python'
         )
     

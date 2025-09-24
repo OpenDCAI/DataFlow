@@ -12,9 +12,9 @@ from dataflow.core import OperatorABC
 from .python_executor import PythonExecutor
 
 @OPERATOR_REGISTRY.register()
-class CodeSandboxEvaluator(OperatorABC):
+class CodeSandboxSampleEvaluator(OperatorABC):
     """
-    CodeSandboxEvaluator is an operator that executes code snippets in a secure,
+    CodeSandboxSampleEvaluator is an operator that executes code snippets in a secure,
     isolated environment to verify their correctness. It leverages a robust
     PythonExecutor to handle process isolation, timeouts, and capturing results.
     This is the final validation step in the data synthesis pipeline.
@@ -74,9 +74,9 @@ class CodeSandboxEvaluator(OperatorABC):
         conflict = [k for k in forbidden_keys if k in dataframe.columns]
 
         if missing:
-            raise ValueError(f"Missing required column(s) for CodeSandboxEvaluator: {missing}")
+            raise ValueError(f"Missing required column(s) for CodeSandboxSampleEvaluator: {missing}")
         if conflict:
-            raise ValueError(f"The following column(s) already exist and would be overwritten by CodeSandboxEvaluator: {conflict}")
+            raise ValueError(f"The following column(s) already exist and would be overwritten by CodeSandboxSampleEvaluator: {conflict}")
     
     def _score_func(self, code: str) -> Tuple[str, str]:
         """
