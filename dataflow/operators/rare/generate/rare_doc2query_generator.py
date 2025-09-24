@@ -4,7 +4,7 @@ from dataflow.utils.registry import OPERATOR_REGISTRY # Changed from GENERATOR_R
 from dataflow.logger import get_logger # Simplified import
 from dataflow.utils.storage import DataFlowStorage # New import for storage
 from dataflow.core import OperatorABC # New import for OperatorABC
-from dataflow.core.LLMServing import LLMServingABC # New import for LLMServingABC
+from dataflow.core import LLMServingABC # New import for LLMServingABC
 from dataflow.prompts.rare import RAREDoc2QueryGenertorPrompt # New import for Prompt
 
 
