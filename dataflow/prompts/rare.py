@@ -1,6 +1,6 @@
 import json
 
-class Doc2QueryGenertorPrompt:
+class RAREDoc2QueryGenertorPrompt:
     '''
     The prompt for the Doc2Query Generator.
     '''
@@ -54,7 +54,7 @@ Now, ** the number of hard_queries to generate is exactly 1 **.
         return prompt + prompt_document
 
 
-class ReasonDistillGenertorPrompt:
+class RAREReasonDistillGenertorPrompt:
     '''
     The prompt for the ReasonDistill Generator.
     '''

@@ -5,11 +5,11 @@ from dataflow.logger import get_logger # Simplified import
 from dataflow.utils.storage import DataFlowStorage
 from dataflow.core.Operator import OperatorABC # New import for OperatorABC
 from dataflow.core.LLMServing import LLMServingABC # New import for LLMServingABC
-from dataflow.prompts.rare import ReasonDistillGenertorPrompt # New import for Prompt
+from dataflow.prompts.rare import RAREReasonDistillGenertorPrompt # New import for Prompt
 
 
 @OPERATOR_REGISTRY.register()
-class ReasonDistillGenerator(OperatorABC):
+class RAREReasonDistillGenerator(OperatorABC):
     '''
     ReasonDistill distills reasoning capabilities from LLMs by generating a step-by-step thought process.
     It takes a question, a scenario, a positive document, and several hard negative documents as input.
@@ -23,7 +23,7 @@ class ReasonDistillGenerator(OperatorABC):
         """
         self.logger = get_logger()
         self.llm_serving = llm_serving
-        self.prompt = ReasonDistillGenertorPrompt()
+        self.prompt = RAREReasonDistillGenertorPrompt()
 
     @staticmethod
     def get_desc(lang: str = "zh") -> str:

@@ -5,11 +5,11 @@ from dataflow.logger import get_logger # Simplified import
 from dataflow.utils.storage import DataFlowStorage # New import for storage
 from dataflow.core.Operator import OperatorABC # New import for OperatorABC
 from dataflow.core.LLMServing import LLMServingABC # New import for LLMServingABC
-from dataflow.prompts.rare import Doc2QueryGenertorPrompt # New import for Prompt
+from dataflow.prompts.rare import RAREDoc2QueryGenertorPrompt # New import for Prompt
 
 
 @OPERATOR_REGISTRY.register() # Changed decorator to OPERATOR_REGISTRY
-class Doc2QueryGenerator(OperatorABC): # Inherit from OperatorABC
+class RAREDoc2QueryGenerator(OperatorABC): # Inherit from OperatorABC
     '''
     Doc2Query uses LLMs to generate reasoning-intensive questions for given documents.
     '''
@@ -17,7 +17,7 @@ class Doc2QueryGenerator(OperatorABC): # Inherit from OperatorABC
     def __init__(self, llm_serving: LLMServingABC): # Changed config to llm_serving
         self.logger = get_logger()
         self.llm_serving = llm_serving # Renamed generator to llm_serving
-        self.prompt = Doc2QueryGenertorPrompt()
+        self.prompt = RAREDoc2QueryGenertorPrompt()
 
         # Removed config related attributes as they will be passed in run method
         self.input_key = "text"

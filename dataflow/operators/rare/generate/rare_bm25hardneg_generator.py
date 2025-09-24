@@ -82,7 +82,7 @@ class BM25Miner():
 
 
 @OPERATOR_REGISTRY.register()
-class BM25HardNegGenerator(OperatorABC):
+class RAREBM25HardNegGenerator(OperatorABC):
     '''
     BM25HardNeg operator mines hard negatives for a given query using the BM25 algorithm.
     It reads a dataframe with queries and positive documents, and appends a column with hard negatives.

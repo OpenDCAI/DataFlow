@@ -2,9 +2,9 @@ from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     # filter
-    from .generate.rare_doc2query_generator import Doc2QueryGenerator
-    from .generate.rare_bm25hardneg_generator import BM25HardNegGenerator
-    from .generate.rare_reasondistill_generator import ReasonDistillGenerator
+    from .generate.rare_doc2query_generator import RAREDoc2QueryGenerator
+    from .generate.rare_bm25hardneg_generator import RAREBM25HardNegGenerator
+    from .generate.rare_reasondistill_generator import RAREReasonDistillGenerator
 
 else:
     import sys
