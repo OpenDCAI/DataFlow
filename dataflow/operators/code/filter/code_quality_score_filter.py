@@ -11,7 +11,7 @@ from dataflow.operators.code.eval.code_quality_sample_evaluator import CodeQuali
 class CodeQualityScoreFilter(OperatorABC):
     """
     CodeQualityScoreFilter filters code samples based on LLM-generated quality scores
-    from CodeQualityEvaluator. It evaluates code correctness, completeness, clarity,
+    from CodeQualitySampleEvaluator. It evaluates code correctness, completeness, clarity,
     best practices, and efficiency, then filters out samples below the specified threshold.
     
     This filter uses evaluator scores to filter:
@@ -29,7 +29,7 @@ class CodeQualityScoreFilter(OperatorABC):
         self.max_score = max_score
         self.logger = get_logger()
         self.logger.info(f"Initializing {self.__class__.__name__} with min_score: {self.min_score} and max_score: {self.max_score}...")
-        self.scorer = CodeQualityEvaluator(llm_serving)
+        self.scorer = CodeQualitySampleEvaluator(llm_serving)
     
     @staticmethod
     def get_desc(lang: str = "zh"):
