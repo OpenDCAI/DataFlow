@@ -3,7 +3,7 @@
 from __future__ import annotations
 import argparse, asyncio, os
 from dataflow.dataflowagent.state import DFRequest, DFState
-from pipeline_nodes import create_pipeline_graph
+from dataflow.dataflowagent.workflow.wf_pipeline_recommend import create_pipeline_graph
 from IPython.display import Image, display
 
 # ---------- 命令行 ----------

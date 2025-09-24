@@ -4,7 +4,9 @@ import asyncio
 import os
 from dataflow.cli_funcs.paths import DataFlowPath
 from dataflow.dataflowagent.state import DFRequest, DFState
-from pipeline_nodes import create_pipeline_graph
+# from pipeline_nodes import create_pipeline_graph
+from dataflow.dataflowagent.workflow.wf_pipeline_recommend import create_pipeline_graph
+
 from IPython.display import Image, display
 
 async def main() -> None:
@@ -18,7 +20,7 @@ async def main() -> None:
         json_file=f"{DATAFLOW_DIR}/dataflow/example/DataflowAgent/mq_test_data.jsonl",
         target="我需要 2 个reasoning的算子！",
         python_file_path = f"{DATAFLOW_DIR}/dataflow/dataflowagent/tests/my_pipeline.py",  # pipeline的输出脚本路径
-        need_debug = True, #是否需要Debug
+        need_debug = False, #是否需要Debug
         max_debug_rounds = 3, #Debug的轮次数量
     )
     state = DFState(request=req, messages=[])
