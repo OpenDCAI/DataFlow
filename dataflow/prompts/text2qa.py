@@ -2,10 +2,10 @@ import json
 from dataflow.utils.registry import PROMPT_REGISTRY
 from dataflow.core.prompt import PromptABC
 """
-A collection of prompts for the Doc2QA pipelines operator
+A collection of prompts for the Text2QA pipelines operator
 """
 @PROMPT_REGISTRY.register()
-class Doc2QAAutoPromptGeneratorPrompt(PromptABC):
+class Text2QAAutoPromptGeneratorPrompt(PromptABC):
     '''
     The prompt for the AutoPromptGenerator.
     '''
@@ -36,9 +36,9 @@ Here is the seed data you need to analyze and generate a prompt for:\n{seed_data
         return prompt
 
 @PROMPT_REGISTRY.register()
-class Doc2QASeedQuestionGeneratorPrompt(PromptABC):
+class Text2QASeedQuestionGeneratorPrompt(PromptABC):
     '''
-    The prompt for the Doc2QAGenerator.
+    The prompt for the Text2QAGenerator.
     '''
     def __init__(self):
         pass
@@ -50,7 +50,7 @@ class Doc2QASeedQuestionGeneratorPrompt(PromptABC):
 
 
 @PROMPT_REGISTRY.register()
-class Doc2QAQuestionQualityPrompt(PromptABC):
+class Text2QAQuestionQualityPrompt(PromptABC):
     '''
     The prompt for the question quality scorer.
     '''
@@ -77,7 +77,7 @@ Output format:
         return prompt
 
 @PROMPT_REGISTRY.register()
-class Doc2QAAnswerAlignmentPrompt(PromptABC):
+class Text2QAAnswerAlignmentPrompt(PromptABC):
     '''
     The prompt for the RAG answer alignment scorer.
     '''
@@ -104,7 +104,7 @@ Output format:
         return prompt
 
 @PROMPT_REGISTRY.register()
-class Doc2QAAnswerVerifiabilityPrompt(PromptABC):
+class Text2QAAnswerVerifiabilityPrompt(PromptABC):
     '''
     The prompt for the RAG answer verifiability scorer.
     '''
@@ -131,7 +131,7 @@ Output format:
         return prompt
 
 @PROMPT_REGISTRY.register()
-class Doc2QADownstreamValuePrompt(PromptABC):
+class Text2QADownstreamValuePrompt(PromptABC):
     '''
     The prompt for the RAG  downstream value scorer.
     '''

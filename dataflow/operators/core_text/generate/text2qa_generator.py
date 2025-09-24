@@ -7,11 +7,14 @@ from dataflow.core import OperatorABC
 from dataflow.core import LLMServingABC
 from dataflow.core.prompt import prompt_restrict
 
-from dataflow.prompts.doc2qa import Doc2QASeedQuestionGeneratorPrompt
+from dataflow.prompts.text2qa import Text2QASeedQuestionGeneratorPrompt,Text2QAAutoPromptGeneratorPrompt
 
-
+@prompt_restrict(
+    Text2QAAutoPromptGeneratorPrompt,
+    Text2QASeedQuestionGeneratorPrompt
+)
 @OPERATOR_REGISTRY.register()
-class Doc2QAGenerator:
+class Text2QAGenerator:
     '''
     SeedQAGenerator is a class that uses LLMs to generate QA pairs based on seed input.
     '''
@@ -22,13 +25,13 @@ class Doc2QAGenerator:
                  ):
         self.logger = get_logger()
         self.llm_serving = llm_serving
-        self.prompt_template = Doc2QASeedQuestionGeneratorPrompt()
+        self.prompt_template = Text2QAAutoPromptGeneratorPrompt()
     
     @staticmethod
     def get_desc(lang: str = "zh"):
         if lang == "zh":
             return (
-                "该算子用于生成对应文档片段的QA对。\n\n"
+                "该算子用于为给的的文档片段生成种子QA对。\n\n"
                 "输入参数：\n"
                 "- input_key: 包含文档片段的字段名\n"
                 "- prompt_key: 包含提示词的字段名\n"
@@ -37,7 +40,7 @@ class Doc2QAGenerator:
             )
         elif lang == "en":
             return (
-                "This operator generates QA pairs for given document fragments.\n\n"
+                "This operator generates generate seed QA pairs for given document fragments.\n\n"
                 "Input Parameters:\n"
                 "- input_key: Field name containing the content\n"
                 "- prompt_key: Field name containing the generated prompt\n"
@@ -59,11 +62,17 @@ class Doc2QAGenerator:
         if conflict:
             raise ValueError(f"The following column(s) already exist and would be overwritten: {conflict}")
 
-    def _build_prompt(self, df):
-        prompts = []
-        for index, row in df.iterrows():
-            prompts.append(row[self.prompt_key] + self.prompt_template.build_prompt() + row[self.input_key])
-        return prompts
+    def _build_prompt(self, df, types):
+        if types == "prompt":
+            self.prompt_template = Text2QAAutoPromptGeneratorPrompt()
+            texts = df[self.input_key].tolist()
+            output = [self.prompt_template.build_prompt(text) for text in texts]
+        elif types == "qa":
+            self.prompt_template = Text2QASeedQuestionGeneratorPrompt()
+            output = []
+            for index, row in df.iterrows():
+                output.append(row[self.output_prompt_key] + self.prompt_template.build_prompt() + row[self.input_key])
+        return output
 
     def _parse_qa(self, response: str) -> tuple:
         lines = response.strip().split('\n')
@@ -80,14 +89,19 @@ class Doc2QAGenerator:
         output_answer_key:str = "generated_answer"
         ):
         '''
-        Runs the answer generation process, reading from the input file and saving results to output.
+        Runs the QA generation process, reading from the input file and saving results to output.
         '''
 
-        self.input_key, self.prompt_key, self.output_question_key, self.output_answer_key = input_key, output_prompt_key, output_quesion_key, output_answer_key
+        self.input_key, self.output_prompt_key, self.output_question_key, self.output_answer_key = input_key, output_prompt_key, output_quesion_key, output_answer_key
 
         dataframe = storage.read("dataframe")
         self._validate_dataframe(dataframe)
-        formatted_prompts = self._build_prompt(dataframe)
+        formatted_prompts = self._build_prompt(dataframe, "prompt")
+        prompts = self.llm_serving.generate_from_input(user_inputs=formatted_prompts, system_prompt="")
+
+        dataframe[self.output_prompt_key] = prompts
+
+        formatted_prompts = self._build_prompt(dataframe, "qa")
         responses = self.llm_serving.generate_from_input(user_inputs=formatted_prompts, system_prompt="")
 
         questions, answers = zip(*[self._parse_qa(r) for r in responses])
