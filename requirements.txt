@@ -67,5 +67,15 @@ sseclient-py
 librosa
 soundfile
 
+langgraph==0.6.7
+langgraph-checkpoint==2.1.1
+langgraph-prebuilt==0.6.4
+langgraph-sdk==0.2.6
+langchain==0.3.27
+langchain-community==0.3.29
+langchain-core==0.3.76
+langchain-openai==0.3.33
+langchain-text-splitters==0.3.11
+faiss-cpu==1.12.0
 # map visualize
 # matplotlib
