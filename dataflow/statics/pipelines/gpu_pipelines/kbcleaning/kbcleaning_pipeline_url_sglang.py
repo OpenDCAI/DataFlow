@@ -2,8 +2,9 @@ from dataflow.operators.knowledge_cleaning import (
     KBCChunkGenerator,
     FileOrURLToMarkdownConverter,
     KBCTextCleaner,
-    KBCMultiHopQAGenerator,
+    # KBCMultiHopQAGenerator,
 )
+from dataflow.operators.core_text import Text2MultiHopQAGenerator
 from dataflow.utils.storage import FileStorage
 from dataflow.serving import LocalModelLLMServing_sglang
 
@@ -53,7 +54,7 @@ class KBCleaning_URLSglang_GPUPipeline():
             lang="en"
         )
 
-        self.knowledge_cleaning_step4 = KBCMultiHopQAGenerator(
+        self.knowledge_cleaning_step4 = Text2MultiHopQAGenerator(
             llm_serving=self.llm_serving,
             lang="en"
         )

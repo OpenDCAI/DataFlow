@@ -1,7 +1,10 @@
 import textwrap
 from typing import Dict, Literal
+from dataflow.utils.registry import PROMPT_REGISTRY
+from dataflow.core.prompt import PromptABC
 
-class MultiHopQAGeneratorPrompt:
+@PROMPT_REGISTRY.register()
+class MultiHopQAGeneratorPrompt(PromptABC):
     '''
     多跳问答生成器（严格JSON格式输出）
     根据语言参数提供完全独立的专业提示模板

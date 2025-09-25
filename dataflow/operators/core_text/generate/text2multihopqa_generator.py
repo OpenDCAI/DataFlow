@@ -12,7 +12,15 @@ import json
 from tqdm import tqdm
 import re
 
-class KBCMultiHopQAGenerator(OperatorABC):
+from dataflow.core.prompt import prompt_restrict 
+
+import re
+@prompt_restrict(
+    MultiHopQAGeneratorPrompt       
+)
+
+@OPERATOR_REGISTRY.register()
+class Text2MultiHopQAGenerator(OperatorABC):
     r"""A processor for generating multi-hop question-answer pairs from user
     data.
 
