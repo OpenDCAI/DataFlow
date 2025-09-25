@@ -38,6 +38,16 @@ class BaseAgent(ABC):
         self.max_tokens = max_tokens
 
         self.tool_mode = "auto"  # 默认工具选择模式，可扩展为 "auto", "required", "none"
+
+    @classmethod
+    def create(cls, tool_manager: Optional[ToolManager] = None, **kwargs) -> "BaseAgent":
+        """
+        工厂方法：保持所有 Agent 统一的创建入口。
+
+        ----
+        BaseAgent 的具体子类实例（cls）
+        """
+        return cls(tool_manager=tool_manager, **kwargs)
     
     @property
     @abstractmethod

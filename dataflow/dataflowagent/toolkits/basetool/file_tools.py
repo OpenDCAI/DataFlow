@@ -21,6 +21,7 @@ logger = get_logger()
 from dataflow.cli_funcs.paths import DataFlowPath
 from dataflow.dataflowagent.storage.storage_service import SampleFileStorage
 from dataflow.dataflowagent.state import DFState,DFRequest
+import re
 
 parent_dir = f"{DataFlowPath.get_dataflow_agent_dir()}/toolkits"
 MAX_JSONL_LINES = 50
@@ -176,10 +177,6 @@ def local_tool_for_get_categories():
         return []
 
 # ================================================================修改python文件的某行代码
-from __future__ import annotations
-from pathlib import Path
-from typing import Dict, Union, List
-import re
 
 
 def change_pycode_lines(
@@ -193,30 +190,16 @@ def change_pycode_lines(
     write_back: bool = True,
 ) -> List[str]:
     """
-    根据行号-文本映射修改 Python 源文件，可自动沿用原行缩进。
-
-    参数
-    ----
-    file_path      : 目标 .py 文件路径。
-    patches        : {行号: 新文本}，行号从 1 开始。
-    encoding       : 读取/写入编码。
-    inherit_indent : True → 自动继承原行的前导空白并补到新文本前。
-    make_backup    : 是否写出备份文件（修改前内容）。
-    backup_suffix  : 备份文件后缀，默认 '.bak'。
-    write_back     : 是否把结果写回磁盘；False 时仅返回行列表。
-
-    返回
-    ----
-    List[str] : 修改后的全部行（包含换行符）。
+    根据行号-文本映射修改 Python 文件，并可自动继承原行缩进。
     """
     path = Path(file_path).expanduser().resolve()
     if not path.is_file():
         raise FileNotFoundError(path)
 
-    # 读取
+    # 读取原文件
     lines = path.read_text(encoding=encoding).splitlines(keepends=True)
 
-    # 备份（备份的是原版本，更安全）
+    # 先备份
     if write_back and make_backup:
         path.with_suffix(path.suffix + backup_suffix).write_text(
             "".join(lines), encoding=encoding
@@ -229,14 +212,17 @@ def change_pycode_lines(
 
     for ln, new_body in patches.items():
         old_line = lines[ln - 1]
-        # 提取换行符
+
+        # 行尾换行符
         eol = old_line[len(old_line.rstrip("\r\n")) :]
-        # 自动继承缩进
+
+        # 缩进
+        indent = ""
         if inherit_indent and not new_body.startswith((" ", "\t")):
             indent = re.match(r"[ \t]*", old_line).group(0)
-        else:
-            indent = ""
-        lines[ln - 1] = f"{indent}{new_body}{eol or '\n'}"
+
+        newline = eol if eol else "\n"          # 关键修复
+        lines[ln - 1] = f"{indent}{new_body}{newline}"
 
     if write_back:
         path.write_text("".join(lines), encoding=encoding)

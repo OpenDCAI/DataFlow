@@ -5,7 +5,23 @@ from dataflow.pipeline import PipelineABC
 from dataflow.utils.storage import FileStorage
 from dataflow.serving import APILLMServing_request, LocalModelLLMServing_vllm
 
+from dataflow.operators.reasoning.eval.reasoning_category_dataset_evaluator import ReasoningCategoryDatasetEvaluator
+from dataflow.operators.reasoning.eval.reasoning_difficulty_dataset_evaluator import ReasoningDifficultyDatasetEvaluator
+from dataflow.operators.reasoning.eval.reasoning_question_category_sample_evaluator import ReasoningQuestionCategorySampleEvaluator
+from dataflow.operators.reasoning.eval.reasoning_question_difficulty_sample_evaluator import ReasoningQuestionDifficultySampleEvaluator
+from dataflow.operators.reasoning.eval.reasoning_token_dataset_evaluator import ReasoningTokenDatasetEvaluator
+from dataflow.operators.reasoning.filter.reasoning_answer_formatter_filter import ReasoningAnswerFormatterFilter
+from dataflow.operators.reasoning.filter.reasoning_answer_groundtruth_filter import ReasoningAnswerGroundTruthFilter
+from dataflow.operators.reasoning.filter.reasoning_answer_judge_mathverify_filter import ReasoningAnswerJudgeMathVerifyFilter
+from dataflow.operators.reasoning.filter.reasoning_answer_model_judge_filter import ReasoningAnswerModelJudgeFilter
+from dataflow.operators.reasoning.filter.reasoning_answer_ngram_filter import ReasoningAnswerNgramFilter
+from dataflow.operators.reasoning.filter.reasoning_answer_pipeline_root_filter import ReasoningAnswerPipelineRootFilter
+from dataflow.operators.reasoning.filter.reasoning_answer_token_length_filter import ReasoningAnswerTokenLengthFilter
+from dataflow.operators.reasoning.filter.reasoning_question_filter import ReasoningQuestionFilter
+from dataflow.operators.reasoning.generate.reasoning_answer_extraction_qwenmatheval_generator import ReasoningAnswerExtractionQwenMathEvalGenerator
 from dataflow.operators.reasoning.generate.reasoning_answer_generator import ReasoningAnswerGenerator
+from dataflow.operators.reasoning.generate.reasoning_pretrain_format_convert_generator import ReasoningPretrainFormatConvertGenerator
+from dataflow.operators.reasoning.generate.reasoning_pseudo_answer_generator import ReasoningPseudoAnswerGenerator
 from dataflow.operators.reasoning.generate.reasoning_question_generator import ReasoningQuestionGenerator
 
 
@@ -28,15 +44,79 @@ class RecommendPipeline(PipelineABC):
             max_workers=100,
         )
 
+        self.reasoning_answer_pipeline_root_filter = ReasoningAnswerPipelineRootFilter()
+        self.reasoning_question_filter = ReasoningQuestionFilter(system_prompt='You are a helpful assistant.', llm_serving=self.llm_serving, prompt_template=dataflow.prompts.reasoning.math.MathQuestionFilterPrompt | dataflow.prompts.reasoning.general.GeneralQuestionFilterPrompt | dataflow.prompts.reasoning.diy.DiyQuestionFilterPrompt | dataflow.core.prompt.DIYPromptABC)
+        self.reasoning_answer_model_judge_filter = ReasoningAnswerModelJudgeFilter(system_prompt='You are a helpful assistant specialized in evaluating answer correctness.', llm_serving=self.llm_serving, prompt_template=None, keep_all_samples=False)
         self.reasoning_answer_generator = ReasoningAnswerGenerator(llm_serving=self.llm_serving, prompt_template=None)
         self.reasoning_question_generator = ReasoningQuestionGenerator(num_prompts=1, llm_serving=self.llm_serving, prompt_template=None)
+        self.reasoning_pseudo_answer_generator = ReasoningPseudoAnswerGenerator(llm_serving=self.llm_serving, max_times=3)
+        self.reasoning_answer_extraction_qwen_math_eval_generator = ReasoningAnswerExtractionQwenMathEvalGenerator(dataset_name=None)
+        self.reasoning_answer_formatter_filter = ReasoningAnswerFormatterFilter()
+        self.reasoning_answer_ground_truth_filter = ReasoningAnswerGroundTruthFilter(compare_method='math_verify')
+        self.reasoning_answer_judge_math_verify_filter = ReasoningAnswerJudgeMathVerifyFilter(config=None)
+        self.reasoning_answer_ngram_filter = ReasoningAnswerNgramFilter(min_score=0.1, max_score=1.0, ngrams=5)
+        self.reasoning_answer_token_length_filter = ReasoningAnswerTokenLengthFilter(max_answer_token_length=8192, tokenizer_dir='Qwen/Qwen2.5-0.5B-Instruct')
+        self.reasoning_pretrain_format_convert_generator = ReasoningPretrainFormatConvertGenerator()
+        self.reasoning_category_dataset_evaluator = ReasoningCategoryDatasetEvaluator()
+        self.reasoning_difficulty_dataset_evaluator = ReasoningDifficultyDatasetEvaluator()
+        self.reasoning_token_dataset_evaluator = ReasoningTokenDatasetEvaluator()
+        self.reasoning_question_category_sample_evaluator = ReasoningQuestionCategorySampleEvaluator(llm_serving=self.llm_serving)
+        self.reasoning_question_difficulty_sample_evaluator = ReasoningQuestionDifficultySampleEvaluator(llm_serving=self.llm_serving)
 
     def forward(self):
+        self.reasoning_answer_pipeline_root_filter.run(
+            storage=self.storage.step(), input_answer_key='output', input_gt_key='golden_answer'
+        )
+        self.reasoning_question_filter.run(
+            storage=self.storage.step(), input_key='math_problem'
+        )
+        self.reasoning_answer_model_judge_filter.run(
+            storage=self.storage.step(), input_question_key='question', input_answer_key='answer', input_reference_key='reference_answer'
+        )
         self.reasoning_answer_generator.run(
             storage=self.storage.step(), input_key='instruction', output_key='generated_cot'
         )
         self.reasoning_question_generator.run(
             storage=self.storage.step(), input_key=None, output_synth_or_input_flag='Synth_or_Input'
+        )
+        self.reasoning_pseudo_answer_generator.run(
+            storage=self.storage.step(), input_key='instruction', output_key_answer='pseudo_answers', output_key_answer_value='pseudo_answer_value', output_key_solutions='pseudo_solutions', output_key_correct_solution_example='pseudo_correct_solution_example'
+        )
+        self.reasoning_answer_extraction_qwen_math_eval_generator.run(
+            storage=self.storage.step(), response_key='pseudo_correct_solution_example', extraction_key='extraction'
+        )
+        self.reasoning_answer_formatter_filter.run(
+            storage=self.storage.step(), input_key='generated_cot'
+        )
+        self.reasoning_answer_ground_truth_filter.run(
+            storage=self.storage.step(), input_test_answer_key='generated_cot', input_gt_answer_key='golden_answer'
+        )
+        self.reasoning_answer_judge_math_verify_filter.run(
+            storage=self.storage.step(), input_key='instruction', answer_key='student_answer', gt_key='correct_answer', result_key='result'
+        )
+        self.reasoning_answer_ngram_filter.run(
+            storage=self.storage.step(), input_question_key='instruction', input_answer_key='generated_cot'
+        )
+        self.reasoning_answer_token_length_filter.run(
+            storage=self.storage.step(), input_key='generated_cot'
+        )
+        self.reasoning_pretrain_format_convert_generator.run(
+            storage=self.storage.step(), input_read_key_question='question', input_read_key_answer='answer', output_key='text'
+        )
+        self.reasoning_category_dataset_evaluator.run(
+            storage=self.storage.step(), input_primary_category_key='primary_category', input_secondary_category_key='secondary_category'
+        )
+        self.reasoning_difficulty_dataset_evaluator.run(
+            storage=self.storage.step(), input_diffulty_key='difficulty_score'
+        )
+        self.reasoning_token_dataset_evaluator.run(
+            storage=self.storage.step(), input_question_key=None, input_answer_key=None, model_name_or_path=None
+        )
+        self.reasoning_question_category_sample_evaluator.run(
+            storage=self.storage.step(), input_key='instruction', output_key='question_category'
+        )
+        self.reasoning_question_difficulty_sample_evaluator.run(
+            storage=self.storage.step(), input_key=None, output_key='difficulty_score'
         )
 
 if __name__ == "__main__":

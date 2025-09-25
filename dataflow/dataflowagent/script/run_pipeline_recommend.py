@@ -18,7 +18,7 @@ async def main() -> None:
         api_key=os.getenv("DF_API_KEY", "sk-dummy"),
         model="gpt-4o",
         json_file=f"{DATAFLOW_DIR}/dataflow/example/DataflowAgent/mq_test_data.jsonl",
-        target="我需要 2 个reasoning的算子！",
+        target="根据数据，推荐pipeline，需要尽量多的算子！",
         python_file_path = f"{DATAFLOW_DIR}/dataflow/dataflowagent/tests/my_pipeline.py",  # pipeline的输出脚本路径
         need_debug = False, #是否需要Debug
         max_debug_rounds = 3, #Debug的轮次数量
@@ -58,7 +58,5 @@ async def main() -> None:
         print(f"================== 不需要调试，只进行组装，结果在 {req.python_file_path} ==================")
 
     
-
-
 if __name__ == "__main__":
     asyncio.run(main())
