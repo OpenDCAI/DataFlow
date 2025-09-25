@@ -77,9 +77,16 @@ class Writer(BaseAgent):
         code_str = ""
         if isinstance(result, dict):
             code_str = result.get("code", "")
+        # 将生成代码写入状态，并同步到 temp_data 以便后续执行/调试节点复用
         state.draft_operator_code = code_str
         if code_str:
-            self._dump_code(state, code_str)
+            saved_path = self._dump_code(state, code_str)
+            try:
+                state.temp_data["pipeline_code"] = code_str
+                if saved_path is not None:
+                    state.temp_data["pipeline_file_path"] = str(saved_path)
+            except Exception:
+                pass
         super().update_state_result(state, result, pre_tool_results)
 
 
