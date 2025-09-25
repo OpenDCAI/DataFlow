@@ -5,6 +5,10 @@ from dataflow import get_logger
 from dataflow.utils.storage import DataFlowStorage
 from dataflow.core import OperatorABC
 from dataflow.core import LLMServingABC
+from dataflow.core.prompt import prompt_restrict
+
+from dataflow.prompts.doc2qa import Doc2QASeedQuestionGeneratorPrompt
+
 
 @OPERATOR_REGISTRY.register()
 class Doc2QAGenerator:
@@ -12,9 +16,13 @@ class Doc2QAGenerator:
     SeedQAGenerator is a class that uses LLMs to generate QA pairs based on seed input.
     '''
 
-    def __init__(self, llm_serving: LLMServingABC):
+    def __init__(self,
+                 llm_serving: LLMServingABC,
+                #  prompt_template = None # prompt is fix
+                 ):
         self.logger = get_logger()
         self.llm_serving = llm_serving
+        self.prompt_template = Doc2QASeedQuestionGeneratorPrompt()
     
     @staticmethod
     def get_desc(lang: str = "zh"):
@@ -54,7 +62,7 @@ class Doc2QAGenerator:
     def _build_prompt(self, df):
         prompts = []
         for index, row in df.iterrows():
-            prompts.append(row[self.prompt_key] + "Format:\nQ: ...\nA: ..." + "\nSeed data:\n" + row[self.input_key])
+            prompts.append(row[self.prompt_key] + self.prompt_template.build_prompt() + row[self.input_key])
         return prompts
 
     def _parse_qa(self, response: str) -> tuple:

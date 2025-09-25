@@ -1,4 +1,3 @@
-from dataflow.prompts.doc2qa import Doc2QAAutoPromptGeneratorPrompt
 import pandas as pd
 from dataflow.utils.registry import OPERATOR_REGISTRY
 from dataflow import get_logger
@@ -6,15 +5,25 @@ from dataflow import get_logger
 from dataflow.utils.storage import DataFlowStorage  
 from dataflow.core import OperatorABC
 from dataflow.core import LLMServingABC
+from dataflow.core.prompt import prompt_restrict
+from dataflow.core.prompt import DIYPromptABC
 
+from dataflow.prompts.doc2qa import Doc2QAAutoPromptGeneratorPrompt
+
+@prompt_restrict(
+    Doc2QAAutoPromptGeneratorPrompt
+)
 @OPERATOR_REGISTRY.register()
 class Doc2PromptGenerator(OperatorABC):
     '''
     AutoPromptGenerator is a class that generates prompts for given document fragments to generate seed QA pairs.
     '''
-    def __init__(self, llm_serving: LLMServingABC):
+    def __init__(self,
+                 llm_serving: LLMServingABC,
+                #  prompt_template = None # prompt is fix
+                 ):
         self.logger = get_logger()
-        self.prompts = Doc2QAAutoPromptGeneratorPrompt()    
+        self.prompt_template = Doc2QAAutoPromptGeneratorPrompt()    
         self.llm_serving = llm_serving
     
     @staticmethod
@@ -53,7 +62,7 @@ class Doc2PromptGenerator(OperatorABC):
         Reformat the prompts in the dataframe to generate questions.
         """
         questions = dataframe[self.input_key].tolist()
-        inputs = [self.prompts.build_prompt(question) for question in questions]
+        inputs = [self.prompt_template.build_prompt(question) for question in questions]
 
         return inputs
 

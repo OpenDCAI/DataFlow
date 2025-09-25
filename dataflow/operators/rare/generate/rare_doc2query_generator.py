@@ -1,56 +1,15 @@
 import pandas as pd
 import json
 from dataflow.utils.registry import OPERATOR_REGISTRY # Changed from GENERATOR_REGISTRY to OPERATOR_REGISTRY
-from dataflow import get_logger # Simplified import
+from dataflow.logger import get_logger # Simplified import
 from dataflow.utils.storage import DataFlowStorage # New import for storage
 from dataflow.core import OperatorABC # New import for OperatorABC
 from dataflow.core import LLMServingABC # New import for LLMServingABC
+from dataflow.prompts.rare import RAREDoc2QueryGenertorPrompt # New import for Prompt
 
-DOC2HARD_QUERY = '''# Context
-You are tasked with generating reasoning-intensive questions with scenarios based on a given document. These questions must be standalone (meaningful without the document) while being answerable using information from the document as supporting evidence. The questions should specifically engage with core concepts and principles from the document's domain.
-
-# Question Requirements
-1. Each question MUST:
-- Present a complete scenario or context within itself
-- Be answerable through logical reasoning and critical thinking
-- Remain valid and meaningful even if the source document didn't exist
-- Target higher-order thinking skills (analysis, evaluation, synthesis)
-- Be domain-relevant but not document-specific
-- Incorporate key concepts, terminology, and principles from the document's field
-- Challenge understanding of domain-specific problem-solving approaches
-
-2. Each question MUST NOT:
-- Directly reference the document or its contents
-- Be answerable through simple fact recall
-- Require specific knowledge only found in the document
-- Be a reading comprehension question
-- Stray from the core subject matter of the document's domain
-
-# Domain Alignment Guidelines
-Before generating questions:
-1. Identify the primary domain (e.g., programming, medicine, economics)
-2. Extract key concepts and principles from the document
-3. List common problem-solving patterns in this domain
-
-When crafting questions:
-1. Frame scenarios using domain-specific contexts
-2. Incorporate relevant technical terminology naturally
-3. Focus on problem-solving approaches typical to the field
-4. Connect theoretical concepts to practical applications within the domain
-
-After generating questions step by step, reformat questions including corresponding scenarios in JSON with key "hard_query":
-```json
-{{
-    "hard_query": { "question": <str>, "scenario": <str>}
-}}
-```
-Now, ** the number of hard_queries to generate is exactly 1 **.
-
-# Document
-'''
 
 @OPERATOR_REGISTRY.register() # Changed decorator to OPERATOR_REGISTRY
-class Doc2Query(OperatorABC): # Inherit from OperatorABC
+class RAREDoc2QueryGenerator(OperatorABC): # Inherit from OperatorABC
     '''
     Doc2Query uses LLMs to generate reasoning-intensive questions for given documents.
     '''
@@ -58,6 +17,7 @@ class Doc2Query(OperatorABC): # Inherit from OperatorABC
     def __init__(self, llm_serving: LLMServingABC): # Changed config to llm_serving
         self.logger = get_logger()
         self.llm_serving = llm_serving # Renamed generator to llm_serving
+        self.prompt = RAREDoc2QueryGenertorPrompt()
 
         # Removed config related attributes as they will be passed in run method
         self.input_key = "text"
@@ -98,10 +58,10 @@ class Doc2Query(OperatorABC): # Inherit from OperatorABC
         if conflict:
             raise ValueError(f"The following column(s) already exist and would be overwritten: {conflict}")
 
-    def _build_prompt(self, df) -> list: # Changed return type hint to list
+    def _build_prompts(self, df) -> list: # Changed return type hint to list
         prompts = []
         for index, row in df.iterrows():
-            prompt = DOC2HARD_QUERY + row[self.input_key]
+            prompt = self.prompt.build_prompt(document=row[self.input_key])
             prompts.append(prompt)
         return prompts # Return as a list directly
 
@@ -123,7 +83,7 @@ class Doc2Query(OperatorABC): # Inherit from OperatorABC
 
         dataframe = storage.read("dataframe") # Read from storage
         self._validate_dataframe(dataframe)
-        prompts = self._build_prompt(dataframe)
+        prompts = self._build_prompts(dataframe)
         responses = self.llm_serving.generate_from_input(user_inputs=prompts, system_prompt="") # Updated LLM call
 
         questions, scenarios = [], []
