@@ -1,15 +1,19 @@
+from dataflow.utils.storage import DataFlowStorage
+from dataflow.core import OperatorABC
+from dataflow.core.prompt import prompt_restrict
+from dataflow.utils.reasoning.CategoryFuzz import CategoryUtils
+from dataflow.core import LLMServingABC
 from dataflow.prompts.reasoning.math import MathQuestionCategoryPrompt
+
 import pandas as pd
 import json
 import re
 from dataflow.utils.registry import OPERATOR_REGISTRY
 from dataflow import get_logger
 
-from dataflow.utils.storage import DataFlowStorage
-from dataflow.core import OperatorABC
-
-from dataflow.utils.reasoning.CategoryFuzz import CategoryUtils
-from dataflow.core import LLMServingABC
+@prompt_restrict(
+    MathQuestionCategoryPrompt
+)
 
 @OPERATOR_REGISTRY.register()
 class ReasoningQuestionCategorySampleEvaluator(OperatorABC):

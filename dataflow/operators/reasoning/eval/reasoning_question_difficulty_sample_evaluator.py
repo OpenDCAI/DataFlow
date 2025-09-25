@@ -1,12 +1,17 @@
 from dataflow.prompts.reasoning.math import MathQuestionDifficultyPrompt
-import pandas as pd
-import re
 from dataflow.utils.registry import OPERATOR_REGISTRY
 from dataflow import get_logger
-
+from dataflow.core.prompt import prompt_restrict
 from dataflow.utils.storage import DataFlowStorage
 from dataflow.core import OperatorABC
 from dataflow.core import LLMServingABC
+
+import pandas as pd
+import re
+
+@prompt_restrict(
+    MathQuestionDifficultyPrompt
+)
 
 @OPERATOR_REGISTRY.register()
 class ReasoningQuestionDifficultySampleEvaluator(OperatorABC):
