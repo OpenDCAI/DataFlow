@@ -33,7 +33,7 @@ def prompt_restrict(*allowed_prompts: type[DIYPromptABC]):
         setattr(cls, "ALLOWED_PROMPTS", tuple(allowed_prompts))
         # self.ALLOWED_PROMPTS = list(allowed_prompts)
 
-        print(allowed_prompts,"fuck!!!!")
+        # print(allowed_prompts,"fuck!!!!")
         orig_init = cls.__init__
 
         @wraps(orig_init)
