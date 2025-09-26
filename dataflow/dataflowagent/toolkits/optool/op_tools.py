@@ -39,6 +39,37 @@ def local_tool_for_get_purpose(req: DFRequest) -> str:
     return req.target or ""
 
 # ===================================================================更新算子库部分代码：
+def _safe_json_val(val: Any) -> Any:
+    """
+    把任意 Python 对象转换成 JSON 可序列化的值。
+    规则：
+    1. 基本类型（None / bool / int / float / str）直接返回；
+    2. enum/类对象 → 返回 'module.qualname'；
+    3. 其它复杂对象 → 返回 str(val)；
+    """
+    # 空值直接交给 _param_to_dict 去处理
+    if val is inspect.Parameter.empty:
+        return None
+
+    # 基本可 JSON 类型
+    if isinstance(val, (str, int, float, bool)) or val is None:
+        return val
+
+    # 类、函数、枚举等 → module.qualname
+    if isinstance(val, type):
+        return f"{val.__module__}.{val.__qualname__}"
+
+    # Python3.10+ 的 A | B 产生的 UnionType
+    if getattr(val, "__origin__", None) is None and val.__class__.__name__ == "UnionType":
+        return str(val)          # e.g. "A | B | C"
+
+    # 尝试直接 dump
+    try:
+        json.dumps(val)
+        return val
+    except TypeError:
+        return str(val)
+
 # 工具函数：安全调用带 @staticmethod 的 get_desc(lang)
 def _call_get_desc_static(cls, lang: str = "zh") -> str | None:
     """
@@ -67,7 +98,8 @@ def _param_to_dict(p: inspect.Parameter) -> Dict[str, Any]:
     """把 inspect.Parameter 转成 JSON 可序列化的字典（参考 MCP func 定义）"""
     return {
         "name": p.name,
-        "default": None if p.default is inspect.Parameter.empty else p.default,
+        # "default": None if p.default is inspect.Parameter.empty else p.default,
+        "default": _safe_json_val(p.default),
         "kind": p.kind.name,  # POSITIONAL_OR_KEYWORD / VAR_POSITIONAL / ...
     }
 

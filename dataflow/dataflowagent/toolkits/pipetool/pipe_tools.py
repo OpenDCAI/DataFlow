@@ -13,6 +13,7 @@ from dataflow.utils.registry import OPERATOR_REGISTRY
 
 log = get_logger()
 
+EXTRA_IMPORTS: set[str] = set()  
 
 def snake_case(name: str) -> str:
     """
@@ -77,6 +78,13 @@ def group_imports(op_names: List[str]) -> Tuple[List[str], List[str], Dict[str, 
         names = sorted(set(module2names[m]))
         imports.append(f"from {m} import {', '.join(names)}")
 
+    for m in sorted(module2names.keys()):
+        names = sorted(set(module2names[m]))
+        imports.append(f"from {m} import {', '.join(names)}")
+
+    # 追加 choose_prompt_template 过程中收集的额外 import
+    imports.extend(sorted(EXTRA_IMPORTS))
+
     return imports, stubs, op_classes
 
 
@@ -131,6 +139,49 @@ def extract_op_params(cls: type) -> Tuple[List[Tuple[str, str]], List[Tuple[str,
 
     return init_kwargs, run_kwargs, run_has_storage
 
+def choose_prompt_template(op_name: str) -> str:
+    """
+    返回 prompt_template 的代码字符串。
+    规则：
+      1. 若类有 ALLOWED_PROMPTS 且非空 → 取第一个并实例化；
+      2. 否则回退到 __init__ 默认值；若仍不可用则返回 None。
+    """
+    from dataflow.utils.registry import OPERATOR_REGISTRY
+    import inspect, json
+
+    cls = OPERATOR_REGISTRY.get(op_name)
+    if cls is None:
+        raise KeyError(f"Operator {op_name} not found in registry")
+
+    # 优先使用 ALLOWED_PROMPTS
+    if getattr(cls, "ALLOWED_PROMPTS", None):
+        prompt_cls = cls.ALLOWED_PROMPTS[0]
+        EXTRA_IMPORTS.add(f"from {prompt_cls.__module__} import {prompt_cls.__qualname__}")
+        return f"{prompt_cls.__qualname__}()"
+
+    # -------- 无 ALLOWED_PROMPTS，兜底处理 --------
+    sig = inspect.signature(cls.__init__)
+    p = sig.parameters.get("prompt_template")
+    if p is None:
+        # 理论上不会走到这里，因为调用方只在存在该参数时才进来
+        return "None"
+
+    default_val = p.default
+    if default_val in (inspect._empty, None):
+        return "None"
+
+    # 基础类型可直接 repr
+    if isinstance(default_val, (str, int, float, bool)):
+        return repr(default_val)
+
+    # 类型对象 → 加 import 然后实例化
+    if isinstance(default_val, type):
+        EXTRA_IMPORTS.add(f"from {default_val.__module__} import {default_val.__qualname__}")
+        return f"{default_val.__qualname__}()"
+
+    # UnionType / 其它复杂对象 → 字符串化再 repr，保证可写入代码
+    return repr(str(default_val))
+
 
 def render_operator_blocks(op_names: List[str], op_classes: Dict[str, type]) -> Tuple[str, str]:
     """
@@ -151,6 +202,9 @@ def render_operator_blocks(op_names: List[str], op_classes: Dict[str, type]) -> 
         for k, v in init_kwargs:
             if k == "llm_serving":
                 rendered_init_args.append(f"{k}=self.llm_serving")
+            elif k == "prompt_template":
+                p_t = choose_prompt_template(name)
+                rendered_init_args.append(f'{k}={p_t}')
             else:
                 rendered_init_args.append(f"{k}={v}")
 
@@ -219,11 +273,15 @@ def build_pipeline_code(
 ) -> str:
     # 1) 收集导入与类
     import_lines, stub_blocks, op_classes = group_imports(op_names)
-    import_section = "\n".join(import_lines)
-    stub_section = "\n\n".join(stub_blocks)  # 用空行隔开多个 stub
+
 
     # 2) 渲染 operator 代码片段（无缩进）
     ops_init_block_raw, forward_block_raw = render_operator_blocks(op_names, op_classes)
+
+    import_lines.extend(sorted(EXTRA_IMPORTS))
+    
+    import_section = "\n".join(import_lines)
+    stub_section = "\n\n".join(stub_blocks)  # 用空行隔开多个 stub
 
     # 3) LLM-Serving 片段（无缩进，统一在模板中缩进）
     if llm_local:
