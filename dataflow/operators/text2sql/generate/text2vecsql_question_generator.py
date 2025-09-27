@@ -4,6 +4,7 @@ import pandas as pd
 from tqdm import tqdm
 import numpy as np
 from scipy.spatial.distance import cdist
+import json
 from dataflow.prompts.text2sql import Text2SQLQuestionGeneratorPrompt
 from dataflow.utils.registry import OPERATOR_REGISTRY
 from dataflow import get_logger
@@ -11,9 +12,8 @@ from dataflow.core import OperatorABC, LLMServingABC
 from dataflow.utils.storage import DataFlowStorage
 from dataflow.utils.text2sql.database_manager import DatabaseManager
 
-
 @OPERATOR_REGISTRY.register()
-class Text2SQLQuestionGenerator(OperatorABC):
+class Text2VecSQLQuestionGenerator(OperatorABC):
     def __init__(self, 
                 llm_serving: LLMServingABC, 
                 embedding_serving: LLMServingABC, 
@@ -56,18 +56,23 @@ class Text2SQLQuestionGenerator(OperatorABC):
         else:
             return "Question generator for Text2SQL tasks."
 
-    def extract_column_descriptions(self, create_statements):
+    @staticmethod
+    def extract_column_descriptions(create_statements):
         column_name2column_desc = dict()
-        pattern = r'"(\w+)"\s+\w+\s*/\*\s*(.*?)\s*\*/'
-
+        pattern = r'"(\w+)"\s+([\w\[\]]+)\s*(?:/\*\s*(.*?)\s*\*/)?'
+        
         for create_statement in create_statements:
             matches = re.findall(pattern, create_statement)
-
-            for column_name, description in matches:
+            for column_name, col_type, description in matches:
                 column_name = column_name.lower()
-                if column_name not in column_name2column_desc:
-                    column_name2column_desc[column_name] = description
-
+                desc = description.strip() if description else ""
+                if 'float[' in col_type.lower() or '_embedding' in column_name:
+                    column_info = f"Vector column for similarity search"
+                    if desc:
+                        column_info += f": {desc}"
+                else:
+                    column_info = desc if desc else f"{col_type} column"
+                column_name2column_desc[column_name] = column_info
         return column_name2column_desc
 
     def parse_llm_response(self, response, style):
@@ -109,13 +114,12 @@ class Text2SQLQuestionGenerator(OperatorABC):
     def run(self, storage: DataFlowStorage,
             input_sql_key: str = "sql",
             input_db_id_key: str = "db_id",
-            output_question_key: str = "question",
-            output_evidence_key: str = "evidence"
+            output_question_key: str = "question"
         ):
         self.input_sql_key = input_sql_key
         self.input_db_id_key = input_db_id_key
         self.output_question_key = output_question_key
-        self.output_evidence_key = output_evidence_key
+        
         raw_dataframe = storage.read("dataframe")
         
         existing_data = []
@@ -130,6 +134,7 @@ class Text2SQLQuestionGenerator(OperatorABC):
         else:
             raw_data = [row.to_dict() for _, row in raw_dataframe.iterrows()]
         
+        styles = ["Formal", "Colloquial", "Imperative", "Interrogative", "Descriptive", "Concise", "Vague", "Metaphorical"]
         db_ids = list(set([data[self.input_db_id_key] for data in raw_data]))
         db_id2column_info = dict()
         
@@ -142,9 +147,11 @@ class Text2SQLQuestionGenerator(OperatorABC):
         prompt_data_mapping = []
         
         for data in tqdm(raw_data, desc="Preparing prompts"):
-            prompt = self.prompt_template.build_prompt(
-                data[self.input_sql_key],
-                data[self.input_db_id_key],
+            prompt, style_name = self.prompt_template.build_prompt(
+                data,
+                self.input_db_id_key,
+                self.input_sql_key,
+                styles,
                 db_id2column_info,
                 self.database_manager.db_type,
                 using_sqlite_vec = True,
@@ -153,7 +160,7 @@ class Text2SQLQuestionGenerator(OperatorABC):
             
             for _ in range(self.question_candidates_num):
                 prompts.append(prompt)
-                prompt_data_mapping.append({**data})
+                prompt_data_mapping.append({**data, "style": style_name})
 
         responses = self.llm_serving.generate_from_input(prompts, system_prompt="You are a helpful assistant.")
         
@@ -198,8 +205,7 @@ class Text2SQLQuestionGenerator(OperatorABC):
                 if best_question:
                     result = {
                         **data,
-                        self.output_question_key: best_question["question"],
-                        self.output_evidence_key: best_question["external_knowledge"]
+                        self.output_question_key: best_question["question"]
                     }
                     processed_results.append(result)
                 else:
@@ -226,5 +232,3 @@ class Text2SQLQuestionGenerator(OperatorABC):
             return []
         else:
             return [self.output_question_key]
-
-            return [self.output_question_key, self.output_evidence_key]

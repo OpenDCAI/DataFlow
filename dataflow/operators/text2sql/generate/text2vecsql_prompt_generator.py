@@ -4,24 +4,26 @@ from tqdm import tqdm
 from typing import Dict, Optional
 from dataflow.utils.registry import OPERATOR_REGISTRY
 from dataflow import get_logger
-from dataflow.prompts.text2sql import Text2SQLPromptGeneratorPrompt
+from dataflow.prompts.text2sql import Text2VecSQLPromptGeneratorPrompt
 from dataflow.core import OperatorABC
 from dataflow.utils.storage import DataFlowStorage
 from dataflow.utils.text2sql.database_manager import DatabaseManager
 
 
 @OPERATOR_REGISTRY.register()
-class Text2SQLPromptGenerator(OperatorABC):
+class Text2VecSQLPromptGenerator(OperatorABC):
     def __init__(self, 
                 database_manager: DatabaseManager,
-                prompt_template = None
+                prompt_template = None,
+                include_evidence = True
             ):
 
         if prompt_template is None:
-            prompt_template = Text2SQLPromptGeneratorPrompt()
+            prompt_template = Text2VecSQLPromptGeneratorPrompt()
         self.prompt_template = prompt_template
         
         self.logger = get_logger()
+        self.include_evidence = include_evidence
         self.database_manager = database_manager
 
     @staticmethod
@@ -78,12 +80,10 @@ class Text2SQLPromptGenerator(OperatorABC):
         for item in tqdm(items, desc="Generating prompts"):
             db_id = item[self.input_db_id_key]
             question = item[self.input_question_key]
-
-            if self.input_evidence_key in item:
+            evidence = ""
+            if self.include_evidence and self.input_evidence_key in item:
                 evidence = item[self.input_evidence_key]
-            else:
-                evidence = ""
-        
+                
             db_id = re.sub(r'[^A-Za-z0-9_]', '', str(db_id).replace('\n', ''))
 
             db_details = self.database_manager.get_db_details(db_id)
