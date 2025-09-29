@@ -4,8 +4,18 @@ from dataflow.utils.storage import DataFlowStorage
 from dataflow.core import OperatorABC
 from dataflow.core import LLMServingABC
 
-import pandas as pd
 from dataflow.prompts.reasoning.math import MathAnswerGeneratorPrompt
+from dataflow.prompts.reasoning.general import GeneralAnswerGeneratorPrompt
+from dataflow.prompts.reasoning.diy import DiyAnswerGeneratorPrompt
+from dataflow.core.prompt import prompt_restrict, DIYPromptABC
+
+import pandas as pd
+
+@prompt_restrict(
+    MathAnswerGeneratorPrompt,
+    GeneralAnswerGeneratorPrompt,
+    DiyAnswerGeneratorPrompt
+)
 
 @OPERATOR_REGISTRY.register()
 class ReasoningAnswerGenerator(OperatorABC):
@@ -14,7 +24,7 @@ class ReasoningAnswerGenerator(OperatorABC):
     '''
     def __init__(self,
                 llm_serving: LLMServingABC,
-                prompt_template = None,
+                prompt_template = MathAnswerGeneratorPrompt | GeneralAnswerGeneratorPrompt | DiyAnswerGeneratorPrompt | DIYPromptABC
                 ):
         
         self.logger = get_logger()
