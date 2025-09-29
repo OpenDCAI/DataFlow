@@ -11,9 +11,14 @@ class PromptedGenerator(OperatorABC):
     '''
     Answer Generator is a class that generates answers for given questions.
     '''
-    def __init__(self, llm_serving: LLMServingABC, system_prompt: str = "You are a helpful agent."):
+    def __init__(self, 
+                llm_serving: LLMServingABC, 
+                system_prompt: str = "You are a helpful agent.",
+                json_schema: dict = None,
+                ):
         self.logger = get_logger()
         self.llm_serving = llm_serving
+        self.llm_serving.json_schema = json_schema
         self.system_prompt = system_prompt
     
     @staticmethod

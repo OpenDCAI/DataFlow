@@ -18,7 +18,16 @@ class GPT_generator():
         )
         self.prompt_generator = PromptedGenerator(
             llm_serving = self.llm_serving, 
-            system_prompt = "Please translate to Chinese.", # System prompt for translation
+            system_prompt = "Please translate to Chinese.Please answer in JSON format.",
+            json_schema = {
+                    "type": "object",
+                    "properties": {
+                        "original": {"type": "string"},
+                        "translation": {"type": "string"}
+                    },
+                    "required": ["original", "translation"],
+                    "additionalProperties": False
+                    }
         )        
 
     def forward(self):

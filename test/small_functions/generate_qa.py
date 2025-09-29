@@ -16,13 +16,34 @@ class GPT_generator():
                 model_name="gpt-4o",
                 max_workers=50
         )
-        self.prompt_generator = PromptedGenerator(llm_serving = self.llm_serving)        
+        self.prompt_generator = PromptedGenerator(
+                llm_serving = self.llm_serving,
+                system_prompt = "Please solve this math problem. Answer in JSON format.",
+                json_schema={
+                    "type": "object",
+                    "properties": {
+                        "problem": {
+                            "type": "string",
+                            "description": "The math problem that needs to be solved."
+                        },
+                        "solution": {
+                            "type": "string",
+                            "description": "Step-by-step reasoning and solution process."
+                        },
+                        "answer": {
+                            "type": "string",
+                            "description": "The final answer to the math problem."
+                        }
+                    },
+                    "required": ["problem", "solution", "answer"],
+                    "additionalProperties": False
+                }
+                )        
 
     def forward(self):
         # Initial filters
         self.prompt_generator.run(
             storage = self.storage.step(),
-            system_prompt = "Please solve this math problem.",
             input_key = "problem",
         )
 

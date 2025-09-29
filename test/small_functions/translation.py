@@ -14,11 +14,20 @@ class GPT_generator():
         self.llm_serving = APILLMServing_request(
                 api_url="http://123.129.219.111:3000/v1/chat/completions",
                 model_name="gpt-4o",
-                max_workers=2
+                max_workers=10,
         )
         self.prompt_generator = PromptedGenerator(
             llm_serving = self.llm_serving,
-            system_prompt = "Please translate to Chinese.",
+            system_prompt = "Please translate to Chinese.Please answer in JSON format.",
+            json_schema = {
+                    "type": "object",
+                    "properties": {
+                        "original": {"type": "string"},
+                        "translation": {"type": "string"}
+                    },
+                    "required": ["original", "translation"],
+                    "additionalProperties": False
+                    }
         )        
 
     def forward(self):

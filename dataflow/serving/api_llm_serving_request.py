@@ -21,13 +21,15 @@ class APILLMServing_request(LLMServingABC):
                  key_name_of_api_key: str = "DF_API_KEY",
                  model_name: str = "gpt-4o",
                  max_workers: int = 10,
-                 max_retries: int = 5
+                 max_retries: int = 5,
+                 json_schema: dict = None,
                  ):
         # Get API key from environment variable or config
         self.api_url = api_url
         self.model_name = model_name
         self.max_workers = max_workers
         self.max_retries = max_retries
+        self.json_schema = json_schema
         self.logger = get_logger()
 
         # config api_key in os.environ global, since safty issue.
@@ -92,11 +94,26 @@ class APILLMServing_request(LLMServingABC):
                         "model": model,
                         "input": payload
                     })
-                else:
+                elif self.json_schema is None:
                     payload = json.dumps({
                         "model": model,
                         "messages": payload
                     })
+                else:
+                    payload = {
+                        "model": model,
+                        "messages": payload,
+                        "response_format": {
+                            "type": "json_schema",
+                            "json_schema": {
+                                "name": "custom_response",
+                                "strict": True,
+                                "schema": self.json_schema
+                            }
+                        }
+                    }
+                    payload = json.dumps(payload)
+                    
                 headers = {
                     'Authorization': f"Bearer {self.api_key}",
                     'Content-Type': 'application/json',
