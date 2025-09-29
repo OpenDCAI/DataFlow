@@ -13,7 +13,6 @@
 #   dataflow eval init                 初始化评估配置文件
 #   dataflow eval api                  运行API模型评估
 #   dataflow eval local                运行本地模型评估
-#   dataflow eval list                 列出评估配置文件
 # ===============================================================
 
 import os
@@ -250,7 +249,6 @@ def smart_chat_command(model_path=None, cache_path="./"):
         for model_type, path in detected_models:
             if model_type == "fine_tuned_model":
                 print(f"{Fore.GREEN}Found trained model in current directory: {path.name}{Style.RESET_ALL}")
-                print(f"{Fore.CYAN}Starting chat interface...{Style.RESET_ALL}")
                 return call_dataflow_chat(path)
 
         # 如果没有adapter，使用base_model
@@ -355,21 +353,7 @@ def handle_python_config_eval(eval_type: str, args=None):
         return False
 
 
-def list_eval_files():
-    """列出评估配置文件"""
-    try:
-        from dataflow.cli_funcs.cli_eval import DataFlowEvalCLI
 
-        cli = DataFlowEvalCLI()
-        cli.list_eval_files()
-        return True
-
-    except ImportError:
-        print("Python config evaluation module unavailable")
-        return False
-    except Exception as e:
-        print(f"Failed to list config files: {e}")
-        return False
 
 
 def handle_eval_command(args):
@@ -381,17 +365,13 @@ def handle_eval_command(args):
         if eval_action == 'init':
             return handle_python_config_init()
 
-        # 处理 api 子命令（增强版）
+        # 处理 api 子命令
         elif eval_action == 'api':
             return handle_python_config_eval('api', args)
 
-        # 处理 local 子命令（增强版）
+        # 处理 local 子命令
         elif eval_action == 'local':
             return handle_python_config_eval('local', args)
-
-        # 处理 list 子命令
-        elif eval_action == 'list':
-            return list_eval_files()
 
         # 如果没有指定子命令，显示帮助
         else:
@@ -401,11 +381,6 @@ def handle_eval_command(args):
             print("  dataflow eval init                        # Initialize evaluation config files")
             print("  dataflow eval api                         # Run API model evaluation (auto-detect models)")
             print("  dataflow eval local                       # Run local model evaluation (auto-detect models)")
-            print("  dataflow eval list                        # List config files")
-            print()
-            print("Advanced usage:")
-            print("  dataflow eval api --models model1,model2  # Specify models to evaluate")
-            print("  dataflow eval api --no-auto               # Disable auto-detection, use config file models")
             print()
             print("Complete evaluation workflow:")
             print("  1. dataflow eval local                     # Auto-detect and evaluate local models")
@@ -449,26 +424,19 @@ def build_arg_parser() -> argparse.ArgumentParser:
     p_chat.add_argument("--model", default=None, help="Model path (default: use latest trained model from cache)")
     p_chat.add_argument("--cache", default="./", help="Cache directory path")
 
-    # --- eval 命令（修改版本，支持模型参数） ---
+    # --- eval 命令
     p_eval = top.add_parser("eval", help="Model evaluation using BenchDatasetEvaluator")
     eval_sub = p_eval.add_subparsers(dest="eval_action", help="Evaluation actions")
 
     # eval init 子命令
     eval_init = eval_sub.add_parser("init", help="Initialize evaluation configuration file")
-    eval_init.add_argument("--output", help="Output file name (default: eval_api.py or eval_local.py)")
 
-    # eval api 子命令（增强版）
+    # eval api 子命令
     eval_api = eval_sub.add_parser("api", help="Run API model evaluation")
-    eval_api.add_argument("--models", help="Comma-separated list of models to evaluate (overrides config)")
-    eval_api.add_argument("--no-auto", action="store_true", help="Disable auto-detection of models")
 
-    # eval local 子命令（增强版）
+    # eval local 子命令
     eval_local = eval_sub.add_parser("local", help="Run local model evaluation")
-    eval_local.add_argument("--models", help="Comma-separated list of models to evaluate (overrides config)")
-    eval_local.add_argument("--no-auto", action="store_true", help="Disable auto-detection of models")
 
-    # eval list 子命令
-    eval_list = eval_sub.add_parser("list", help="List evaluation configuration files")
 
     # --- pdf2model ---
     p_pdf2model = top.add_parser("pdf2model", help="PDF to model training pipeline")

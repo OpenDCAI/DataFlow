@@ -55,28 +55,24 @@ class FairAnswerJudgePrompt:
 # Judge Model Configuration (local strong model as judge)
 JUDGE_MODEL_CONFIG = {
     "model_path": "./Qwen2.5-7B-Instruct",  # 用更强的模型做裁判
-    "tensor_parallel_size": 2,
+    "tensor_parallel_size": 1,
     "max_tokens": 512,
     "gpu_memory_utilization": 0.8,
 }
 
 # Target Models Configuration (same as API mode)
-TARGET_MODELS = {
-    "auto_detect": False,
-    "models": [
-        "./Qwen2.5-3B-Instruct",
-        "./Qwen2.5-7B-Instruct"
-        # 当 auto_detect=False 时，手动指定要评估的模型
-        # "Qwen/Qwen2.5-7B-Instruct",
-        # "meta-llama/Llama-3-8B-Instruct",
-        # "/path/to/local/model",
-        # "./.cache/saves/text2model_cache_20241201_143022"
-    ]
-}
+TARGET_MODELS = [
+    "./Qwen2.5-3B-Instruct",
+    "./Qwen2.5-7B-Instruct"
+    # "Qwen/Qwen2.5-7B-Instruct",
+    # "meta-llama/Llama-3-8B-Instruct",
+    # "/path/to/local/model",
+    # "./.cache/saves/text2model_cache_20241201_143022"
+]
 
 # Data Configuration (same as API mode)
 DATA_CONFIG = {
-    "input_file": "./.cache/data/qa.json",
+    "input_file": "./qa.json",
     "output_dir": "./eval_results",
     "question_key": "input",
     "reference_answer_key": "output"
@@ -91,7 +87,7 @@ EVALUATOR_RUN_CONFIG = {
 
 # Evaluation Configuration (same as API mode)
 EVAL_CONFIG = {
-    "compare_method": "semantic",  # "semantic" 或 "match"
+    "compare_method": "semantic",  # "semantic" 语义匹配 或 "match" 字段完全匹配 
     "batch_size": 8,
     "max_tokens": 512
 }

@@ -17,34 +17,34 @@ class FairAnswerJudgePrompt:
     def build_prompt(self, question, answer, reference_answer):
         prompt = f"""You are an expert evaluator assessing answer quality for academic questions.
 
-**Question:**
-{question}
+            **Question:**
+            {question}
 
-**Answer to Evaluate:**
-{answer}
+            **Answer to Evaluate:**
+            {answer}
 
-**Evaluation Instructions:**
-Judge this answer based on:
-1. **Factual Accuracy**: Is the information correct?
-2. **Completeness**: Does it address the key aspects of the question?
-3. **Relevance**: Is it directly related to what was asked?
-4. **Academic Quality**: Is the reasoning sound and appropriate?
+            **Evaluation Instructions:**
+            Judge this answer based on:
+            1. **Factual Accuracy**: Is the information correct?
+            2. **Completeness**: Does it address the key aspects of the question?
+            3. **Relevance**: Is it directly related to what was asked?
+            4. **Academic Quality**: Is the reasoning sound and appropriate?
 
-**Important Guidelines:**
-- Focus on content correctness, not writing style
-- A good answer may be longer, shorter, or differently structured
-- Accept different valid approaches or explanations
-- Judge based on whether the answer demonstrates correct understanding
-- Consider partial credit for answers that are mostly correct
+            **Important Guidelines:**
+            - Focus on content correctness, not writing style
+            - A good answer may be longer, shorter, or differently structured
+            - Accept different valid approaches or explanations
+            - Judge based on whether the answer demonstrates correct understanding
+            - Consider partial credit for answers that are mostly correct
 
-**Reference Answer (for context only):** {reference_answer}
+            **Reference Answer (for context only):** {reference_answer}
 
-**Output Format:**
-Return your judgment in JSON format:
-{{"judgement_result": true}} if the answer is factually correct and adequately addresses the question
-{{"judgement_result": false}} if the answer contains significant errors or fails to address the question
+            **Output Format:**
+            Return your judgment in JSON format:
+            {{"judgement_result": true}} if the answer is factually correct and adequately addresses the question
+            {{"judgement_result": false}} if the answer contains significant errors or fails to address the question
 
-**Your Judgment:**"""
+            **Your Judgment:**"""
         return prompt
 
 
@@ -55,7 +55,7 @@ Return your judgment in JSON format:
 # Judge Model Configuration (API model as judge)
 JUDGE_MODEL_CONFIG = {
     "model_name": "gpt-4o-mini",
-    "api_url": "http://OPENAI_URL/v1/chat/completions",  # 请求URL 必填
+    "api_url": "http://123.129.219.111:3000/v1/chat/completions",  # 请求URL 必填
     "api_key_env": "DF_API_KEY",  # api_key 必填
     "max_workers": 3,
     "max_retries": 5,
@@ -63,16 +63,13 @@ JUDGE_MODEL_CONFIG = {
 }
 
 # Target Models Configuration
-TARGET_MODELS = {
-    "auto_detect": True,  # 自动检测本地训练的模型
-    "models": [
+TARGET_MODELS = [
         # 当 auto_detect=False 时，手动指定要评估的模型
-        # "Qwen/Qwen2.5-7B-Instruct",
+        "./Qwen2.5-7B-Instruct",
         # "meta-llama/Llama-3-8B-Instruct",
         # "/path/to/local/model",
         # "./.cache/saves/text2model_cache_20241201_143022"
-    ]
-}
+        ]
 
 # Data Configuration
 DATA_CONFIG = {
@@ -156,11 +153,6 @@ def get_evaluator_config():
         "create_evaluator": create_evaluator,
         "create_storage": create_storage
     }
-
-
-# =============================================================================
-# Direct Execution Support
-# =============================================================================
 
 if __name__ == "__main__":
     # 直接运行时的简单评估
