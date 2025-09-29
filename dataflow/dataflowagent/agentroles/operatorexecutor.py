@@ -66,12 +66,10 @@ class OperatorExecutor(BaseAgent):
                     "无可执行的算子代码：draft_operator_code / temp_data['pipeline_code'] 为空"
                 )
 
-            # 写入目标文件
+            # 写入目标文件并执行
             file_path = file_path or state.temp_data.get("pipeline_file_path")
             file_path_obj = _ensure_py_file(code_str, file_name=file_path)
             state.temp_data["pipeline_file_path"] = str(file_path_obj)
-
-            # 执行并捕获结果
             exec_result = await _run_py(file_path_obj)
             state.execution_result = exec_result
             log.info(f"[operator_executor] run success={exec_result['success']}")
@@ -103,4 +101,3 @@ def create_operator_executor(
     **kwargs,
 ) -> OperatorExecutor:
     return OperatorExecutor(tool_manager=tool_manager, **kwargs)
-
