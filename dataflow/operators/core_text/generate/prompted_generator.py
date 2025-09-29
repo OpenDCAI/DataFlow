@@ -18,7 +18,7 @@ class PromptedGenerator(OperatorABC):
                 ):
         self.logger = get_logger()
         self.llm_serving = llm_serving
-        self.llm_serving.json_schema = json_schema
+        self.json_schema = json_schema
         self.system_prompt = system_prompt
     
     @staticmethod
@@ -73,7 +73,7 @@ class PromptedGenerator(OperatorABC):
         # Generate the text using the model
         try:
             self.logger.info("Generating text using the model...")
-            generated_outputs = self.llm_serving.generate_from_input(llm_inputs)
+            generated_outputs = self.llm_serving.generate_from_input(llm_inputs, json_schema = self.json_schema)
             self.logger.info("Text generation completed.")
         except Exception as e:
             self.logger.error(f"Error during text generation: {e}")

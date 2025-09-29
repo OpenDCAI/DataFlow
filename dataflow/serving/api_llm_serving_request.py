@@ -22,14 +22,12 @@ class APILLMServing_request(LLMServingABC):
                  model_name: str = "gpt-4o",
                  max_workers: int = 10,
                  max_retries: int = 5,
-                 json_schema: dict = None,
                  ):
         # Get API key from environment variable or config
         self.api_url = api_url
         self.model_name = model_name
         self.max_workers = max_workers
         self.max_retries = max_retries
-        self.json_schema = json_schema
         self.logger = get_logger()
 
         # config api_key in os.environ global, since safty issue.
@@ -87,20 +85,20 @@ class APILLMServing_request(LLMServingABC):
             logging.error(f"API request error: {e}")
             return None
 
-    def _api_chat_with_id(self, id, payload, model, is_embedding: bool = False):
+    def _api_chat_with_id(self, id, payload, model, is_embedding: bool = False, json_schema: dict = None):
             try:
                 if is_embedding:
                     payload = json.dumps({
                         "model": model,
                         "input": payload
                     })
-                elif self.json_schema is None:
+                elif json_schema is None:
                     payload = json.dumps({
                         "model": model,
                         "messages": payload
                     })
                 else:
-                    payload = {
+                    payload = json.dumps({
                         "model": model,
                         "messages": payload,
                         "response_format": {
@@ -108,11 +106,10 @@ class APILLMServing_request(LLMServingABC):
                             "json_schema": {
                                 "name": "custom_response",
                                 "strict": True,
-                                "schema": self.json_schema
+                                "schema": json_schema
                             }
                         }
-                    }
-                    payload = json.dumps(payload)
+                    })
                     
                 headers = {
                     'Authorization': f"Bearer {self.api_key}",
@@ -133,16 +130,18 @@ class APILLMServing_request(LLMServingABC):
                 logging.error(f"API request error: {e}")
                 return id, None
         
-    def _api_chat_id_retry(self, id, payload, model, is_embedding : bool = False):
+    def _api_chat_id_retry(self, id, payload, model, is_embedding : bool = False, json_schema: dict = None):
         for i in range(self.max_retries):
-            id, response = self._api_chat_with_id(id, payload, model, is_embedding)
+            id, response = self._api_chat_with_id(id, payload, model, is_embedding, json_schema)
             if response is not None:
                 return id, response
             time.sleep(2**i)
         return id, None    
     
     def generate_from_input(self, 
-                            user_inputs: list[str], system_prompt: str = "You are a helpful assistant"
+                            user_inputs: list[str], 
+                            system_prompt: str = "You are a helpful assistant",
+                            json_schema: dict = None,
                             ) -> list[str]:
 
 
@@ -160,7 +159,8 @@ class APILLMServing_request(LLMServingABC):
                         {"role": "user", "content": question}
                         ],
                     model = self.model_name,
-                    id = idx
+                    json_schema = json_schema,
+                    id = idx,
                 ) for idx, question in enumerate(user_inputs)
             ]
             for future in tqdm(as_completed(futures), total=len(futures), desc="Generating......"):
