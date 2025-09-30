@@ -17,7 +17,7 @@ async def main() -> None:
         chat_api_url="http://123.129.219.111:3000/v1/",
         api_key=os.getenv("DF_API_KEY", "sk-dummy"),
         model="gpt-4o",
-        json_file=f"{DATAFLOW_DIR}/dataflow/example/ReasoningPipeline/pipeline_general.json",
+        json_file=f"{DATAFLOW_DIR}/dataflow/example/GeneralTextPipeline/translation.jsonl",
         target="根据数据，推荐pipeline,保证最小可运行即可！",
         python_file_path = f"{DATAFLOW_DIR}/dataflow/dataflowagent/tests/my_pipeline.py",  # pipeline的输出脚本路径
         need_debug = True, #是否需要Debug

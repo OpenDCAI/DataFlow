@@ -241,7 +241,7 @@ class DataPipelineBuilder(BaseAgent):
                     log.info(f"[pipeline_builder] DEBUG mode , sample at {sample_path}")
 
                 # 2) 生成 pipeline 代码字符串
-                pipe_obj = pipeline_assembler(recommendation, **assembler_kwargs)
+                pipe_obj = pipeline_assembler(recommendation, state, **assembler_kwargs)
                 print(f"assembler_kwargs : {assembler_kwargs}")
                 code_str: str = pipe_obj["pipe_code"]
 
