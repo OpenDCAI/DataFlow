@@ -12,11 +12,11 @@ from dataflow.utils.text2sql.database_manager import DatabaseManager
 
 
 @OPERATOR_REGISTRY.register()
-class SQLGenerator(OperatorABC):
+class SQLByColumnGenerator(OperatorABC):
     def __init__(self, 
                  llm_serving: LLMServingABC, 
                  database_manager: DatabaseManager,
-                 generate_num: int = 300,
+                 generate_num: int = 5,
                  prompt_template = None
         ):
         self.llm_serving = llm_serving
@@ -60,7 +60,7 @@ class SQLGenerator(OperatorABC):
         else:
             self.logger.warning("No SQL code block found in the response")
             return ""
-
+    
     def run(self, storage: DataFlowStorage,
             output_sql_key: str = "sql",
             output_db_id_key: str = "db_id"
@@ -74,7 +74,11 @@ class SQLGenerator(OperatorABC):
         self.logger.info(f"Generating {self.generate_num} SQLs for each database")
 
         for db_name in tqdm(db_names, desc="Processing Databases"):
-            sum_generate_num = self.generate_num
+            special_col_count = self.database_manager.get_number_of_special_column(db_name)
+            sum_generate_num = special_col_count * self.generate_num         
+            self.logger.info(f"Database '{db_name}' has {special_col_count} special columns. "
+                            f"Generating {sum_generate_num} SQLs.")
+
             create_statements, insert_statements = self.database_manager.get_create_statements_and_insert_statements(db_name)
 
             for _ in range(sum_generate_num):
@@ -84,7 +88,7 @@ class SQLGenerator(OperatorABC):
                     db_engine=self.database_manager.db_type
                 )
                 prompts.append({"prompt": prompt, "db_id": db_name})
-            
+                
         if not prompts:
             self.logger.warning("No prompts generated, please check the database path and file")
             return [self.output_sql_key, self.output_db_id_key]

@@ -1,3 +1,9 @@
+import os
+from dataflow import get_logger
+import zipfile
+from pathlib import Path
+from huggingface_hub import snapshot_download
+
 from dataflow.operators.text2sql import (
     SQLGenerator,
     Text2SQLQuestionGenerator,
@@ -10,14 +16,63 @@ from dataflow.operators.text2sql import (
 from dataflow.operators.text2sql import (
     SQLComponentClassifier,
     SQLExecutionClassifier
-)   
+)
+from dataflow.prompts.text2sql import (
+    Text2SQLCotGeneratorPrompt,
+    SelectSQLGeneratorPrompt,
+    Text2SQLQuestionGeneratorPrompt,
+    Text2SQLPromptGeneratorPrompt
+)
 from dataflow.utils.storage import FileStorage
 from dataflow.serving import LocalModelLLMServing_vllm, LocalModelLLMServing_sglang
 from dataflow.utils.text2sql.database_manager import DatabaseManager
 
+def download_and_extract_database(logger):
+    dataset_repo_id = "Open-Dataflow/dataflow-Text2SQL-database-example"
+    local_dir = "./hf_cache"
+    extract_to = "./downloaded_databases"
+    
+    logger.info(f"Downloading and extracting database from {dataset_repo_id}...")
+    os.environ['HF_ENDPOINT'] = 'https://hf-mirror.com'
+    
+    os.makedirs(local_dir, exist_ok=True)
+    os.makedirs(extract_to, exist_ok=True)
+    
+    downloaded_path = snapshot_download(
+        repo_id=dataset_repo_id,
+        repo_type="dataset",
+        local_dir=local_dir,
+        resume_download=True
+    )
+    
+    logger.info(f"Files downloaded to: {downloaded_path}")
+    
+    zip_path = os.path.join(downloaded_path, "databases.zip")
+    if os.path.exists(zip_path):
+        with zipfile.ZipFile(zip_path, 'r') as zip_ref:
+            zip_ref.extractall(extract_to)
+        logger.info(f"Database files extracted to {extract_to}")
+        return extract_to
+    else:
+        raise FileNotFoundError(f"Database zip file not found at {zip_path}")
 
 class Text2SQLGeneration_GPUPipeline():
-    def __init__(self):
+    def __init__(self, db_root_path=""):
+        self.logger = get_logger()
+        self.db_root_path = db_root_path
+
+        if not db_root_path:
+            try:
+                self.db_root_path = download_and_extract_database(self.logger)
+                self.logger.info(f"Using automatically downloaded database at: {self.db_root_path}")
+            except Exception as e:
+                self.logger.error(f"Failed to auto-download database: {e}")
+                raise 
+        else:
+            self.logger.info(f"Using manually specified database path: {self.db_root_path}")
+
+        if not os.path.exists(self.db_root_path):
+            raise FileNotFoundError(f"Database path does not exist: {self.db_root_path}")
 
         self.storage = FileStorage(
             first_entry_file_name="",
@@ -48,40 +103,10 @@ class Text2SQLGeneration_GPUPipeline():
             vllm_max_tokens=8192,
         )
 
-        embedding_serving = LocalModelLLMServing_vllm(hf_model_name_or_path="Alibaba-NLP/gte-Qwen2-7B-instruct", vllm_max_tokens=8192)
-
-        # You can customize the difficulty config here, but it must contain 'num_generations', 'thresholds' and 'labels' keys
-        # 'num_generations' key is the number of generations for each question, SQL will be classified based on the number of correct executions
-        execution_difficulty_config = {
-            "num_generations": 10,
-            'thresholds': [2, 5, 9],
-            'labels': ['extra', 'hard', 'medium', 'easy']
-        }
-
-        component_difficulty_config = {
-            'thresholds': [2, 4, 6],      
-            'labels': ['easy', 'medium', 'hard', 'extra']
-        }
-
-        # You can customize the prompt template here, but it must contain {schema} and {question} placeholders
-        prompt_template = '''Task Overview:
-            /* Given the following database schema: */
-            {schema}
-            /* Answer the following: {question} */
-            Let's think step by step'''
-
-        # You can customize the schema config here, but it must contain 'format' and 'use_example' keys
-        schema_config = {
-            'format': 'ddl',  # Optional: 'ddl', 'formatted_schema'
-            'use_example': True  # Whether to include example data
-        }
-
-        # A demo database is provided. Download it from the following URL and update the path:  
-        # https://huggingface.co/datasets/Open-Dataflow/dataflow-Text2SQL-database-example  
-        db_root_path = ""  
-
-        # SQL execution timeout. Generated SQL execution time should be less than this value.
-        sql_execution_timeout = 2
+        embedding_serving = LocalModelLLMServing_vllm(
+            hf_model_name_or_path="Alibaba-NLP/gte-Qwen2-7B-instruct", 
+            vllm_max_tokens=8192
+        )
 
         # SQLite and MySQL are currently supported
         # db_type can be sqlite or mysql, which must match your database type
@@ -101,7 +126,7 @@ class Text2SQLGeneration_GPUPipeline():
         database_manager = DatabaseManager(
             db_type="sqlite",
             config={
-                "root_path": db_root_path
+                "root_path": self.db_root_path
             },
             logger=None,
             max_connections_per_db=100,
@@ -111,46 +136,46 @@ class Text2SQLGeneration_GPUPipeline():
         self.sql_generator_step1 = SQLGenerator(
             llm_serving=self.llm_serving,
             database_manager=database_manager,
-            generate_num=10
+            generate_num=10,
+            prompt_template=SelectSQLGeneratorPrompt()
         )
 
         self.sql_execution_filter_step2 = SQLExecutionFilter(
             database_manager=database_manager,
-            timeout=sql_execution_timeout
         )
 
         self.text2sql_question_generator_step3 = Text2SQLQuestionGenerator(
             llm_serving=self.llm_serving,
             embedding_serving=embedding_serving,
             database_manager=database_manager,
-            question_candidates_num=5
+            question_candidates_num=5,
+            prompt_template=Text2SQLQuestionGeneratorPrompt()
         )
 
         self.text2sql_prompt_generator_step4 = Text2SQLPromptGenerator(
             database_manager=database_manager,
-            prompt_template=prompt_template,
-            schema_config=schema_config
+            prompt_template=Text2SQLPromptGeneratorPrompt()
         )
 
         self.sql_cot_generator_step5 = Text2SQLCoTGenerator(
             llm_serving=cot_generation_llm_serving,
             database_manager=database_manager,
-            schema_config=schema_config,
             max_retries=3,
             enable_retry=True,
-            timeout=sql_execution_timeout
+            prompt_template=Text2SQLCotGeneratorPrompt()
         )
 
         self.sql_component_classifier_step6 = SQLComponentClassifier(
-            difficulty_config=component_difficulty_config
+            difficulty_thresholds=[2, 4, 6],
+            difficulty_labels=['easy', 'medium', 'hard', 'extra']
         )
 
         self.sql_execution_classifier_step7 = SQLExecutionClassifier(
             llm_serving=self.llm_serving,
             database_manager=database_manager,
-            difficulty_config=execution_difficulty_config,
-            num_generations=execution_difficulty_config["num_generations"],
-            timeout=sql_execution_timeout
+            num_generations=10,
+            difficulty_thresholds=[2, 5, 9],
+            difficulty_labels=['extra', 'hard', 'medium', 'easy']
         )
         
         
@@ -209,6 +234,9 @@ class Text2SQLGeneration_GPUPipeline():
         )
 
 if __name__ == "__main__":
-    model = Text2SQLGeneration_GPUPipeline()
-    model.forward()
+    # If you have your own database files, you can set the db_root_path to the path of your database files
+    # If not, please set the db_root_path "", and we will download the example database files automatically
+    db_root_path = ""
 
+    model = Text2SQLGeneration_GPUPipeline(db_root_path=db_root_path)
+    model.forward()
