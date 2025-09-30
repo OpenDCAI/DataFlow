@@ -53,6 +53,7 @@ class FairAnswerJudgePrompt:
 # =============================================================================
 
 # Judge Model Configuration (local strong model as judge)
+# 评估模型设置
 JUDGE_MODEL_CONFIG = {
     "model_path": "./Qwen2.5-7B-Instruct",  # 用更强的模型做裁判
     "tensor_parallel_size": 1,
@@ -60,52 +61,63 @@ JUDGE_MODEL_CONFIG = {
     "gpu_memory_utilization": 0.8,
 }
 
-# Target Models Configuration (字典格式 - 必需)
+# Target Models Configuration
+# 目标模型的默认设置（被评估的本地模型）
+DEFAULT_MODEL_CONFIG = {
+    "tensor_parallel_size": 1,
+    "max_tokens": 1024,
+    "gpu_memory_utilization": 0.8,
+    # "answer_prompt": "请回答：{question}",  # 可选
+}
+
+# Target Models Configuration
+# 目标模型设置（被评估的本地模型）
 TARGET_MODELS = [
     {
         "name": "qwen_3b",  # 模型名称（可选，默认使用路径最后一部分）
         "path": "./Qwen2.5-3B-Instruct",  # 模型路径（必需）
-        
+
         # ===== 答案生成的模型加载参数（可选）=====
         "tensor_parallel_size": 1,  # GPU并行数量
         "max_tokens": 1024,  # 最大生成token数
         "gpu_memory_utilization": 0.8,  # GPU显存利用率
         # "dtype": "float16",  # 数据类型：auto/float16/bfloat16
         # "trust_remote_code": True,  # 是否信任远程代码
-        
+
         # ===== 答案生成参数（可选）=====
         # "answer_prompt": "请回答以下问题：{question}",  # 自定义提示词
         # "output_key": "model_generated_answer",  # 输出字段名
-        
+
         # ===== 文件路径参数（可选）=====
         # "cache_dir": "./.cache/eval",  # 缓存目录
         # "file_prefix": "answer_gen",  # 文件前缀
         # "cache_type": "json"  # 缓存类型：json/jsonl
     },
-    {
-        "name": "qwen_7b",
-        "path": "./Qwen2.5-7B-Instruct",
-        
-        # 大模型可以用不同的参数
-        "tensor_parallel_size": 2,
-        "max_tokens": 2048,
-        "gpu_memory_utilization": 0.9,
-        
-        # 可以为每个模型自定义提示词
-        "answer_prompt": """请基于学术文献回答以下问题：
+    "./Qwen2.5-7B-Instruct",
+    # {
+    #     "name": "qwen_7b",
+    #     "path": "./Qwen2.5-7B-Instruct",
 
-        问题：{question}
+    #     # 大模型可以用不同的参数
+    #     "tensor_parallel_size": 2,
+    #     "max_tokens": 2048,
+    #     "gpu_memory_utilization": 0.9,
 
-        答案："""
+    #     # # 可以为每个模型自定义提示词
+    #     # "answer_prompt": """请基于学术文献回答以下问题：
 
-    },
-            
-            # 添加更多模型...
-            # {
-            #     "name": "llama_8b",
-            #     "path": "meta-llama/Llama-3-8B-Instruct",
-            #     "tensor_parallel_size": 2
-            # }
+    #     # 问题：{question}
+
+    #     # 答案："""
+
+    # },
+
+    # 添加更多模型...
+    # {
+    #     "name": "llama_8b",
+    #     "path": "meta-llama/Llama-3-8B-Instruct",
+    #     "tensor_parallel_size": 2
+    # }
 ]
 
 # Data Configuration
@@ -125,7 +137,7 @@ EVALUATOR_RUN_CONFIG = {
 
 # Evaluation Configuration
 EVAL_CONFIG = {
-    "compare_method": "semantic",  # "semantic" 语义匹配 或 "match" 字段完全匹配 
+    "compare_method": "semantic",  # "semantic" 语义匹配 或 "match" 字段完全匹配
     "batch_size": 8,
     "max_tokens": 512
 }
@@ -197,6 +209,7 @@ def get_evaluator_config():
     return {
         "JUDGE_MODEL_CONFIG": JUDGE_MODEL_CONFIG,
         "TARGET_MODELS": TARGET_MODELS,
+        "DEFAULT_MODEL_CONFIG": DEFAULT_MODEL_CONFIG,
         "DATA_CONFIG": DATA_CONFIG,
         "EVALUATOR_RUN_CONFIG": EVALUATOR_RUN_CONFIG,
         "EVAL_CONFIG": EVAL_CONFIG,
@@ -226,4 +239,5 @@ if __name__ == "__main__":
     except Exception as e:
         print(f"Evaluation error: {e}")
         import traceback
+
         traceback.print_exc()

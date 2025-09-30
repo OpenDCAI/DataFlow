@@ -13,6 +13,7 @@ from dataflow.utils.storage import FileStorage
 
 class FairAnswerJudgePrompt:
     """Fair answer evaluation prompt template with English prompts"""
+
     # 默认评估模型提示词 该prompt为评估模型的提示词，请勿与被评估模型提示词混淆
     def build_prompt(self, question, answer, reference_answer):
         prompt = f"""You are an expert evaluator assessing answer quality for academic questions.
@@ -61,23 +62,32 @@ JUDGE_MODEL_CONFIG = {
     "timeout": 60  # 添加超时配置
 }
 
+# Target Models Configuration
+# 目标模型的默认设置（被评估的本地模型）
+DEFAULT_MODEL_CONFIG = {
+    "tensor_parallel_size": 1,
+    "max_tokens": 1024,
+    "gpu_memory_utilization": 0.8,
+    # "answer_prompt": "请回答：{question}",  # 可选
+}
+
 # Target Models Configuration (字典格式 - 必需)
 TARGET_MODELS = [
     {
         "name": "qwen_3b",  # 模型名称（可选，默认使用路径最后一部分）
         "path": "./Qwen2.5-3B-Instruct",  # 模型路径（必需）
-        
+
         # ===== 答案生成的模型加载参数（可选）=====
         "tensor_parallel_size": 1,  # GPU并行数量
         "max_tokens": 1024,  # 最大生成token数
         "gpu_memory_utilization": 0.8,  # GPU显存利用率
         # "dtype": "float16",  # 数据类型：auto/float16/bfloat16
         # "trust_remote_code": True,  # 是否信任远程代码
-        
+
         # ===== 答案生成参数（可选）=====
         # "answer_prompt": "请回答以下问题：{question}",  # 自定义提示词
         # "output_key": "model_generated_answer",  # 输出字段名
-        
+
         # ===== 文件路径参数（可选）=====
         # "cache_dir": "./.cache/eval",  # 缓存目录
         # "file_prefix": "answer_gen",  # 文件前缀
@@ -86,14 +96,14 @@ TARGET_MODELS = [
     {
         "name": "qwen_7b",
         "path": "./Qwen2.5-7B-Instruct",
-        
+
         # 大模型可以用不同的参数
         "tensor_parallel_size": 2,
         "max_tokens": 2048,
         "gpu_memory_utilization": 0.9,
-        
+
         # 可以为每个模型自定义提示词 不写就为默认模板 即build_prompt函数中的prompt
-        # 默认被评估模型提示词 
+        # 默认被评估模型提示词
         # 再次提示:该prompt为被评估模型的提示词，请勿与评估模型提示词混淆！！！
         # You can customize prompts for each model. If not specified, defaults to the template in build_prompt function.
         # Default prompt for evaluated models
@@ -104,7 +114,7 @@ TARGET_MODELS = [
 
         答案："""
     },
-    
+
     # 添加更多模型...
     # {
     #     "name": "llama_8b",
@@ -145,12 +155,12 @@ def create_judge_serving():
     api_key_env = JUDGE_MODEL_CONFIG["api_key_env"]
     if api_key_env not in os.environ:
         raise ValueError(f"Environment variable {api_key_env} is not set. "
-                        f"Please set it with your API key.")
+                         f"Please set it with your API key.")
 
     api_key = os.environ[api_key_env]
     if not api_key.strip():
         raise ValueError(f"Environment variable {api_key_env} is empty. "
-                        f"Please provide a valid API key.")
+                         f"Please provide a valid API key.")
 
     return APILLMServing_request(
         api_url=JUDGE_MODEL_CONFIG["api_url"],
@@ -190,9 +200,10 @@ def get_evaluator_config():
     return {
         "JUDGE_MODEL_CONFIG": JUDGE_MODEL_CONFIG,
         "TARGET_MODELS": TARGET_MODELS,
+        "DEFAULT_MODEL_CONFIG": DEFAULT_MODEL_CONFIG,
         "DATA_CONFIG": DATA_CONFIG,
-        "EVAL_CONFIG": EVAL_CONFIG,
         "EVALUATOR_RUN_CONFIG": EVALUATOR_RUN_CONFIG,
+        "EVAL_CONFIG": EVAL_CONFIG,
         "create_judge_serving": create_judge_serving,
         "create_evaluator": create_evaluator,
         "create_storage": create_storage
@@ -219,4 +230,5 @@ if __name__ == "__main__":
     except Exception as e:
         print(f"Evaluation error: {e}")
         import traceback
+
         traceback.print_exc()

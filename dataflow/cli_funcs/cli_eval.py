@@ -73,22 +73,22 @@ class EvaluationPipeline:
     def _get_target_models(self) -> List:
         """获取目标模型列表"""
         target_config = self.config.get("TARGET_MODELS", [])
-        
+
         if not isinstance(target_config, list):
             logger.error(f"TARGET_MODELS must be a list, got {type(target_config)}")
             return []
-        
+
         if not target_config:
             logger.error("TARGET_MODELS is empty")
             return []
-            
+
         return target_config
 
     def _prepare_models(self) -> List[Dict]:
         """准备模型信息"""
         prepared = []
         default_config = self.config.get("DEFAULT_MODEL_CONFIG", {})
-        
+
         for idx, item in enumerate(self.target_models, 1):
             if isinstance(item, str):
                 model_info = {
@@ -101,7 +101,7 @@ class EvaluationPipeline:
                 if "path" not in item:
                     logger.error(f"Model at index {idx} missing 'path'")
                     continue
-                
+
                 model_info = {
                     "name": item.get("name", Path(item["path"]).name),
                     "path": item["path"],
@@ -112,9 +112,9 @@ class EvaluationPipeline:
             else:
                 logger.error(f"Invalid model format at index {idx}")
                 continue
-            
+
             prepared.append(model_info)
-        
+
         return prepared
 
     def _clear_vllm_cache(self):
@@ -123,7 +123,7 @@ class EvaluationPipeline:
             Path.home() / ".cache" / "vllm" / "torch_compile_cache",
             Path.home() / ".cache" / "vllm"
         ]
-        
+
         for cache_path in cache_paths:
             if cache_path.exists():
                 try:
@@ -140,21 +140,21 @@ class EvaluationPipeline:
         if not Path(input_file).exists():
             logger.error(f"Input file not found: {input_file}")
             return []
-        
+
         self._clear_vllm_cache()
 
         for idx, model_info in enumerate(self.prepared_models, 1):
             llm_serving = None
             answer_generator = None
             storage = None
-            
+
             try:
                 logger.info(f"[{idx}/{len(self.prepared_models)}] Processing: {model_info['name']}")
-                
+
                 cache_dir = model_info.get('cache_dir', './.cache/eval')
                 Path(cache_dir).mkdir(parents=True, exist_ok=True)
                 output_file = f"{cache_dir}/answers_{model_info['name']}.json"
-                
+
                 # 加载模型
                 llm_serving = LocalModelLLMServing_vllm(
                     hf_model_name_or_path=model_info['path'],
@@ -162,14 +162,14 @@ class EvaluationPipeline:
                     vllm_max_tokens=model_info.get('max_tokens', 1024),
                     vllm_gpu_memory_utilization=model_info.get('gpu_memory_utilization', 0.8)
                 )
-                
+
                 # 答案生成器
                 custom_prompt = model_info.get('answer_prompt', DEFAULT_ANSWER_PROMPT)
                 answer_generator = ReasoningAnswerGenerator(
                     llm_serving=llm_serving,
                     prompt_template=DiyAnswerGeneratorPrompt(custom_prompt)
                 )
-                
+
                 # 存储
                 cache_path = f"{cache_dir}/{model_info['name']}_generation"
                 storage = FileStorage(
@@ -178,14 +178,14 @@ class EvaluationPipeline:
                     file_name_prefix=model_info.get('file_prefix', 'answer_gen'),
                     cache_type=model_info.get('cache_type', 'json')
                 )
-                
+
                 # 运行生成
                 answer_generator.run(
                     storage=storage.step(),
                     input_key=data_config.get("question_key", "input"),
                     output_key=model_info.get('output_key', 'model_generated_answer')
                 )
-                
+
                 # 保存结果
                 gen_file = f"{cache_path}/{model_info.get('file_prefix', 'answer_gen')}_step1.json"
                 if Path(gen_file).exists():
@@ -195,11 +195,11 @@ class EvaluationPipeline:
                         "model_path": model_info['path'],
                         "file_path": output_file
                     })
-                
+
             except Exception as e:
                 logger.error(f"Failed to process {model_info['name']}: {e}")
                 continue
-                
+
             finally:
                 if answer_generator: del answer_generator
                 if storage: del storage
@@ -208,7 +208,7 @@ class EvaluationPipeline:
                 if torch.cuda.is_available():
                     torch.cuda.empty_cache()
                     torch.cuda.synchronize()
-        
+
         return generated_files
 
     def _run_evaluation(self) -> List[Dict]:
@@ -272,13 +272,14 @@ class EvaluationPipeline:
             print(f"   Matched: {r.get('matched_samples', 0)}")
             print()
         print("=" * 60)
-        
+
         # 保存详细报告
         report_file = "./eval_results/report.json"
         Path(report_file).parent.mkdir(parents=True, exist_ok=True)
         with open(report_file, 'w') as f:
             json.dump({"results": sorted_results}, f, indent=2)
         print(f"Detailed report: {report_file}")
+
 
 class DataFlowEvalCLI:
     """CLI工具"""
@@ -294,12 +295,12 @@ class DataFlowEvalCLI:
     def init_eval_files(self):
         """初始化配置文件"""
         files = [("eval_api.py", "api"), ("eval_local.py", "local")]
-        
+
         existing = [f for f, _ in files if (self.current_dir / f).exists()]
         if existing:
             if input(f"{', '.join(existing)} exists. Overwrite? (y/n): ").lower() != 'y':
                 return False
-        
+
         for filename, eval_type in files:
             try:
                 template = self._get_template_path(eval_type)
@@ -316,7 +317,7 @@ class DataFlowEvalCLI:
     def run_eval_file(self, eval_type: str, eval_file: str, cli_args):
         """运行评估"""
         config_path = self.current_dir / eval_file
-        
+
         if not config_path.exists():
             logger.error(f"Config not found: {eval_file}")
             return False
@@ -325,7 +326,7 @@ class DataFlowEvalCLI:
             spec = importlib.util.spec_from_file_location("config", config_path)
             module = importlib.util.module_from_spec(spec)
             spec.loader.exec_module(module)
-            
+
             config = module.get_evaluator_config()
             return run_evaluation(config, cli_args)
 
