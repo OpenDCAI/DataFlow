@@ -71,7 +71,7 @@ DEFAULT_MODEL_CONFIG = {
     # "answer_prompt": "请回答：{question}",  # 可选
 }
 
-# Target Models Configuration (字典格式 - 必需)
+# Target Models Configuration
 TARGET_MODELS = [
     {
         "name": "qwen_3b",  # 模型名称（可选，默认使用路径最后一部分）
