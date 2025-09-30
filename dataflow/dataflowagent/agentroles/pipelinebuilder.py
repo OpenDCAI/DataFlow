@@ -14,6 +14,7 @@ DataPipelineBuilder
 from __future__ import annotations
 
 import asyncio
+import json
 import re
 import sys
 import tempfile
@@ -21,6 +22,8 @@ import textwrap
 import uuid
 from pathlib import Path
 from typing import Any, Dict, List, Optional
+
+import pandas as pd
 
 from dataflow import get_logger
 from dataflow.dataflowagent.agentroles.base_agent import BaseAgent
@@ -73,10 +76,10 @@ def _ensure_py_file(code: str, file_name: str | None = None) -> Path:
     log.warning(f"[pipeline_builder] pipeline code written to {target}")
     return target
 
-
 def _create_debug_sample(src_file: str | Path, sample_lines: int = 10) -> Path:
     """
-    从 src_file 抽取前 sample_lines 行，写入临时文件并返回路径。
+    从 src_file 抽取前 sample_lines 条记录（不是行），写入临时文件。
+    支持 JSON/JSONL/CSV 格式。
     """
     src_path = Path(src_file).expanduser().resolve()
     if not src_path.is_file():
@@ -87,18 +90,65 @@ def _create_debug_sample(src_file: str | Path, sample_lines: int = 10) -> Path:
         / f"{src_path.stem}_sample_{sample_lines}{src_path.suffix}"
     )
 
-    with src_path.open("r", encoding="utf-8") as rf, tmp_path.open(
-        "w", encoding="utf-8"
-    ) as wf:
-        for idx, line in enumerate(rf):
-            if idx >= sample_lines:
-                break
-            wf.write(line)
+    # 判断文件格式
+    suffix = src_path.suffix.lower()
+    
+    if suffix == '.csv':  # CSV 格式
+        df = pd.read_csv(src_path)
+        sample_df = df.head(sample_lines)
+        sample_df.to_csv(tmp_path, index=False, encoding="utf-8")
+        log.info(
+            f"[pipeline_builder] debug mode: CSV sample written to {tmp_path} "
+            f"(first {sample_lines} records)"
+        )
+    
+    elif suffix == '.json':  # JSON 格式
+        with src_path.open("r", encoding="utf-8") as f:
+            first_char = f.read(1)
+            f.seek(0)
+            
+            if first_char == '[':  # JSON 数组格式
+                data = json.load(f)
+                sample_data = data[:sample_lines]
+                with tmp_path.open("w", encoding="utf-8") as wf:
+                    json.dump(sample_data, wf, ensure_ascii=False, indent=2)
+            
+            else:  # JSONL 格式（每行一个 JSON）
+                sample_data = []
+                for idx, line in enumerate(f):
+                    if idx >= sample_lines:
+                        break
+                    sample_data.append(json.loads(line.strip()))
+                
+                with tmp_path.open("w", encoding="utf-8") as wf:
+                    for item in sample_data:
+                        wf.write(json.dumps(item, ensure_ascii=False) + "\n")
+        
+        log.info(
+            f"[pipeline_builder] debug mode: JSON sample written to {tmp_path} "
+            f"(first {sample_lines} records)"
+        )
+    
+    elif suffix == '.jsonl':  # JSONL 格式（明确后缀）
+        sample_data = []
+        with src_path.open("r", encoding="utf-8") as f:
+            for idx, line in enumerate(f):
+                if idx >= sample_lines:
+                    break
+                sample_data.append(json.loads(line.strip()))
+        
+        with tmp_path.open("w", encoding="utf-8") as wf:
+            for item in sample_data:
+                wf.write(json.dumps(item, ensure_ascii=False) + "\n")
+        
+        log.info(
+            f"[pipeline_builder] debug mode: JSONL sample written to {tmp_path} "
+            f"(first {sample_lines} records)"
+        )
+    
+    else:
+        raise ValueError(f"Unsupported file format: {suffix}. Only .json, .jsonl, .csv are supported.")
 
-    log.info(
-        f"[pipeline_builder] debug mode: sample data written to {tmp_path} "
-        f"(first {sample_lines} lines)"
-    )
     return tmp_path
 
 
@@ -223,7 +273,8 @@ class DataPipelineBuilder(BaseAgent):
                 state.debug_mode = False
                 log.info("[pipeline_builder] debug run passed, state.debug_mode -> False")
 
-                sample_path: str | None = state.temp_data.pop("debug_sample_file", None)
+                # sample_path: str | None = state.temp_data.pop("debug_sample_file", None)
+                sample_path: str | None = state.temp_data.get("debug_sample_file")
                 origin_path: str | None = state.temp_data.get("origin_file_path")
                 if sample_path and origin_path:
                     _patch_first_entry_file(

@@ -155,7 +155,7 @@ class BaseAgent(ABC):
             openai_api_key=state.request.api_key,
             model_name=actual_model,
             temperature=self.temperature,
-            max_tokens=self.max_tokens,
+            # max_tokens=self.max_tokens,
         )
         
         if bind_post_tools and self.tool_manager:

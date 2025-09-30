@@ -99,6 +99,31 @@ The list of available operators for each data type:
 {operator}
 ============================
 
+[key rules]
+1. Follow Execution Order:
+  Data generation must occur before data extraction
+  Data extraction must occur before data validation
+  Correct order: Filter → Generate → Extract → Validate
+  Incorrect order: Filter → Extract → Generate ❌
+2 .Validate Data Availability:
+
+  Check sample data to confirm which fields already exist
+  If an operator requires field "X" but it's not present in the sample data, ensure a preceding operator creates it
+
+[Common Error Patterns to Avoid]
+❌ Incorrect Example: ["FilterData", "ExtractAnswer", "GenerateAnswer"]
+Problem: Attempting to extract the answer before it is generated
+
+✅ Correct Example: ["FilterData", "GenerateAnswer", "ExtractAnswer"]
+Reason: Generate first, then extract
+
+❌ Incorrect Example: ["ValidateAnswer", "GenerateAnswer"]
+Problem: Validating an answer that does not exist yet
+
+✅ Correct Example: ["GenerateAnswer", "ExtractAnswer", "ValidateAnswer"]
+Reason: Complete data flow
+
+
 [OUTPUT RULES]
 1. Please select suitable operator nodes for each type and return them in the following JSON format:
 {{
@@ -108,7 +133,7 @@ The list of available operators for each data type:
 2 Only the names of the operators are needed.
 3. Please verify whether the selected operators and their order fully meet the requirements specified in {target}.
 [Question]
-返回的管线是什么？？
+Based on the above rules, what pipeline should be recommended???
 """
 
 # --------------------------------------------------------------------------- #

@@ -63,10 +63,6 @@ termcolor
 uvicorn
 sseclient-py
 
-# speech
-librosa
-soundfile
-
 langgraph==0.6.7
 langgraph-checkpoint==2.1.1
 langgraph-prebuilt==0.6.4
@@ -77,5 +73,13 @@ langchain-core==0.3.76
 langchain-openai==0.3.33
 langchain-text-splitters==0.3.11
 faiss-cpu==1.12.0
+
+IPython==9.6.0
+
+# speech
+librosa
+soundfile
+
+
 # map visualize
 # matplotlib

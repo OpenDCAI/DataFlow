@@ -1,0 +1,55 @@
+{
+  "nodes": [
+    {
+      "id": "node1",
+      "name": "ReasoningQuestionFilter",
+      "type": "filter",
+      "config": {
+        "init": {
+          "system_prompt": "You are a helpful assistant.",
+          "llm_serving": "self.llm_serving",
+          "prompt_template": "MathQuestionFilterPrompt()"
+        },
+        "run": {
+          "storage": "self.storage.step()",
+          "input_key": "math_problem"
+        }
+      }
+    },
+    {
+      "id": "node2",
+      "name": "ReasoningAnswerModelJudgeFilter",
+      "type": "filter",
+      "config": {
+        "init": {
+          "system_prompt": "You are a helpful assistant specialized in evaluating answer correctness.",
+          "llm_serving": "self.llm_serving",
+          "prompt_template": null,
+          "keep_all_samples": false
+        },
+        "run": {
+          "storage": "self.storage.step()",
+          "input_question_key": "question",
+          "input_answer_key": "answer",
+          "input_reference_key": "reference_answer"
+        }
+      }
+    },
+    {
+      "id": "node3",
+      "name": "ReasoningAnswerGroundTruthFilter",
+      "type": "filter",
+      "config": {
+        "init": {
+          "compare_method": "math_verify"
+        },
+        "run": {
+          "storage": "self.storage.step()",
+          "input_test_answer_key": "generated_cot",
+          "input_gt_answer_key": "golden_answer"
+        }
+      }
+    }
+  ],
+  "edges": []
+}

@@ -6,13 +6,10 @@ from dataflow.utils.storage import FileStorage
 from dataflow.serving import APILLMServing_request, LocalModelLLMServing_vllm
 
 from dataflow.operators.reasoning.filter.reasoning_answer_groundtruth_filter import ReasoningAnswerGroundTruthFilter
-from dataflow.operators.reasoning.filter.reasoning_answer_model_judge_filter import ReasoningAnswerModelJudgeFilter
 from dataflow.operators.reasoning.filter.reasoning_question_filter import ReasoningQuestionFilter
-from dataflow.operators.reasoning.filter.reasoning_answer_groundtruth_filter import ReasoningAnswerGroundTruthFilter
-from dataflow.operators.reasoning.filter.reasoning_answer_model_judge_filter import ReasoningAnswerModelJudgeFilter
-from dataflow.operators.reasoning.filter.reasoning_question_filter import ReasoningQuestionFilter
+from dataflow.operators.reasoning.generate.reasoning_answer_extraction_qwenmatheval_generator import ReasoningAnswerExtractionQwenMathEvalGenerator
+from dataflow.operators.reasoning.generate.reasoning_answer_generator import ReasoningAnswerGenerator
 from dataflow.prompts.reasoning.math import MathQuestionFilterPrompt
-
 
 
 class RecommendPipeline(PipelineABC):
@@ -20,10 +17,10 @@ class RecommendPipeline(PipelineABC):
         super().__init__()
         # -------- FileStorage --------
         self.storage = FileStorage(
-            first_entry_file_name="/tmp/mq_test_data_sample_10.jsonl",
+            first_entry_file_name="/mnt/DataFlow/lz/proj/DataFlow/dataflow/example/ReasoningPipeline/pipeline_general.json",
             cache_path="./cache_local",
             file_name_prefix="dataflow_cache_step",
-            cache_type="jsonl",
+            cache_type="json",
         )
         # -------- LLM Serving (Remote) --------
         self.llm_serving = APILLMServing_request(
@@ -33,20 +30,43 @@ class RecommendPipeline(PipelineABC):
             max_workers=100,
         )
 
-        self.reasoning_question_filter = ReasoningQuestionFilter(system_prompt='You are a helpful assistant.', llm_serving=self.llm_serving, prompt_template=MathQuestionFilterPrompt())
-        self.reasoning_answer_model_judge_filter = ReasoningAnswerModelJudgeFilter(system_prompt='You are a helpful assistant specialized in evaluating answer correctness.', llm_serving=self.llm_serving, prompt_template=None, keep_all_samples=False)
-        self.reasoning_answer_ground_truth_filter = ReasoningAnswerGroundTruthFilter(compare_method='math_verify')
+        self.reasoning_question_filter = ReasoningQuestionFilter(
+            system_prompt="You are a helpful assistant.",
+            llm_serving=self.llm_serving,
+            prompt_template=MathQuestionFilterPrompt(),
+        )
+        self.reasoning_answer_generator = ReasoningAnswerGenerator(
+            llm_serving=self.llm_serving,
+            prompt_template=None,
+        )
+        self.reasoning_answer_extraction_qwen_math_eval_generator = ReasoningAnswerExtractionQwenMathEvalGenerator(
+            dataset_name=None
+        )
+        self.reasoning_answer_ground_truth_filter = ReasoningAnswerGroundTruthFilter(
+            compare_method="math_verify"
+        )
 
     def forward(self):
+        # Step 0: Filter questions using the correct dataset key
         self.reasoning_question_filter.run(
-            storage=self.storage.step(), input_key='math_problem'
+            storage=self.storage.step(), input_key="instruction"
         )
-        self.reasoning_answer_model_judge_filter.run(
-            storage=self.storage.step(), input_question_key='question', input_answer_key='answer', input_reference_key='reference_answer'
+
+        # Step 1: Generate chain-of-thought answers
+        self.reasoning_answer_generator.run(
+            storage=self.storage.step(), input_key="instruction", output_key="generated_cot"
         )
+
+        # Step 2: Extract final answers from the chain-of-thought
+        self.reasoning_answer_extraction_qwen_math_eval_generator.run(
+            storage=self.storage.step(), response_key="generated_cot", extraction_key="extraction"
+        )
+
+        # Step 3: Compare generated answers with ground truth
         self.reasoning_answer_ground_truth_filter.run(
-            storage=self.storage.step(), input_test_answer_key='generated_cot', input_gt_answer_key='golden_answer'
+            storage=self.storage.step(), input_test_answer_key="generated_cot", input_gt_answer_key="golden_answer"
         )
+
 
 if __name__ == "__main__":
     pipeline = RecommendPipeline()
