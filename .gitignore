@@ -31,3 +31,7 @@ build
 *.xlsx
 
 lib
+
+hf_cache/
+downloaded_databases/
+downloaded_databases_vec/

@@ -11,11 +11,8 @@ from dataflow.utils.text2sql.database_manager import DatabaseManager
 
 @OPERATOR_REGISTRY.register()
 class SQLExecutionFilter(OperatorABC):
-    def __init__(self, 
-                 database_manager: DatabaseManager,
-                 timeout: int = 5):
+    def __init__(self, database_manager: DatabaseManager):
         self.database_manager = database_manager
-        self.timeout = timeout
         self.logger = get_logger()
 
     @staticmethod
@@ -67,7 +64,7 @@ class SQLExecutionFilter(OperatorABC):
         
         db_id_need_to_check = dataframe[input_db_id_key].unique()
         for db_id in db_id_need_to_check:
-            if not self.database_manager.registry.database_exists(db_id):
+            if not self.database_manager.database_exists(db_id):
                 self.logger.warning(f"Database {db_id} not found in registry, please check the database folder")
                 continue
         
@@ -82,30 +79,15 @@ class SQLExecutionFilter(OperatorABC):
 
         self.logger.info(f"Phase 1 completed: {len(phase1_passed_indices)}/{len(dataframe)} SQLs passed initial filter")
 
-        infos_to_analyze = [{
-            "db_id": dataframe.loc[idx, input_db_id_key],
-            "sql": dataframe.loc[idx, input_sql_key],
-            "timeout": self.timeout,
-            "original_index": idx
-        } for idx in phase1_passed_indices]
-
-        self.logger.info("Analyzing execution plans")
-        execution_plan_results = self.database_manager.batch_analyze_execution_plans(infos_to_analyze)
-
-        phase2_passed_infos = []
-        for info, plan_result in zip(infos_to_analyze, execution_plan_results):
-            if plan_result.success:
-                phase2_passed_infos.append(info)
-
-        self.logger.info(f"Phase 2 completed: {len(phase2_passed_infos)}/{len(infos_to_analyze)} SQLs passed execution plan analysis")
-
-        self.logger.info("Executing queries")
-        execution_results = self.database_manager.batch_execute_queries(phase2_passed_infos)
+        db_ids = dataframe[input_db_id_key]
+        sql_list = dataframe[input_sql_key]
+        sql_triples = [(db_id, sql) for db_id, sql in zip(db_ids, sql_list)]
+        execution_results = self.database_manager.batch_execute_queries(sql_triples)
 
         final_indices = []
-        for info, exec_result in zip(phase2_passed_infos, execution_results):
+        for idx, exec_result in enumerate(execution_results):
             if exec_result.success:
-                final_indices.append(info["original_index"])
+                final_indices.append(idx)
 
         self.logger.info(f"Filter completed, remaining {len(final_indices)} SQLs out of {len(dataframe)} original SQLs")
 
