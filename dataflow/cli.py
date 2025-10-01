@@ -335,7 +335,7 @@ def handle_python_config_eval(eval_type: str, args=None):
         print(f"Starting {eval_type} model evaluation: {eval_file}")
 
         # 传递命令行参数到评估器
-        success = cli.run_eval_file(eval_type, eval_file, args)
+        success = cli.run_eval_file(eval_file)
 
         if success:
             print(f"{eval_type.upper()} model evaluation completed successfully")
