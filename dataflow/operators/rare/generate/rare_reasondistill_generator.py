@@ -1,28 +1,15 @@
 import pandas as pd
 import random
 from dataflow.utils.registry import OPERATOR_REGISTRY
-from dataflow import get_logger
+from dataflow.logger import get_logger # Simplified import
 from dataflow.utils.storage import DataFlowStorage
-from dataflow.core import OperatorABC, LLMServingABC
+from dataflow.core import OperatorABC # New import for OperatorABC
+from dataflow.core import LLMServingABC # New import for LLMServingABC
+from dataflow.prompts.rare import RAREReasonDistillGenertorPrompt # New import for Prompt
 
-# The prompt template remains the same.
-REASON_TEMPLATE = '''# Scenario
-{}
-
-# Question
-{}
-
-# Retrieved Documents
-{}
-
-# Instructions:
-1. Identify the essential problem.
-2. Identify the helpful information to address the questions. Not all retrieved documents are relevant.
-3. Think step by step to reason and draft an answer with as many thoughts as you have.
-'''
 
 @OPERATOR_REGISTRY.register()
-class ReasonDistill(OperatorABC):
+class RAREReasonDistillGenerator(OperatorABC):
     '''
     ReasonDistill distills reasoning capabilities from LLMs by generating a step-by-step thought process.
     It takes a question, a scenario, a positive document, and several hard negative documents as input.
@@ -36,6 +23,7 @@ class ReasonDistill(OperatorABC):
         """
         self.logger = get_logger()
         self.llm_serving = llm_serving
+        self.prompt = RAREReasonDistillGenertorPrompt()
 
     @staticmethod
     def get_desc(lang: str = "zh") -> str:
@@ -93,7 +81,7 @@ class ReasonDistill(OperatorABC):
             documents_str = "\n\n".join(documents)
 
             # Format the final prompt
-            prompt = REASON_TEMPLATE.format(scenario.strip(), question.strip(), documents_str.strip())
+            prompt = self.prompt.build_prompt(scenario=scenario.strip(), question=question.strip(), documents_str=documents_str.strip())
             prompts.append(prompt)
         return prompts
 

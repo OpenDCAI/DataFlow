@@ -1,6 +1,12 @@
 import json
+from dataflow.utils.registry import PROMPT_REGISTRY
+from dataflow.core.prompt import PromptABC
+"""
+A collection of prompts for the AgenticRAG pipelines operator
+"""
 
-class AtomicTaskGeneratorGetIdentifierPrompt:
+@PROMPT_REGISTRY.register()
+class AtomicTaskGeneratorGetIdentifierPrompt(PromptABC):
     '''
     The prompt for the AtomicTaskGenerator to get identifier.
     '''
@@ -36,7 +42,8 @@ class AtomicTaskGeneratorGetIdentifierPrompt:
         '''
         return prompt
 
-class AtomicTaskGeneratorGetConlcusionPrompt:
+@PROMPT_REGISTRY.register()
+class AtomicTaskGeneratorGetConlcusionPrompt(PromptABC):
     '''
     The prompt for the AtomicTaskGenerator to get initial conclusion.
     '''
@@ -178,7 +185,8 @@ class AtomicTaskGeneratorGetConlcusionPrompt:
     '''
         return prompt
 
-class AtomicTaskGeneratorQuestionPrompt:
+@PROMPT_REGISTRY.register()
+class AtomicTaskGeneratorQuestionPrompt(PromptABC):
     '''
     The prompt for the AtomicTaskGenerator to get initial question.
     '''
@@ -233,7 +241,8 @@ class AtomicTaskGeneratorQuestionPrompt:
 
         return prompt
 
-class AtomicTaskGeneratorCleanQAPrompt:
+@PROMPT_REGISTRY.register()
+class AtomicTaskGeneratorCleanQAPrompt(PromptABC):
     '''
     The prompt for the AtomicTaskGenerator to clean QA.
     '''
@@ -281,7 +290,8 @@ class AtomicTaskGeneratorCleanQAPrompt:
 
         return prompt
 
-class AtomicTaskGeneratorAnswerPrompt:
+@PROMPT_REGISTRY.register()
+class AtomicTaskGeneratorAnswerPrompt(PromptABC):
     '''
     The prompt for the AtomicTaskGenerator to get LLM's answer.
     '''
@@ -294,7 +304,8 @@ class AtomicTaskGeneratorAnswerPrompt:
         
         return prompt
 
-class AtomicTaskGeneratorRecallScorePrompt:
+@PROMPT_REGISTRY.register()
+class AtomicTaskGeneratorRecallScorePrompt(PromptABC):
     '''
     The prompt for the AtomicTaskGenerator to get recall score.
     '''
@@ -342,7 +353,8 @@ Evaluate the consistency of the core content of the golden answer and the other 
         '''
         return prompt
 
-class AtomicTaskGeneratorOptionalAnswerPrompt:
+@PROMPT_REGISTRY.register()
+class AtomicTaskGeneratorOptionalAnswerPrompt(PromptABC):
     '''
     The prompt for the AtomicTaskGenerator to get optional answer.
     '''
@@ -398,7 +410,8 @@ class AtomicTaskGeneratorOptionalAnswerPrompt:
         """
         return prompt
 
-class AtomicTaskGeneratorGoldenDocAnswerPrompt:
+@PROMPT_REGISTRY.register()
+class AtomicTaskGeneratorGoldenDocAnswerPrompt(PromptABC):
     '''
     The prompt for the AtomicTaskGenerator to get LLM's answer with golden doc.
     '''
@@ -417,7 +430,8 @@ Please answer the question using ONLY the information in the provided document. 
         """
         return prompt
     
-class DepthQAGeneratorGetIdentifierPrompt:
+@PROMPT_REGISTRY.register()
+class DepthQAGeneratorGetIdentifierPrompt(PromptABC):
     '''
     The prompt for the AtomicTaskGenerator to get identifier.
     '''
@@ -453,7 +467,8 @@ class DepthQAGeneratorGetIdentifierPrompt:
         '''
         return prompt
 
-class DepthQAGeneratorBackwardTaskPrompt:
+@PROMPT_REGISTRY.register()
+class DepthQAGeneratorBackwardTaskPrompt(PromptABC):
     '''
     The prompt for the AtomicTaskGenerator to get backward task.
     '''
@@ -542,7 +557,8 @@ class DepthQAGeneratorBackwardTaskPrompt:
         '''
         return prompt
 
-class DepthQAGeneratorSupersetCheckPrompt:
+@PROMPT_REGISTRY.register()
+class DepthQAGeneratorSupersetCheckPrompt(PromptABC):
     '''
     The prompt for the AtomicTaskGenerator to check superset.
     '''
@@ -580,7 +596,8 @@ Given subset: {identifier}\n
 '''
         return prompt
 
-class DepthQAGeneratorQuestionPrompt:
+@PROMPT_REGISTRY.register()
+class DepthQAGeneratorQuestionPrompt(PromptABC):
     '''
     The prompt for the AtomicTaskGenerator to get question.
     '''
@@ -605,7 +622,8 @@ class DepthQAGeneratorQuestionPrompt:
 '''
         return prompt
 
-class DepthQAGeneratorAnswerPrompt:
+@PROMPT_REGISTRY.register()
+class DepthQAGeneratorAnswerPrompt(PromptABC):
     '''
     The prompt for the AtomicTaskGenerator to get LLM's answer.
     '''
@@ -625,7 +643,8 @@ Please solve the following problem and return as many relevant results as possib
         
         return prompt
 
-class DepthQAGeneratorRecallScorePrompt:
+@PROMPT_REGISTRY.register()
+class DepthQAGeneratorRecallScorePrompt(PromptABC):
     '''
     The prompt for the AtomicTaskGenerator to get recall score.
     '''
@@ -673,7 +692,8 @@ Evaluate the consistency of the core content of the golden answer and the other 
         '''
         return prompt
     
-class WidthQAGeneratorMergePrompt:
+@PROMPT_REGISTRY.register()
+class WidthQAGeneratorMergePrompt(PromptABC):
     '''
     The prompt for the WidthQAGenerator to merge prompt.
     '''
@@ -735,7 +755,8 @@ class WidthQAGeneratorMergePrompt:
 '''
         return prompt
 
-class WidthQAGeneratorOriginCheckPrompt:
+@PROMPT_REGISTRY.register()
+class WidthQAGeneratorOriginCheckPrompt(PromptABC):
     '''
     The prompt for the WidthQAGenerator to check origin.
     '''
@@ -790,7 +811,8 @@ class WidthQAGeneratorOriginCheckPrompt:
 '''
         return prompt
 
-class WidthQAGeneratorQuestionVerifyPrompt:
+@PROMPT_REGISTRY.register()
+class WidthQAGeneratorQuestionVerifyPrompt(PromptABC):
     '''
     The prompt for the WidthQAGenerator to verify question.
     '''
@@ -824,7 +846,8 @@ class WidthQAGeneratorQuestionVerifyPrompt:
 '''
         return prompt
 
-class WidthQAGeneratorAnswerPrompt:
+@PROMPT_REGISTRY.register()
+class WidthQAGeneratorAnswerPrompt(PromptABC):
     '''
     The prompt for the WidthQAGenerator to get LLM's answer.
     '''
@@ -844,7 +867,8 @@ Please solve the following problem and return as many relevant results as possib
         
         return prompt
 
-class WidthQAGeneratorRecallScorePrompt:
+@PROMPT_REGISTRY.register()
+class WidthQAGeneratorRecallScorePrompt(PromptABC):
     '''
     The prompt for the WidthQAGenerator to get recall score.
     '''

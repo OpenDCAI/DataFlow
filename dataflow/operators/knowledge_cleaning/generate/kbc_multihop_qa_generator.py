@@ -12,6 +12,7 @@ import json
 from tqdm import tqdm
 import re
 
+@OPERATOR_REGISTRY.register()
 class KBCMultiHopQAGenerator(OperatorABC):
     r"""A processor for generating multi-hop question-answer pairs from user
     data.

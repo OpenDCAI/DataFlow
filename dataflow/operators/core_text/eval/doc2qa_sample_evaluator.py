@@ -1,9 +1,3 @@
-from dataflow.prompts.doc2qa import (
-    Doc2QAQuestionQualityPrompt,
-    Doc2QAAnswerAlignmentPrompt,
-    Doc2QAAnswerVerifiabilityPrompt,
-    Doc2QADownstreamValuePrompt
-)
 import pandas as pd
 from dataflow.utils.registry import OPERATOR_REGISTRY
 from dataflow import get_logger
@@ -11,13 +5,30 @@ import re
 from dataflow.utils.storage import DataFlowStorage
 from dataflow.core import OperatorABC
 from dataflow.core import LLMServingABC
+from dataflow.core.prompt import prompt_restrict
 
+from dataflow.prompts.doc2qa import (
+    Doc2QAQuestionQualityPrompt,
+    Doc2QAAnswerAlignmentPrompt,
+    Doc2QAAnswerVerifiabilityPrompt,
+    Doc2QADownstreamValuePrompt
+)
+
+@prompt_restrict(
+    Doc2QAQuestionQualityPrompt,
+    Doc2QAAnswerAlignmentPrompt,
+    Doc2QAAnswerVerifiabilityPrompt,
+    Doc2QADownstreamValuePrompt
+)
 @OPERATOR_REGISTRY.register()
 class Doc2QASampleEvaluator(OperatorABC):
     '''
     Answer Generator is a class that generates answers for given questions.
     '''
-    def __init__(self, llm_serving: LLMServingABC):
+    def __init__(self, 
+                 llm_serving: LLMServingABC,
+                #  prompt_template = None  # prompt is fix
+                 ):
         self.logger = get_logger()   
         self.llm_serving = llm_serving
     
