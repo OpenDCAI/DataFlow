@@ -33,9 +33,9 @@ Answer:"""
 class EvaluationPipeline:
     """评估管道"""
 
-    def __init__(self, config: Dict[str, Any], cli_args=None):
+    def __init__(self, config: Dict[str, Any]):
         self.config = config
-        self.cli_args = cli_args
+        # self.cli_args = cli_args
         self.prepared_models = []
         self.generated_files = []
 
@@ -103,11 +103,10 @@ class EvaluationPipeline:
                     continue
 
                 model_info = {
-                    "name": item.get("name", Path(item["path"]).name),
-                    "path": item["path"],
-                    "type": "local",
-                    **default_config,
-                    **{k: v for k, v in item.items() if k not in ["name", "path"]}
+                    **default_config,  # 1. 先设置默认值
+                    **item,  # 2. 用户配置覆盖默认值
+                    "name": item.get("name", Path(item["path"]).name),  # 3. 确保name字段正确
+                    "type": "local"  # 4. 强制设置type
                 }
             else:
                 logger.error(f"Invalid model format at index {idx}")
@@ -187,23 +186,37 @@ class EvaluationPipeline:
                 )
 
                 # 保存结果
-                gen_file = f"{cache_path}/{model_info.get('file_prefix', 'answer_gen')}_step1.json"
-                if Path(gen_file).exists():
+                file_prefix = model_info.get('file_prefix', 'answer_gen')
+                cache_type = model_info.get('cache_type', 'json')
+
+                # 查找所有匹配的文件
+                pattern = f"{file_prefix}_step*.{cache_type}"
+                matching_files = sorted(Path(cache_path).glob(pattern))
+
+                if matching_files:
+                    # 使用最新的文件（最后一个step）
+                    gen_file = matching_files[-1]
                     shutil.copy2(gen_file, output_file)
                     generated_files.append({
                         "model_name": model_info['name'],
                         "model_path": model_info['path'],
                         "file_path": output_file
                     })
+                else:
+                    logger.error(f"No generated file found for {model_info['name']} in {cache_path}")
+                    continue
 
             except Exception as e:
                 logger.error(f"Failed to process {model_info['name']}: {e}")
                 continue
 
             finally:
-                if answer_generator: del answer_generator
-                if storage: del storage
-                if llm_serving: del llm_serving
+                if answer_generator is not None:
+                    del answer_generator
+                if storage is not None:
+                    del storage
+                if llm_serving is not None:
+                    del llm_serving
                 gc.collect()
                 if torch.cuda.is_available():
                     torch.cuda.empty_cache()
@@ -314,28 +327,27 @@ class DataFlowEvalCLI:
         logger.info("You must modified the eval_api.py or eval_local.py before you run dataflow eval api/local")
         return True
 
-    def run_eval_file(self, eval_type: str, eval_file: str, cli_args):
+    def run_eval_file(self, eval_file: str):
         """运行评估"""
         config_path = self.current_dir / eval_file
 
         if not config_path.exists():
             logger.error(f"Config not found: {eval_file}")
             return False
-
         try:
             spec = importlib.util.spec_from_file_location("config", config_path)
             module = importlib.util.module_from_spec(spec)
             spec.loader.exec_module(module)
 
             config = module.get_evaluator_config()
-            return run_evaluation(config, cli_args)
+            return run_evaluation(config)
 
         except Exception as e:
             logger.error(f"Failed: {e}")
             return False
 
 
-def run_evaluation(config, cli_args=None):
+def run_evaluation(config):
     """运行评估"""
-    pipeline = EvaluationPipeline(config, cli_args)
+    pipeline = EvaluationPipeline(config)
     return pipeline.run()
