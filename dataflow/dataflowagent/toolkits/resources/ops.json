@@ -1,0 +1,4605 @@
+{
+  "agentic_rag": [
+    {
+      "node": 1,
+      "name": "AgenticRAGQAF1SampleEvaluator",
+      "description": "用于评估预测答案与多个参考答案之间的 F1 分数",
+      "parameter": {
+        "init": [],
+        "run": [
+          {
+            "name": "storage",
+            "default": null,
+            "kind": "POSITIONAL_OR_KEYWORD"
+          },
+          {
+            "name": "input_prediction_key",
+            "default": "refined_answer",
+            "kind": "POSITIONAL_OR_KEYWORD"
+          },
+          {
+            "name": "input_ground_truth_key",
+            "default": "golden_doc_answer",
+            "kind": "POSITIONAL_OR_KEYWORD"
+          },
+          {
+            "name": "output_key",
+            "default": "F1Score",
+            "kind": "POSITIONAL_OR_KEYWORD"
+          }
+        ]
+      },
+      "required": "",
+      "depends_on": [],
+      "mode": ""
+    },
+    {
+      "node": 2,
+      "name": "AgenticRAGAtomicTaskGenerator",
+      "description": "该算子用于为提供的文本内容生成合适的高质量问题与可验证答案。\n\n输入参数：\n- input_key: 输入文本内容字段名（默认值：\"prompts\"）\n- output_question_key: 输出问题字段名（默认值：\"question\"）\n- output_answer_key: 输出答案字段名（默认值：\"answer\"）\n- output_refined_answer_key: 输出精炼答案字段名（默认值：\"refined_answer\"）\n- output_optional_answer_key: 输出可替代精炼答案字段名（默认值：\"optional_answer\"）\n- output_golden_doc_answer_key: 输出黄金文档回答字段名（默认值：\"golden_doc_answer\"）\n",
+      "parameter": {
+        "init": [
+          {
+            "name": "llm_serving",
+            "default": null,
+            "kind": "POSITIONAL_OR_KEYWORD"
+          },
+          {
+            "name": "data_num",
+            "default": 100,
+            "kind": "POSITIONAL_OR_KEYWORD"
+          },
+          {
+            "name": "max_per_task",
+            "default": 10,
+            "kind": "POSITIONAL_OR_KEYWORD"
+          },
+          {
+            "name": "max_question",
+            "default": 10,
+            "kind": "POSITIONAL_OR_KEYWORD"
+          }
+        ],
+        "run": [
+          {
+            "name": "storage",
+            "default": null,
+            "kind": "POSITIONAL_OR_KEYWORD"
+          },
+          {
+            "name": "input_key",
+            "default": "prompts",
+            "kind": "POSITIONAL_OR_KEYWORD"
+          },
+          {
+            "name": "output_question_key",
+            "default": "question",
+            "kind": "POSITIONAL_OR_KEYWORD"
+          },
+          {
+            "name": "output_answer_key",
+            "default": "answer",
+            "kind": "POSITIONAL_OR_KEYWORD"
+          },
+          {
+            "name": "output_refined_answer_key",
+            "default": "refined_answer",
+            "kind": "POSITIONAL_OR_KEYWORD"
+          },
+          {
+            "name": "output_optional_answer_key",
+            "default": "optional_answer",
+            "kind": "POSITIONAL_OR_KEYWORD"
+          },
+          {
+            "name": "output_llm_answer_key",
+            "default": "llm_answer",
+            "kind": "POSITIONAL_OR_KEYWORD"
+          },
+          {
+            "name": "output_golden_doc_answer_key",
+            "default": "golden_doc_answer",
+            "kind": "POSITIONAL_OR_KEYWORD"
+          }
+        ]
+      },
+      "required": "",
+      "depends_on": [],
+      "mode": ""
+    },
+    {
+      "node": 3,
+      "name": "AgenticRAGDepthQAGenerator",
+      "description": "该算子以已有问答生成更深度的问题。\n\n输入参数：\n- input_key: 输入字段名（默认值：\"question\"）\n- output_key: 输出字段名（默认值：\"depth_question\"）\n",
+      "parameter": {
+        "init": [
+          {
+            "name": "llm_serving",
+            "default": null,
+            "kind": "POSITIONAL_OR_KEYWORD"
+          },
+          {
+            "name": "n_rounds",
+            "default": 2,
+            "kind": "POSITIONAL_OR_KEYWORD"
+          }
+        ],
+        "run": [
+          {
+            "name": "storage",
+            "default": null,
+            "kind": "POSITIONAL_OR_KEYWORD"
+          },
+          {
+            "name": "input_key",
+            "default": "question",
+            "kind": "POSITIONAL_OR_KEYWORD"
+          },
+          {
+            "name": "output_key",
+            "default": "depth_question",
+            "kind": "POSITIONAL_OR_KEYWORD"
+          }
+        ]
+      },
+      "required": "",
+      "depends_on": [],
+      "mode": ""
+    },
+    {
+      "node": 4,
+      "name": "AgenticRAGWidthQAGenerator",
+      "description": "该算子用于结合两个问答，生成新的问题。\n\n输入参数：\n- input_question_key: 输入问题字段名（默认值：\"question\"）\n- input_identifier_key: 输入标识符字段名（默认值：\"identifier\"）\n- input_answer_key: 输入答案字段名（默认值：\"answer\"）\n- output_question_key: 输出问题字段名（默认值：\"generated_width_task\"）\n",
+      "parameter": {
+        "init": [
+          {
+            "name": "llm_serving",
+            "default": null,
+            "kind": "POSITIONAL_OR_KEYWORD"
+          }
+        ],
+        "run": [
+          {
+            "name": "storage",
+            "default": null,
+            "kind": "POSITIONAL_OR_KEYWORD"
+          },
+          {
+            "name": "input_question_key",
+            "default": "question",
+            "kind": "POSITIONAL_OR_KEYWORD"
+          },
+          {
+            "name": "input_identifier_key",
+            "default": "identifier",
+            "kind": "POSITIONAL_OR_KEYWORD"
+          },
+          {
+            "name": "input_answer_key",
+            "default": "answer",
+            "kind": "POSITIONAL_OR_KEYWORD"
+          },
+          {
+            "name": "output_question_key",
+            "default": "generated_width_task",
+            "kind": "POSITIONAL_OR_KEYWORD"
+          }
+        ]
+      },
+      "required": "",
+      "depends_on": [],
+      "mode": ""
+    }
+  ],
+  "chemistry": [
+    {
+      "node": 5,
+      "name": "ExtractSmilesFromText",
+      "description": "ExtractSmilesFromText 用于从 OCR 文本中抽取或解析化学分子的 SMILES 表达式。算子会根据给定的提示模板（prompt_template），结合文本内容和（可选的）单体缩写信息，调用大语言模型完成解析与结构化，并将结果以 JSON 格式写回到指定列。\n\n输入参数：\n- llm_serving：LLM 服务对象，需实现 LLMServingABC 接口\n- prompt_template：提示词模板对象，用于构造模型输入\n- content_key：包含 OCR 文本的列名（默认 'text'）\n- abbreviation_key：包含缩写/单体信息的列名（默认 'abbreviations'），可为空\n- output_key：写回抽取结果的列名（默认 'synth_smiles'）\n\n输出参数：\n- DataFrame，其中 output_key 列为模型返回并经 JSON 解析后的 SMILES 结构\n- 返回 output_key，供后续算子引用\n\n备注：\n- 模型输出会尝试解析为 JSON；若解析失败，将返回 [] 并记录失败次数。",
+      "parameter": {
+        "init": [
+          {
+            "name": "llm_serving",
+            "default": null,
+            "kind": "POSITIONAL_OR_KEYWORD"
+          },
+          {
+            "name": "prompt_template",
+            "default": null,
+            "kind": "POSITIONAL_OR_KEYWORD"
+          }
+        ],
+        "run": [
+          {
+            "name": "storage",
+            "default": null,
+            "kind": "POSITIONAL_OR_KEYWORD"
+          },
+          {
+            "name": "content_key",
+            "default": "text",
+            "kind": "POSITIONAL_OR_KEYWORD"
+          },
+          {
+            "name": "abbreviation_key",
+            "default": "abbreviations",
+            "kind": "POSITIONAL_OR_KEYWORD"
+          },
+          {
+            "name": "output_key",
+            "default": "synth_smiles",
+            "kind": "POSITIONAL_OR_KEYWORD"
+          }
+        ]
+      },
+      "required": "",
+      "depends_on": [],
+      "mode": ""
+    },
+    {
+      "node": 6,
+      "name": "EvaluateSmilesEquivalence",
+      "description": "评估 golden_label 与 synth_smiles 的 SMILES 等价性并计算分数。逐块输出 final_result、块内得分与准确率，并统计全局总分。",
+      "parameter": {
+        "init": [
+          {
+            "name": "llm_serving",
+            "default": null,
+            "kind": "POSITIONAL_OR_KEYWORD"
+          }
+        ],
+        "run": [
+          {
+            "name": "storage",
+            "default": null,
+            "kind": "POSITIONAL_OR_KEYWORD"
+          },
+          {
+            "name": "golden_key",
+            "default": "golden_label",
+            "kind": "POSITIONAL_OR_KEYWORD"
+          },
+          {
+            "name": "synth_key",
+            "default": "synth_smiles",
+            "kind": "POSITIONAL_OR_KEYWORD"
+          },
+          {
+            "name": "output_key",
+            "default": "final_result",
+            "kind": "POSITIONAL_OR_KEYWORD"
+          }
+        ]
+      },
+      "required": "",
+      "depends_on": [],
+      "mode": ""
+    }
+  ],
+  "conversations": [
+    {
+      "node": 7,
+      "name": "ScenarioExtractor",
+      "description": "从对话内容中提取场景信息，使用LLM服务分析对话并生成场景描述。\n输入参数：\n- llm_serving：LLM服务对象，需实现LLMServingABC接口\n- input_chat_key：对话内容字段名\n- output_key：输出场景字段名，默认'scenario'\n输出参数：\n- 包含提取场景信息的DataFrame\n- 包含输出字段名的列表",
+      "parameter": {
+        "init": [
+          {
+            "name": "llm_serving",
+            "default": null,
+            "kind": "POSITIONAL_OR_KEYWORD"
+          }
+        ],
+        "run": [
+          {
+            "name": "storage",
+            "default": null,
+            "kind": "POSITIONAL_OR_KEYWORD"
+          },
+          {
+            "name": "input_chat_key",
+            "default": null,
+            "kind": "POSITIONAL_OR_KEYWORD"
+          },
+          {
+            "name": "output_key",
+            "default": "scenario",
+            "kind": "POSITIONAL_OR_KEYWORD"
+          }
+        ]
+      },
+      "required": "",
+      "depends_on": [],
+      "mode": ""
+    },
+    {
+      "node": 8,
+      "name": "ScenarioExpander",
+      "description": "基于原始场景生成新的替代场景，使用LLM服务重写或改写原有场景内容。\n输入参数：\n- llm_serving：LLM服务对象，需实现LLMServingABC接口\n- input_scenario_key：原始场景字段名\n- output_key：生成的新场景字段名，默认'modified_scenario'\n输出参数：\n- 包含生成新场景的DataFrame\n- 包含输出字段名的列表",
+      "parameter": {
+        "init": [
+          {
+            "name": "llm_serving",
+            "default": null,
+            "kind": "POSITIONAL_OR_KEYWORD"
+          }
+        ],
+        "run": [
+          {
+            "name": "storage",
+            "default": null,
+            "kind": "POSITIONAL_OR_KEYWORD"
+          },
+          {
+            "name": "input_scenario_key",
+            "default": null,
+            "kind": "POSITIONAL_OR_KEYWORD"
+          },
+          {
+            "name": "output_key",
+            "default": "modified_scenario",
+            "kind": "POSITIONAL_OR_KEYWORD"
+          }
+        ]
+      },
+      "required": "",
+      "depends_on": [],
+      "mode": ""
+    },
+    {
+      "node": 9,
+      "name": "AtomTaskGenerator",
+      "description": "根据输入的场景信息，使用LLM服务生成对应的原子任务。\n输入参数：\n- llm_serving：LLM服务对象，需实现LLMServingABC接口\n- input_scenario_key：场景字段名\n- output_key：原子任务的输出字段名，默认'atom_task'\n输出参数：\n- 包含原子任务的DataFrame\n- 包含输出字段名的列表",
+      "parameter": {
+        "init": [
+          {
+            "name": "llm_serving",
+            "default": null,
+            "kind": "POSITIONAL_OR_KEYWORD"
+          }
+        ],
+        "run": [
+          {
+            "name": "storage",
+            "default": null,
+            "kind": "POSITIONAL_OR_KEYWORD"
+          },
+          {
+            "name": "input_scenario_key",
+            "default": null,
+            "kind": "POSITIONAL_OR_KEYWORD"
+          },
+          {
+            "name": "output_key",
+            "default": "atom_task",
+            "kind": "POSITIONAL_OR_KEYWORD"
+          }
+        ]
+      },
+      "required": "",
+      "depends_on": [],
+      "mode": ""
+    },
+    {
+      "node": 10,
+      "name": "SequentialTaskGenerator",
+      "description": "根据输入的原子任务，使用LLM服务生成该任务的后继任务和两者的组合任务。\n输入参数：\n- llm_serving：LLM服务对象，需实现LLMServingABC接口\n- input_task_key：原子任务字段名\n- output_subsequent_task_key：后继任务输出字段名，默认'subsequent_task'\n- output_composition_task_key：组合任务输出字段名，默认'composition_task'\n输出参数：\n- 包含后继任务和组合任务的DataFrame\n- 输出字段名的列表（后继任务字段和组合任务字段）",
+      "parameter": {
+        "init": [
+          {
+            "name": "llm_serving",
+            "default": null,
+            "kind": "POSITIONAL_OR_KEYWORD"
+          }
+        ],
+        "run": [
+          {
+            "name": "storage",
+            "default": null,
+            "kind": "POSITIONAL_OR_KEYWORD"
+          },
+          {
+            "name": "input_task_key",
+            "default": null,
+            "kind": "POSITIONAL_OR_KEYWORD"
+          },
+          {
+            "name": "output_subsequent_task_key",
+            "default": "subsequent_task",
+            "kind": "POSITIONAL_OR_KEYWORD"
+          },
+          {
+            "name": "output_composition_task_key",
+            "default": "composition_task",
+            "kind": "POSITIONAL_OR_KEYWORD"
+          }
+        ]
+      },
+      "required": "",
+      "depends_on": [],
+      "mode": ""
+    },
+    {
+      "node": 11,
+      "name": "ParaSeqTaskGenerator",
+      "description": "基于原子任务，使用LLM服务生成三个任务类型：并行任务、后继任务以及这三者的组合任务。\n输入参数：\n- llm_serving：LLM服务对象，需实现LLMServingABC接口\n- input_task_key：原子任务字段名\n- output_parallel_task_key：并行任务输出字段名，默认'parallel_task'\n- output_subsequent_task_key：后继任务输出字段名，默认'subsequent_task'\n- output_composition_task_key：组合任务输出字段名，默认'composition_task'\n输出参数：\n- 包含并行任务、后继任务与组合任务的DataFrame\n- 输出字段名列表（并行任务、后继任务、组合任务）",
+      "parameter": {
+        "init": [
+          {
+            "name": "llm_serving",
+            "default": null,
+            "kind": "POSITIONAL_OR_KEYWORD"
+          }
+        ],
+        "run": [
+          {
+            "name": "storage",
+            "default": null,
+            "kind": "POSITIONAL_OR_KEYWORD"
+          },
+          {
+            "name": "input_task_key",
+            "default": null,
+            "kind": "POSITIONAL_OR_KEYWORD"
+          },
+          {
+            "name": "output_parallel_task_key",
+            "default": "parallel_task",
+            "kind": "POSITIONAL_OR_KEYWORD"
+          },
+          {
+            "name": "output_subsequent_task_key",
+            "default": "subsequent_task",
+            "kind": "POSITIONAL_OR_KEYWORD"
+          },
+          {
+            "name": "output_composition_task_key",
+            "default": "composition_task",
+            "kind": "POSITIONAL_OR_KEYWORD"
+          }
+        ]
+      },
+      "required": "",
+      "depends_on": [],
+      "mode": ""
+    },
+    {
+      "node": 12,
+      "name": "CompositionTaskFilter",
+      "description": "根据组合任务及其子任务，使用LLM服务判断组合任务是否具备可行性与完备性，从而进行可运行任务的筛选。\n输入参数：\n- llm_serving：LLM服务对象，需实现LLMServingABC接口\n- input_composition_task_key：组合任务字段名\n- input_sub_tasks_keys：子任务字段名列表（如原子任务、并行任务、后继任务等）\n- output_key：可运行标签的输出字段名，默认'runable_label'\n输出参数：\n- 仅包含可运行组合任务的数据DataFrame\n- 包含输出字段名的列表（可运行标签字段）",
+      "parameter": {
+        "init": [
+          {
+            "name": "llm_serving",
+            "default": null,
+            "kind": "POSITIONAL_OR_KEYWORD"
+          }
+        ],
+        "run": [
+          {
+            "name": "storage",
+            "default": null,
+            "kind": "POSITIONAL_OR_KEYWORD"
+          },
+          {
+            "name": "input_composition_task_key",
+            "default": null,
+            "kind": "POSITIONAL_OR_KEYWORD"
+          },
+          {
+            "name": "input_sub_tasks_keys",
+            "default": null,
+            "kind": "POSITIONAL_OR_KEYWORD"
+          },
+          {
+            "name": "output_key",
+            "default": "runable_label",
+            "kind": "POSITIONAL_OR_KEYWORD"
+          }
+        ]
+      },
+      "required": "",
+      "depends_on": [],
+      "mode": ""
+    },
+    {
+      "node": 13,
+      "name": "FunctionGenerator",
+      "description": "基于组合任务及其相关子任务，使用LLM服务生成对应的函数列表。输入参数：\n- llm_serving：LLM服务对象，需实现LLMServingABC接口\n- input_composition_task_key：组合任务字段名\n- input_sub_tasks_keys：子任务字段名列表（如原子任务、并行任务、后继任务等）\n- output_key：函数列表输出字段名，默认'functions'\n输出参数：\n- 包含函数定义或函数列表的DataFrame\n- 输出字段名的列表（函数列表字段）",
+      "parameter": {
+        "init": [
+          {
+            "name": "llm_serving",
+            "default": null,
+            "kind": "POSITIONAL_OR_KEYWORD"
+          }
+        ],
+        "run": [
+          {
+            "name": "storage",
+            "default": null,
+            "kind": "POSITIONAL_OR_KEYWORD"
+          },
+          {
+            "name": "input_composition_task_key",
+            "default": null,
+            "kind": "POSITIONAL_OR_KEYWORD"
+          },
+          {
+            "name": "input_sub_tasks_keys",
+            "default": null,
+            "kind": "POSITIONAL_OR_KEYWORD"
+          },
+          {
+            "name": "output_key",
+            "default": "functions",
+            "kind": "POSITIONAL_OR_KEYWORD"
+          }
+        ]
+      },
+      "required": "",
+      "depends_on": [],
+      "mode": ""
+    },
+    {
+      "node": 14,
+      "name": "MultiTurnConversationGenerator",
+      "description": "根据组合任务及其子任务函数，使用LLM服务模拟多轮对话过程，由User、Assistant和Tool三个Agent协同生成完整的对话数据。\n输入参数：\n- llm_serving：LLM服务对象，需实现LLMServingABC接口\n- input_task_key：任务字段名（组合任务）\n- input_sub_tasks_keys：子任务字段名列表\n- input_functions_key：子任务函数字段名\n- output_conversations_key：输出对话字段名，默认'conversations'\n输出参数：\n- 包含已完成的多轮对话记录的DataFrame\n- 输出字段名（对话字段名）",
+      "parameter": {
+        "init": [
+          {
+            "name": "llm_serving",
+            "default": null,
+            "kind": "POSITIONAL_OR_KEYWORD"
+          }
+        ],
+        "run": [
+          {
+            "name": "storage",
+            "default": null,
+            "kind": "POSITIONAL_OR_KEYWORD"
+          },
+          {
+            "name": "input_task_key",
+            "default": null,
+            "kind": "POSITIONAL_OR_KEYWORD"
+          },
+          {
+            "name": "input_sub_tasks_keys",
+            "default": null,
+            "kind": "POSITIONAL_OR_KEYWORD"
+          },
+          {
+            "name": "input_functions_key",
+            "default": null,
+            "kind": "POSITIONAL_OR_KEYWORD"
+          },
+          {
+            "name": "output_conversations_key",
+            "default": "conversations",
+            "kind": "POSITIONAL_OR_KEYWORD"
+          }
+        ]
+      },
+      "required": "",
+      "depends_on": [],
+      "mode": ""
+    },
+    {
+      "node": 15,
+      "name": "ConsistentChatGenerator",
+      "description": "根据预置主题和人类意图，两阶段从0合成多轮对话格式数据（合成数量大于9000时建议增加标签数量）。\n输入参数：\n- llm_serving：LLM服务对象，需实现LLMServingABC接口\n- num_dialogs_per_intent：每个意图生成的对话数量，默认20\n- num_turns_per_dialog：每个对话的轮次数量，默认6\n- temperature：生成温度，控制输出随机性，默认0.9\n输出参数：\n- 包含category和conversation字段的DataFrame，其中conversation为多轮对话列表",
+      "parameter": {
+        "init": [
+          {
+            "name": "llm_serving",
+            "default": null,
+            "kind": "POSITIONAL_OR_KEYWORD"
+          },
+          {
+            "name": "num_dialogs_per_intent",
+            "default": 20,
+            "kind": "POSITIONAL_OR_KEYWORD"
+          },
+          {
+            "name": "num_turns_per_dialog",
+            "default": 6,
+            "kind": "POSITIONAL_OR_KEYWORD"
+          },
+          {
+            "name": "temperature",
+            "default": 0.9,
+            "kind": "POSITIONAL_OR_KEYWORD"
+          }
+        ],
+        "run": [
+          {
+            "name": "storage",
+            "default": null,
+            "kind": "POSITIONAL_OR_KEYWORD"
+          }
+        ]
+      },
+      "required": "",
+      "depends_on": [],
+      "mode": ""
+    }
+  ],
+  "core_speech": [
+    {
+      "node": 16,
+      "name": "Speech2TextGenerator",
+      "description": "该算子用于将语音内容转录为文本。它接收语音文件路径或URL，使用大语言模型进行转录，并将转录结果保存到数据框中。\n输入参数：\n- llm_serving：LLM服务对象，需实现LLMServingABC接口\n- system_prompt：系统提示词，用于定义模型行为，默认为'You are a helpful assistant'\n- input_key：输入语音文件路径或URL的字段名，默认为'raw_content'\n- output_key：输出转录文本的字段名，默认为'generated_content'\n输出参数：\n- 返回输出字段名，用于后续算子引用\n- 在数据框中添加包含转录文本的新列",
+      "parameter": {
+        "init": [
+          {
+            "name": "llm_serving",
+            "default": null,
+            "kind": "POSITIONAL_OR_KEYWORD"
+          },
+          {
+            "name": "system_prompt",
+            "default": "You are a helpful assistant",
+            "kind": "POSITIONAL_OR_KEYWORD"
+          }
+        ],
+        "run": [
+          {
+            "name": "storage",
+            "default": null,
+            "kind": "POSITIONAL_OR_KEYWORD"
+          },
+          {
+            "name": "input_key",
+            "default": "raw_content",
+            "kind": "POSITIONAL_OR_KEYWORD"
+          },
+          {
+            "name": "output_key",
+            "default": "generated_content",
+            "kind": "POSITIONAL_OR_KEYWORD"
+          }
+        ]
+      },
+      "required": "",
+      "depends_on": [],
+      "mode": ""
+    }
+  ],
+  "core_text": [
+    {
+      "node": 17,
+      "name": "PromptedGenerator",
+      "description": "基于用户提供的提示词（prompt）生成数据。结合系统提示词和输入内容生成符合要求的输出文本。输入参数：\n- llm_serving：LLM服务对象，需实现LLMServingABC接口\n- system_prompt：系统提示词，定义模型行为，默认为'You are a helpful agent.'\n- input_key：输入内容字段名，默认为'raw_content'\n- output_key：输出生成内容字段名，默认为'generated_content'\n输出参数：\n- 包含生成内容的DataFrame\n- 返回输出字段名，用于后续算子引用",
+      "parameter": {
+        "init": [
+          {
+            "name": "llm_serving",
+            "default": null,
+            "kind": "POSITIONAL_OR_KEYWORD"
+          },
+          {
+            "name": "system_prompt",
+            "default": "You are a helpful agent.",
+            "kind": "POSITIONAL_OR_KEYWORD"
+          }
+        ],
+        "run": [
+          {
+            "name": "storage",
+            "default": null,
+            "kind": "POSITIONAL_OR_KEYWORD"
+          },
+          {
+            "name": "input_key",
+            "default": "raw_content",
+            "kind": "POSITIONAL_OR_KEYWORD"
+          },
+          {
+            "name": "output_key",
+            "default": "generated_content",
+            "kind": "POSITIONAL_OR_KEYWORD"
+          }
+        ]
+      },
+      "required": "",
+      "depends_on": [],
+      "mode": ""
+    },
+    {
+      "node": 18,
+      "name": "PairedPromptedGenerator",
+      "description": "PairedPromptedGenerator：基于两列配对输入（input_key_1 与 input_key_2）进行成对提示生成。\n算子会将 system_prompt 与每行的两列文本按固定模板拼接后，调用 LLM 服务批量生成结果，并将模型输出写回到 DataFrame 的指定列。\n\n输入参数：\n- llm_serving：LLM 服务对象（实现 LLMServingABC 接口）\n- system_prompt：系统提示词（默认 'You are a helpful agent.'）。该提示会放在每条样本前缀，  用于约束模型的角色与输出风格。\n- input_key_1：第一列输入字段名（默认 'input_key_1'）\n- input_key_2：第二列输入字段名（默认 'input_key_2'）\n- output_key：输出字段名（默认 'generated_content'）\n\n处理逻辑：\n1) 从 storage 中读取名为 'dataframe' 的 DataFrame；\n2) 对于每一行，若 input_key_1 与 input_key_2 均非空，则按模板：\n   system_prompt + input_key_1 + 值 + '\\n' + input_key_2 + 值\n   构造 LLM 输入；\n3) 批量调用 llm_serving.generate_from_input 生成文本；\n4) 将生成结果写入 DataFrame 的 output_key 列并保存。\n\n输出：\n- 返回写入了生成结果的新 DataFrame（由 storage 管理保存），\n- 返回 output_key 以便后续算子引用。",
+      "parameter": {
+        "init": [
+          {
+            "name": "llm_serving",
+            "default": null,
+            "kind": "POSITIONAL_OR_KEYWORD"
+          },
+          {
+            "name": "system_prompt",
+            "default": "You are a helpful agent.",
+            "kind": "POSITIONAL_OR_KEYWORD"
+          }
+        ],
+        "run": [
+          {
+            "name": "storage",
+            "default": null,
+            "kind": "POSITIONAL_OR_KEYWORD"
+          },
+          {
+            "name": "input_key_1",
+            "default": "input_key_1",
+            "kind": "POSITIONAL_OR_KEYWORD"
+          },
+          {
+            "name": "input_key_2",
+            "default": "input_key_2",
+            "kind": "POSITIONAL_OR_KEYWORD"
+          },
+          {
+            "name": "output_key",
+            "default": "generated_content",
+            "kind": "POSITIONAL_OR_KEYWORD"
+          }
+        ]
+      },
+      "required": "",
+      "depends_on": [],
+      "mode": ""
+    },
+    {
+      "node": 19,
+      "name": "RandomDomainKnowledgeRowGenerator",
+      "description": "RandomDomainKnowledgeRowGenerator算子用于结合系统提示词(system_prompt)和用户自定义提示模板(user_prompt)，批量生成领域知识相关文本内容。\n注意：本算子随机生成的SFT数据所参考的领域是人为预先设定的，具体领域列表可参考prompt中的domain_keys。\n核心功能：\n- 支持无输入数据时，按generation_num参数生成指定数量的内容；\n- 支持自定义system_prompt和user_prompt，user_prompt可通过'{}'占位符灵活插入输入内容或整行字典；\n- 支持指定输出字段(output_key)\n参数说明：\n- llm_serving：LLM服务对象，需实现LLMServingABC接口；\n- system_prompt：系统提示词，定义模型行为，默认为'You are a helpful agent.'；\n- user_prompt：用户提示词模板，默认为'{}'，可通过'{}'占位符插入输入内容或整行字典；\n- output_key：输出生成内容字段名，默认为'generated_content'；\n- generation_num：无输入数据时生成内容的数量，默认为1；\n输出：\n- 包含生成内容的DataFrame；\n- 返回输出字段名(output_key)，供后续算子引用。",
+      "parameter": {
+        "init": [
+          {
+            "name": "llm_serving",
+            "default": null,
+            "kind": "POSITIONAL_OR_KEYWORD"
+          },
+          {
+            "name": "system_prompt",
+            "default": "You are a helpful agent.",
+            "kind": "POSITIONAL_OR_KEYWORD"
+          },
+          {
+            "name": "user_prompt",
+            "default": "{}",
+            "kind": "POSITIONAL_OR_KEYWORD"
+          }
+        ],
+        "run": [
+          {
+            "name": "storage",
+            "default": null,
+            "kind": "POSITIONAL_OR_KEYWORD"
+          },
+          {
+            "name": "output_key",
+            "default": "generated_content",
+            "kind": "POSITIONAL_OR_KEYWORD"
+          },
+          {
+            "name": "generation_num",
+            "default": 1,
+            "kind": "POSITIONAL_OR_KEYWORD"
+          }
+        ]
+      },
+      "required": "",
+      "depends_on": [],
+      "mode": ""
+    },
+    {
+      "node": 20,
+      "name": "Doc2PromptGenerator",
+      "description": "该算子用于为给的的文档片段生成提示词，用于生成种子QA对\n\n输入参数：\n- input_key: 包含文档片段的字段名\n- output_key: 包含提示词的字段名\n",
+      "parameter": {
+        "init": [
+          {
+            "name": "llm_serving",
+            "default": null,
+            "kind": "POSITIONAL_OR_KEYWORD"
+          }
+        ],
+        "run": [
+          {
+            "name": "storage",
+            "default": null,
+            "kind": "POSITIONAL_OR_KEYWORD"
+          },
+          {
+            "name": "input_key",
+            "default": "text",
+            "kind": "POSITIONAL_OR_KEYWORD"
+          },
+          {
+            "name": "output_key",
+            "default": "generated_prompt",
+            "kind": "POSITIONAL_OR_KEYWORD"
+          }
+        ]
+      },
+      "required": "",
+      "depends_on": [],
+      "mode": ""
+    },
+    {
+      "node": 21,
+      "name": "Doc2QAGenerator",
+      "description": "该算子用于生成对应文档片段的QA对。\n\n输入参数：\n- input_key: 包含文档片段的字段名\n- prompt_key: 包含提示词的字段名\n- output_quesion_key: 包含生成问题的字段名\n- output_answer_key: 包含生成答案的字段名\n",
+      "parameter": {
+        "init": [
+          {
+            "name": "llm_serving",
+            "default": null,
+            "kind": "POSITIONAL_OR_KEYWORD"
+          }
+        ],
+        "run": [
+          {
+            "name": "storage",
+            "default": null,
+            "kind": "POSITIONAL_OR_KEYWORD"
+          },
+          {
+            "name": "input_key",
+            "default": "text",
+            "kind": "POSITIONAL_OR_KEYWORD"
+          },
+          {
+            "name": "output_prompt_key",
+            "default": "generated_prompt",
+            "kind": "POSITIONAL_OR_KEYWORD"
+          },
+          {
+            "name": "output_quesion_key",
+            "default": "generated_question",
+            "kind": "POSITIONAL_OR_KEYWORD"
+          },
+          {
+            "name": "output_answer_key",
+            "default": "generated_answer",
+            "kind": "POSITIONAL_OR_KEYWORD"
+          }
+        ]
+      },
+      "required": "",
+      "depends_on": [],
+      "mode": ""
+    },
+    {
+      "node": 22,
+      "name": "BenchDatasetEvaluator",
+      "description": "该算子用于对比预测答案与标准答案的匹配度，支持两种评估模式：\n\n1. 字符串匹配（match）：使用数学验证方法比较答案，适用于有明确答案的问题\n2. 语义匹配（semantic）：使用LLM评估答案的语义相似度，适用于开放性问题\n\n输入参数：\n- input_test_answer_key：预测答案字段名\n- input_gt_answer_key：标准答案字段名\n- input_question_key：问题字段名（语义匹配模式下必需）\n- compare_method：比较方法（match/semantic）\n\n输出参数：\n- answer_match_result：匹配结果（True/False）\n- 统计结果将保存到指定的eval_result_path路径\n",
+      "parameter": {
+        "init": [
+          {
+            "name": "eval_result_path",
+            "default": null,
+            "kind": "POSITIONAL_OR_KEYWORD"
+          },
+          {
+            "name": "compare_method",
+            "default": "match",
+            "kind": "POSITIONAL_OR_KEYWORD"
+          },
+          {
+            "name": "system_prompt",
+            "default": "You are a helpful assistant specialized in evaluating answer correctness.",
+            "kind": "POSITIONAL_OR_KEYWORD"
+          },
+          {
+            "name": "llm_serving",
+            "default": null,
+            "kind": "POSITIONAL_OR_KEYWORD"
+          },
+          {
+            "name": "prompt_template",
+            "default": null,
+            "kind": "POSITIONAL_OR_KEYWORD"
+          }
+        ],
+        "run": [
+          {
+            "name": "storage",
+            "default": null,
+            "kind": "POSITIONAL_OR_KEYWORD"
+          },
+          {
+            "name": "input_test_answer_key",
+            "default": "generated_cot",
+            "kind": "POSITIONAL_OR_KEYWORD"
+          },
+          {
+            "name": "input_gt_answer_key",
+            "default": "golden_answer",
+            "kind": "POSITIONAL_OR_KEYWORD"
+          },
+          {
+            "name": "input_question_key",
+            "default": null,
+            "kind": "POSITIONAL_OR_KEYWORD"
+          }
+        ]
+      },
+      "required": "",
+      "depends_on": [],
+      "mode": ""
+    },
+    {
+      "node": 23,
+      "name": "Doc2QASampleEvaluator",
+      "description": "该算子用于为给的的文档片段生成种子QA对打分\n\n输入参数：\n- input_question_key: Field name containing the generated question\n- input_answer_key: Field name containing the generated answer\n- output_question_quality_key: Field name containing the question quality grade\n- output_question_quality_feedback_key: Field name containing the question quality feedback\n- output_answer_alignment_key: Field name containing the answer alignment grade\n- output_answer_alignment_feedback_key: Field name containing the answer alignment feedback\n- output_answer_verifiability_key: Field name containing the answer verifiability grade\n- output_downstream_value_key: Field name containing the downstream value grade\n- output_downstream_value_feedback_key: Field name containing the downstream value feedback\n",
+      "parameter": {
+        "init": [
+          {
+            "name": "llm_serving",
+            "default": null,
+            "kind": "POSITIONAL_OR_KEYWORD"
+          }
+        ],
+        "run": [
+          {
+            "name": "storage",
+            "default": null,
+            "kind": "POSITIONAL_OR_KEYWORD"
+          },
+          {
+            "name": "input_question_key",
+            "default": "generated_question",
+            "kind": "POSITIONAL_OR_KEYWORD"
+          },
+          {
+            "name": "input_answer_key",
+            "default": "generated_answer",
+            "kind": "POSITIONAL_OR_KEYWORD"
+          },
+          {
+            "name": "output_question_quality_key",
+            "default": "question_quality_grades",
+            "kind": "POSITIONAL_OR_KEYWORD"
+          },
+          {
+            "name": "output_question_quality_feedback_key",
+            "default": "question_quality_feedbacks",
+            "kind": "POSITIONAL_OR_KEYWORD"
+          },
+          {
+            "name": "output_answer_alignment_key",
+            "default": "answer_alignment_grades",
+            "kind": "POSITIONAL_OR_KEYWORD"
+          },
+          {
+            "name": "output_answer_alignment_feedback_key",
+            "default": "answer_alignment_feedbacks",
+            "kind": "POSITIONAL_OR_KEYWORD"
+          },
+          {
+            "name": "output_answer_verifiability_key",
+            "default": "answer_verifiability_grades",
+            "kind": "POSITIONAL_OR_KEYWORD"
+          },
+          {
+            "name": "output_answer_verifiability_feedback_key",
+            "default": "answer_verifiability_feedbacks",
+            "kind": "POSITIONAL_OR_KEYWORD"
+          },
+          {
+            "name": "output_downstream_value_key",
+            "default": "downstream_value_grades",
+            "kind": "POSITIONAL_OR_KEYWORD"
+          },
+          {
+            "name": "output_downstream_value_feedback_key",
+            "default": "downstream_value_feedbacks",
+            "kind": "POSITIONAL_OR_KEYWORD"
+          }
+        ]
+      },
+      "required": "",
+      "depends_on": [],
+      "mode": ""
+    },
+    {
+      "node": 24,
+      "name": "PromptedEvaluator",
+      "description": "PromptedEvaluator：使用 LLM 根据系统提示词对数据质量进行评分，并将评分写回 DataFrame（同时通过 storage 持久化）。模型应只输出分数（整数）。\n功能：对每行输入文本生成一个评分。\n输入参数：\n- llm_serving：LLM 服务对象，需实现 LLMServingABC 接口。\n- system_prompt：系统提示词（默认：'Please evaluate the quality of this data on a scale from 1 to 5.'）。\n- input_key：输入文本所在列名（默认：'raw_content'）。\n- output_key：评分结果写入的列名（默认：'eval'）。\n输出：\n- 返回输出列名（用于后续算子引用），评分结果已写回并保存。",
+      "parameter": {
+        "init": [
+          {
+            "name": "llm_serving",
+            "default": null,
+            "kind": "POSITIONAL_OR_KEYWORD"
+          },
+          {
+            "name": "system_prompt",
+            "default": "Please evaluate the quality of this data on a scale from 1 to 5.",
+            "kind": "POSITIONAL_OR_KEYWORD"
+          }
+        ],
+        "run": [
+          {
+            "name": "storage",
+            "default": null,
+            "kind": "POSITIONAL_OR_KEYWORD"
+          },
+          {
+            "name": "input_key",
+            "default": "raw_content",
+            "kind": "POSITIONAL_OR_KEYWORD"
+          },
+          {
+            "name": "output_key",
+            "default": "eval",
+            "kind": "POSITIONAL_OR_KEYWORD"
+          }
+        ]
+      },
+      "required": "",
+      "depends_on": [],
+      "mode": ""
+    },
+    {
+      "node": 25,
+      "name": "PromptedFilter",
+      "description": "PromptedFilter 使用内置的 PromptedEvaluator 对输入数据进行数值化打分，并根据指定的分数区间（min_score 到 max_score，闭区间）筛选出符合条件的样本。默认情况下打分范围是 1–5，但用户可以通过 system_prompt 自定义其他评分规则。\n\n输入参数：\n- llm_serving：LLM 服务对象，需实现 LLMServingABC 接口\n- system_prompt：系统提示词，定义评估规范（可选，默认 'Please evaluate the quality of this data on a scale from 1 to 5.'）\n- input_key：待评估文本所在列名（默认 'raw_content'）\n- output_key：写回打分结果的列名（默认 'eval'，若已存在将被覆盖）\n- min_score：筛选的最小分（默认 5）\n- max_score：筛选的最大分（默认 5）\n\n输出参数：\n- 过滤后的 DataFrame（仅保留分数位于 [min_score, max_score] 的行）\n- 返回 output_key 以供后续算子引用\n\n备注：\n- 默认打分区间是 1–5，但可根据实际 prompt 改变。",
+      "parameter": {
+        "init": [
+          {
+            "name": "llm_serving",
+            "default": null,
+            "kind": "POSITIONAL_OR_KEYWORD"
+          },
+          {
+            "name": "system_prompt",
+            "default": "Please evaluate the quality of this data on a scale from 1 to 5.",
+            "kind": "POSITIONAL_OR_KEYWORD"
+          }
+        ],
+        "run": [
+          {
+            "name": "storage",
+            "default": null,
+            "kind": "POSITIONAL_OR_KEYWORD"
+          },
+          {
+            "name": "input_key",
+            "default": "raw_content",
+            "kind": "POSITIONAL_OR_KEYWORD"
+          },
+          {
+            "name": "output_key",
+            "default": "eval",
+            "kind": "POSITIONAL_OR_KEYWORD"
+          },
+          {
+            "name": "min_score",
+            "default": 5,
+            "kind": "POSITIONAL_OR_KEYWORD"
+          },
+          {
+            "name": "max_score",
+            "default": 5,
+            "kind": "POSITIONAL_OR_KEYWORD"
+          }
+        ]
+      },
+      "required": "",
+      "depends_on": [],
+      "mode": ""
+    },
+    {
+      "node": 26,
+      "name": "KCenterGreedyFilter",
+      "description": "该算子用于从大量的文档片段中选取部分文档片段，用于后续生成种子QA对\n\n输入参数:\n- input_key: 包含文档片段的字段名\n- embedding_model_path: 嵌入模型路径\n- num_samples: 选取的文档片段数量\n- method: 选择方法，随机或k-center-greedy\n\n",
+      "parameter": {
+        "init": [
+          {
+            "name": "num_samples",
+            "default": null,
+            "kind": "POSITIONAL_OR_KEYWORD"
+          },
+          {
+            "name": "embedding_serving",
+            "default": null,
+            "kind": "POSITIONAL_OR_KEYWORD"
+          }
+        ],
+        "run": [
+          {
+            "name": "storage",
+            "default": null,
+            "kind": "POSITIONAL_OR_KEYWORD"
+          },
+          {
+            "name": "input_key",
+            "default": "content",
+            "kind": "POSITIONAL_OR_KEYWORD"
+          }
+        ]
+      },
+      "required": "",
+      "depends_on": [],
+      "mode": ""
+    },
+    {
+      "node": 27,
+      "name": "GeneralFilter",
+      "description": "该算子支持通过多个自定义函数对 DataFrame 进行灵活过滤。\n\n每条过滤规则是一个函数（例如 lambda 表达式），接受一个 DataFrame 并返回一个布尔类型的 Series，用于指定保留哪些行。\n\n输入参数：\n- filter_rules：一个函数列表，每个函数形式为 lambda df: ...，需返回一个与 df 长度一致的布尔 Series。所有规则之间采用与（AND）关系组合。\n\n示例：\n  - lambda df: df['score'] > 0.5\n  - lambda df: df['label'].isin(['A', 'B'])",
+      "parameter": {
+        "init": [
+          {
+            "name": "filter_rules",
+            "default": null,
+            "kind": "POSITIONAL_OR_KEYWORD"
+          }
+        ],
+        "run": [
+          {
+            "name": "storage",
+            "default": null,
+            "kind": "POSITIONAL_OR_KEYWORD"
+          }
+        ]
+      },
+      "required": "",
+      "depends_on": [],
+      "mode": ""
+    },
+    {
+      "node": 28,
+      "name": "PromptedRefiner",
+      "description": "PromptedRefiner 根据给定的 system_prompt 对指定列的文本进行改写/润色/规范化，并将结果**就地写回**同一列（覆盖原内容）。其做法是对每一行拼接 `system_prompt + raw_content` 作为模型输入，批量生成改写结果。\n\n输入参数：\n- llm_serving：LLM 服务对象，需实现 LLMServingABC 接口\n- system_prompt：系统提示词，用于描述改写目标与风格（默认 'You are a helpful agent.'）\n- input_key：要改写的文本列名（默认 'raw_content'），改写后会覆盖该列\n\n输出参数：\n- 覆盖后的 DataFrame（同名列被改写后的文本）\n- 无返回值（结果已通过 DataFlowStorage 写出）\n\n备注：\n- 该算子**覆盖** input_key 列；若需保留原文，建议先拷贝到新列。\n- 期望每行在 input_key 列提供可用文本；空值将不会生成对应输入，如与行数不匹配可能导致赋值报错。",
+      "parameter": {
+        "init": [
+          {
+            "name": "llm_serving",
+            "default": null,
+            "kind": "POSITIONAL_OR_KEYWORD"
+          },
+          {
+            "name": "system_prompt",
+            "default": "You are a helpful agent.",
+            "kind": "POSITIONAL_OR_KEYWORD"
+          }
+        ],
+        "run": [
+          {
+            "name": "storage",
+            "default": null,
+            "kind": "POSITIONAL_OR_KEYWORD"
+          },
+          {
+            "name": "input_key",
+            "default": "raw_content",
+            "kind": "POSITIONAL_OR_KEYWORD"
+          }
+        ]
+      },
+      "required": "",
+      "depends_on": [],
+      "mode": ""
+    },
+    {
+      "node": 29,
+      "name": "PandasOperator",
+      "description": "该算子支持通过多个自定义函数对 DataFrame 进行任意操作（如添加列、重命名、排序等）。\n\n每个函数（通常为 lambda 表达式）接受一个 DataFrame 并返回一个修改后的 DataFrame。\n\n输入参数：\n- process_fn：一个函数列表，每个函数形式为 lambda df: ...，必须返回一个 DataFrame。\n\n示例：\n  - lambda df: df.assign(score2=df['score'] * 2)\n  - lambda df: df.sort_values('score', ascending=False)",
+      "parameter": {
+        "init": [
+          {
+            "name": "process_fn",
+            "default": null,
+            "kind": "POSITIONAL_OR_KEYWORD"
+          }
+        ],
+        "run": [
+          {
+            "name": "storage",
+            "default": null,
+            "kind": "POSITIONAL_OR_KEYWORD"
+          }
+        ]
+      },
+      "required": "",
+      "depends_on": [],
+      "mode": ""
+    }
+  ],
+  "core_vision": [
+    {
+      "node": 30,
+      "name": "PromptedVQAGenerator",
+      "description": "该算子用于视觉问答生成，接收包含图像和问题的输入内容，使用大语言模型生成回答，并将生成的回答保存到数据框中。\n输入参数：\n- llm_serving：LLM服务对象，需实现LLMServingABC接口\n- system_prompt：系统提示词，用于定义模型行为，默认为'You are a helpful assistant.'\n- input_key：输入内容的字段名，默认为'raw_content'\n- output_key：输出生成内容的字段名，默认为'generated_content'\n输出参数：\n- 返回输出字段名，用于后续算子引用\n- 在数据框中添加包含生成回答的新列",
+      "parameter": {
+        "init": [
+          {
+            "name": "llm_serving",
+            "default": null,
+            "kind": "POSITIONAL_OR_KEYWORD"
+          },
+          {
+            "name": "system_prompt",
+            "default": "You are a helpful assistant.",
+            "kind": "POSITIONAL_OR_KEYWORD"
+          }
+        ],
+        "run": [
+          {
+            "name": "storage",
+            "default": null,
+            "kind": "POSITIONAL_OR_KEYWORD"
+          },
+          {
+            "name": "input_key",
+            "default": "raw_content",
+            "kind": "POSITIONAL_OR_KEYWORD"
+          },
+          {
+            "name": "output_key",
+            "default": "generated_content",
+            "kind": "POSITIONAL_OR_KEYWORD"
+          }
+        ]
+      },
+      "required": "",
+      "depends_on": [],
+      "mode": ""
+    }
+  ],
+  "db": [
+    {
+      "node": 31,
+      "name": "DBOperator",
+      "description": "",
+      "parameter": {
+        "init": [
+          {
+            "name": "expr",
+            "default": null,
+            "kind": "POSITIONAL_OR_KEYWORD"
+          }
+        ],
+        "run": [
+          {
+            "name": "storage",
+            "default": null,
+            "kind": "POSITIONAL_OR_KEYWORD"
+          },
+          {
+            "name": "input_key",
+            "default": null,
+            "kind": "POSITIONAL_OR_KEYWORD"
+          }
+        ]
+      },
+      "required": "",
+      "depends_on": [],
+      "mode": ""
+    }
+  ],
+  "general_text": [
+    {
+      "node": 32,
+      "name": "ColonEndFilter",
+      "description": "该算子用于检查文本是否以冒号结尾，常用于判断问题是否为不完整的提问。\n输入参数：\n- input_key：输入文本字段名，默认为'text'\n输出参数：\n- 过滤后的DataFrame，仅保留不以冒号结尾的文本行\n- 返回包含输入字段名的列表，用于后续算子引用",
+      "parameter": {
+        "init": [],
+        "run": [
+          {
+            "name": "storage",
+            "default": null,
+            "kind": "POSITIONAL_OR_KEYWORD"
+          },
+          {
+            "name": "input_key",
+            "default": null,
+            "kind": "POSITIONAL_OR_KEYWORD"
+          },
+          {
+            "name": "output_key",
+            "default": null,
+            "kind": "POSITIONAL_OR_KEYWORD"
+          }
+        ]
+      },
+      "required": "",
+      "depends_on": [],
+      "mode": ""
+    },
+    {
+      "node": 33,
+      "name": "SentenceNumberFilter",
+      "description": "该算子用于检查文本中的句子数量是否在指定范围内，使用正则表达式匹配句子结束符号(。！？.!?)进行分割。\n输入参数：\n- input_key：输入文本字段名，默认为'text'\n- min_sentences：最小句子数量阈值，默认为1\n- max_sentences：最大句子数量阈值，默认为5\n输出参数：\n- 过滤后的DataFrame，仅保留句子数量在指定范围内的文本行\n- 返回包含输入字段名的列表，用于后续算子引用",
+      "parameter": {
+        "init": [
+          {
+            "name": "min_sentences",
+            "default": 3,
+            "kind": "POSITIONAL_OR_KEYWORD"
+          },
+          {
+            "name": "max_sentences",
+            "default": 7500,
+            "kind": "POSITIONAL_OR_KEYWORD"
+          }
+        ],
+        "run": [
+          {
+            "name": "storage",
+            "default": null,
+            "kind": "POSITIONAL_OR_KEYWORD"
+          },
+          {
+            "name": "input_key",
+            "default": null,
+            "kind": "POSITIONAL_OR_KEYWORD"
+          },
+          {
+            "name": "output_key",
+            "default": "sentence_number_filter_label",
+            "kind": "POSITIONAL_OR_KEYWORD"
+          }
+        ]
+      },
+      "required": "",
+      "depends_on": [],
+      "mode": ""
+    },
+    {
+      "node": 34,
+      "name": "LineEndWithEllipsisFilter",
+      "description": "该算子用于检测并过滤以省略号(...)或(……)结尾的文本行，常用于识别不完整的表述。\n输入参数：\n- input_key：输入文本字段名，默认为'text'\n- strip_whitespace：是否在检查前去除末尾空白字符，默认为True\n输出参数：\n- 过滤后的DataFrame，仅保留不以省略号结尾的文本行\n- 返回包含输入字段名的列表，用于后续算子引用",
+      "parameter": {
+        "init": [
+          {
+            "name": "threshold",
+            "default": 0.3,
+            "kind": "POSITIONAL_OR_KEYWORD"
+          }
+        ],
+        "run": [
+          {
+            "name": "storage",
+            "default": null,
+            "kind": "POSITIONAL_OR_KEYWORD"
+          },
+          {
+            "name": "input_key",
+            "default": null,
+            "kind": "POSITIONAL_OR_KEYWORD"
+          },
+          {
+            "name": "output_key",
+            "default": "line_end_with_ellipsis_filter_label",
+            "kind": "POSITIONAL_OR_KEYWORD"
+          }
+        ]
+      },
+      "required": "",
+      "depends_on": [],
+      "mode": ""
+    },
+    {
+      "node": 35,
+      "name": "ContentNullFilter",
+      "description": "该算子用于过滤空值、空字符串或仅包含空白字符的文本，确保输入数据的有效性。\n输入参数：\n- input_key：输入文本字段名，默认为'text'\n- ignore_whitespace：是否将仅含空白字符的文本视为空值，默认为True\n输出参数：\n- 过滤后的DataFrame，仅保留非空且非空白的文本行\n- 返回包含输入字段名的列表，用于后续算子引用",
+      "parameter": {
+        "init": [],
+        "run": [
+          {
+            "name": "storage",
+            "default": null,
+            "kind": "POSITIONAL_OR_KEYWORD"
+          },
+          {
+            "name": "input_key",
+            "default": null,
+            "kind": "POSITIONAL_OR_KEYWORD"
+          },
+          {
+            "name": "output_key",
+            "default": "content_null_filter_label",
+            "kind": "POSITIONAL_OR_KEYWORD"
+          }
+        ]
+      },
+      "required": "",
+      "depends_on": [],
+      "mode": ""
+    },
+    {
+      "node": 36,
+      "name": "SymbolWordRatioFilter",
+      "description": "该算子用于检查文本中特定符号(#, ..., …)与单词数量的比率是否超过阈值，过滤符号使用过多的文本。\n输入参数：\n- input_key：输入文本字段名，默认为'text'\n- threshold：符号与单词比率阈值，默认为0.3\n- symbols：要检查的符号列表，默认为['#', '...', '……']\n输出参数：\n- 过滤后的DataFrame，仅保留符号比率低于阈值的文本行\n- 返回包含输入字段名的列表，用于后续算子引用",
+      "parameter": {
+        "init": [
+          {
+            "name": "threshold",
+            "default": 0.4,
+            "kind": "POSITIONAL_OR_KEYWORD"
+          }
+        ],
+        "run": [
+          {
+            "name": "storage",
+            "default": null,
+            "kind": "POSITIONAL_OR_KEYWORD"
+          },
+          {
+            "name": "input_key",
+            "default": null,
+            "kind": "POSITIONAL_OR_KEYWORD"
+          },
+          {
+            "name": "output_key",
+            "default": "symbol_word_ratio_filter_label",
+            "kind": "POSITIONAL_OR_KEYWORD"
+          }
+        ]
+      },
+      "required": "",
+      "depends_on": [],
+      "mode": ""
+    },
+    {
+      "node": 37,
+      "name": "AlphaWordsFilter",
+      "description": "该算子用于验证文本中字母单词的比率是否达到阈值，支持NLTK分词或简单空格分割两种模式。\n输入参数：\n- input_key：输入文本字段名，默认为'text'\n- threshold：字母单词比率阈值，默认为0.5\n- use_nltk：是否使用NLTK进行分词，默认为True\n- nltk_tokenizer：NLTK分词器类型，默认为'word_tokenize'\n输出参数：\n- 过滤后的DataFrame，仅保留字母单词比率达到阈值的文本行\n- 返回包含输入字段名的列表，用于后续算子引用",
+      "parameter": {
+        "init": [
+          {
+            "name": "threshold",
+            "default": null,
+            "kind": "POSITIONAL_OR_KEYWORD"
+          },
+          {
+            "name": "use_tokenizer",
+            "default": null,
+            "kind": "POSITIONAL_OR_KEYWORD"
+          }
+        ],
+        "run": [
+          {
+            "name": "storage",
+            "default": null,
+            "kind": "POSITIONAL_OR_KEYWORD"
+          },
+          {
+            "name": "input_key",
+            "default": null,
+            "kind": "POSITIONAL_OR_KEYWORD"
+          },
+          {
+            "name": "output_key",
+            "default": "alpha_words_filter_label",
+            "kind": "POSITIONAL_OR_KEYWORD"
+          }
+        ]
+      },
+      "required": "",
+      "depends_on": [],
+      "mode": ""
+    },
+    {
+      "node": 38,
+      "name": "HtmlEntityFilter",
+      "description": "该算子用于检测并过滤包含HTML实体（如&amp;、&lt;、&gt;等）的文本，确保内容不包含标记语言元素。\n输入参数：\n- input_key：输入文本字段名，默认为'text'\n- patterns：HTML实体匹配模式列表，默认为包含常见实体的正则表达式\n- case_sensitive：是否区分大小写匹配，默认为False\n输出参数：\n- 过滤后的DataFrame，仅保留不包含HTML实体的文本行\n- 返回包含输入字段名的列表，用于后续算子引用",
+      "parameter": {
+        "init": [],
+        "run": [
+          {
+            "name": "storage",
+            "default": null,
+            "kind": "POSITIONAL_OR_KEYWORD"
+          },
+          {
+            "name": "input_key",
+            "default": null,
+            "kind": "POSITIONAL_OR_KEYWORD"
+          },
+          {
+            "name": "output_key",
+            "default": "html_entity_filter_label",
+            "kind": "POSITIONAL_OR_KEYWORD"
+          }
+        ]
+      },
+      "required": "",
+      "depends_on": [],
+      "mode": ""
+    },
+    {
+      "node": 39,
+      "name": "IDCardFilter",
+      "description": "该算子用于检测并过滤包含身份证相关术语的文本，使用正则表达式匹配身份证号码模式以保护敏感信息。\n输入参数：\n- input_key：输入文本字段名，默认为'text'\n- pattern：身份证号码匹配正则表达式，默认为包含18位和15位身份证的模式\n- threshold：匹配次数阈值，默认为1\n输出参数：\n- 过滤后的DataFrame，仅保留不包含身份证相关信息的文本行\n- 返回包含输入字段名的列表，用于后续算子引用",
+      "parameter": {
+        "init": [
+          {
+            "name": "threshold",
+            "default": 3,
+            "kind": "POSITIONAL_OR_KEYWORD"
+          }
+        ],
+        "run": [
+          {
+            "name": "storage",
+            "default": null,
+            "kind": "POSITIONAL_OR_KEYWORD"
+          },
+          {
+            "name": "input_key",
+            "default": null,
+            "kind": "POSITIONAL_OR_KEYWORD"
+          },
+          {
+            "name": "output_key",
+            "default": "id_card_filter_label",
+            "kind": "POSITIONAL_OR_KEYWORD"
+          }
+        ]
+      },
+      "required": "",
+      "depends_on": [],
+      "mode": ""
+    },
+    {
+      "node": 40,
+      "name": "NoPuncFilter",
+      "description": "该算子用于确保文本包含足够的标点符号，通过统计标点符号数量与文本长度的比率进行过滤。\n输入参数：\n- input_key：输入文本字段名，默认为'text'\n- min_punc_ratio：最小标点符号比率阈值，默认为0.02\n- punc_set：标点符号集合，默认为'。，！？；：,.!?;:()'\n输出参数：\n- 过滤后的DataFrame，仅保留标点符号比率达到阈值的文本行\n- 返回包含输入字段名的列表，用于后续算子引用",
+      "parameter": {
+        "init": [
+          {
+            "name": "threshold",
+            "default": 112,
+            "kind": "POSITIONAL_OR_KEYWORD"
+          }
+        ],
+        "run": [
+          {
+            "name": "storage",
+            "default": null,
+            "kind": "POSITIONAL_OR_KEYWORD"
+          },
+          {
+            "name": "input_key",
+            "default": null,
+            "kind": "POSITIONAL_OR_KEYWORD"
+          },
+          {
+            "name": "output_key",
+            "default": "no_punc_filter_label",
+            "kind": "POSITIONAL_OR_KEYWORD"
+          }
+        ]
+      },
+      "required": "",
+      "depends_on": [],
+      "mode": ""
+    },
+    {
+      "node": 41,
+      "name": "SpecialCharacterFilter",
+      "description": "该算子用于移除包含特殊/unicode字符的文本，使用预定义模式检测非标准字符以确保文本规范性。\n输入参数：\n- input_key：输入文本字段名，默认为'text'\n- patterns：特殊字符匹配模式列表，默认为包含各种unicode控制字符的正则表达式\n- allowed_chars：允许的字符集正则表达式，默认为基本中英文和常用标点\n输出参数：\n- 过滤后的DataFrame，仅保留不包含特殊字符的文本行\n- 返回包含输入字段名的列表，用于后续算子引用",
+      "parameter": {
+        "init": [],
+        "run": [
+          {
+            "name": "storage",
+            "default": null,
+            "kind": "POSITIONAL_OR_KEYWORD"
+          },
+          {
+            "name": "input_key",
+            "default": null,
+            "kind": "POSITIONAL_OR_KEYWORD"
+          },
+          {
+            "name": "output_key",
+            "default": "special_character_filter_label",
+            "kind": "POSITIONAL_OR_KEYWORD"
+          }
+        ]
+      },
+      "required": "",
+      "depends_on": [],
+      "mode": ""
+    },
+    {
+      "node": 42,
+      "name": "WatermarkFilter",
+      "description": "该算子用于检测并移除包含版权/水印内容的文本，使用指定关键词列表识别受保护内容。\n输入参数：\n- input_key：输入文本字段名，默认为'text'\n- keywords：水印关键词列表，默认为['版权所有', '保留所有权利', 'watermark', 'copyright']\n- case_sensitive：是否区分大小写匹配，默认为False\n- threshold：匹配关键词数量阈值，默认为1\n输出参数：\n- 过滤后的DataFrame，仅保留不包含水印关键词的文本行\n- 返回包含输入字段名的列表，用于后续算子引用",
+      "parameter": {
+        "init": [
+          {
+            "name": "watermarks",
+            "default": [
+              "Copyright",
+              "Watermark",
+              "Confidential"
+            ],
+            "kind": "POSITIONAL_OR_KEYWORD"
+          }
+        ],
+        "run": [
+          {
+            "name": "storage",
+            "default": null,
+            "kind": "POSITIONAL_OR_KEYWORD"
+          },
+          {
+            "name": "input_key",
+            "default": null,
+            "kind": "POSITIONAL_OR_KEYWORD"
+          },
+          {
+            "name": "output_key",
+            "default": "watermark_filter_label",
+            "kind": "POSITIONAL_OR_KEYWORD"
+          }
+        ]
+      },
+      "required": "",
+      "depends_on": [],
+      "mode": ""
+    },
+    {
+      "node": 43,
+      "name": "MeanWordLengthFilter",
+      "description": "该算子用于检查文本中单词的平均长度是否在指定范围内，通过字符总数除以单词数量计算平均值。\n输入参数：\n- input_key：输入文本字段名，默认为'text'\n- min_length：最小平均单词长度，默认为2\n- max_length：最大平均单词长度，默认为10\n- word_splitter：单词分割方法，默认为空格分割\n输出参数：\n- 过滤后的DataFrame，仅保留平均单词长度在指定范围内的文本行\n- 返回包含输入字段名的列表，用于后续算子引用",
+      "parameter": {
+        "init": [
+          {
+            "name": "min_length",
+            "default": 3,
+            "kind": "POSITIONAL_OR_KEYWORD"
+          },
+          {
+            "name": "max_length",
+            "default": 10,
+            "kind": "POSITIONAL_OR_KEYWORD"
+          }
+        ],
+        "run": [
+          {
+            "name": "storage",
+            "default": null,
+            "kind": "POSITIONAL_OR_KEYWORD"
+          },
+          {
+            "name": "input_key",
+            "default": null,
+            "kind": "POSITIONAL_OR_KEYWORD"
+          },
+          {
+            "name": "output_key",
+            "default": "mean_word_length_filter_label",
+            "kind": "POSITIONAL_OR_KEYWORD"
+          }
+        ]
+      },
+      "required": "",
+      "depends_on": [],
+      "mode": ""
+    },
+    {
+      "node": 44,
+      "name": "StopWordFilter",
+      "description": "该算子用于验证文本中停用词的比率是否低于阈值，使用NLTK分词器进行单词分割和停用词识别。\n输入参数：\n- input_key：输入文本字段名，默认为'text'\n- threshold：停用词比率阈值，默认为0.3\n- language：NLTK停用词语言，默认为'english'\n- use_nltk_tokenizer：是否使用NLTK分词器，默认为True\n输出参数：\n- 过滤后的DataFrame，仅保留停用词比率低于阈值的文本行\n- 返回包含输入字段名的列表，用于后续算子引用",
+      "parameter": {
+        "init": [
+          {
+            "name": "threshold",
+            "default": null,
+            "kind": "POSITIONAL_OR_KEYWORD"
+          },
+          {
+            "name": "use_tokenizer",
+            "default": null,
+            "kind": "POSITIONAL_OR_KEYWORD"
+          }
+        ],
+        "run": [
+          {
+            "name": "storage",
+            "default": null,
+            "kind": "POSITIONAL_OR_KEYWORD"
+          },
+          {
+            "name": "input_key",
+            "default": null,
+            "kind": "POSITIONAL_OR_KEYWORD"
+          },
+          {
+            "name": "output_key",
+            "default": "stop_word_filter_label",
+            "kind": "POSITIONAL_OR_KEYWORD"
+          }
+        ]
+      },
+      "required": "",
+      "depends_on": [],
+      "mode": ""
+    },
+    {
+      "node": 45,
+      "name": "CurlyBracketFilter",
+      "description": "该算子用于检测文本中是否存在过多的花括号使用，通过花括号数量与文本长度的比率进行过滤。\n输入参数：\n- input_key：输入文本字段名，默认为'text'\n- threshold：花括号比率阈值，默认为0.01\n- brackets：要检测的括号类型，默认为['{', '}']\n输出参数：\n- 过滤后的DataFrame，仅保留花括号比率低于阈值的文本行\n- 返回包含输入字段名的列表，用于后续算子引用",
+      "parameter": {
+        "init": [
+          {
+            "name": "threshold",
+            "default": 0.025,
+            "kind": "POSITIONAL_OR_KEYWORD"
+          }
+        ],
+        "run": [
+          {
+            "name": "storage",
+            "default": null,
+            "kind": "POSITIONAL_OR_KEYWORD"
+          },
+          {
+            "name": "input_key",
+            "default": null,
+            "kind": "POSITIONAL_OR_KEYWORD"
+          },
+          {
+            "name": "output_key",
+            "default": "curly_bracket_filter_label",
+            "kind": "POSITIONAL_OR_KEYWORD"
+          }
+        ]
+      },
+      "required": "",
+      "depends_on": [],
+      "mode": ""
+    },
+    {
+      "node": 46,
+      "name": "CapitalWordsFilter",
+      "description": "该算子用于检查文本中大写单词的比率是否超过阈值，支持可选的分词器进行单词识别。\n输入参数：\n- input_key：输入文本字段名，默认为'text'\n- threshold：大写单词比率阈值，默认为0.5\n- use_tokenizer：是否使用分词器，默认为False\n- tokenizer：分词器对象，默认为None\n输出参数：\n- 过滤后的DataFrame，仅保留大写单词比率低于阈值的文本行\n- 返回包含输入字段名的列表，用于后续算子引用",
+      "parameter": {
+        "init": [
+          {
+            "name": "threshold",
+            "default": 0.2,
+            "kind": "POSITIONAL_OR_KEYWORD"
+          },
+          {
+            "name": "use_tokenizer",
+            "default": false,
+            "kind": "POSITIONAL_OR_KEYWORD"
+          }
+        ],
+        "run": [
+          {
+            "name": "storage",
+            "default": null,
+            "kind": "POSITIONAL_OR_KEYWORD"
+          },
+          {
+            "name": "input_key",
+            "default": null,
+            "kind": "POSITIONAL_OR_KEYWORD"
+          },
+          {
+            "name": "output_key",
+            "default": "capital_words_filter",
+            "kind": "POSITIONAL_OR_KEYWORD"
+          }
+        ]
+      },
+      "required": "",
+      "depends_on": [],
+      "mode": ""
+    },
+    {
+      "node": 47,
+      "name": "LoremIpsumFilter",
+      "description": "该算子用于检测并过滤包含占位文本（如'lorem ipsum'）的文本，使用正则表达式模式匹配并结合阈值过滤。\n输入参数：\n- input_key：输入文本字段名，默认为'text'\n- threshold：匹配次数阈值，默认为1\n- patterns：占位文本匹配模式列表，默认为包含'lorem ipsum'变体的正则表达式\n- case_sensitive：是否区分大小写匹配，默认为False\n输出参数：\n- 过滤后的DataFrame，仅保留不包含占位文本的文本行\n- 返回包含输入字段名的列表，用于后续算子引用",
+      "parameter": {
+        "init": [
+          {
+            "name": "threshold",
+            "default": 3e-08,
+            "kind": "POSITIONAL_OR_KEYWORD"
+          }
+        ],
+        "run": [
+          {
+            "name": "storage",
+            "default": null,
+            "kind": "POSITIONAL_OR_KEYWORD"
+          },
+          {
+            "name": "input_key",
+            "default": null,
+            "kind": "POSITIONAL_OR_KEYWORD"
+          },
+          {
+            "name": "output_key",
+            "default": "loremipsum_filter_label",
+            "kind": "POSITIONAL_OR_KEYWORD"
+          }
+        ]
+      },
+      "required": "",
+      "depends_on": [],
+      "mode": ""
+    },
+    {
+      "node": 48,
+      "name": "UniqueWordsFilter",
+      "description": "该算子用于检查文本中唯一单词的比率是否达到阈值，通过集合操作计算唯一单词数量与总单词数量的比率。\n输入参数：\n- input_key：输入文本字段名，默认为'text'\n- min_ratio：最小唯一单词比率阈值，默认为0.3\n- ignore_case：是否忽略大小写，默认为True\n- word_splitter：单词分割方法，默认为空格分割\n输出参数：\n- 过滤后的DataFrame，仅保留唯一单词比率达到阈值的文本行\n- 返回包含输入字段名的列表，用于后续算子引用",
+      "parameter": {
+        "init": [
+          {
+            "name": "threshold",
+            "default": 0.1,
+            "kind": "POSITIONAL_OR_KEYWORD"
+          }
+        ],
+        "run": [
+          {
+            "name": "storage",
+            "default": null,
+            "kind": "POSITIONAL_OR_KEYWORD"
+          },
+          {
+            "name": "input_key",
+            "default": null,
+            "kind": "POSITIONAL_OR_KEYWORD"
+          },
+          {
+            "name": "output_key",
+            "default": "unique_words_filter",
+            "kind": "POSITIONAL_OR_KEYWORD"
+          }
+        ]
+      },
+      "required": "",
+      "depends_on": [],
+      "mode": ""
+    },
+    {
+      "node": 49,
+      "name": "CharNumberFilter",
+      "description": "该算子用于验证文本在去除空白字符后的字符数量是否在指定阈值范围内。\n输入参数：\n- input_key：输入文本字段名，默认为'text'\n- min_chars：最小字符数量阈值，默认为10\n- max_chars：最大字符数量阈值，默认为1000\n- strip_whitespace：是否去除空白字符后计算，默认为True\n输出参数：\n- 过滤后的DataFrame，仅保留字符数量在指定范围内的文本行\n- 返回包含输入字段名的列表，用于后续算子引用",
+      "parameter": {
+        "init": [
+          {
+            "name": "threshold",
+            "default": 100,
+            "kind": "POSITIONAL_OR_KEYWORD"
+          }
+        ],
+        "run": [
+          {
+            "name": "storage",
+            "default": null,
+            "kind": "POSITIONAL_OR_KEYWORD"
+          },
+          {
+            "name": "input_key",
+            "default": null,
+            "kind": "POSITIONAL_OR_KEYWORD"
+          },
+          {
+            "name": "output_key",
+            "default": "char_number_filter_label",
+            "kind": "POSITIONAL_OR_KEYWORD"
+          }
+        ]
+      },
+      "required": "",
+      "depends_on": [],
+      "mode": ""
+    },
+    {
+      "node": 50,
+      "name": "LineStartWithBulletpointFilter",
+      "description": "该算子用于检测并过滤以各种项目符号符号开头的文本行，使用Unicode字符匹配结合比率阈值进行过滤。\n输入参数：\n- input_key：输入文本字段名，默认为'text'\n- threshold：项目符号行比率阈值，默认为0.5\n- bullet_chars：项目符号字符列表，默认为['•', '●', '○', '■', '□', '◆', '◇', '▶', '▷', '*', '-']\n- line_separator：行分隔符，默认为'\n'\n输出参数：\n- 过滤后的DataFrame，仅保留项目符号行比率低于阈值的文本行\n- 返回包含输入字段名的列表，用于后续算子引用",
+      "parameter": {
+        "init": [
+          {
+            "name": "threshold",
+            "default": 0.9,
+            "kind": "POSITIONAL_OR_KEYWORD"
+          }
+        ],
+        "run": [
+          {
+            "name": "storage",
+            "default": null,
+            "kind": "POSITIONAL_OR_KEYWORD"
+          },
+          {
+            "name": "input_key",
+            "default": null,
+            "kind": "POSITIONAL_OR_KEYWORD"
+          },
+          {
+            "name": "output_key",
+            "default": "line_start_with_bullet_point_filter_label",
+            "kind": "POSITIONAL_OR_KEYWORD"
+          }
+        ]
+      },
+      "required": "",
+      "depends_on": [],
+      "mode": ""
+    },
+    {
+      "node": 51,
+      "name": "LineWithJavascriptFilter",
+      "description": "该算子用于识别并过滤包含'javascript'引用的文本，通过关键词匹配和阈值判断进行内容过滤。\n输入参数：\n- input_key：输入文本字段名，默认为'text'\n- threshold：匹配次数阈值，默认为1\n- keywords：JavaScript相关关键词列表，默认为['javascript', 'js', '<script>', 'eval(', 'function(']\n- case_sensitive：是否区分大小写匹配，默认为False\n输出参数：\n- 过滤后的DataFrame，仅保留不包含JavaScript引用的文本行\n- 返回包含输入字段名的列表，用于后续算子引用",
+      "parameter": {
+        "init": [
+          {
+            "name": "threshold",
+            "default": 3,
+            "kind": "POSITIONAL_OR_KEYWORD"
+          }
+        ],
+        "run": [
+          {
+            "name": "storage",
+            "default": null,
+            "kind": "POSITIONAL_OR_KEYWORD"
+          },
+          {
+            "name": "input_key",
+            "default": null,
+            "kind": "POSITIONAL_OR_KEYWORD"
+          },
+          {
+            "name": "output_key",
+            "default": "line_with_javascript_filter_label",
+            "kind": "POSITIONAL_OR_KEYWORD"
+          }
+        ]
+      },
+      "required": "",
+      "depends_on": [],
+      "mode": ""
+    },
+    {
+      "node": 52,
+      "name": "LangkitSampleEvaluator",
+      "description": "使用Langkit工具包计算文本统计信息，帮助评估文本结构复杂性和可读性。提取多种语言特征，包括句子长度、词汇多样性、情感倾向等。\n\n输出参数：\n- LangkitNumSentencesScore: 句子数量\n- LangkitNumWordsScore: 单词数量\n- LangkitAvgWordLengthScore: 平均单词长度\n- LangkitFleschReadingEaseScore: 可读性评分（Flesch公式）\n- LangkitSentimentScore: 情感倾向（-1到1之间）",
+      "parameter": {
+        "init": [],
+        "run": [
+          {
+            "name": "storage",
+            "default": null,
+            "kind": "POSITIONAL_OR_KEYWORD"
+          },
+          {
+            "name": "input_key",
+            "default": null,
+            "kind": "POSITIONAL_OR_KEYWORD"
+          }
+        ]
+      },
+      "required": "",
+      "depends_on": [],
+      "mode": ""
+    },
+    {
+      "node": 53,
+      "name": "LangkitFilter",
+      "description": "基于LangkitScorer打分器的得分对数据进行过滤。使用Langkit工具包计算11种文本统计信息，帮助评估文本结构复杂性和可读性。\n输入参数：\n- min_scores：各指标的最小阈值字典，包含11个语言统计指标\n- max_scores：各指标的最大阈值字典，包含11个语言统计指标\n- metrics_to_keep：需要保留的评估指标列表\n输出参数：\n- 过滤后的DataFrame，仅保留所有指标都在指定范围内的文本\n- 返回包含各指标标签字段名的列表",
+      "parameter": {
+        "init": [
+          {
+            "name": "min_scores",
+            "default": {
+              "flesch_reading_ease": 0,
+              "automated_readability_index": 0,
+              "aggregate_reading_level": 0,
+              "syllable_count": 32.0,
+              "lexicon_count": 23.0,
+              "sentence_count": 1.0,
+              "character_count": 118.0,
+              "letter_count": 109.0,
+              "polysyllable_count": 0.0,
+              "monosyllable_count": 13.0,
+              "difficult_words": 4.0
+            },
+            "kind": "POSITIONAL_OR_KEYWORD"
+          },
+          {
+            "name": "max_scores",
+            "default": {
+              "flesch_reading_ease": 100,
+              "automated_readability_index": 100,
+              "aggregate_reading_level": 100,
+              "syllable_count": 2331.9,
+              "lexicon_count": 1554.0,
+              "sentence_count": 89.1,
+              "character_count": 7466.3,
+              "letter_count": 7193.0,
+              "polysyllable_count": 216.4,
+              "monosyllable_count": 1044.1,
+              "difficult_words": 213.4
+            },
+            "kind": "POSITIONAL_OR_KEYWORD"
+          },
+          {
+            "name": "metrics_to_keep",
+            "default": [
+              "flesch_reading_ease",
+              "automated_readability_index",
+              "aggregate_reading_level",
+              "syllable_count",
+              "lexicon_count",
+              "sentence_count",
+              "character_count",
+              "letter_count",
+              "polysyllable_count",
+              "monosyllable_count",
+              "difficult_words"
+            ],
+            "kind": "POSITIONAL_OR_KEYWORD"
+          }
+        ],
+        "run": [
+          {
+            "name": "storage",
+            "default": null,
+            "kind": "POSITIONAL_OR_KEYWORD"
+          },
+          {
+            "name": "input_key",
+            "default": null,
+            "kind": "POSITIONAL_OR_KEYWORD"
+          },
+          {
+            "name": "output_keys",
+            "default": [
+              "flesch_reading_ease",
+              "automated_readability_index",
+              "aggregate_reading_level",
+              "syllable_count",
+              "lexicon_count",
+              "sentence_count",
+              "character_count",
+              "letter_count",
+              "polysyllable_count",
+              "monosyllable_count",
+              "difficult_words"
+            ],
+            "kind": "POSITIONAL_OR_KEYWORD"
+          }
+        ]
+      },
+      "required": "",
+      "depends_on": [],
+      "mode": ""
+    },
+    {
+      "node": 54,
+      "name": "LexicalDiversitySampleEvaluator",
+      "description": "使用MTLD（词汇多样性测量）和HDD（移动平均类型-标记比）方法计算文本词汇多样性。\n\n功能说明：\n- MTLD（词汇多样性测量）：通过计算维持特定TTR阈值所需的单词数量来评估词汇多样性\n- HDD（移动平均类型-标记比）：基于样本的词汇丰富度估计\n\n输入要求：文本长度需大于50个单词\n\n输出参数：\n- LexicalDiversityMTLDScore: MTLD多样性得分（值越高表示多样性越好）\n- LexicalDiversityHD-DScore: HDD多样性得分（值越高表示多样性越好）",
+      "parameter": {
+        "init": [],
+        "run": [
+          {
+            "name": "storage",
+            "default": null,
+            "kind": "POSITIONAL_OR_KEYWORD"
+          },
+          {
+            "name": "input_key",
+            "default": null,
+            "kind": "POSITIONAL_OR_KEYWORD"
+          }
+        ]
+      },
+      "required": "",
+      "depends_on": [],
+      "mode": ""
+    },
+    {
+      "node": 55,
+      "name": "LexicalDiversityFilter",
+      "description": "基于LexicalDiversityScorer打分器的得分对数据进行过滤。使用MTLD（移动平均类型-令牌比）和HDD（超几何分布多样性）两种方法计算词汇多样性，高分代表更丰富的词汇使用。\n输入参数：\n- min_scores：各指标的最小阈值字典，包含'mtld'和'hdd'\n- max_scores：各指标的最大阈值字典，包含'mtld'和'hdd'\n输出参数：\n- 过滤后的DataFrame，仅保留词汇多样性在指定范围内的文本\n- 返回包含各指标标签字段名的列表",
+      "parameter": {
+        "init": [
+          {
+            "name": "min_scores",
+            "default": {
+              "mtld": 50,
+              "hdd": 0.8
+            },
+            "kind": "POSITIONAL_OR_KEYWORD"
+          },
+          {
+            "name": "max_scores",
+            "default": {
+              "mtld": 99999,
+              "hdd": 1.0
+            },
+            "kind": "POSITIONAL_OR_KEYWORD"
+          }
+        ],
+        "run": [
+          {
+            "name": "storage",
+            "default": null,
+            "kind": "POSITIONAL_OR_KEYWORD"
+          },
+          {
+            "name": "input_key",
+            "default": null,
+            "kind": "POSITIONAL_OR_KEYWORD"
+          },
+          {
+            "name": "output_keys",
+            "default": [
+              "mtld",
+              "hdd"
+            ],
+            "kind": "POSITIONAL_OR_KEYWORD"
+          }
+        ]
+      },
+      "required": "",
+      "depends_on": [],
+      "mode": ""
+    },
+    {
+      "node": 56,
+      "name": "NgramSampleEvaluator",
+      "description": "计算文本中n-gram的重复比例，评估文本冗余度。通过比较唯一n-gram数量与总n-gram数量的比值来衡量文本原创性。\n\n初始化参数：\n- ngrams: n-gram的长度，默认为5\n\n输出参数：\n- NgramScore: n-gram重复比例得分（0到1之间，得分越高表示重复比例越低）",
+      "parameter": {
+        "init": [
+          {
+            "name": "ngrams",
+            "default": 5,
+            "kind": "POSITIONAL_OR_KEYWORD"
+          }
+        ],
+        "run": [
+          {
+            "name": "storage",
+            "default": null,
+            "kind": "POSITIONAL_OR_KEYWORD"
+          },
+          {
+            "name": "input_key",
+            "default": null,
+            "kind": "POSITIONAL_OR_KEYWORD"
+          },
+          {
+            "name": "output_key",
+            "default": "NgramScore",
+            "kind": "POSITIONAL_OR_KEYWORD"
+          }
+        ]
+      },
+      "required": "",
+      "depends_on": [],
+      "mode": ""
+    },
+    {
+      "node": 57,
+      "name": "NgramFilter",
+      "description": "基于NgramScorer打分器的得分对数据进行过滤。计算文本中n-gram的重复比例，得分越高表示重复比例越低，文本冗余度越小。\n输入参数：\n- min_score：最小n-gram得分阈值\n- max_score：最大n-gram得分阈值\n- ngrams：n-gram的n值\n输出参数：\n- 过滤后的DataFrame，仅保留n-gram得分在指定范围内的文本\n- 返回包含n-gram得分字段名的列表",
+      "parameter": {
+        "init": [
+          {
+            "name": "min_score",
+            "default": 0.8,
+            "kind": "POSITIONAL_OR_KEYWORD"
+          },
+          {
+            "name": "max_score",
+            "default": 1,
+            "kind": "POSITIONAL_OR_KEYWORD"
+          },
+          {
+            "name": "ngrams",
+            "default": 5,
+            "kind": "POSITIONAL_OR_KEYWORD"
+          }
+        ],
+        "run": [
+          {
+            "name": "storage",
+            "default": null,
+            "kind": "POSITIONAL_OR_KEYWORD"
+          },
+          {
+            "name": "input_key",
+            "default": null,
+            "kind": "POSITIONAL_OR_KEYWORD"
+          },
+          {
+            "name": "output_key",
+            "default": "NgramScore",
+            "kind": "POSITIONAL_OR_KEYWORD"
+          }
+        ]
+      },
+      "required": "",
+      "depends_on": [],
+      "mode": ""
+    },
+    {
+      "node": 58,
+      "name": "PresidioSampleEvaluator",
+      "description": "使用Microsoft Presidio模型识别文本中的个人身份信息(PII)，返回检测到的PII实体数量。支持多种实体类型如姓名、邮箱、电话号码等，基于dslim/bert-base-NER模型实现。适用于评估文本的隐私安全风险。\n输入参数：\n- text: 待检测的文本字符串\n- lang: 语言类型，默认为'en'\n输出参数：\n- int: 检测到的PII实体数量",
+      "parameter": {
+        "init": [
+          {
+            "name": "device",
+            "default": "cuda",
+            "kind": "POSITIONAL_OR_KEYWORD"
+          },
+          {
+            "name": "lang",
+            "default": "en",
+            "kind": "POSITIONAL_OR_KEYWORD"
+          },
+          {
+            "name": "model_cache_dir",
+            "default": "./dataflow_cache",
+            "kind": "POSITIONAL_OR_KEYWORD"
+          }
+        ],
+        "run": [
+          {
+            "name": "storage",
+            "default": null,
+            "kind": "POSITIONAL_OR_KEYWORD"
+          },
+          {
+            "name": "input_key",
+            "default": null,
+            "kind": "POSITIONAL_OR_KEYWORD"
+          },
+          {
+            "name": "output_key",
+            "default": "PresidioScore",
+            "kind": "POSITIONAL_OR_KEYWORD"
+          }
+        ]
+      },
+      "required": "",
+      "depends_on": [],
+      "mode": ""
+    },
+    {
+      "node": 59,
+      "name": "PresidioFilter",
+      "description": "基于PresidioScorer打分器的得分对数据进行过滤。使用Microsoft Presidio模型识别文本中的私人实体(PII)，返回PII信息个数。\n支持识别姓名、邮箱、电话号码、身份证号等多种敏感信息类型，可用于数据隐私保护和合规性检查。\n输入参数：\n- min_score：保留样本的最小PII数量阈值，默认为0\n- max_score：保留样本的最大PII数量阈值，默认为5\n- lang：文本语言，默认为'en'\n- device：模型运行设备，默认为'cuda'\n- model_cache_dir：模型缓存目录，默认为'./dataflow_cache'\n输出参数：\n- 过滤后的DataFrame，仅保留PII数量在[min_score, max_score]范围内的样本\n- 返回包含输出字段名的列表，用于后续算子引用",
+      "parameter": {
+        "init": [
+          {
+            "name": "min_score",
+            "default": 0,
+            "kind": "POSITIONAL_OR_KEYWORD"
+          },
+          {
+            "name": "max_score",
+            "default": 5,
+            "kind": "POSITIONAL_OR_KEYWORD"
+          },
+          {
+            "name": "lang",
+            "default": "en",
+            "kind": "POSITIONAL_OR_KEYWORD"
+          },
+          {
+            "name": "device",
+            "default": "cuda",
+            "kind": "POSITIONAL_OR_KEYWORD"
+          },
+          {
+            "name": "model_cache_dir",
+            "default": "./dataflow_cache",
+            "kind": "POSITIONAL_OR_KEYWORD"
+          }
+        ],
+        "run": [
+          {
+            "name": "storage",
+            "default": null,
+            "kind": "POSITIONAL_OR_KEYWORD"
+          },
+          {
+            "name": "input_key",
+            "default": null,
+            "kind": "POSITIONAL_OR_KEYWORD"
+          },
+          {
+            "name": "output_key",
+            "default": "PresidioScore",
+            "kind": "POSITIONAL_OR_KEYWORD"
+          }
+        ]
+      },
+      "required": "",
+      "depends_on": [],
+      "mode": ""
+    },
+    {
+      "node": 60,
+      "name": "BlocklistFilter",
+      "description": "该算子使用特定语言的阻止列表进行文本过滤，支持可选的分词器进行单词级匹配。\n输入参数：\n- input_key：输入文本字段名，默认为'text'\n- language：语言代码，默认为'zh'\n- blocklist_dir：阻止列表文件目录，默认为'./blocklists/'\n- threshold：匹配次数阈值，默认为1\n- use_tokenizer：是否使用分词器，默认为True\n- tokenizer：分词器对象，默认为None\n输出参数：\n- 过滤后的DataFrame，仅保留不包含阻止列表关键词的文本行\n- 返回包含输入字段名的列表，用于后续算子引用",
+      "parameter": {
+        "init": [
+          {
+            "name": "language",
+            "default": "en",
+            "kind": "POSITIONAL_OR_KEYWORD"
+          },
+          {
+            "name": "threshold",
+            "default": 1,
+            "kind": "POSITIONAL_OR_KEYWORD"
+          },
+          {
+            "name": "use_tokenizer",
+            "default": false,
+            "kind": "POSITIONAL_OR_KEYWORD"
+          }
+        ],
+        "run": [
+          {
+            "name": "storage",
+            "default": null,
+            "kind": "POSITIONAL_OR_KEYWORD"
+          },
+          {
+            "name": "input_key",
+            "default": null,
+            "kind": "POSITIONAL_OR_KEYWORD"
+          },
+          {
+            "name": "output_key",
+            "default": "blocklist_filter_label",
+            "kind": "POSITIONAL_OR_KEYWORD"
+          }
+        ]
+      },
+      "required": "",
+      "depends_on": [],
+      "mode": ""
+    },
+    {
+      "node": 61,
+      "name": "HashDeduplicateFilter",
+      "description": "使用多种哈希函数对文本进行精确去重，支持md5、sha256或xxh3算法。通过计算文本的哈希值识别重复数据。\n\n初始化参数：\n- hash_func: 哈希函数名称，可选'md5'、'sha256'或'xxh3'，默认为'md5'\n\n运行参数：\n- input_keys: 用于计算哈希的多个字段列表（与input_key二选一）\n- input_key: 用于计算哈希的单个字段名（与input_keys二选一）\n- output_key: 去重标记字段名，默认为'minhash_deduplicated_label'\n\n输出说明：标记为1的数据表示首次出现，标记为0的数据表示重复数据\n算法特点：\n- md5: 128位哈希值，平衡速度和唯一性\n- sha256: 256位哈希值，更高安全性，速度较慢\n- xxh3: 128位哈希值，最快的哈希算法",
+      "parameter": {
+        "init": [
+          {
+            "name": "hash_func",
+            "default": "md5",
+            "kind": "POSITIONAL_OR_KEYWORD"
+          }
+        ],
+        "run": [
+          {
+            "name": "storage",
+            "default": null,
+            "kind": "POSITIONAL_OR_KEYWORD"
+          },
+          {
+            "name": "input_keys",
+            "default": null,
+            "kind": "POSITIONAL_OR_KEYWORD"
+          },
+          {
+            "name": "input_key",
+            "default": null,
+            "kind": "POSITIONAL_OR_KEYWORD"
+          },
+          {
+            "name": "output_key",
+            "default": "minhash_deduplicated_label",
+            "kind": "POSITIONAL_OR_KEYWORD"
+          }
+        ]
+      },
+      "required": "",
+      "depends_on": [],
+      "mode": ""
+    },
+    {
+      "node": 62,
+      "name": "LanguageFilter",
+      "description": "使用FastText语言识别模型过滤数据。下载并加载预训练的FastText语言识别模型，检查文本的语言是否在允许的语言列表中。\n输入参数：\n- allowed_languages：允许的语言标签列表\n- model_cache_dir：模型缓存目录路径\n输出参数：\n- 过滤后的DataFrame，仅保留语言在允许列表中的文本\n- 返回包含语言标签字段名的列表",
+      "parameter": {
+        "init": [
+          {
+            "name": "allowed_languages",
+            "default": null,
+            "kind": "POSITIONAL_OR_KEYWORD"
+          },
+          {
+            "name": "model_cache_dir",
+            "default": null,
+            "kind": "POSITIONAL_OR_KEYWORD"
+          }
+        ],
+        "run": [
+          {
+            "name": "storage",
+            "default": null,
+            "kind": "POSITIONAL_OR_KEYWORD"
+          },
+          {
+            "name": "input_key",
+            "default": null,
+            "kind": "POSITIONAL_OR_KEYWORD"
+          },
+          {
+            "name": "output_key",
+            "default": "language_label",
+            "kind": "POSITIONAL_OR_KEYWORD"
+          }
+        ]
+      },
+      "required": "",
+      "depends_on": [],
+      "mode": ""
+    },
+    {
+      "node": 63,
+      "name": "LLMLanguageFilter",
+      "description": "使用大语言模型识别语言并过滤数据",
+      "parameter": {
+        "init": [
+          {
+            "name": "llm_serving",
+            "default": null,
+            "kind": "POSITIONAL_OR_KEYWORD"
+          },
+          {
+            "name": "allowed_languages",
+            "default": [
+              "en"
+            ],
+            "kind": "POSITIONAL_OR_KEYWORD"
+          }
+        ],
+        "run": [
+          {
+            "name": "storage",
+            "default": null,
+            "kind": "POSITIONAL_OR_KEYWORD"
+          },
+          {
+            "name": "input_key",
+            "default": null,
+            "kind": "POSITIONAL_OR_KEYWORD"
+          },
+          {
+            "name": "output_key",
+            "default": "language_label",
+            "kind": "POSITIONAL_OR_KEYWORD"
+          }
+        ]
+      },
+      "required": "",
+      "depends_on": [],
+      "mode": ""
+    },
+    {
+      "node": 64,
+      "name": "MinHashDeduplicateFilter",
+      "description": "结合MinHash与LSH（局部敏感哈希）实现高效近似去重。将文本转换为MinHash签名，使用LSH快速查找相似文本，实现大规模数据集的近似去重。\n输入参数：\n- num_perm：生成MinHash签名的排列数\n- threshold：相似度阈值，超过此阈值判定为相似文本\n- use_n_gram：是否使用n-gram分词\n- ngram：n-gram的n值\n输出参数：\n- 去重后的DataFrame，仅保留唯一文本\n- 返回包含去重标签字段名的列表",
+      "parameter": {
+        "init": [
+          {
+            "name": "num_perm",
+            "default": 128,
+            "kind": "POSITIONAL_OR_KEYWORD"
+          },
+          {
+            "name": "threshold",
+            "default": 0.9,
+            "kind": "POSITIONAL_OR_KEYWORD"
+          },
+          {
+            "name": "use_n_gram",
+            "default": true,
+            "kind": "POSITIONAL_OR_KEYWORD"
+          },
+          {
+            "name": "ngram",
+            "default": 5,
+            "kind": "POSITIONAL_OR_KEYWORD"
+          }
+        ],
+        "run": [
+          {
+            "name": "storage",
+            "default": null,
+            "kind": "POSITIONAL_OR_KEYWORD"
+          },
+          {
+            "name": "input_keys",
+            "default": null,
+            "kind": "POSITIONAL_OR_KEYWORD"
+          },
+          {
+            "name": "input_key",
+            "default": null,
+            "kind": "POSITIONAL_OR_KEYWORD"
+          },
+          {
+            "name": "output_key",
+            "default": "minhash_deduplicated_label",
+            "kind": "POSITIONAL_OR_KEYWORD"
+          }
+        ]
+      },
+      "required": "",
+      "depends_on": [],
+      "mode": ""
+    },
+    {
+      "node": 65,
+      "name": "NgramHashDeduplicateFilter",
+      "description": "结合n-gram技术与哈希算法识别相似文本，实现近似去重。将文本分割为多个n-gram片段，计算每个片段的哈希值，通过比较哈希集合的相似度来判断文本相似性。\n输入参数：\n- n_gram：将文本分割的片段数量\n- hash_func：哈希函数类型，支持'md5'、'sha256'和'xxh3'\n- diff_size：哈希集合差异阈值，小于此值判定为相似文本\n输出参数：\n- 去重后的DataFrame，仅保留唯一文本\n- 返回包含去重标签字段名的列表",
+      "parameter": {
+        "init": [
+          {
+            "name": "n_gram",
+            "default": 3,
+            "kind": "POSITIONAL_OR_KEYWORD"
+          },
+          {
+            "name": "hash_func",
+            "default": "md5",
+            "kind": "POSITIONAL_OR_KEYWORD"
+          },
+          {
+            "name": "diff_size",
+            "default": 1,
+            "kind": "POSITIONAL_OR_KEYWORD"
+          }
+        ],
+        "run": [
+          {
+            "name": "storage",
+            "default": null,
+            "kind": "POSITIONAL_OR_KEYWORD"
+          },
+          {
+            "name": "input_keys",
+            "default": null,
+            "kind": "POSITIONAL_OR_KEYWORD"
+          },
+          {
+            "name": "input_key",
+            "default": null,
+            "kind": "POSITIONAL_OR_KEYWORD"
+          },
+          {
+            "name": "output_key",
+            "default": "minhash_deduplicated_label",
+            "kind": "POSITIONAL_OR_KEYWORD"
+          }
+        ]
+      },
+      "required": "",
+      "depends_on": [],
+      "mode": ""
+    },
+    {
+      "node": 66,
+      "name": "PerspectiveSampleEvaluator",
+      "description": "使用Perspective API评估文本的毒性，返回毒性概率，得分越高表明文本毒性越高。\n输入参数：\n- serving：Perspective API服务对象\n- input_key：输入文本字段名\n- output_key：输出得分字段名，默认'PerspectiveScore'\n输出参数：\n- 包含毒性评估得分的DataFrame",
+      "parameter": {
+        "init": [
+          {
+            "name": "serving",
+            "default": null,
+            "kind": "POSITIONAL_OR_KEYWORD"
+          }
+        ],
+        "run": [
+          {
+            "name": "storage",
+            "default": null,
+            "kind": "POSITIONAL_OR_KEYWORD"
+          },
+          {
+            "name": "input_key",
+            "default": null,
+            "kind": "POSITIONAL_OR_KEYWORD"
+          },
+          {
+            "name": "output_key",
+            "default": "PerspectiveScore",
+            "kind": "POSITIONAL_OR_KEYWORD"
+          }
+        ]
+      },
+      "required": "",
+      "depends_on": [],
+      "mode": ""
+    },
+    {
+      "node": 67,
+      "name": "PerspectiveFilter",
+      "description": "基于PerspectiveScorer打分器的得分对数据进行过滤使用Perspective API评估文本的毒性，返回毒性概率，得分越高表明文本毒性越高。\n输入参数：\n- min_score：最小毒性得分阈值\n- max_score：最大毒性得分阈值\n输出参数：\n- 过滤后的DataFrame，仅保留毒性得分在指定范围内的文本\n- 返回包含毒性得分字段名的列表",
+      "parameter": {
+        "init": [
+          {
+            "name": "min_score",
+            "default": 0.0,
+            "kind": "POSITIONAL_OR_KEYWORD"
+          },
+          {
+            "name": "max_score",
+            "default": 0.5,
+            "kind": "POSITIONAL_OR_KEYWORD"
+          }
+        ],
+        "run": [
+          {
+            "name": "storage",
+            "default": null,
+            "kind": "POSITIONAL_OR_KEYWORD"
+          },
+          {
+            "name": "input_key",
+            "default": null,
+            "kind": "POSITIONAL_OR_KEYWORD"
+          },
+          {
+            "name": "output_key",
+            "default": "PerspectiveScore",
+            "kind": "POSITIONAL_OR_KEYWORD"
+          }
+        ]
+      },
+      "required": "",
+      "depends_on": [],
+      "mode": ""
+    },
+    {
+      "node": 68,
+      "name": "SemDeduplicateFilter",
+      "description": "基于BERT语义相似度识别语义重复文本，执行近似去重操作。通过计算文本嵌入向量间的余弦相似度，识别语义相似的文本并保留唯一样本。\n支持多字段组合作为去重依据，可有效去除内容相似但表述不同的重复数据，提高数据集多样性。\n输入参数：\n- eps：相似度阈值，值越小表示允许的相似度越低，默认为0.05（即余弦相似度大于0.95视为重复）\n- model_name：预训练模型名称，默认为'sentence-transformers/all-MiniLM-L6-v2'\n- model_cache_dir：模型缓存目录，默认为'./dataflow_cache'\n- device：模型运行设备，默认为'cuda'\n- input_keys：多个输入字段名列表，与input_key二选一\n- input_key：单个输入字段名，与input_keys二选一\n- output_key：去重结果字段名，默认为'minhash_deduplicated_label'\n输出参数：\n- 过滤后的DataFrame，仅保留语义不重复的样本（标记为1的样本）\n- 返回包含去重结果字段名的列表，用于后续算子引用",
+      "parameter": {
+        "init": [
+          {
+            "name": "eps",
+            "default": 0.05,
+            "kind": "POSITIONAL_OR_KEYWORD"
+          },
+          {
+            "name": "model_name",
+            "default": "sentence-transformers/all-MiniLM-L6-v2",
+            "kind": "POSITIONAL_OR_KEYWORD"
+          },
+          {
+            "name": "model_cache_dir",
+            "default": "./dataflow_cache",
+            "kind": "POSITIONAL_OR_KEYWORD"
+          },
+          {
+            "name": "device",
+            "default": "cuda",
+            "kind": "POSITIONAL_OR_KEYWORD"
+          }
+        ],
+        "run": [
+          {
+            "name": "storage",
+            "default": null,
+            "kind": "POSITIONAL_OR_KEYWORD"
+          },
+          {
+            "name": "input_keys",
+            "default": null,
+            "kind": "POSITIONAL_OR_KEYWORD"
+          },
+          {
+            "name": "input_key",
+            "default": null,
+            "kind": "POSITIONAL_OR_KEYWORD"
+          },
+          {
+            "name": "output_key",
+            "default": "minhash_deduplicated_label",
+            "kind": "POSITIONAL_OR_KEYWORD"
+          }
+        ]
+      },
+      "required": "",
+      "depends_on": [],
+      "mode": ""
+    },
+    {
+      "node": 69,
+      "name": "SimHashDeduplicateFilter",
+      "description": "使用SimHash算法通过汉明距离识别相似文本，执行近似去重操作。将文本转换为固定长度的指纹，通过计算指纹间的汉明距离判断文本相似度。\n相比语义去重速度更快，适合大规模数据集的快速去重预处理，尤其适用于检测字符层面相似的文本。\n输入参数：\n- fingerprint_size：指纹长度，默认为64位\n- bound：相似度阈值，值越小表示允许的相似度越低，默认为0.1（即相似度大于0.9视为重复）\n- input_keys：多个输入字段名列表，与input_key二选一\n- input_key：单个输入字段名，与input_keys二选一\n- output_key：去重结果字段名，默认为'minhash_deduplicated_label'\n输出参数：\n- 过滤后的DataFrame，仅保留相似性低于阈值的唯一样本（标记为1的样本）\n- 返回包含去重结果字段名的列表，用于后续算子引用",
+      "parameter": {
+        "init": [
+          {
+            "name": "fingerprint_size",
+            "default": 64,
+            "kind": "POSITIONAL_OR_KEYWORD"
+          },
+          {
+            "name": "bound",
+            "default": 0.1,
+            "kind": "POSITIONAL_OR_KEYWORD"
+          }
+        ],
+        "run": [
+          {
+            "name": "storage",
+            "default": null,
+            "kind": "POSITIONAL_OR_KEYWORD"
+          },
+          {
+            "name": "input_keys",
+            "default": null,
+            "kind": "POSITIONAL_OR_KEYWORD"
+          },
+          {
+            "name": "input_key",
+            "default": null,
+            "kind": "POSITIONAL_OR_KEYWORD"
+          },
+          {
+            "name": "output_key",
+            "default": "minhash_deduplicated_label",
+            "kind": "POSITIONAL_OR_KEYWORD"
+          }
+        ]
+      },
+      "required": "",
+      "depends_on": [],
+      "mode": ""
+    },
+    {
+      "node": 70,
+      "name": "WordNumberFilter",
+      "description": "该算子用于过滤单词数量不在指定范围内的文本，通过空格分割计算单词数量。\n输入参数：\n- input_key：输入文本字段名，默认为'text'\n- min_words：最小单词数量阈值，默认为5\n- max_words：最大单词数量阈值，默认为100\n输出参数：\n- 过滤后的DataFrame，仅保留单词数量在指定范围内的文本行\n- 返回包含输入字段名的列表，用于后续算子引用",
+      "parameter": {
+        "init": [
+          {
+            "name": "min_words",
+            "default": 20,
+            "kind": "POSITIONAL_OR_KEYWORD"
+          },
+          {
+            "name": "max_words",
+            "default": 100000,
+            "kind": "POSITIONAL_OR_KEYWORD"
+          }
+        ],
+        "run": [
+          {
+            "name": "storage",
+            "default": null,
+            "kind": "POSITIONAL_OR_KEYWORD"
+          },
+          {
+            "name": "input_key",
+            "default": null,
+            "kind": "POSITIONAL_OR_KEYWORD"
+          },
+          {
+            "name": "output_key",
+            "default": "word_number_filter_label",
+            "kind": "POSITIONAL_OR_KEYWORD"
+          }
+        ]
+      },
+      "required": "",
+      "depends_on": [],
+      "mode": ""
+    },
+    {
+      "node": 71,
+      "name": "HtmlEntityRefiner",
+      "description": "去除文本中的HTML实体，包括标准实体（如&nbsp;、&lt;）和各种变体形式（全角符号、中文分号等）。支持自定义需要移除的HTML实体列表。输入参数：\n- html_entities：需要移除的HTML实体列表，默认为包含常见实体的列表\n- input_key：输入文本字段名\n输出参数：\n- 包含移除HTML实体后文本的DataFrame\n- 返回输入字段名，用于后续算子引用",
+      "parameter": {
+        "init": [
+          {
+            "name": "html_entities",
+            "default": [
+              "nbsp",
+              "lt",
+              "gt",
+              "amp",
+              "quot",
+              "apos",
+              "hellip",
+              "ndash",
+              "mdash",
+              "lsquo",
+              "rsquo",
+              "ldquo",
+              "rdquo"
+            ],
+            "kind": "POSITIONAL_OR_KEYWORD"
+          }
+        ],
+        "run": [
+          {
+            "name": "storage",
+            "default": null,
+            "kind": "POSITIONAL_OR_KEYWORD"
+          },
+          {
+            "name": "input_key",
+            "default": null,
+            "kind": "POSITIONAL_OR_KEYWORD"
+          }
+        ]
+      },
+      "required": "",
+      "depends_on": [],
+      "mode": ""
+    },
+    {
+      "node": 72,
+      "name": "HtmlUrlRemoverRefiner",
+      "description": "去除文本中的URL链接和HTML标签，净化文本内容。使用正则表达式匹配并移除各种形式的URL和HTML标签。输入参数：\n- input_key：输入文本字段名\n输出参数：\n- 包含净化后文本的DataFrame\n- 返回输入字段名，用于后续算子引用",
+      "parameter": {
+        "init": [],
+        "run": [
+          {
+            "name": "storage",
+            "default": null,
+            "kind": "POSITIONAL_OR_KEYWORD"
+          },
+          {
+            "name": "input_key",
+            "default": null,
+            "kind": "POSITIONAL_OR_KEYWORD"
+          }
+        ]
+      },
+      "required": "",
+      "depends_on": [],
+      "mode": ""
+    },
+    {
+      "node": 73,
+      "name": "LowercaseRefiner",
+      "description": "将文本字段中的所有大写字符转换为小写，统一文本格式。对指定字段的文本内容进行全小写处理。输入参数：\n- input_key：输入文本字段名\n输出参数：\n- 包含小写转换后文本的DataFrame\n- 返回输入字段名，用于后续算子引用",
+      "parameter": {
+        "init": [],
+        "run": [
+          {
+            "name": "storage",
+            "default": null,
+            "kind": "POSITIONAL_OR_KEYWORD"
+          },
+          {
+            "name": "input_key",
+            "default": null,
+            "kind": "POSITIONAL_OR_KEYWORD"
+          }
+        ]
+      },
+      "required": "",
+      "depends_on": [],
+      "mode": ""
+    },
+    {
+      "node": 74,
+      "name": "NERRefiner",
+      "description": "使用命名实体识别（NER）技术识别并屏蔽文本中的特定实体。使用spaCy的'en_core_web_sm'模型识别实体，并将其替换为对应的实体类型标签。输入参数：\n- input_key：输入文本字段名\n输出参数：\n- 包含实体屏蔽后文本的DataFrame\n- 返回输入字段名，用于后续算子引用",
+      "parameter": {
+        "init": [],
+        "run": [
+          {
+            "name": "storage",
+            "default": null,
+            "kind": "POSITIONAL_OR_KEYWORD"
+          },
+          {
+            "name": "input_key",
+            "default": null,
+            "kind": "POSITIONAL_OR_KEYWORD"
+          }
+        ]
+      },
+      "required": "",
+      "depends_on": [],
+      "mode": ""
+    },
+    {
+      "node": 75,
+      "name": "PIIAnonymizeRefiner",
+      "description": "使用Presidio和BERT-NER模型识别并匿名化文本中的个人身份信息（PII）。支持多种PII类型的检测和匿名化处理。输入参数：\n- lang：语言代码，默认为'en'\n- device：运行设备，默认为'cuda'\n- model_cache_dir：模型缓存目录，默认为'./dataflow_cache'\n- model_name：NER模型名称，默认为'dslim/bert-base-NER'\n- input_key：输入文本字段名\n输出参数：\n- 包含匿名化后文本的DataFrame\n- 返回输入字段名，用于后续算子引用",
+      "parameter": {
+        "init": [
+          {
+            "name": "lang",
+            "default": "en",
+            "kind": "POSITIONAL_OR_KEYWORD"
+          },
+          {
+            "name": "device",
+            "default": "cuda",
+            "kind": "POSITIONAL_OR_KEYWORD"
+          },
+          {
+            "name": "model_cache_dir",
+            "default": "./dataflow_cache",
+            "kind": "POSITIONAL_OR_KEYWORD"
+          },
+          {
+            "name": "model_name",
+            "default": "dslim/bert-base-NER",
+            "kind": "POSITIONAL_OR_KEYWORD"
+          }
+        ],
+        "run": [
+          {
+            "name": "storage",
+            "default": null,
+            "kind": "POSITIONAL_OR_KEYWORD"
+          },
+          {
+            "name": "input_key",
+            "default": null,
+            "kind": "POSITIONAL_OR_KEYWORD"
+          }
+        ]
+      },
+      "required": "",
+      "depends_on": [],
+      "mode": ""
+    },
+    {
+      "node": 76,
+      "name": "ReferenceRemoverRefiner",
+      "description": "删除文本中未闭合的引用标签和引用链接，包括<ref>标签和{{cite}}模板的各种完整和不完整形式。净化文本中的引用标记。输入参数：\n- input_key：输入文本字段名\n输出参数：\n- 包含移除引用标记后文本的DataFrame\n- 返回输入字段名，用于后续算子引用",
+      "parameter": {
+        "init": [],
+        "run": [
+          {
+            "name": "storage",
+            "default": null,
+            "kind": "POSITIONAL_OR_KEYWORD"
+          },
+          {
+            "name": "input_key",
+            "default": null,
+            "kind": "POSITIONAL_OR_KEYWORD"
+          }
+        ]
+      },
+      "required": "",
+      "depends_on": [],
+      "mode": ""
+    },
+    {
+      "node": 77,
+      "name": "RemoveContractionsRefiner",
+      "description": "该算子用于扩展文本中的英语缩写词，将缩写形式转换为完整形式（例如将\"can't\"扩展为\"cannot\"）。\n使用contractions库进行缩写词扩展，提高文本标准化程度。\n输入参数：\n- 无初始化参数\n运行参数：\n- input_key：输入文本字段名\n输出参数：\n- 处理后的DataFrame，包含扩展缩写词后的文本\n- 返回包含输入字段名的列表，用于后续算子引用",
+      "parameter": {
+        "init": [],
+        "run": [
+          {
+            "name": "storage",
+            "default": null,
+            "kind": "POSITIONAL_OR_KEYWORD"
+          },
+          {
+            "name": "input_key",
+            "default": null,
+            "kind": "POSITIONAL_OR_KEYWORD"
+          }
+        ]
+      },
+      "required": "",
+      "depends_on": [],
+      "mode": ""
+    },
+    {
+      "node": 78,
+      "name": "RemoveEmojiRefiner",
+      "description": "该算子用于去除文本中的Unicode图像表情符号，包括表情符号、杂项符号、交通符号、旗帜等各类图像符号。\n通过正则表达式匹配Unicode表情符号范围，实现高效过滤。\n输入参数：\n- 无初始化参数\n运行参数：\n- input_key：输入文本字段名\n输出参数：\n- 处理后的DataFrame，包含去除表情符号的文本\n- 返回包含输入字段名的列表，用于后续算子引用",
+      "parameter": {
+        "init": [],
+        "run": [
+          {
+            "name": "storage",
+            "default": null,
+            "kind": "POSITIONAL_OR_KEYWORD"
+          },
+          {
+            "name": "input_key",
+            "default": null,
+            "kind": "POSITIONAL_OR_KEYWORD"
+          }
+        ]
+      },
+      "required": "",
+      "depends_on": [],
+      "mode": ""
+    },
+    {
+      "node": 79,
+      "name": "RemoveEmoticonsRefiner",
+      "description": "该算子用于移除文本中的文本型表情符号，例如':-)'、':D'、':('等字符组合表情。\n基于预定义的表情符号字典进行匹配替换，支持多种常见文本表情模式。\n输入参数：\n- 无初始化参数\n运行参数：\n- input_key：输入文本字段名\n输出参数：\n- 处理后的DataFrame，包含去除文本表情的文本\n- 返回包含输入字段名的列表，用于后续算子引用",
+      "parameter": {
+        "init": [],
+        "run": [
+          {
+            "name": "storage",
+            "default": null,
+            "kind": "POSITIONAL_OR_KEYWORD"
+          },
+          {
+            "name": "input_key",
+            "default": null,
+            "kind": "POSITIONAL_OR_KEYWORD"
+          }
+        ]
+      },
+      "required": "",
+      "depends_on": [],
+      "mode": ""
+    },
+    {
+      "node": 80,
+      "name": "RemoveExtraSpacesRefiner",
+      "description": "该算子用于移除文本中的多余空格，将连续的多个空格替换为单个空格，并去除文本前后的空白字符。\n通过字符串分割和连接实现空格标准化，提高文本格式一致性。\n输入参数：\n- 无初始化参数\n运行参数：\n- input_key：输入文本字段名\n输出参数：\n- 处理后的DataFrame，包含标准化空格的文本\n- 返回包含输入字段名的列表，用于后续算子引用",
+      "parameter": {
+        "init": [],
+        "run": [
+          {
+            "name": "storage",
+            "default": null,
+            "kind": "POSITIONAL_OR_KEYWORD"
+          },
+          {
+            "name": "input_key",
+            "default": null,
+            "kind": "POSITIONAL_OR_KEYWORD"
+          }
+        ]
+      },
+      "required": "",
+      "depends_on": [],
+      "mode": ""
+    },
+    {
+      "node": 81,
+      "name": "RemoveImageRefsRefiner",
+      "description": "该算子用于去除文本中的图片引用格式，包括Markdown图片链接、图片编号、特殊符号组合等图像引用模式。\n通过多模式正则表达式匹配，识别并移除多种图片引用格式。\n输入参数：\n- 无初始化参数\n运行参数：\n- input_key：输入文本字段名\n输出参数：\n- 处理后的DataFrame，包含去除图片引用的文本\n- 返回包含输入字段名的列表，用于后续算子引用",
+      "parameter": {
+        "init": [],
+        "run": [
+          {
+            "name": "storage",
+            "default": null,
+            "kind": "POSITIONAL_OR_KEYWORD"
+          },
+          {
+            "name": "input_key",
+            "default": null,
+            "kind": "POSITIONAL_OR_KEYWORD"
+          }
+        ]
+      },
+      "required": "",
+      "depends_on": [],
+      "mode": ""
+    },
+    {
+      "node": 82,
+      "name": "RemoveNumberRefiner",
+      "description": "该算子用于移除文本中的数字字符，包括0-9的阿拉伯数字。\n通过字符过滤实现数字移除，保留纯文本内容。\n输入参数：\n- 无初始化参数\n运行参数：\n- input_key：输入文本字段名\n输出参数：\n- 处理后的DataFrame，包含去除数字的文本\n- 返回包含输入字段名的列表，用于后续算子引用",
+      "parameter": {
+        "init": [],
+        "run": [
+          {
+            "name": "storage",
+            "default": null,
+            "kind": "POSITIONAL_OR_KEYWORD"
+          },
+          {
+            "name": "input_key",
+            "default": null,
+            "kind": "POSITIONAL_OR_KEYWORD"
+          }
+        ]
+      },
+      "required": "",
+      "depends_on": [],
+      "mode": ""
+    },
+    {
+      "node": 83,
+      "name": "RemovePunctuationRefiner",
+      "description": "该算子用于移除文本中的标点符号，包括英文标点符号集合中的所有符号。\n使用string.punctuation定义的标点集合进行过滤，实现文本去标点处理。\n输入参数：\n- 无初始化参数\n运行参数：\n- input_key：输入文本字段名\n输出参数：\n- 处理后的DataFrame，包含去除标点的文本\n- 返回包含输入字段名的列表，用于后续算子引用",
+      "parameter": {
+        "init": [],
+        "run": [
+          {
+            "name": "storage",
+            "default": null,
+            "kind": "POSITIONAL_OR_KEYWORD"
+          },
+          {
+            "name": "input_key",
+            "default": null,
+            "kind": "POSITIONAL_OR_KEYWORD"
+          }
+        ]
+      },
+      "required": "",
+      "depends_on": [],
+      "mode": ""
+    },
+    {
+      "node": 84,
+      "name": "RemoveRepetitionsPunctuationRefiner",
+      "description": "该算子用于移除文本中重复的标点符号，例如将\"!!!\"变为\"!\"，\",,\"变为\",\"。\n通过正则表达式匹配连续重复的标点符号，替换为单个符号。\n输入参数：\n- 无初始化参数\n运行参数：\n- input_key：输入文本字段名\n输出参数：\n- 处理后的DataFrame，包含标准化标点的文本\n- 返回包含输入字段名的列表，用于后续算子引用",
+      "parameter": {
+        "init": [],
+        "run": [
+          {
+            "name": "storage",
+            "default": null,
+            "kind": "POSITIONAL_OR_KEYWORD"
+          },
+          {
+            "name": "input_key",
+            "default": null,
+            "kind": "POSITIONAL_OR_KEYWORD"
+          }
+        ]
+      },
+      "required": "",
+      "depends_on": [],
+      "mode": ""
+    },
+    {
+      "node": 85,
+      "name": "RemoveStopwordsRefiner",
+      "description": "该算子用于移除文本中的英语停用词（如\"the\"，\"is\"，\"in\"等无实际意义的高频词汇）。\n使用NLTK库的stopwords语料库进行停用词过滤，提高文本特征密度。\n输入参数：\n- model_cache_dir：模型缓存目录，默认为'./dataflow_cache'\n运行参数：\n- input_key：输入文本字段名\n输出参数：\n- 处理后的DataFrame，包含去除停用词的文本\n- 返回包含输入字段名的列表，用于后续算子引用",
+      "parameter": {
+        "init": [
+          {
+            "name": "model_cache_dir",
+            "default": "./dataflow_cache",
+            "kind": "POSITIONAL_OR_KEYWORD"
+          }
+        ],
+        "run": [
+          {
+            "name": "storage",
+            "default": null,
+            "kind": "POSITIONAL_OR_KEYWORD"
+          },
+          {
+            "name": "input_key",
+            "default": null,
+            "kind": "POSITIONAL_OR_KEYWORD"
+          }
+        ]
+      },
+      "required": "",
+      "depends_on": [],
+      "mode": ""
+    },
+    {
+      "node": 86,
+      "name": "SpellingCorrectionRefiner",
+      "description": "该算子用于通过SymSpell算法对文本中的拼写错误进行纠正，支持自定义编辑距离和词典路径。\n若本地词典不存在则自动下载，使用近似字符串匹配实现拼写纠错功能。\n输入参数：\n- max_edit_distance：最大编辑距离，默认为2\n- prefix_length：前缀长度，默认为7\n- dictionary_path：词典路径，默认为'frequency_dictionary_en_82_765.txt'\n运行参数：\n- input_key：输入文本字段名\n输出参数：\n- 处理后的DataFrame，包含纠正拼写错误的文本\n- 返回包含输入字段名的列表，用于后续算子引用",
+      "parameter": {
+        "init": [
+          {
+            "name": "max_edit_distance",
+            "default": 2,
+            "kind": "POSITIONAL_OR_KEYWORD"
+          },
+          {
+            "name": "prefix_length",
+            "default": 7,
+            "kind": "POSITIONAL_OR_KEYWORD"
+          },
+          {
+            "name": "dictionary_path",
+            "default": "frequency_dictionary_en_82_765.txt",
+            "kind": "POSITIONAL_OR_KEYWORD"
+          }
+        ],
+        "run": [
+          {
+            "name": "storage",
+            "default": null,
+            "kind": "POSITIONAL_OR_KEYWORD"
+          },
+          {
+            "name": "input_key",
+            "default": null,
+            "kind": "POSITIONAL_OR_KEYWORD"
+          }
+        ]
+      },
+      "required": "",
+      "depends_on": [],
+      "mode": ""
+    },
+    {
+      "node": 87,
+      "name": "StemmingLemmatizationRefiner",
+      "description": "该算子用于对文本进行词干提取或词形还原处理，将词语转换为其基本形式。\n支持两种处理方式：Porter词干提取(stemming)和WordNet词形还原(lemmatization)，可通过参数选择。\n输入参数：\n- method：处理方法，可选'stemming'或'lemmatization'，默认为'stemming'\n运行参数：\n- input_key：输入文本字段名\n输出参数：\n- 处理后的DataFrame，包含词干/词形还原后的文本\n- 返回包含输入字段名的列表，用于后续算子引用",
+      "parameter": {
+        "init": [
+          {
+            "name": "method",
+            "default": "stemming",
+            "kind": "POSITIONAL_OR_KEYWORD"
+          }
+        ],
+        "run": [
+          {
+            "name": "storage",
+            "default": null,
+            "kind": "POSITIONAL_OR_KEYWORD"
+          },
+          {
+            "name": "input_key",
+            "default": null,
+            "kind": "POSITIONAL_OR_KEYWORD"
+          }
+        ]
+      },
+      "required": "",
+      "depends_on": [],
+      "mode": ""
+    },
+    {
+      "node": 88,
+      "name": "TextNormalizationRefiner",
+      "description": "该算子用于规范化文本中的日期格式和货币格式，统一为标准表示形式。\n日期格式统一转换为'YYYY-MM-DD'形式，货币格式转换为'金额 USD'形式，提高数据一致性。\n输入参数：\n- 无初始化参数\n运行参数：\n- input_key：输入文本字段名\n输出参数：\n- 处理后的DataFrame，包含格式规范化的文本\n- 返回包含输入字段名的列表，用于后续算子引用",
+      "parameter": {
+        "init": [],
+        "run": [
+          {
+            "name": "storage",
+            "default": null,
+            "kind": "POSITIONAL_OR_KEYWORD"
+          },
+          {
+            "name": "input_key",
+            "default": null,
+            "kind": "POSITIONAL_OR_KEYWORD"
+          }
+        ]
+      },
+      "required": "",
+      "depends_on": [],
+      "mode": ""
+    },
+    {
+      "node": 89,
+      "name": "BertSampleEvaluator",
+      "description": "使用BERTScore评估生成文本与参考文本的相似度，基于上下文嵌入计算P/R/F1分数。\n输入参数：\n- lang：语言类型，默认为'en'\n- model_cache_dir：模型缓存目录，默认为'./dataflow_cache'\n- input_key：生成文本字段名\n- reference_key：参考文本字段名\n- output_key：输出得分字段名，默认为'BertScore'\n输出参数：\n- 包含F1相似度得分的DataFrame",
+      "parameter": {
+        "init": [
+          {
+            "name": "lang",
+            "default": "en",
+            "kind": "POSITIONAL_OR_KEYWORD"
+          },
+          {
+            "name": "model_cache_dir",
+            "default": "./dataflow_cache",
+            "kind": "POSITIONAL_OR_KEYWORD"
+          }
+        ],
+        "run": [
+          {
+            "name": "storage",
+            "default": null,
+            "kind": "POSITIONAL_OR_KEYWORD"
+          },
+          {
+            "name": "input_key",
+            "default": null,
+            "kind": "POSITIONAL_OR_KEYWORD"
+          },
+          {
+            "name": "reference_key",
+            "default": null,
+            "kind": "POSITIONAL_OR_KEYWORD"
+          },
+          {
+            "name": "output_key",
+            "default": "BertScore",
+            "kind": "POSITIONAL_OR_KEYWORD"
+          }
+        ]
+      },
+      "required": "",
+      "depends_on": [],
+      "mode": ""
+    },
+    {
+      "node": 90,
+      "name": "BleuSampleEvaluator",
+      "description": "计算BLEU分数评估生成文本与参考文本的n-gram重叠度，支持1-4元语法分析。\n输入参数：\n- n：最大n-gram长度，默认为4\n- eff：参考长度计算方式，可选'shortest'/'average'/'longest'，默认为'average'\n- special_reflen：特殊参考长度，默认为None\n- input_key：生成文本字段名\n- reference_key：参考文本字段名\n- output_key：输出得分字段名，默认为'BleuScore'\n输出参数：\n- 包含BLEU得分的DataFrame",
+      "parameter": {
+        "init": [
+          {
+            "name": "n",
+            "default": 4,
+            "kind": "POSITIONAL_OR_KEYWORD"
+          },
+          {
+            "name": "eff",
+            "default": "average",
+            "kind": "POSITIONAL_OR_KEYWORD"
+          },
+          {
+            "name": "special_reflen",
+            "default": null,
+            "kind": "POSITIONAL_OR_KEYWORD"
+          }
+        ],
+        "run": [
+          {
+            "name": "storage",
+            "default": null,
+            "kind": "POSITIONAL_OR_KEYWORD"
+          },
+          {
+            "name": "input_key",
+            "default": null,
+            "kind": "POSITIONAL_OR_KEYWORD"
+          },
+          {
+            "name": "reference_key",
+            "default": null,
+            "kind": "POSITIONAL_OR_KEYWORD"
+          },
+          {
+            "name": "output_key",
+            "default": "BleuScore",
+            "kind": "POSITIONAL_OR_KEYWORD"
+          }
+        ]
+      },
+      "required": "",
+      "depends_on": [],
+      "mode": ""
+    },
+    {
+      "node": 91,
+      "name": "CiderSampleEvaluator",
+      "description": "使用CIDEr指标评估生成文本与参考文本的相似度，基于TF-IDF加权的n-gram重叠度。\n输入参数：\n- n：最大n-gram长度，默认为4\n- sigma：高斯惩罚参数，默认为6.0\n- df_mode：文档频率模式，默认为'coco-val-df'\n- idf_path：IDF文件路径，默认为预训练COCO数据集IDF\n- input_key：生成文本字段名\n- reference_key：参考文本字段名\n- output_key：输出得分字段名，默认为'CiderScore'\n输出参数：\n- 包含CIDEr得分的DataFrame",
+      "parameter": {
+        "init": [
+          {
+            "name": "n",
+            "default": 4,
+            "kind": "POSITIONAL_OR_KEYWORD"
+          },
+          {
+            "name": "sigma",
+            "default": 6.0,
+            "kind": "POSITIONAL_OR_KEYWORD"
+          },
+          {
+            "name": "df_mode",
+            "default": "coco-val-df",
+            "kind": "POSITIONAL_OR_KEYWORD"
+          },
+          {
+            "name": "idf_path",
+            "default": "./dataflow/operators/general_pt/eval/cider/coco-val-df.p",
+            "kind": "POSITIONAL_OR_KEYWORD"
+          }
+        ],
+        "run": [
+          {
+            "name": "storage",
+            "default": null,
+            "kind": "POSITIONAL_OR_KEYWORD"
+          },
+          {
+            "name": "input_key",
+            "default": null,
+            "kind": "POSITIONAL_OR_KEYWORD"
+          },
+          {
+            "name": "reference_key",
+            "default": null,
+            "kind": "POSITIONAL_OR_KEYWORD"
+          },
+          {
+            "name": "output_key",
+            "default": "CiderScore",
+            "kind": "POSITIONAL_OR_KEYWORD"
+          }
+        ]
+      },
+      "required": "",
+      "depends_on": [],
+      "mode": ""
+    },
+    {
+      "node": 92,
+      "name": "Task2VecDatasetEvaluator",
+      "description": "使用Task2Vec方法评估数据集的多样性，通过计算样本嵌入的余弦距离矩阵来量化多样性。\n输入参数：\n- device：计算设备，默认为'cuda'\n- sample_nums：采样次数，默认为10\n- sample_size：每次采样样本数，默认为1\n- method：嵌入方法，可选'montecarlo'或'variational'，默认为'montecarlo'\n- model_cache_dir：模型缓存目录，默认为'./dataflow_cache'\n- input_key：输入文本字段名\n输出参数：\n- Task2VecDiversityScore：多样性得分\n- ConfidenceInterval：置信区间",
+      "parameter": {
+        "init": [
+          {
+            "name": "device",
+            "default": "cuda",
+            "kind": "POSITIONAL_OR_KEYWORD"
+          },
+          {
+            "name": "sample_nums",
+            "default": 10,
+            "kind": "POSITIONAL_OR_KEYWORD"
+          },
+          {
+            "name": "sample_size",
+            "default": 1,
+            "kind": "POSITIONAL_OR_KEYWORD"
+          },
+          {
+            "name": "method",
+            "default": "montecarlo",
+            "kind": "POSITIONAL_OR_KEYWORD"
+          },
+          {
+            "name": "model_cache_dir",
+            "default": "./dataflow_cache",
+            "kind": "POSITIONAL_OR_KEYWORD"
+          }
+        ],
+        "run": [
+          {
+            "name": "storage",
+            "default": null,
+            "kind": "POSITIONAL_OR_KEYWORD"
+          },
+          {
+            "name": "input_key",
+            "default": null,
+            "kind": "POSITIONAL_OR_KEYWORD"
+          }
+        ]
+      },
+      "required": "",
+      "depends_on": [],
+      "mode": ""
+    },
+    {
+      "node": 93,
+      "name": "VendiDatasetEvaluator",
+      "description": "通过计算VendiScore来评估数据集的多样性，使用BERT和SimCSE模型生成嵌入并计算分数。\n输入参数：\n- device：计算设备，默认为'cuda'\n- input_key：输入文本字段名\n输出参数：\n- BERTVendiScore：基于BERT的多样性得分\n- SimCSEVendiScore：基于SimCSE的多样性得分",
+      "parameter": {
+        "init": [
+          {
+            "name": "device",
+            "default": "cuda",
+            "kind": "POSITIONAL_OR_KEYWORD"
+          }
+        ],
+        "run": [
+          {
+            "name": "storage",
+            "default": null,
+            "kind": "POSITIONAL_OR_KEYWORD"
+          },
+          {
+            "name": "input_key",
+            "default": null,
+            "kind": "POSITIONAL_OR_KEYWORD"
+          }
+        ]
+      },
+      "required": "",
+      "depends_on": [],
+      "mode": ""
+    }
+  ],
+  "knowledge_cleaning": [
+    {
+      "node": 94,
+      "name": "KBCChunkGenerator",
+      "description": [
+        "CorpusTextSplitter是轻量级文本分割工具，",
+        "支持词/句/语义/递归分块，",
+        "可配置块大小、重叠和最小块长度"
+      ],
+      "parameter": {
+        "init": [
+          {
+            "name": "chunk_size",
+            "default": 512,
+            "kind": "POSITIONAL_OR_KEYWORD"
+          },
+          {
+            "name": "chunk_overlap",
+            "default": 50,
+            "kind": "POSITIONAL_OR_KEYWORD"
+          },
+          {
+            "name": "split_method",
+            "default": "token",
+            "kind": "POSITIONAL_OR_KEYWORD"
+          },
+          {
+            "name": "min_tokens_per_chunk",
+            "default": 100,
+            "kind": "POSITIONAL_OR_KEYWORD"
+          },
+          {
+            "name": "tokenizer_name",
+            "default": "bert-base-uncased",
+            "kind": "POSITIONAL_OR_KEYWORD"
+          }
+        ],
+        "run": [
+          {
+            "name": "storage",
+            "default": null,
+            "kind": "POSITIONAL_OR_KEYWORD"
+          },
+          {
+            "name": "input_file",
+            "default": null,
+            "kind": "POSITIONAL_OR_KEYWORD"
+          },
+          {
+            "name": "output_key",
+            "default": "raw_content",
+            "kind": "POSITIONAL_OR_KEYWORD"
+          }
+        ]
+      },
+      "required": "",
+      "depends_on": [],
+      "mode": ""
+    },
+    {
+      "node": 95,
+      "name": "KBCChunkGeneratorBatch",
+      "description": [
+        "CorpusTextSplitter是轻量级文本分割工具，",
+        "支持词/句/语义/递归分块，",
+        "可配置块大小、重叠和最小块长度"
+      ],
+      "parameter": {
+        "init": [
+          {
+            "name": "chunk_size",
+            "default": 512,
+            "kind": "POSITIONAL_OR_KEYWORD"
+          },
+          {
+            "name": "chunk_overlap",
+            "default": 50,
+            "kind": "POSITIONAL_OR_KEYWORD"
+          },
+          {
+            "name": "split_method",
+            "default": "token",
+            "kind": "POSITIONAL_OR_KEYWORD"
+          },
+          {
+            "name": "min_tokens_per_chunk",
+            "default": 100,
+            "kind": "POSITIONAL_OR_KEYWORD"
+          },
+          {
+            "name": "tokenizer_name",
+            "default": "bert-base-uncased",
+            "kind": "POSITIONAL_OR_KEYWORD"
+          }
+        ],
+        "run": [
+          {
+            "name": "storage",
+            "default": null,
+            "kind": "POSITIONAL_OR_KEYWORD"
+          },
+          {
+            "name": "input_key",
+            "default": "text_path",
+            "kind": "POSITIONAL_OR_KEYWORD"
+          },
+          {
+            "name": "output_key",
+            "default": "chunk_path",
+            "kind": "POSITIONAL_OR_KEYWORD"
+          }
+        ]
+      },
+      "required": "",
+      "depends_on": [],
+      "mode": ""
+    },
+    {
+      "node": 96,
+      "name": "FileOrURLToMarkdownConverter",
+      "description": "知识提取算子：支持从多种文件格式中提取结构化内容并转换为标准Markdown\n核心功能：\n1. PDF文件：使用MinerU解析引擎提取文本/表格/公式，保留原始布局\n2. Office文档(DOC/PPT等)：通过DocConverter转换为Markdown格式\n3. 网页内容(HTML/XML)：使用trafilatura提取正文并转为Markdown\n4. 纯文本(TXT/MD)：直接透传不做处理\n特殊处理：\n- 自动识别中英文文档(lang参数)\n- 支持本地文件路径和URL输入\n- 生成中间文件到指定目录(intermediate_dir)",
+      "parameter": {
+        "init": [
+          {
+            "name": "url",
+            "default": null,
+            "kind": "POSITIONAL_OR_KEYWORD"
+          },
+          {
+            "name": "raw_file",
+            "default": null,
+            "kind": "POSITIONAL_OR_KEYWORD"
+          },
+          {
+            "name": "intermediate_dir",
+            "default": "intermediate",
+            "kind": "POSITIONAL_OR_KEYWORD"
+          },
+          {
+            "name": "lang",
+            "default": "en",
+            "kind": "POSITIONAL_OR_KEYWORD"
+          },
+          {
+            "name": "mineru_backend",
+            "default": "vlm-sglang-engine",
+            "kind": "POSITIONAL_OR_KEYWORD"
+          }
+        ],
+        "run": [
+          {
+            "name": "storage",
+            "default": null,
+            "kind": "POSITIONAL_OR_KEYWORD"
+          },
+          {
+            "name": "input_key",
+            "default": "",
+            "kind": "POSITIONAL_OR_KEYWORD"
+          },
+          {
+            "name": "output_key",
+            "default": "",
+            "kind": "POSITIONAL_OR_KEYWORD"
+          }
+        ]
+      },
+      "required": "",
+      "depends_on": [],
+      "mode": ""
+    },
+    {
+      "node": 97,
+      "name": "FileOrURLToMarkdownConverterBatch",
+      "description": "知识提取算子：支持从多种文件格式中提取结构化内容并转换为标准Markdown\n核心功能：\n1. PDF文件：使用MinerU解析引擎提取文本/表格/公式，保留原始布局\n2. Office文档(DOC/PPT等)：通过DocConverter转换为Markdown格式\n3. 网页内容(HTML/XML)：使用trafilatura提取正文并转为Markdown\n4. 纯文本(TXT/MD)：直接透传不做处理\n特殊处理：\n- 自动识别中英文文档(lang参数)\n- 支持本地文件路径和URL输入\n- 生成中间文件到指定目录(intermediate_dir)",
+      "parameter": {
+        "init": [
+          {
+            "name": "intermediate_dir",
+            "default": "intermediate",
+            "kind": "POSITIONAL_OR_KEYWORD"
+          },
+          {
+            "name": "lang",
+            "default": "en",
+            "kind": "POSITIONAL_OR_KEYWORD"
+          },
+          {
+            "name": "mineru_backend",
+            "default": "vlm-sglang-engine",
+            "kind": "POSITIONAL_OR_KEYWORD"
+          }
+        ],
+        "run": [
+          {
+            "name": "storage",
+            "default": null,
+            "kind": "POSITIONAL_OR_KEYWORD"
+          },
+          {
+            "name": "input_key",
+            "default": "raw_content",
+            "kind": "POSITIONAL_OR_KEYWORD"
+          },
+          {
+            "name": "output_key",
+            "default": "text_path",
+            "kind": "POSITIONAL_OR_KEYWORD"
+          }
+        ]
+      },
+      "required": "",
+      "depends_on": [],
+      "mode": ""
+    },
+    {
+      "node": 98,
+      "name": "KBCTextCleaner",
+      "description": "知识清洗算子：对原始知识内容进行标准化处理，包括HTML标签清理、特殊字符规范化、链接处理和结构优化，提升RAG知识库的质量。主要功能：\n1. 移除冗余HTML标签但保留语义化标签\n2. 标准化引号/破折号等特殊字符\n3. 处理超链接同时保留文本\n4. 保持原始段落结构和代码缩进\n5. 确保事实性内容零修改\n\n输入格式示例：\n<div class=\"container\">\n  <h1>标题文本</h1>\n  <p>正文段落，包括特殊符号，例如“弯引号”、–破折号等</p>\n  <img src=\"example.jpg\" alt=\"示意图\">\n  <a href=\"...\">链接文本</a>\n  <pre><code>代码片段</code></pre>\n  ...\n</div>\n\n输出格式示例：\n标题文本\n\n正文段落，包括特殊符号，例如\"直引号\"、-破折号等\n\n[Image: 示例图 example.jpg]\n\n链接文本\n\n<code>代码片段</code>\n\n[结构保持，语义保留，敏感信息脱敏处理（如手机号、保密标记等）]",
+      "parameter": {
+        "init": [
+          {
+            "name": "llm_serving",
+            "default": null,
+            "kind": "POSITIONAL_OR_KEYWORD"
+          },
+          {
+            "name": "lang",
+            "default": "en",
+            "kind": "POSITIONAL_OR_KEYWORD"
+          },
+          {
+            "name": "prompt_template",
+            "default": null,
+            "kind": "POSITIONAL_OR_KEYWORD"
+          }
+        ],
+        "run": [
+          {
+            "name": "storage",
+            "default": null,
+            "kind": "POSITIONAL_OR_KEYWORD"
+          },
+          {
+            "name": "input_key",
+            "default": "raw_content",
+            "kind": "POSITIONAL_OR_KEYWORD"
+          },
+          {
+            "name": "output_key",
+            "default": "cleaned",
+            "kind": "POSITIONAL_OR_KEYWORD"
+          }
+        ]
+      },
+      "required": "",
+      "depends_on": [],
+      "mode": ""
+    },
+    {
+      "node": 99,
+      "name": "KBCTextCleanerBatch",
+      "description": "知识清洗算子：对原始知识内容进行标准化处理，包括HTML标签清理、特殊字符规范化、链接处理和结构优化，提升RAG知识库的质量。主要功能：\n1. 移除冗余HTML标签但保留语义化标签\n2. 标准化引号/破折号等特殊字符\n3. 处理超链接同时保留文本\n4. 保持原始段落结构和代码缩进\n5. 确保事实性内容零修改",
+      "parameter": {
+        "init": [
+          {
+            "name": "llm_serving",
+            "default": null,
+            "kind": "POSITIONAL_OR_KEYWORD"
+          },
+          {
+            "name": "lang",
+            "default": "en",
+            "kind": "POSITIONAL_OR_KEYWORD"
+          },
+          {
+            "name": "prompt_template",
+            "default": null,
+            "kind": "POSITIONAL_OR_KEYWORD"
+          }
+        ],
+        "run": [
+          {
+            "name": "storage",
+            "default": null,
+            "kind": "POSITIONAL_OR_KEYWORD"
+          },
+          {
+            "name": "input_key",
+            "default": "chunk_path",
+            "kind": "POSITIONAL_OR_KEYWORD"
+          },
+          {
+            "name": "output_key",
+            "default": "cleaned_chunk_path",
+            "kind": "POSITIONAL_OR_KEYWORD"
+          }
+        ]
+      },
+      "required": "",
+      "depends_on": [],
+      "mode": ""
+    },
+    {
+      "node": 100,
+      "name": "MathBookQuestionExtract",
+      "description": "该算子用于从数学教材PDF中提取问题和相关图片内容。它将PDF转换为图片，使用MinerU进行内容提取，然后组织图片并使用大语言模型分析内容，最终生成包含问题和图片的JSON和Markdown文件。\n输入参数：\n- llm_serving：VLM服务对象，需实现APIVLMServing_openai接口\n- pdf_file_path：PDF文件路径\n- output_file_name：输出文件名\n- output_folder：输出文件夹路径\n- MinerU_Backend：MinerU后端类型，默认为'vlm-sglang-engine'\n- dpi：PDF转图片的分辨率，默认为300\n- api_url：API服务URL\n- key_name_of_api_key：API密钥的环境变量名\n- model_name：使用的模型名称，默认为'o4-mini'\n- max_workers：最大并行工作线程数，默认为20\n输出参数：\n- 返回布尔值表示处理是否成功\n- 在指定文件夹生成JSON和Markdown格式的提取结果",
+      "parameter": {
+        "init": [
+          {
+            "name": "llm_serving",
+            "default": null,
+            "kind": "POSITIONAL_OR_KEYWORD"
+          },
+          {
+            "name": "prompt_template",
+            "default": null,
+            "kind": "POSITIONAL_OR_KEYWORD"
+          }
+        ],
+        "run": [
+          {
+            "name": "pdf_file_path",
+            "default": null,
+            "kind": "POSITIONAL_OR_KEYWORD"
+          },
+          {
+            "name": "output_file_name",
+            "default": null,
+            "kind": "POSITIONAL_OR_KEYWORD"
+          },
+          {
+            "name": "output_folder",
+            "default": null,
+            "kind": "POSITIONAL_OR_KEYWORD"
+          },
+          {
+            "name": "MinerU_Backend",
+            "default": "vlm-sglang-engine",
+            "kind": "POSITIONAL_OR_KEYWORD"
+          },
+          {
+            "name": "dpi",
+            "default": 300,
+            "kind": "POSITIONAL_OR_KEYWORD"
+          },
+          {
+            "name": "api_url",
+            "default": "http://123.129.219.111:3000/v1",
+            "kind": "POSITIONAL_OR_KEYWORD"
+          },
+          {
+            "name": "key_name_of_api_key",
+            "default": "DF_API_KEY",
+            "kind": "POSITIONAL_OR_KEYWORD"
+          },
+          {
+            "name": "model_name",
+            "default": "o4-mini",
+            "kind": "POSITIONAL_OR_KEYWORD"
+          },
+          {
+            "name": "max_workers",
+            "default": 20,
+            "kind": "POSITIONAL_OR_KEYWORD"
+          }
+        ]
+      },
+      "required": "",
+      "depends_on": [],
+      "mode": ""
+    }
+  ],
+  "rare": [
+    {
+      "node": 101,
+      "name": "Doc2Query",
+      "description": "RAREPipeline: Doc2Query 算子使用大语言模型为给定文档生成推理密集型问题。\n\n输入参数：\n- input_key: 包含文档片段的字段名\n- output_question_key: 包含生成问题的字段名\n- output_scenario_key: 包含生成情景的字段名\n",
+      "parameter": {
+        "init": [
+          {
+            "name": "llm_serving",
+            "default": null,
+            "kind": "POSITIONAL_OR_KEYWORD"
+          }
+        ],
+        "run": [
+          {
+            "name": "storage",
+            "default": null,
+            "kind": "POSITIONAL_OR_KEYWORD"
+          },
+          {
+            "name": "input_key",
+            "default": "text",
+            "kind": "POSITIONAL_OR_KEYWORD"
+          },
+          {
+            "name": "output_question_key",
+            "default": "question",
+            "kind": "POSITIONAL_OR_KEYWORD"
+          },
+          {
+            "name": "output_scenario_key",
+            "default": "scenario",
+            "kind": "POSITIONAL_OR_KEYWORD"
+          },
+          {
+            "name": "max_attempts",
+            "default": 3,
+            "kind": "POSITIONAL_OR_KEYWORD"
+          }
+        ]
+      },
+      "required": "",
+      "depends_on": [],
+      "mode": ""
+    },
+    {
+      "node": 102,
+      "name": "BM25HardNeg",
+      "description": "RAREPipeline: BM25HardNeg 算子使用 BM25 算法为给定查询挖掘困难负样本。\n\n输入参数：\n- input_question_key: 包含查询的字段名。\n- input_text_key: 包含正面文档的字段名。\n- output_negatives_key: 用于存储挖掘出的困难负样本列表的字段名。\n- num_neg: 每个查询需要挖掘的困难负样本数量。\n",
+      "parameter": {
+        "init": [],
+        "run": [
+          {
+            "name": "storage",
+            "default": null,
+            "kind": "POSITIONAL_OR_KEYWORD"
+          },
+          {
+            "name": "input_question_key",
+            "default": "question",
+            "kind": "POSITIONAL_OR_KEYWORD"
+          },
+          {
+            "name": "input_text_key",
+            "default": "text",
+            "kind": "POSITIONAL_OR_KEYWORD"
+          },
+          {
+            "name": "output_negatives_key",
+            "default": "hard_negatives",
+            "kind": "POSITIONAL_OR_KEYWORD"
+          },
+          {
+            "name": "num_neg",
+            "default": 3,
+            "kind": "POSITIONAL_OR_KEYWORD"
+          }
+        ]
+      },
+      "required": "",
+      "depends_on": [],
+      "mode": ""
+    },
+    {
+      "node": 103,
+      "name": "ReasonDistill",
+      "description": "RAREPipeline: ReasonDistill 算子通过组合正负示例文档，提示大语言模型生成详细的推理过程。\n\n输入参数：\n- input_text_key: 包含正面文档的字段名。\n- input_question_key: 包含问题的字段名。\n- input_scenario_key: 包含情景的字段名。\n- input_hardneg_key: 包含困难负样本列表的字段名。\n- output_key: 用于存储生成推理过程的字段名。\n",
+      "parameter": {
+        "init": [
+          {
+            "name": "llm_serving",
+            "default": null,
+            "kind": "POSITIONAL_OR_KEYWORD"
+          }
+        ],
+        "run": [
+          {
+            "name": "storage",
+            "default": null,
+            "kind": "POSITIONAL_OR_KEYWORD"
+          },
+          {
+            "name": "input_text_key",
+            "default": "text",
+            "kind": "POSITIONAL_OR_KEYWORD"
+          },
+          {
+            "name": "input_question_key",
+            "default": "question",
+            "kind": "POSITIONAL_OR_KEYWORD"
+          },
+          {
+            "name": "input_scenario_key",
+            "default": "scenario",
+            "kind": "POSITIONAL_OR_KEYWORD"
+          },
+          {
+            "name": "input_hardneg_key",
+            "default": "hard_negatives",
+            "kind": "POSITIONAL_OR_KEYWORD"
+          },
+          {
+            "name": "output_key",
+            "default": "reasoning",
+            "kind": "POSITIONAL_OR_KEYWORD"
+          }
+        ]
+      },
+      "required": "",
+      "depends_on": [],
+      "mode": ""
+    }
+  ],
+  "reasoning": [
+    {
+      "node": 104,
+      "name": "ReasoningAnswerGenerator",
+      "description": "该算子用于为给定问题生成答案，调用大语言模型进行推理。\n输入参数：\n- llm_serving：LLM服务实例，用于生成答案\n- prompt_template：提示模板对象，用于构建生成提示词\n输出参数：\n- output_key：生成的答案字段，默认'generated_cot'",
+      "parameter": {
+        "init": [
+          {
+            "name": "llm_serving",
+            "default": null,
+            "kind": "POSITIONAL_OR_KEYWORD"
+          },
+          {
+            "name": "prompt_template",
+            "default": null,
+            "kind": "POSITIONAL_OR_KEYWORD"
+          }
+        ],
+        "run": [
+          {
+            "name": "storage",
+            "default": null,
+            "kind": "POSITIONAL_OR_KEYWORD"
+          },
+          {
+            "name": "input_key",
+            "default": "instruction",
+            "kind": "POSITIONAL_OR_KEYWORD"
+          },
+          {
+            "name": "output_key",
+            "default": "generated_cot",
+            "kind": "POSITIONAL_OR_KEYWORD"
+          }
+        ]
+      },
+      "required": "",
+      "depends_on": [],
+      "mode": ""
+    },
+    {
+      "node": 105,
+      "name": "ReasoningQuestionGenerator",
+      "description": "该算子用于基于现有问题生成新问题。\n输入参数：\n- num_prompts：生成问题的数量，整数，范围1-5（含），默认1\n- llm_serving：LLM服务实例，用于生成问题\n- prompt_template：提示模板对象，用于构建生成提示词\n输出参数：\n- 原始输入列（由input_key指定）：新增生成的问题\n- Synth_or_Input：标识问题来源，'input'表示原始问题，'synth'表示生成的新问题",
+      "parameter": {
+        "init": [
+          {
+            "name": "num_prompts",
+            "default": 1,
+            "kind": "POSITIONAL_OR_KEYWORD"
+          },
+          {
+            "name": "llm_serving",
+            "default": null,
+            "kind": "POSITIONAL_OR_KEYWORD"
+          },
+          {
+            "name": "prompt_template",
+            "default": null,
+            "kind": "POSITIONAL_OR_KEYWORD"
+          }
+        ],
+        "run": [
+          {
+            "name": "storage",
+            "default": null,
+            "kind": "POSITIONAL_OR_KEYWORD"
+          },
+          {
+            "name": "input_key",
+            "default": null,
+            "kind": "POSITIONAL_OR_KEYWORD"
+          },
+          {
+            "name": "output_synth_or_input_flag",
+            "default": "Synth_or_Input",
+            "kind": "POSITIONAL_OR_KEYWORD"
+          }
+        ]
+      },
+      "required": "",
+      "depends_on": [],
+      "mode": ""
+    },
+    {
+      "node": 106,
+      "name": "ReasoningAnswerExtractionQwenMathEvalGenerator",
+      "description": "该算子用于从数学问题回答中提取规范化答案表达式，进行字符串清洗、单位处理和格式标准化。\n\n输入参数：\n- input_key：输入数据字段名\n- answer_key：原始答案字段名\n- output_key：处理后的答案字段名\n- unit_texts：需要过滤的单位文本列表\n\n输出参数：\n- output_key：标准化后的数学表达式字段",
+      "parameter": {
+        "init": [
+          {
+            "name": "dataset_name",
+            "default": null,
+            "kind": "POSITIONAL_OR_KEYWORD"
+          }
+        ],
+        "run": [
+          {
+            "name": "storage",
+            "default": null,
+            "kind": "POSITIONAL_OR_KEYWORD"
+          },
+          {
+            "name": "response_key",
+            "default": "pseudo_correct_solution_example",
+            "kind": "POSITIONAL_OR_KEYWORD"
+          },
+          {
+            "name": "extraction_key",
+            "default": "extraction",
+            "kind": "POSITIONAL_OR_KEYWORD"
+          }
+        ]
+      },
+      "required": "",
+      "depends_on": [],
+      "mode": ""
+    },
+    {
+      "node": 107,
+      "name": "ReasoningPseudoAnswerGenerator",
+      "description": "该算子生成多个候选答案并通过统计选择最优解，实现伪答案生成。\n\n输入参数：\n- input_file：输入文件路径\n- output_file：输出文件路径\n- max_times：最大生成次数\n- selection_mode：统计选择模式（frequency/consistency）\n\n输出参数：\n- final_answer：最终选择答案字段\n- candidate_answers：候选答案列表字段",
+      "parameter": {
+        "init": [
+          {
+            "name": "llm_serving",
+            "default": null,
+            "kind": "POSITIONAL_OR_KEYWORD"
+          },
+          {
+            "name": "max_times",
+            "default": 3,
+            "kind": "POSITIONAL_OR_KEYWORD"
+          }
+        ],
+        "run": [
+          {
+            "name": "storage",
+            "default": null,
+            "kind": "POSITIONAL_OR_KEYWORD"
+          },
+          {
+            "name": "input_key",
+            "default": "instruction",
+            "kind": "POSITIONAL_OR_KEYWORD"
+          },
+          {
+            "name": "output_key_answer",
+            "default": "pseudo_answers",
+            "kind": "POSITIONAL_OR_KEYWORD"
+          },
+          {
+            "name": "output_key_answer_value",
+            "default": "pseudo_answer_value",
+            "kind": "POSITIONAL_OR_KEYWORD"
+          },
+          {
+            "name": "output_key_solutions",
+            "default": "pseudo_solutions",
+            "kind": "POSITIONAL_OR_KEYWORD"
+          },
+          {
+            "name": "output_key_correct_solution_example",
+            "default": "pseudo_correct_solution_example",
+            "kind": "POSITIONAL_OR_KEYWORD"
+          }
+        ]
+      },
+      "required": "",
+      "depends_on": [],
+      "mode": ""
+    },
+    {
+      "node": 108,
+      "name": "ReasoningPretrainFormatConvertGenerator",
+      "description": "该算子用于将SFT格式数据转换为预训练格式。\n\n输入参数：\n- read_key_question：问题字段名\n- read_key_answer：答案字段名\n- output_key：输出文本字段名\n\n输出参数：\n- output_key：输出文本字段名，包含问题和答案的拼接结果\n- 输出文件：转换后的预训练格式数据文件路径",
+      "parameter": {
+        "init": [],
+        "run": [
+          {
+            "name": "storage",
+            "default": null,
+            "kind": "POSITIONAL_OR_KEYWORD"
+          },
+          {
+            "name": "input_read_key_question",
+            "default": "question",
+            "kind": "POSITIONAL_OR_KEYWORD"
+          },
+          {
+            "name": "input_read_key_answer",
+            "default": "answer",
+            "kind": "POSITIONAL_OR_KEYWORD"
+          },
+          {
+            "name": "output_key",
+            "default": "text",
+            "kind": "POSITIONAL_OR_KEYWORD"
+          }
+        ]
+      },
+      "required": "",
+      "depends_on": [],
+      "mode": ""
+    },
+    {
+      "node": 109,
+      "name": "ReasoningCategoryDatasetEvaluator",
+      "description": "该算子用于统计数据集中的类别信息，包括主类别和次类别的分布情况。它计算每个类别的样本数量，并返回类别分布的统计结果。\n输入参数：\n- input_primary_category_key：主类别字段名，默认为'primary_category'\n- input_secondary_category_key：次类别字段名，默认为'secondary_category'\n输出参数：\n- 返回包含类别统计信息的字典，主类别作为键，值为包含该类别样本数量和次类别分布的字典",
+      "parameter": {
+        "init": [],
+        "run": [
+          {
+            "name": "storage",
+            "default": null,
+            "kind": "POSITIONAL_OR_KEYWORD"
+          },
+          {
+            "name": "input_primary_category_key",
+            "default": "primary_category",
+            "kind": "POSITIONAL_OR_KEYWORD"
+          },
+          {
+            "name": "input_secondary_category_key",
+            "default": "secondary_category",
+            "kind": "POSITIONAL_OR_KEYWORD"
+          }
+        ]
+      },
+      "required": "",
+      "depends_on": [],
+      "mode": ""
+    },
+    {
+      "node": 110,
+      "name": "ReasoningDifficultyDatasetEvaluator",
+      "description": "该算子用于统计数据集中的难度信息，计算不同难度级别的样本数量分布。它统计每个难度级别的样本数量，并返回难度分布的统计结果。\n输入参数：\n- input_diffulty_key：难度分数字段名，默认为'difficulty_score'\n输出参数：\n- 返回包含难度统计信息的字典，难度级别作为键，值为该难度级别的样本数量",
+      "parameter": {
+        "init": [],
+        "run": [
+          {
+            "name": "storage",
+            "default": null,
+            "kind": "POSITIONAL_OR_KEYWORD"
+          },
+          {
+            "name": "input_diffulty_key",
+            "default": "difficulty_score",
+            "kind": "POSITIONAL_OR_KEYWORD"
+          }
+        ]
+      },
+      "required": "",
+      "depends_on": [],
+      "mode": ""
+    },
+    {
+      "node": 111,
+      "name": "ReasoningTokenDatasetEvaluator",
+      "description": "该算子用于统计数据集中问题和回答的token信息，包括token数量的最小值、最大值、平均值和中位数等统计指标。它使用指定的tokenizer对文本进行编码，并计算token长度的分布情况。\n输入参数：\n- input_question_key：问题文本字段名\n- input_answer_key：回答文本字段名\n- model_name_or_path：tokenizer模型名称或路径\n输出参数：\n- 返回包含token统计信息的字典，包括问题和回答的token数量的零值计数、最小值、最大值、平均值和中位数",
+      "parameter": {
+        "init": [],
+        "run": [
+          {
+            "name": "storage",
+            "default": null,
+            "kind": "POSITIONAL_OR_KEYWORD"
+          },
+          {
+            "name": "input_question_key",
+            "default": null,
+            "kind": "POSITIONAL_OR_KEYWORD"
+          },
+          {
+            "name": "input_answer_key",
+            "default": null,
+            "kind": "POSITIONAL_OR_KEYWORD"
+          },
+          {
+            "name": "model_name_or_path",
+            "default": null,
+            "kind": "POSITIONAL_OR_KEYWORD"
+          }
+        ]
+      },
+      "required": "",
+      "depends_on": [],
+      "mode": ""
+    },
+    {
+      "node": 112,
+      "name": "ReasoningQuestionCategorySampleEvaluator",
+      "description": "该算子用于对用户问题进行多级分类（主分类和子分类）。通过大语言模型对输入问题进行语义分析，输出分类编码结果。\n\n输入参数：\n- db_port/db_name/table_name：数据库连接参数（存储模式）\n- input_file/output_file：文件路径（文件模式）\n- input_key：输入数据中问题字段的键名\n- generator_type：模型调用方式（aisuite/request）\n\n输出参数：\n- classification_result：包含主分类和子分类的编码结果",
+      "parameter": {
+        "init": [
+          {
+            "name": "llm_serving",
+            "default": null,
+            "kind": "POSITIONAL_OR_KEYWORD"
+          }
+        ],
+        "run": [
+          {
+            "name": "storage",
+            "default": null,
+            "kind": "POSITIONAL_OR_KEYWORD"
+          },
+          {
+            "name": "input_key",
+            "default": "instruction",
+            "kind": "POSITIONAL_OR_KEYWORD"
+          },
+          {
+            "name": "output_key",
+            "default": "question_category",
+            "kind": "POSITIONAL_OR_KEYWORD"
+          }
+        ]
+      },
+      "required": "",
+      "depends_on": [],
+      "mode": ""
+    },
+    {
+      "node": 113,
+      "name": "ReasoningQuestionDifficultySampleEvaluator",
+      "description": "该算子用于评估问题的难度等级。通过大语言模型分析问题复杂度，输出1-10级的难度评分。\n\n输入参数：\n- eval_stage：评估阶段标识\n- read_min/max_score：分数过滤阈值\n- 其他参数同ReasoningCategoryDatasetEvaluator\n\n输出参数：\n- difficulty_score：数值型难度评分（1-10）",
+      "parameter": {
+        "init": [
+          {
+            "name": "llm_serving",
+            "default": null,
+            "kind": "POSITIONAL_OR_KEYWORD"
+          }
+        ],
+        "run": [
+          {
+            "name": "storage",
+            "default": null,
+            "kind": "POSITIONAL_OR_KEYWORD"
+          },
+          {
+            "name": "input_key",
+            "default": null,
+            "kind": "POSITIONAL_OR_KEYWORD"
+          },
+          {
+            "name": "output_key",
+            "default": "difficulty_score",
+            "kind": "POSITIONAL_OR_KEYWORD"
+          }
+        ]
+      },
+      "required": "",
+      "depends_on": [],
+      "mode": ""
+    },
+    {
+      "node": 114,
+      "name": "ReasoningAnswerFormatterFilter",
+      "description": "该算子用于检查答案格式是否符合规范，主要验证数学答案是否包含正确的\\boxed{}标记。\n\n输入参数：\n- input_key：输入字段名\n- result_key：结果字段名\n\n输出参数：\n- 通过格式检查返回1，否则返回0",
+      "parameter": {
+        "init": [],
+        "run": [
+          {
+            "name": "storage",
+            "default": null,
+            "kind": "POSITIONAL_OR_KEYWORD"
+          },
+          {
+            "name": "input_key",
+            "default": "generated_cot",
+            "kind": "POSITIONAL_OR_KEYWORD"
+          }
+        ]
+      },
+      "required": "",
+      "depends_on": [],
+      "mode": ""
+    },
+    {
+      "node": 115,
+      "name": "ReasoningAnswerGroundTruthFilter",
+      "description": "该算子用于对比预测答案与标准答案的匹配度，支持精确匹配和数学验证两种方式。\n\n输入参数：\n- input_test_answer_key：预测答案字段名\n- input_gt_answer_key：标准答案字段名\n- compare_method：比较方法（exact/math_verify）\n\n输出参数：\n- 匹配成功返回1，否则返回0",
+      "parameter": {
+        "init": [
+          {
+            "name": "compare_method",
+            "default": "math_verify",
+            "kind": "POSITIONAL_OR_KEYWORD"
+          }
+        ],
+        "run": [
+          {
+            "name": "storage",
+            "default": null,
+            "kind": "POSITIONAL_OR_KEYWORD"
+          },
+          {
+            "name": "input_test_answer_key",
+            "default": "generated_cot",
+            "kind": "POSITIONAL_OR_KEYWORD"
+          },
+          {
+            "name": "input_gt_answer_key",
+            "default": "golden_answer",
+            "kind": "POSITIONAL_OR_KEYWORD"
+          }
+        ]
+      },
+      "required": "",
+      "depends_on": [],
+      "mode": ""
+    },
+    {
+      "node": 116,
+      "name": "ReasoningAnswerJudgeMathVerifyFilter",
+      "description": "该算子通过符号计算验证答案正确性，执行数学表达式解析和等价性验证。\n\n输入参数：\n- answer_key：待验证答案字段名\n- gt_key：标准答案字段名\n- tolerance：数值容差阈值\n- symbolic_check：是否启用符号验证\n\n输出参数：\n- result_key：验证结果字段（True/False）",
+      "parameter": {
+        "init": [
+          {
+            "name": "config",
+            "default": null,
+            "kind": "POSITIONAL_OR_KEYWORD"
+          }
+        ],
+        "run": [
+          {
+            "name": "storage",
+            "default": null,
+            "kind": "POSITIONAL_OR_KEYWORD"
+          },
+          {
+            "name": "input_key",
+            "default": "instruction",
+            "kind": "POSITIONAL_OR_KEYWORD"
+          },
+          {
+            "name": "answer_key",
+            "default": "student_answer",
+            "kind": "POSITIONAL_OR_KEYWORD"
+          },
+          {
+            "name": "gt_key",
+            "default": "correct_answer",
+            "kind": "POSITIONAL_OR_KEYWORD"
+          },
+          {
+            "name": "result_key",
+            "default": "result",
+            "kind": "POSITIONAL_OR_KEYWORD"
+          }
+        ]
+      },
+      "required": "",
+      "depends_on": [],
+      "mode": ""
+    },
+    {
+      "node": 117,
+      "name": "ReasoningAnswerNgramFilter",
+      "description": "该算子基于n-gram重复率过滤答案，检测回答中的重复模式。\n\n输入参数：\n- min_score：最小可接受分数\n- max_score：最大可接受分数\n- ngrams：n-gram大小\n\n输出参数：\n- 分数在范围内返回1，否则返回0",
+      "parameter": {
+        "init": [
+          {
+            "name": "min_score",
+            "default": 0.1,
+            "kind": "POSITIONAL_OR_KEYWORD"
+          },
+          {
+            "name": "max_score",
+            "default": 1.0,
+            "kind": "POSITIONAL_OR_KEYWORD"
+          },
+          {
+            "name": "ngrams",
+            "default": 5,
+            "kind": "POSITIONAL_OR_KEYWORD"
+          }
+        ],
+        "run": [
+          {
+            "name": "storage",
+            "default": null,
+            "kind": "POSITIONAL_OR_KEYWORD"
+          },
+          {
+            "name": "input_question_key",
+            "default": "instruction",
+            "kind": "POSITIONAL_OR_KEYWORD"
+          },
+          {
+            "name": "input_answer_key",
+            "default": "generated_cot",
+            "kind": "POSITIONAL_OR_KEYWORD"
+          }
+        ]
+      },
+      "required": "",
+      "depends_on": [],
+      "mode": ""
+    },
+    {
+      "node": 118,
+      "name": "ReasoningAnswerPipelineRootFilter",
+      "description": "答案处理流程根节点，负责将输入数据根据有无真实标签GT分发到不同处理分支。\n\n输入参数：\n- input_file：输入文件路径\n- output_dir：输出目录路径\n- branch_config：分支配置参数\n- parallel_workers：并行工作线程数\n\n输出参数：\n- 多个输出文件路径（根据分支配置生成）",
+      "parameter": {
+        "init": [],
+        "run": [
+          {
+            "name": "storage",
+            "default": null,
+            "kind": "POSITIONAL_OR_KEYWORD"
+          },
+          {
+            "name": "input_answer_key",
+            "default": "output",
+            "kind": "POSITIONAL_OR_KEYWORD"
+          },
+          {
+            "name": "input_gt_key",
+            "default": "golden_answer",
+            "kind": "POSITIONAL_OR_KEYWORD"
+          }
+        ]
+      },
+      "required": "",
+      "depends_on": [],
+      "mode": ""
+    },
+    {
+      "node": 119,
+      "name": "ReasoningAnswerTokenLengthFilter",
+      "description": "该算子根据token数量过滤过长的答案。\n\n输入参数：\n- max_answer_token_length：最大token数\n- tokenizer_dir：分词器路径\n- read_min/max_score：分数范围\n\n输出参数：\n- 长度合规返回1，否则返回0",
+      "parameter": {
+        "init": [
+          {
+            "name": "max_answer_token_length",
+            "default": 8192,
+            "kind": "POSITIONAL_OR_KEYWORD"
+          },
+          {
+            "name": "tokenizer_dir",
+            "default": "Qwen/Qwen2.5-0.5B-Instruct",
+            "kind": "POSITIONAL_OR_KEYWORD"
+          }
+        ],
+        "run": [
+          {
+            "name": "storage",
+            "default": null,
+            "kind": "POSITIONAL_OR_KEYWORD"
+          },
+          {
+            "name": "input_key",
+            "default": "generated_cot",
+            "kind": "POSITIONAL_OR_KEYWORD"
+          }
+        ]
+      },
+      "required": "",
+      "depends_on": [],
+      "mode": ""
+    },
+    {
+      "node": 120,
+      "name": "ReasoningQuestionFilter",
+      "description": "该算子用于对问题进行正确性检查，包括格式是否规范、语义是否合理、条件是否矛盾以及是否具备充分信息可解。调用大语言模型依次执行四阶段判断，最终返回每个问题是否合格的二分类结果（保留合格样本）。\n输入参数：\n- system_prompt：系统提示词，用于定义模型行为\n- llm_serving：LLM服务对象，需实现LLMServingABC接口\n- prompt_template：提示模板对象，用于构建检查提示词\n- input_key：输入问题字段名，默认为'math_problem'\n输出参数：\n- 过滤后的DataFrame，仅保留判断结果为True的行\n- 返回包含输入字段名的列表，用于后续算子引用",
+      "parameter": {
+        "init": [
+          {
+            "name": "system_prompt",
+            "default": "You are a helpful assistant.",
+            "kind": "POSITIONAL_OR_KEYWORD"
+          },
+          {
+            "name": "llm_serving",
+            "default": null,
+            "kind": "POSITIONAL_OR_KEYWORD"
+          },
+          {
+            "name": "prompt_template",
+            "default": 
