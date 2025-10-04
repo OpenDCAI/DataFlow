@@ -13,7 +13,6 @@ from dataflow.operators.general_text import (
     MeanWordLengthFilter,
     SymbolWordRatioFilter,
     HtmlEntityFilter,
-    IDCardFilter,
     NoPuncFilter,
     SpecialCharacterFilter,
     WatermarkFilter,
@@ -30,8 +29,7 @@ from dataflow.operators.text_pt import (
 )
 from dataflow.operators.text_sft import (
     SuperfilteringFilter,
-    DeitaQualityFilter,
-    InstagFilter,
+    DeitaQualityFilter
 )
 from dataflow.operators.text_sft import SFTGeneratorSeed
 from dataflow.serving import LocalModelLLMServing_vllm, LocalModelLLMServing_sglang
@@ -75,7 +73,6 @@ class SFTTextSynthetic_GPUPipeline():
         self.mean_word_length_filter = MeanWordLengthFilter(min_length=3, max_length=10)
         self.symbol_word_ratio_filter = SymbolWordRatioFilter(threshold=0.4)
         self.html_entity_filter = HtmlEntityFilter()
-        self.id_card_filter = IDCardFilter(threshold=3)
         self.no_punc_filter = NoPuncFilter(threshold=112)
         self.special_character_filter = SpecialCharacterFilter()
         self.watermark_filter = WatermarkFilter(watermarks=['Copyright', 'Watermark', 'Confidential'])
@@ -107,16 +104,6 @@ class SFTTextSynthetic_GPUPipeline():
         )
 
     def forward(self):
-        # Initial filters
-        self.language_filter.run(
-            storage = self.storage.step(),
-            input_key = "raw_content"
-        )
-        # refiners
-        self.remove_extra_spaces_refiner.run(
-            storage=self.storage.step(),
-            input_key="raw_content"
-        )
         self.remove_emoji_refiner.run(
             storage=self.storage.step(),
             input_key="raw_content"
@@ -125,10 +112,9 @@ class SFTTextSynthetic_GPUPipeline():
             storage=self.storage.step(),
             input_key="raw_content"
         )
-        self.minhash_deduplicator.run(
-            storage = self.storage.step(),
-            input_key='raw_content',
-            output_key='minhash_deduplicated_label',
+        self.remove_extra_spaces_refiner.run(
+            storage=self.storage.step(),
+            input_key="raw_content"
         )
         self.blocklist_filter.run(
             storage = self.storage.step(),
@@ -164,10 +150,6 @@ class SFTTextSynthetic_GPUPipeline():
             input_key='raw_content',
         )
         self.html_entity_filter.run(
-            storage = self.storage.step(),
-            input_key='raw_content',
-        )
-        self.id_card_filter.run(
             storage = self.storage.step(),
             input_key='raw_content',
         )
@@ -214,6 +196,15 @@ class SFTTextSynthetic_GPUPipeline():
         self.quality_filter.run(
             storage = self.storage.step(),
             input_key='raw_content',
+        )
+        self.language_filter.run(
+            storage = self.storage.step(),
+            input_key = "raw_content"
+        )
+        self.minhash_deduplicator.run(
+            storage = self.storage.step(),
+            input_key='raw_content',
+            output_key='minhash_deduplicated_label',
         )
         self.sft_generator.run(
             storage=self.storage.step(),
