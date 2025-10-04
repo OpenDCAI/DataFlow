@@ -1132,6 +1132,17 @@ class CondorPrompt:
                 "Military Exercises": ["Exercise Types", "Exercise Scale", "Exercise Objectives"]
             }
         }
+        
+        # 任务类型（增强场景多样性，参考论文中的常见交互场景）
+        self.task_types = [
+            "Daily Conversation",
+            "Creative Task",
+            "Role Playing",
+            "Problem Solving",
+            "Educational Explanation",
+            "Emotional Support",
+            "Information Retrieval"
+        ]
     
     def get_question_prompt(self, theme, domain):
         """
@@ -1166,6 +1177,40 @@ question.\\
 \quad \\
 
 Now it's your turn. Please provide the three Questions of different difficulty levels you created about the theme of {theme} for {domain}, according to the requirements.
+"""
+        return prompt
+
+    def get_single_question_prompt(self, theme, domain, task_type=None, difficulty=None, include_theme=True):
+        """
+        生成仅 1 个问题的提示，支持指定任务场景与难度要求。
+
+        - include_theme: 要求在问题中自然融入或点明主题，从而降低重复度
+        - task_type: 指定场景（如日常对话、创作、角色扮演等），提升多样性
+        - difficulty: 可为 "Easy" | "Medium" | "Hard"，用于控制复杂度
+        """
+        difficulty_line = ""
+        if difficulty in ("Easy", "Medium", "Hard"):
+            difficulty_line = f"The question should reflect a {difficulty} difficulty level in terms of context depth and reasoning complexity.\\n"
+
+        theme_line = ""
+        if include_theme:
+            theme_line = f"The question must explicitly and naturally incorporate the theme \"{theme}\".\\n"
+
+        task_line = ""
+        if task_type:
+            task_line = f"You are asked to generate the question under the scenario of: {task_type}.\\n"
+
+        prompt = f"""
+Now we need to create high-quality SFT data for LLM training. You ONLY need to create ONE Question.
+I will give you a domain and a theme. Please generate EXACTLY ONE well-formed question that:
+1) Belongs to the domain of {domain} and aligns with the theme of {theme}.
+2) Has sufficient background/context and is not abrupt.
+{theme_line}{task_line}{difficulty_line}
+Your reply must strictly follow the format below. The question must be wrapped between markers:
+
+[Question Start]Question[Question End]
+
+Now it's your turn. Please provide ONE Question about the theme of {theme} for {domain}, according to the requirements.
 """
         return prompt
     
