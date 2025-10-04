@@ -10,7 +10,6 @@ from dataflow.operators.general_text import (
     MeanWordLengthFilter,
     SymbolWordRatioFilter,
     HtmlEntityFilter,
-    IDCardFilter,
     NoPuncFilter,
     SpecialCharacterFilter,
     WatermarkFilter,
@@ -54,7 +53,6 @@ class PTTextFilter_GPUPipeline():
         self.mean_word_length_filter = MeanWordLengthFilter(min_length=3, max_length=10)
         self.symbol_word_ratio_filter = SymbolWordRatioFilter(threshold=0.4)
         self.html_entity_filter = HtmlEntityFilter()
-        self.id_card_filter = IDCardFilter(threshold=3)
         self.no_punc_filter = NoPuncFilter(threshold=112)
         self.special_character_filter = SpecialCharacterFilter()
         self.watermark_filter = WatermarkFilter(watermarks=['Copyright', 'Watermark', 'Confidential'])
@@ -65,115 +63,110 @@ class PTTextFilter_GPUPipeline():
         self.char_number_filter = CharNumberFilter(threshold=100)
         self.line_start_with_bulletpoint_filter = LineStartWithBulletpointFilter(threshold=0.9)
         self.line_with_javascript_filter = LineWithJavascriptFilter(threshold=3)
-        self.quality_filter = PairQualFilter(min_score=0, max_score=10000, lang='en')
+        self.quality_filter = PairQualFilter(min_score=2, max_score=10000, lang='en')
     
     def forward(self):
-        # Initial filters
-        self.language_filter.run(
-            storage = self.storage.step(),
-            input_key = "raw_content"
-        )
-        # refiners
-        self.remove_extra_spaces_refiner.run(
-            storage=self.storage.step(),
-            input_key="raw_content"
-        )
         self.remove_emoji_refiner.run(
             storage=self.storage.step(),
-            input_key="raw_content"
+            input_key="text"
         )
         self.html_remove_refiner.run(
             storage=self.storage.step(),
-            input_key="raw_content"
+            input_key="text"
         )
-        self.minhash_deduplicator.run(
-            storage = self.storage.step(),
-            input_key='raw_content',
+        self.remove_extra_spaces_refiner.run(
+            storage=self.storage.step(),
+            input_key="text"
         )
         self.blocklist_filter.run(
             storage = self.storage.step(),
-            input_key='raw_content',
+            input_key='text',
         )
         self.word_number_filter.run(
             storage = self.storage.step(),
-            input_key='raw_content',
+            input_key='text',
         )
         self.colon_end_filter.run(
             storage = self.storage.step(),
-            input_key = 'raw_content'
+            input_key = 'text'
         )
         self.sentence_number_filter.run(
             storage = self.storage.step(),
-            input_key = 'raw_content'
+            input_key = 'text'
         )
         self.line_end_with_ellipsis_filter.run(
             storage = self.storage.step(),
-            input_key = 'raw_content'
+            input_key = 'text'
         )
         self.content_null_filter.run(
             storage = self.storage.step(),
-            input_key='raw_content',
+            input_key='text',
         )
         self.mean_word_length_filter.run(
             storage = self.storage.step(),
-            input_key='raw_content',
+            input_key='text',
         )
         self.symbol_word_ratio_filter.run(
             storage = self.storage.step(),
-            input_key='raw_content',
+            input_key='text',
         )
         self.html_entity_filter.run(
             storage = self.storage.step(),
-            input_key='raw_content',
-        )
-        self.id_card_filter.run(
-            storage = self.storage.step(),
-            input_key='raw_content',
+            input_key='text',
         )
         self.no_punc_filter.run(
             storage = self.storage.step(),
-            input_key='raw_content',
+            input_key='text',
         )
         self.special_character_filter.run(
             storage = self.storage.step(),
-            input_key='raw_content',
+            input_key='text',
         )
         self.watermark_filter.run(
             storage = self.storage.step(),
-            input_key='raw_content',
+            input_key='text',
         )
         self.curly_bracket_filter.run(
             storage = self.storage.step(),
-            input_key='raw_content',
+            input_key='text',
         )
         self.capital_words_filter.run(
             storage = self.storage.step(),
-            input_key='raw_content',
+            input_key='text',
         )
         self.lorem_ipsum_filter.run(
             storage = self.storage.step(),
-            input_key='raw_content',
+            input_key='text',
         )
         self.unique_words_filter.run(
             storage = self.storage.step(),
-            input_key='raw_content',
+            input_key='text',
         )
         self.char_number_filter.run(
             storage = self.storage.step(),
-            input_key='raw_content',
+            input_key='text',
         )
         self.line_start_with_bulletpoint_filter.run(
             storage = self.storage.step(),
-            input_key='raw_content',
+            input_key='text',
         )
         self.line_with_javascript_filter.run(
             storage = self.storage.step(),
-            input_key='raw_content',
+            input_key='text',
         )
         self.quality_filter.run(
             storage = self.storage.step(),
-            input_key='raw_content',
+            input_key='text',
         )
+        self.language_filter.run(
+            storage = self.storage.step(),
+            input_key = "text"
+        )
+        self.minhash_deduplicator.run(
+            storage = self.storage.step(),
+            input_key='text',
+        )
+
 if __name__ == "__main__":
     # This is the entry point for the pipeline
     model = PTTextFilter_GPUPipeline()
