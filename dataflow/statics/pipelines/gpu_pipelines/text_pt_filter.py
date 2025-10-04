@@ -68,103 +68,103 @@ class PTTextFilter_GPUPipeline():
     def forward(self):
         self.remove_emoji_refiner.run(
             storage=self.storage.step(),
-            input_key="text"
+            input_key="raw_content"
         )
         self.html_remove_refiner.run(
             storage=self.storage.step(),
-            input_key="text"
+            input_key="raw_content"
         )
         self.remove_extra_spaces_refiner.run(
             storage=self.storage.step(),
-            input_key="text"
+            input_key="raw_content"
         )
         self.blocklist_filter.run(
             storage = self.storage.step(),
-            input_key='text',
+            input_key='raw_content',
         )
         self.word_number_filter.run(
             storage = self.storage.step(),
-            input_key='text',
+            input_key='raw_content',
         )
         self.colon_end_filter.run(
             storage = self.storage.step(),
-            input_key = 'text'
+            input_key = 'raw_content'
         )
         self.sentence_number_filter.run(
             storage = self.storage.step(),
-            input_key = 'text'
+            input_key = 'raw_content'
         )
         self.line_end_with_ellipsis_filter.run(
             storage = self.storage.step(),
-            input_key = 'text'
+            input_key = 'raw_content'
         )
         self.content_null_filter.run(
             storage = self.storage.step(),
-            input_key='text',
+            input_key='raw_content',
         )
         self.mean_word_length_filter.run(
             storage = self.storage.step(),
-            input_key='text',
+            input_key='raw_content',
         )
         self.symbol_word_ratio_filter.run(
             storage = self.storage.step(),
-            input_key='text',
+            input_key='raw_content',
         )
         self.html_entity_filter.run(
             storage = self.storage.step(),
-            input_key='text',
+            input_key='raw_content',
         )
         self.no_punc_filter.run(
             storage = self.storage.step(),
-            input_key='text',
+            input_key='raw_content',
         )
         self.special_character_filter.run(
             storage = self.storage.step(),
-            input_key='text',
+            input_key='raw_content',
         )
         self.watermark_filter.run(
             storage = self.storage.step(),
-            input_key='text',
+            input_key='raw_content',
         )
         self.curly_bracket_filter.run(
             storage = self.storage.step(),
-            input_key='text',
+            input_key='raw_content',
         )
         self.capital_words_filter.run(
             storage = self.storage.step(),
-            input_key='text',
+            input_key='raw_content',
         )
         self.lorem_ipsum_filter.run(
             storage = self.storage.step(),
-            input_key='text',
+            input_key='raw_content',
         )
         self.unique_words_filter.run(
             storage = self.storage.step(),
-            input_key='text',
+            input_key='raw_content',
         )
         self.char_number_filter.run(
             storage = self.storage.step(),
-            input_key='text',
+            input_key='raw_content',
         )
         self.line_start_with_bulletpoint_filter.run(
             storage = self.storage.step(),
-            input_key='text',
+            input_key='raw_content',
         )
         self.line_with_javascript_filter.run(
             storage = self.storage.step(),
-            input_key='text',
+            input_key='raw_content',
         )
         self.quality_filter.run(
             storage = self.storage.step(),
-            input_key='text',
+            input_key='raw_content',
         )
         self.language_filter.run(
             storage = self.storage.step(),
-            input_key = "text"
+            input_key = "raw_content"
         )
         self.minhash_deduplicator.run(
             storage = self.storage.step(),
-            input_key='text',
+            input_key='raw_content',
         )
 
 if __name__ == "__main__":
