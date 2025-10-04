@@ -3,20 +3,28 @@ from dataflow import get_logger
 from dataflow.core import OperatorABC
 from dataflow.utils.storage import DataFlowStorage
 from dataflow.core import LLMServingABC
+
+from dataflow.core.prompt import DIYPromptABC
 from dataflow.prompts.reasoning.math import MathQuestionFilterPrompt
+from dataflow.prompts.reasoning.general import GeneralQuestionFilterPrompt
+from dataflow.prompts.reasoning.diy import DiyQuestionFilterPrompt
+
+from dataflow.core.prompt import prompt_restrict
 
 import re
-
+@prompt_restrict(
+    MathQuestionFilterPrompt, 
+    GeneralQuestionFilterPrompt, 
+    DiyQuestionFilterPrompt
+)
 @OPERATOR_REGISTRY.register()
 class ReasoningQuestionFilter(OperatorABC):
     def __init__(self,
                  system_prompt: str = "You are a helpful assistant.",
                  llm_serving: LLMServingABC = None,
-                 prompt_template = None,
+                 prompt_template = MathQuestionFilterPrompt | GeneralQuestionFilterPrompt | DiyQuestionFilterPrompt | DIYPromptABC
                  ):
-
         self.logger = get_logger()
-        
         if prompt_template is None:
             prompt_template = MathQuestionFilterPrompt()
         self.prompt_template = prompt_template

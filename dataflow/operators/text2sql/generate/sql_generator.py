@@ -1,10 +1,7 @@
-import os
 import random
-from typing import Dict, List, Optional
-import numpy as np
 import pandas as pd
 import re
-from dataflow.prompts.text2sql import SQLGenerationPrompt
+from dataflow.prompts.text2sql import SelectSQLGeneratorPrompt
 from tqdm import tqdm
 from dataflow.utils.registry import OPERATOR_REGISTRY
 from dataflow import get_logger
@@ -19,18 +16,17 @@ class SQLGenerator(OperatorABC):
     def __init__(self, 
                  llm_serving: LLMServingABC, 
                  database_manager: DatabaseManager,
-                 generate_num: int = 300):
+                 generate_num: int = 300,
+                 prompt_template = None
+        ):
         self.llm_serving = llm_serving
         self.logger = get_logger()
         self.database_manager = database_manager
         self.generate_num = generate_num
-        self.prompt = SQLGenerationPrompt()
-        self.complexity2criterion = {
-            "Simple": self.prompt.simple_criterion,
-            "Moderate": self.prompt.moderate_criterion,
-            "Complex": self.prompt.complex_criterion, 
-            "Highly Complex": self.prompt.highly_complex_criterion
-        }
+        if prompt_template is None:
+            self.prompt_template = SelectSQLGeneratorPrompt()
+        else:
+            self.prompt_template = prompt_template
         random.seed(42)
 
     @staticmethod
@@ -52,12 +48,6 @@ class SQLGenerator(OperatorABC):
         else:
             return "SQL generator for Text2SQL tasks."
 
-    def obtain_db_schema(self, db_manager: DatabaseManager, db_id: str) -> tuple:
-        return db_manager.get_table_names_and_create_statements(db_id)
-
-    def obtain_insert_statements(self, db_manager: DatabaseManager, db_id: str, table_names: Optional[List[str]] = None) -> Dict[str, List[str]]:
-        return db_manager.get_insert_statements(db_id, table_names, limit=2)
-
     def parse_response(self, response):
         if not response:
             return ""  
@@ -78,61 +68,22 @@ class SQLGenerator(OperatorABC):
         self.output_sql_key = output_sql_key
         self.output_db_id_key = output_db_id_key
         raw_dataframe = storage.read("dataframe")
-        functions = self.prompt.sqlite_funcs()
         
         db_names = self.database_manager.list_databases()
         prompts = []
         self.logger.info(f"Generating {self.generate_num} SQLs for each database")
 
-        
         for db_name in tqdm(db_names, desc="Processing Databases"):
-            table_names, create_statements = self.obtain_db_schema(self.database_manager, db_name)
+            sum_generate_num = self.generate_num
+            create_statements, insert_statements = self.database_manager.get_create_statements_and_insert_statements(db_name)
 
-            if not table_names:
-                self.logger.warning(f"Database {db_name} has no tables")
-                continue
-
-            table_name2insert_statements = self.obtain_insert_statements(self.database_manager, db_name, table_names)
-
-            for _ in range(self.generate_num):
-                complexity = random.choice(["Simple", "Moderate", "Complex", "Highly Complex"])
-
-                insert_statements = []
-                for table_name in table_names:
-                    insert_statements.extend(table_name2insert_statements.get(table_name, []))
-
-                if len(insert_statements) == 0:
-                    db_value_prompt = ""
-                else:
-                    if len(insert_statements) > 4:
-                        insert_statements = random.sample(insert_statements, 4)
-                    db_value_prompt = self.prompt.insert_stmts_template(
-                        insert_statements="\n\n".join(insert_statements)
-                    )
-
-                function_num = random.randint(0, 2)
-                if function_num == 0:
-                    sql_function_prompt = "### SQL Functions\nYou can use any function supported by the database engine."
-                else:
-                    sql_funcs = ""
-                    sampled_functions = random.sample(functions, min(function_num, len(functions)))
-                    for idx, func in enumerate(sampled_functions):
-                        sql_funcs += f"Function {idx + 1}:\n{func.strip()}\n"
-                    sql_function_prompt = self.prompt.sql_func_template(sql_funcs=sql_funcs)
-
-                column_count = np.random.geometric(0.6, 1)[0]
-
-                prompt = self.prompt.sql_synthesis_prompt(
-                    schema_str="\n\n".join(create_statements),
-                    sql_function_prompt=sql_function_prompt.strip(),
-                    db_value_prompt=db_value_prompt.strip(),
-                    complexity=complexity,
-                    criterion=self.complexity2criterion[complexity].strip(),
-                    db_engine=self.database_manager.db_type,
-                    column_count=column_count
+            for _ in range(sum_generate_num):
+                prompt, _ = self.prompt_template.build_prompt(
+                    insert_statements=insert_statements,
+                    create_statements=create_statements,
+                    db_engine=self.database_manager.db_type
                 )
-
-                prompts.append({"prompt": prompt, "db_id": db_name, "complexity": complexity})
+                prompts.append({"prompt": prompt, "db_id": db_name})
             
         if not prompts:
             self.logger.warning("No prompts generated, please check the database path and file")

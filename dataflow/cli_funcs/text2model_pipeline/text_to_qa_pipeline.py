@@ -4,13 +4,19 @@ import argparse
 import os
 from pathlib import Path
 from dataflow.operators.knowledge_cleaning import (
-    CorpusTextSplitterBatch,
-    KnowledgeCleanerBatch,
-    MultiHopQAGeneratorBatch,
+    KBCChunkGeneratorBatch as CorpusTextSplitterBatch,
+    KBCTextCleanerBatch as KnowledgeCleanerBatch,
+    KBCMultiHopQAGeneratorBatch as MultiHopQAGeneratorBatch,
 )
+# from dataflow.operators.knowledge_cleaning import (
+#     CorpusTextSplitterBatch,
+#     KnowledgeCleanerBatch,
+#     MultiHopQAGeneratorBatch,
+# )
 from dataflow.utils.storage import FileStorage
 from dataflow.serving import LocalModelLLMServing_vllm
-
+os.environ['OMP_NUM_THREADS'] = '1'
+os.environ['ONNXRUNTIME_THREAD_AFFINITY'] = 'false'
 
 class Text2QAPipeline:
     def __init__(self, cache_base="./"):

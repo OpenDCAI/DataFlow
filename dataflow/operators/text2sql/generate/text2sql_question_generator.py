@@ -1,12 +1,10 @@
-import json
 import random
 import re
 import pandas as pd
 from tqdm import tqdm
 import numpy as np
 from scipy.spatial.distance import cdist
-
-from dataflow.prompts.text2sql import QuestionGenerationPrompt
+from dataflow.prompts.text2sql import Text2SQLQuestionGeneratorPrompt
 from dataflow.utils.registry import OPERATOR_REGISTRY
 from dataflow import get_logger
 from dataflow.core import OperatorABC, LLMServingABC
@@ -20,12 +18,17 @@ class Text2SQLQuestionGenerator(OperatorABC):
                 llm_serving: LLMServingABC, 
                 embedding_serving: LLMServingABC, 
                 database_manager: DatabaseManager, 
-                question_candidates_num: int = 5):
-
+                question_candidates_num: int = 5,
+                prompt_template = None
+                ):
+                
         self.llm_serving = llm_serving
         self.embedding_serving = embedding_serving
         self.database_manager = database_manager
-        self.prompt = QuestionGenerationPrompt()
+        if prompt_template is None:
+            self.prompt_template = Text2SQLQuestionGeneratorPrompt()
+        else:
+            self.prompt_template = prompt_template
         self.logger = get_logger()
         self.question_candidates_num = question_candidates_num
         random.seed(42)
@@ -102,16 +105,17 @@ class Text2SQLQuestionGenerator(OperatorABC):
             distance_sums = distance_matrix.sum(axis=1)
             min_index = np.argmin(distance_sums)
             return question_candidates[min_index]
-
+    
     def run(self, storage: DataFlowStorage,
             input_sql_key: str = "sql",
             input_db_id_key: str = "db_id",
-            output_question_key: str = "question"
+            output_question_key: str = "question",
+            output_evidence_key: str = "evidence"
         ):
         self.input_sql_key = input_sql_key
         self.input_db_id_key = input_db_id_key
         self.output_question_key = output_question_key
-        
+        self.output_evidence_key = output_evidence_key
         raw_dataframe = storage.read("dataframe")
         
         existing_data = []
@@ -126,13 +130,11 @@ class Text2SQLQuestionGenerator(OperatorABC):
         else:
             raw_data = [row.to_dict() for _, row in raw_dataframe.iterrows()]
         
-        styles = ["Formal", "Colloquial", "Imperative", "Interrogative", "Descriptive", "Concise", "Vague", "Metaphorical"]
         db_ids = list(set([data[self.input_db_id_key] for data in raw_data]))
         db_id2column_info = dict()
-        style2desc = self.prompt.get_style2desc()
         
         for db_id in tqdm(db_ids, desc="Extracting database schema"):
-            _, create_statements = self.database_manager.get_table_names_and_create_statements(db_id)
+            create_statements, _ = self.database_manager.get_create_statements_and_insert_statements(db_id)
             db_id2column_info[db_id] = self.extract_column_descriptions(create_statements)
         
         self.logger.info("Generating question candidates...")
@@ -140,39 +142,18 @@ class Text2SQLQuestionGenerator(OperatorABC):
         prompt_data_mapping = []
         
         for data in tqdm(raw_data, desc="Preparing prompts"):
-            style_name = random.sample(styles, 1)[0]
-            column_name2column_desc = db_id2column_info[data[self.input_db_id_key]]
-            used_column_name2column_desc = dict()
-            
-            for column_name, column_desc in column_name2column_desc.items():
-                if column_name.lower() in data[self.input_sql_key].lower():
-                    used_column_name2column_desc[column_name] = column_desc
-
-            if style_name in ["Vague", "Metaphorical"]:
-                steps = self.prompt.get_steps_w_ek()
-                guidelines = self.prompt.get_guidelines_w_ek()
-                instruction = self.prompt.get_instruction_w_ek()
-                output_format = self.prompt.get_output_format_w_ek()
-            else:
-                steps = self.prompt.get_steps_wo_ek()
-                guidelines = self.prompt.get_guidelines_wo_ek()
-                instruction = self.prompt.get_instruction_wo_ek()
-                output_format = self.prompt.get_output_format_wo_ek()
-
-            prompt = self.prompt.question_synthesis_prompt(
-                style_desc=style2desc[style_name].strip(),
-                engine=self.database_manager.db_type,
-                column_info=json.dumps(used_column_name2column_desc, indent=2, ensure_ascii=False).strip(),
-                sql=data[self.input_sql_key].strip(),
-                steps=steps.strip(),
-                guidelines=guidelines.strip(),
-                output_format=output_format.strip(),
-                instruction=instruction.strip()
+            prompt = self.prompt_template.build_prompt(
+                data[self.input_sql_key],
+                data[self.input_db_id_key],
+                db_id2column_info,
+                self.database_manager.db_type,
+                using_sqlite_vec = True,
+                extension="sqlite_vec and sqlite_lembed"
             )
             
             for _ in range(self.question_candidates_num):
                 prompts.append(prompt)
-                prompt_data_mapping.append({**data, "style": style_name})
+                prompt_data_mapping.append({**data})
 
         responses = self.llm_serving.generate_from_input(prompts, system_prompt="You are a helpful assistant.")
         
@@ -217,7 +198,8 @@ class Text2SQLQuestionGenerator(OperatorABC):
                 if best_question:
                     result = {
                         **data,
-                        self.output_question_key: best_question["question"]
+                        self.output_question_key: best_question["question"],
+                        self.output_evidence_key: best_question["external_knowledge"]
                     }
                     processed_results.append(result)
                 else:
@@ -239,8 +221,5 @@ class Text2SQLQuestionGenerator(OperatorABC):
         self.logger.info(f"Successfully processed: {len(processed_results)}")
         if failed_data:
             self.logger.warning(f"Failed to generate questions for: {len(failed_data)} entries")
-        
-        if self.output_question_key in raw_dataframe.columns:
-            return []
-        else:
-            return [self.output_question_key]
+
+        return [self.output_question_key, self.output_evidence_key]

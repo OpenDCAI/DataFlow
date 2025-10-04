@@ -1,3 +1,4 @@
+numpy<2.0.0
 datasets<=3.2
 scipy
 torch
@@ -29,7 +30,6 @@ sqlglot
 pymysql
 # general text
 fasttext-wheel
-kenlm
 langkit
 openai
 sentencepiece
@@ -69,4 +69,4 @@ librosa
 soundfile
 
 # map visualize
-# matplotlib
+# matplotlib - removed as no longer needed
