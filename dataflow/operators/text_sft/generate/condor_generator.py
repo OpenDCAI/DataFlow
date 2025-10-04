@@ -11,13 +11,14 @@ from dataflow.prompts.general_text import CondorPrompt
 
 @OPERATOR_REGISTRY.register()
 class CondorGenerator(OperatorABC):
-    def __init__(self, llm_serving: LLMServingABC = None, num_samples=15):
+    def __init__(self, llm_serving: LLMServingABC = None, num_samples=15, use_task_diversity=True):
         # Based on the existing topics, it is recommended to set num_samples below 5000. Otherwise, it is recommended to add topics in dataflow.prompts.general_text.CondorPrompt on your own to increase data richness
         self.logger = get_logger()
         self.logger.info(f'Initializing {self.__class__.__name__}...')
         self.llm_serving = llm_serving
-        self.num_questions = num_samples // 3
-        self.prompt = CondorPrompt() 
+        self.num_questions = num_samples // 3  # 每个prompt生成3个难度的问题
+        self.prompt = CondorPrompt()
+        self.use_task_diversity = use_task_diversity  # 是否使用任务场景增强多样性
         self.logger.info(f'{self.__class__.__name__} initialized.')
     
     @staticmethod
@@ -79,14 +80,37 @@ class CondorGenerator(OperatorABC):
     def run(self, storage: DataFlowStorage):
         # 生成所有的prompt
         prompts = []
+        prompt_metadata = []  # 记录每个prompt的元信息（用于后续追踪）
+        
         for _ in range(self.num_questions):
             # 每次随机选择topic, domain, theme
             topic = random.choice(list(self.prompt.tag.keys()))
             domain = random.choice(list(self.prompt.tag[topic].keys()))
             theme = random.choice(self.prompt.tag[topic][domain])
-            # 获取生成问题的prompt
+            
+            # 如果启用任务场景多样性，随机选择一个任务类型
+            task_type = None
+            if self.use_task_diversity:
+                task_type = random.choice(self.prompt.task_types)
+            
+            # 获取生成问题的prompt（保留原有的3难度生成逻辑）
             prompt = self.prompt.get_question_prompt(theme, domain)
+            
+            # 如果使用任务场景，在prompt中添加场景说明
+            if task_type:
+                prompt = f"""Task Scenario: {task_type}
+
+{prompt}
+
+Remember to frame the questions within the context of "{task_type}" scenario."""
+            
             prompts.append(prompt)
+            prompt_metadata.append({
+                'topic': topic,
+                'domain': domain, 
+                'theme': theme,
+                'task_type': task_type
+            })
 
         
         # 调用LLM一次性生成问题

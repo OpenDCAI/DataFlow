@@ -1132,6 +1132,17 @@ class CondorPrompt:
                 "Military Exercises": ["Exercise Types", "Exercise Scale", "Exercise Objectives"]
             }
         }
+        
+        # 任务类型（增强场景多样性，参考论文中的常见交互场景）
+        self.task_types = [
+            "Daily Conversation",
+            "Creative Task",
+            "Role Playing",
+            "Problem Solving",
+            "Educational Explanation",
+            "Emotional Support",
+            "Information Retrieval"
+        ]
     
     def get_question_prompt(self, theme, domain):
         """
@@ -1168,6 +1179,7 @@ question.\\
 Now it's your turn. Please provide the three Questions of different difficulty levels you created about the theme of {theme} for {domain}, according to the requirements.
 """
         return prompt
+
     
     def create_critique_prompt(self, question, answer):
         dialogue = [question, answer]
