@@ -1,6 +1,11 @@
 # dataflow/dataflowagent/toolkits/pipeline_assembler.py
 from __future__ import annotations
 
+import ast
+import json
+import itertools
+from pathlib import Path
+from typing import Any, Dict, List, Tuple, DefaultDict
 import requests
 from dataflow.dataflowagent.state import DFState,DFRequest
 import importlib
@@ -616,15 +621,25 @@ async def apipeline_assembler(recommendation: List[str], **kwargs) -> Dict[str, 
     return pipeline_assembler(recommendation, **kwargs)
 
 # ===================================================================通过my pipline的 py文件，拿到结构化的输出信息
-import ast
-from pathlib import Path
-from typing import Any, Dict, List, Tuple
+"""
+Parse a generated PipelineABC python file and export a graph schema::
 
-from dataflow.utils.registry import OPERATOR_REGISTRY 
+    {
+      "nodes": [...],
+      "edges": [...]
+    }
 
-# --------------------------------------------------------------------
-# config
-# --------------------------------------------------------------------
+Requirements:
+    - 支持 input_key / output_key 既可以是关键字参数也可以是位置参数
+    - 允许同一个算子 run 多次
+    - nodes.id 直接使用 self.xxx 的变量名
+"""
+from collections import defaultdict
+from dataflow.utils.registry import OPERATOR_REGISTRY
+
+# ----------------------------------------------------- #
+# config & helpers
+# ----------------------------------------------------- #
 SKIP_CLASSES: set[str] = {
     "FileStorage",
     "APILLMServing_request",
@@ -634,211 +649,312 @@ SKIP_CLASSES: set[str] = {
 _IN_PREFIXES = ("input", "input_")
 _OUT_PREFIXES = ("output", "output_")
 
-def _is_input(name: str)  -> bool: return name.startswith(_IN_PREFIXES)
-def _is_output(name: str) -> bool: return name.startswith(_OUT_PREFIXES)
 
-def _guess_type(cls_obj: "type | None", cls_name: str) -> str:
-    # ---------- rule 1 ----------
+def _is_input(name: str) -> bool:
+    return name.startswith(_IN_PREFIXES)
+
+
+def _is_output(name: str) -> bool:
+    return name.startswith(_OUT_PREFIXES)
+
+
+def _guess_type(cls_obj: type | None, cls_name: str) -> str:
+    """
+    Guess operator category for front-end icon & color.
+    规则:
+        1. package 名倒数第二段 (operators.xxx.{filter|parser}.xxx)
+        2. 类名后缀启发
+        3. 兜底 'other'
+    """
+    # rule-1
     if cls_obj is not None:
         parts = cls_obj.__module__.split(".")
         if len(parts) >= 2:
             candidate = parts[-2]
             if candidate not in {"__init__", "__main__"}:
                 return candidate
-
-    # ---------- rule 2  (后缀启发) ----------
+    # rule-2
     lower = cls_name.lower()
-    if lower.endswith("parser"):
-        return "parser"
-    if lower.endswith("generator"):
-        return "generate"
-    if lower.endswith("filter"):
-        return "filter"
-    if lower.endswith("evaluator"):
-        return "eval"
-    if lower.endswith("refiner"):
-        return "refine"
-
-    # ---------- rule 3 ----------
+    for suf, cat in [
+        ("parser", "parser"),
+        ("generator", "generate"),
+        ("filter", "filter"),
+        ("evaluator", "eval"),
+        ("refiner", "refine"),
+    ]:
+        if lower.endswith(suf):
+            return cat
+    # rule-3
     return "other"
 
-# --------------------------------------------------------------------
-# safe literal eval
-# --------------------------------------------------------------------
+
 def _literal_eval_safe(node: ast.AST) -> Any:
-    if isinstance(node, ast.Constant):                
+    """ast.literal_eval 的宽松版本，失败就返回反编译字符串"""
+    if isinstance(node, ast.Constant):  # fast path
         return node.value
     try:
-        import ast as _ast
-        return _ast.literal_eval(node)
+        return ast.literal_eval(node)
     except Exception:
         return ast.unparse(node) if hasattr(ast, "unparse") else repr(node)
 
-# --------------------------------------------------------------------
-# main
-# --------------------------------------------------------------------
+
+# ----------------------------------------------------- #
+# AST 解析主流程
+# ----------------------------------------------------- #
 def parse_pipeline_file(file_path: str | Path) -> Dict[str, Any]:
     """
     Parameters
     ----------
     file_path : str | Path
-        Path to the generated pipeline python file (e.g. mypipeline.py).
+        生成的 pipeline python 文件路径
 
     Returns
     -------
-    Dict[str, Any]
-        {
-          "nodes": [...],
-          "edges": [...]
-        }
+    dict
+        {"nodes": [...], "edges": [...]}
     """
     file_path = Path(file_path)
     src = file_path.read_text(encoding="utf-8")
     tree = ast.parse(src, filename=str(file_path))
 
-    # ----------------------------------------
-    # collect operators in __init__            self.x = Xxx(...)
-    # ----------------------------------------
-    init_ops: Dict[str, Tuple[str, Dict[str, Any]]] = {}  # var -> (cls_name, init_kwargs)
-    forward_calls: Dict[str, List[Dict[str, Any]]] = {}   # var -> [run_kwargs]
+    # ------------------------------------------------- #
+    # 1. 解析 __init__ 里的 operator 实例
+    # ------------------------------------------------- #
+    def _parse_init(init_func: ast.FunctionDef) -> Dict[str, Tuple[str, Dict[str, Any]]]:
+        """
+        Returns
+        -------
+        var_name -> (cls_name, init_kwargs)
+        """
+        results: Dict[str, Tuple[str, Dict[str, Any]]] = {}
+        for stmt in init_func.body:
+            if (
+                isinstance(stmt, ast.Assign)
+                and stmt.targets
+                and isinstance(stmt.targets[0], ast.Attribute)
+                and isinstance(stmt.value, ast.Call)
+            ):
+                attr: ast.Attribute = stmt.targets[0]
+                if not (isinstance(attr.value, ast.Name) and attr.value.id == "self"):
+                    continue
+                var_name = attr.attr
+
+                call: ast.Call = stmt.value
+                # 取类名
+                if isinstance(call.func, ast.Name):
+                    cls_name = call.func.id
+                elif isinstance(call.func, ast.Attribute):
+                    cls_name = call.func.attr
+                else:
+                    continue
+
+                if cls_name in SKIP_CLASSES:  # 跳过非算子
+                    continue
+
+                kwargs = {
+                    kw.arg: _literal_eval_safe(kw.value)
+                    for kw in call.keywords
+                    if kw.arg is not None
+                }
+                results[var_name] = (cls_name, kwargs)
+        return results
+
+    # ------------------------------------------------- #
+    # 2. 解析 forward() 里的 run 调用
+    # ------------------------------------------------- #
+    def _parse_forward(
+        forward_func: ast.FunctionDef,
+    ) -> DefaultDict[str, List[Dict[str, Any]]]:
+        """
+        Returns
+        -------
+        var_name -> [run_kwargs ...]  (保持出现顺序)
+        """
+        mapping: DefaultDict[str, List[Dict[str, Any]]] = defaultdict(list)
+
+        # walk 按源码顺序遍历需借助 ast.iter_child_nodes + 递归
+        def _visit(node: ast.AST):
+            # 按出现顺序遍历
+            for child in ast.iter_child_nodes(node):
+                if (
+                    isinstance(child, ast.Call)
+                    and isinstance(child.func, ast.Attribute)
+                    and child.func.attr == "run"
+                ):
+                    obj = child.func.value
+                    if (
+                        isinstance(obj, ast.Attribute)
+                        and isinstance(obj.value, ast.Name)
+                        and obj.value.id == "self"
+                    ):
+                        var_name = obj.attr
+
+                        # ------- 关键字参数 -------
+                        kw_dict = {
+                            kw.arg: _literal_eval_safe(kw.value)
+                            for kw in child.keywords
+                            if kw.arg is not None
+                        }
+
+                        # ------- 位置参数 -------
+                        # 假设位置顺序为 (storage, input_key, output_key, ...)
+                        if len(child.args) >= 2:
+                            kw_dict.setdefault("input_key", _literal_eval_safe(child.args[1]))
+                        if len(child.args) >= 3:
+                            kw_dict.setdefault("output_key", _literal_eval_safe(child.args[2]))
+
+                        mapping[var_name].append(kw_dict)
+                _visit(child)
+
+        _visit(forward_func)
+        return mapping
+
+    # ------------------------------------------------- #
+    # 3. 主 visitor：定位唯一继承 PipelineABC 的类
+    # ------------------------------------------------- #
+    init_ops, forward_calls = {}, defaultdict(list)
 
     class PipelineVisitor(ast.NodeVisitor):
-        def visit_ClassDef(self, node: ast.ClassDef):
-            for body_item in node.body:
-                if isinstance(body_item, ast.FunctionDef):
-                    if body_item.name == "__init__":
-                        self._parse_init(body_item)
-                    elif body_item.name == "forward":
-                        self._parse_forward(body_item)
-
-        def _parse_init(self, func: ast.FunctionDef):
-            for stmt in func.body:
-                if (
-                    isinstance(stmt, ast.Assign)
-                    and isinstance(stmt.targets[0], ast.Attribute)
-                    and isinstance(stmt.value, ast.Call)
-                ):
-                    attr: ast.Attribute = stmt.targets[0]
-                    if not (isinstance(attr.value, ast.Name) and attr.value.id == "self"):
-                        continue
-                    var_name = attr.attr
-                    call: ast.Call = stmt.value
-                    if isinstance(call.func, ast.Name):
-                        cls_name = call.func.id
-                    elif isinstance(call.func, ast.Attribute):
-                        cls_name = call.func.attr
-                    else:
-                        continue
-
-                    # skip unwanted classes
-                    if cls_name in SKIP_CLASSES:
-                        continue
-
-                    kwargs = {
-                        kw.arg: _literal_eval_safe(kw.value)
-                        for kw in call.keywords
-                        if kw.arg is not None
-                    }
-                    init_ops[var_name] = (cls_name, kwargs)
-
-        def _parse_forward(self, func: ast.FunctionDef):
-            for call in ast.walk(func):
-                if (
-                    isinstance(call, ast.Call)
-                    and isinstance(call.func, ast.Attribute)
-                    and call.func.attr == "run"
-                ):
-                    obj = call.func.value
-                    if not (isinstance(obj, ast.Attribute) and isinstance(obj.value, ast.Name) and obj.value.id == "self"):
-                        continue
-                    var_name = obj.attr
-                    kw_dict = {
-                        kw.arg: _literal_eval_safe(kw.value)
-                        for kw in call.keywords
-                        if kw.arg is not None
-                    }
-                    forward_calls.setdefault(var_name, []).append(kw_dict)
+        def visit_ClassDef(self, node: ast.ClassDef):  # noqa: N802
+            nonlocal init_ops, forward_calls
+            # naive 判断: 存在 forward() 方法即认为是 pipeline
+            has_forward = any(
+                isinstance(b, ast.FunctionDef) and b.name == "forward" for b in node.body
+            )
+            if not has_forward:
+                return
+            for item in node.body:
+                if isinstance(item, ast.FunctionDef):
+                    if item.name == "__init__":
+                        init_ops = _parse_init(item)
+                    elif item.name == "forward":
+                        forward_calls = _parse_forward(item)
 
     PipelineVisitor().visit(tree)
 
-    # ----------------------------------------
-    # nodes
-    # ----------------------------------------
-    nodes: List[Dict[str, Any]] = []
-    var2node_id: Dict[str, str] = {}
-    produced_ports: Dict[str, Tuple[str, str]] = {}
+    # ------------------------------------------------- #
+    # 4. build nodes
+    # ------------------------------------------------- #
+    def build_nodes() -> Tuple[List[Dict[str, Any]], Dict[str, str], Dict[str, Tuple[str, str]]]:
+        """
+        Returns
+        -------
+        nodes, var_name->node_id, produced_ports(label -> (node_id, port_name))
+        """
+        nodes: List[Dict[str, Any]] = []
+        var2id: Dict[str, str] = {}
+        produced_ports: Dict[str, Tuple[str, str]] = {}
 
-    for idx, (var, (cls_name, init_kwargs)) in enumerate(init_ops.items(), 1):
-        node_id = f"node{idx}"
-        var2node_id[var] = node_id
-        run_cfg = forward_calls.get(var, [{}])[0]  # use first run
-        for k, v in run_cfg.items():
-            if _is_output(k) and isinstance(v, str):
-                produced_ports[v] = (node_id, k)
+        name_counter = defaultdict(itertools.count)  # 解决重复变量名
 
-        cls_obj = None
-        try:
-            cls_obj = OPERATOR_REGISTRY.get(cls_name)
-        except Exception:
-            pass
-        
-        nodes.append({
-            "id": node_id,
-            "name": cls_name,
-            "type": _guess_type(cls_obj, cls_name),
-            "config": {
-                "init": init_kwargs,
-                "run":  run_cfg,
-            },
-        })
+        for var, (cls_name, init_kwargs) in init_ops.items():
+            # id 与变量名一致，如重名则追加 __2
+            idx = next(name_counter[var])
+            node_id = f"{var}" if idx == 0 else f"{var}__{idx+1}"
+            var2id[var] = node_id
 
-    # ----------------------------------------
-    # edges
-    # ----------------------------------------
-    edges: List[Dict[str, Any]] = []
-    for var, runs in forward_calls.items():
-        if var not in var2node_id:           # run() belongs to skipped class
-            continue
-        tgt_id = var2node_id[var]
-        for run_cfg in runs:
-            for k, v in run_cfg.items():
-                if _is_input(k) and isinstance(v, str) and v in produced_ports:
-                    src_id, src_port = produced_ports[v]
-                    edges.append({
-                        "source": src_id,
-                        "target": tgt_id,
-                        "source_port": src_port,
-                        "target_port": k,
-                    })
+            first_run_cfg = forward_calls.get(var, [{}])[0]
+
+            # 统计该 node 在 forward() 第一次产生的 output_key
+            for k, v in first_run_cfg.items():
+                if _is_output(k) and isinstance(v, str):
+                    produced_ports[v] = (node_id, k)
+
+            # 推测类别
+            try:
+                cls_obj = OPERATOR_REGISTRY.get(cls_name)
+            except Exception:
+                cls_obj = None
+
+            nodes.append(
+                {
+                    "id": node_id,
+                    "name": cls_name,
+                    "type": _guess_type(cls_obj, cls_name),
+                    "config": {
+                        "init": init_kwargs,
+                        "run": first_run_cfg,
+                    },
+                }
+            )
+        return nodes, var2id, produced_ports
+
+    # ------------------------------------------------- #
+    # 5. build edges (按 forward 执行顺序)
+    # ------------------------------------------------- #
+    def build_edges(
+        produced_ports: Dict[str, Tuple[str, str]], var2id: Dict[str, str]
+    ) -> List[Dict[str, Any]]:
+        edges: List[Dict[str, Any]] = []
+        for var, runs in forward_calls.items():
+            tgt_id = var2id.get(var)
+            if not tgt_id:
+                continue  # 跳过被过滤算子
+            for run_cfg in runs:
+                for k, v in run_cfg.items():
+                    if _is_input(k) and isinstance(v, str) and v in produced_ports:
+                        src_id, src_port = produced_ports[v]
+                        edges.append(
+                            {
+                                "source": src_id,
+                                "target": tgt_id,
+                                "source_port": src_port,
+                                "target_port": k,
+                            }
+                        )
+        return edges
+
+    nodes, var2id, produced_ports = build_nodes()
+    edges = build_edges(produced_ports, var2id)
 
     return {"nodes": nodes, "edges": edges}
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+# ----------------------------------------------------- #
+# CLI 方便快速测试
+# ----------------------------------------------------- #
 if __name__ == "__main__":
+    import argparse
+    import pprint
+
+    parser = argparse.ArgumentParser(description="Export pipeline graph schema from python file")
+    parser.add_argument("file", help="/mnt/DataFlow/lz/proj/DataFlow/dataflow/dataflowagent/tests/my_pipeline.py")
+    parser.add_argument("--out", help="output json file")
+    args = parser.parse_args()
+
+    graph = parse_pipeline_file(args.file)
+    pprint.pprint(graph, width=120)
+
+    if args.out:
+        Path(args.out).write_text(json.dumps(graph, indent=2, ensure_ascii=False), "utf-8")
+        print(f"saved to {args.out}")
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+# if __name__ == "__main__":
     # test_ops = [
     #     "SQLGenerator",
     #     "SQLExecutionFilter",
@@ -855,8 +971,3 @@ if __name__ == "__main__":
     # code_str = result["pipe_code"]
     # write_pipeline_file(code_str, file_name="my_recommend_pipeline.py", overwrite=True)
     # print("Generated pipeline code written to my_recommend_pipeline.py")
-    graph = parse_pipeline_file("/mnt/DataFlow/lz/proj/DataFlow/dataflow/dataflowagent/tests/my_pipeline.py")
-    import json, pprint
-    pprint.pprint(graph, width=120)
-    # 或者保存
-    Path("pipeline_graph.json").write_text(json.dumps(graph, indent=2), "utf-8")
