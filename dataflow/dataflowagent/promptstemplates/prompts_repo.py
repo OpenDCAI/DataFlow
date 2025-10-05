@@ -468,7 +468,7 @@ and describe the entire process.
 """
 
 # --------------------------------------------------------------------------- #
-# 11. 调试pipeline                                                         #
+# 12. 调试pipeline                                                         #
 # --------------------------------------------------------------------------- #
 class DebugPipeline:
     system_prompt_for_code_debugging = """
@@ -495,30 +495,70 @@ Reply only with a valid JSON object, no markdown, no comments.
 """
 
 # --------------------------------------------------------------------------- #
-# 11. rewrite                                                         #
+# 13. data collection                                                         #
 # --------------------------------------------------------------------------- #
-class CodeRewriter:
-    system_prompt_for_code_rewriting = """
-You are a Python code expert.
+class DataCollector:
+    system_prompt_for_data_collection = """
+You are an expert in user intent recognition.
 """
-    task_prompt_for_code_rewriting = """"
-    [INPUT]
-The input consists of:
-1. Pipeline code (read-only):
-{pipeline_code}
-2. Error trace / shell output:
-{error_trace}
-3. Debug analysis and suggestions from the previous step:
-{debug_reason}
-4. Sample data (if available):
-{data_sample}
-[OUTPUT RULES]
-Reply only with a valid JSON object, no markdown, no comments.
+    task_prompt_for_data_collection = """"
+Please return one or several comma-separated noun keywords related to the input, without any explanations. Each key word should represent a simplified single word domain name. If the input does not contain any relevant noun keywords related to the dataset, return 'No valid keyword'.
 
-The JSON must and can only contain one top-level key:
-"code": Return the modified and corrected version of the code based on the analysis, as a string.
-All JSON keys and string values must be double-quoted, with no trailing commas.
-If you are unsure about any value, use an empty string.
-Double-check that your response is a valid JSON. Do not output anything else.
-    
-    """
+[Example]
+Input1:我想要数学和物理相关的数据
+Output1: math, physics
+
+Input2:收集金融和医疗相关的数据
+Output2: finance, medicine
+
+User request: 
+{user_query}
+
+Keywords:
+"""
+
+# --------------------------------------------------------------------------- #
+# 13. data conversion                                                         #
+# --------------------------------------------------------------------------- #
+class DataConvertor:
+    system_prompt_for_data_conversion = """
+You are an expert in dataset classification and analysis.
+"""
+    task_prompt_for_data_collection = """"
+Please classify the Hugging Face dataset below based on its structure.
+
+Dataset Columns: {column_names}
+
+First Row Data: {first_row}
+
+Using the dataset columns and the example provided in the first row, classify the dataset into one of the following categories:
+1. Pretraining Dataset (PT): This dataset contains a single column representing a statement or declarative text.
+2. Instruction-Tuning Dataset (SFT): This dataset consists primarily of a pair of columns representing a question and an answer, with an optional reasoning process (thought process).
+
+[OUTPUT RULES]
+
+If the dataset is a Pretraining Dataset (PT), return a JSON response with the following structure in ```json block and replace "column_name" with the actual column name:
+
+{
+    "category": "PT",
+    "text": "column_name"
+}
+
+
+If the dataset is an Instruction-Tuning Dataset (SFT), return a JSON response with the following structure in ```json block and replace "column_name" with the actual column names:
+
+{
+    "category": "SFT",
+    "question": "column_name",
+    "output": "column_name",
+    "answer": "column_name"
+}
+
+If no reasoning process (output) is present, leave the "output" field as null.
+
+If the dataset doesn't fit either category, return:
+{
+    "category": null
+}
+in ```json block
+"""
