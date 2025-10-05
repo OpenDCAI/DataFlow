@@ -75,7 +75,7 @@ langchain-openai==0.3.33
 langchain-text-splitters==0.3.11
 faiss-cpu==1.12.0
 
-IPython==9.6.0
+IPython==8.18.1
 
 # speech
 librosa
