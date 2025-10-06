@@ -151,9 +151,18 @@ def _create_debug_sample(src_file: str | Path, sample_lines: int = 10) -> Path:
 
     return tmp_path
 
+_CRITICAL_WARNING_PATTERNS: list[re.Pattern] = [
+    re.compile(r"Warning:\s+Unexpected key", re.I),
+    # 这里可以继续添加其它条件；
+]
+
+def _has_critical_warning(text: str) -> bool:
+    """日志中是否包含关键 Warning"""
+    return any(p.search(text) for p in _CRITICAL_WARNING_PATTERNS)
+
 
 async def _run_py(file_path: Path) -> Dict[str, Any]:
-    """异步执行 python 文件并捕获输出"""
+    """异步执行 python 文件并捕获输出（增强版：检查关键 Warning）"""
     proc = await asyncio.create_subprocess_exec(
         sys.executable,
         str(file_path),
@@ -161,13 +170,46 @@ async def _run_py(file_path: Path) -> Dict[str, Any]:
         stderr=asyncio.subprocess.PIPE,
     )
     stdout, stderr = await proc.communicate()
+    stdout_s, stderr_s = stdout.decode(), stderr.decode()
+
+    # ---- 关键 Warning 视为失败 ----
+    warn_failed = _has_critical_warning(stdout_s) or _has_critical_warning(stderr_s)
+    success = (proc.returncode == 0) and (not warn_failed)
+    if warn_failed:
+        matched_lines = []
+        for line in stdout_s.splitlines() + stderr_s.splitlines():
+            if _has_critical_warning(line):
+                matched_lines.append(line)
+        stderr_s = (
+            "\n".join(matched_lines)
+            + "\n--- above warnings are treated as ERROR by pipeline_builder ---\n"
+            + stderr_s
+        )
+
     return {
-        "success": proc.returncode == 0,
+        "success": success,
         "return_code": proc.returncode,
-        "stdout": stdout.decode(),
-        "stderr": stderr.decode(),
+        "stdout": stdout_s,
+        "stderr": stderr_s,
         "file_path": str(file_path),
     }
+
+# async def _run_py(file_path: Path) -> Dict[str, Any]:
+#     """异步执行 python 文件并捕获输出"""
+#     proc = await asyncio.create_subprocess_exec(
+#         sys.executable,
+#         str(file_path),
+#         stdout=asyncio.subprocess.PIPE,
+#         stderr=asyncio.subprocess.PIPE,
+#     )
+#     stdout, stderr = await proc.communicate()
+#     return {
+#         "success": proc.returncode == 0,
+#         "return_code": proc.returncode,
+#         "stdout": stdout.decode(),
+#         "stderr": stderr.decode(),
+#         "file_path": str(file_path),
+#     }
 
 
 # ---------------------------------------------------------------------- #
@@ -242,7 +284,7 @@ class DataPipelineBuilder(BaseAgent):
 
                 # 2) 生成 pipeline 代码字符串
                 pipe_obj = pipeline_assembler(recommendation, state, **assembler_kwargs)
-                print(f"assembler_kwargs : {assembler_kwargs}")
+                log.info(f"assembler_kwargs : {assembler_kwargs}")
                 code_str: str = pipe_obj["pipe_code"]
 
                 # 记录代码到状态

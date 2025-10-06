@@ -1,8 +1,9 @@
 from __future__ import annotations
 
-import asyncio, os
-from typing import List
+import asyncio, os, json, pathlib, dataclasses
+from typing import List, Dict, Any
 from pydantic import BaseModel, Field
+
 from dataflow.dataflowagent.state import DFRequest, DFState
 from dataflow.dataflowagent.toolkits.basetool.file_tools import (
     local_tool_for_sample,
@@ -14,6 +15,7 @@ from dataflow.dataflowagent.toolkits.optool.op_tools import (
     get_operator_content_str,
     post_process_combine_pipeline_result,
 )
+from dataflow.dataflowagent.toolkits.pipetool.pipe_tools import parse_pipeline_file
 from dataflow.dataflowagent.agentroles.classifier import create_classifier
 from dataflow.dataflowagent.agentroles.recommender import create_recommender
 from dataflow.dataflowagent.agentroles.pipelinebuilder import create_pipeline_builder
@@ -30,6 +32,9 @@ from dataflow import get_logger
 MAX_DEBUG_ROUNDS = 3
 log = get_logger()
 
+# ======================================================================
+# create_pipeline_graph
+# ======================================================================
 def create_pipeline_graph() -> GenericGraphBuilder:
     # ★ 1. 图入口改成 classifier
     builder = GenericGraphBuilder(state_model=DFState, entry_point="classifier")
@@ -63,6 +68,7 @@ def create_pipeline_graph() -> GenericGraphBuilder:
 
     class GetOpInput(BaseModel):
         oplist: list = Field(description="list['xxx']的算子列表")
+
     @builder.post_tool("recommender")
     @tool(args_schema=GetOpInput)
     def combine_pipeline(oplist: list) -> str:
@@ -118,6 +124,7 @@ def create_pipeline_graph() -> GenericGraphBuilder:
         """Return source code for requested modules"""
         log.error(f'fetch_other_info：{module_list}')
         return get_otherinfo_code(module_list)
+
     # ------------------------------------------------------------------
     # Ⅱ. 节点实现
     # ------------------------------------------------------------------
@@ -126,9 +133,7 @@ def create_pipeline_graph() -> GenericGraphBuilder:
         from dataflow.dataflowagent.toolkits.tool_manager import get_tool_manager
 
         classifier = create_classifier(tool_manager=get_tool_manager(), model_name="deepseek-v3")
-        # 这里不需要 agent-mode，所以 use_agent=False
         s = await classifier.execute(s, use_agent=False)
-        # 结果保存在 s.classification （BaseAgent 已写入）
         return s
 
     # --- recommender 子图同原来 ---
@@ -179,7 +184,6 @@ def create_pipeline_graph() -> GenericGraphBuilder:
             for k, v in result.items():         
                 setattr(s, k, v)
         else:
-            import dataclasses
             for f in dataclasses.fields(DFState):
                 setattr(s, f.name, getattr(result, f.name))
         rec_val = s.get("recommendation", {})
@@ -196,7 +200,6 @@ def create_pipeline_graph() -> GenericGraphBuilder:
         return await builder_agent.execute(
             s,
             skip_assemble=skip,
-            # file_path=s.temp_data.get("pipeline_file_path"),
             file_path= s.request.python_file_path,
             assembler_kwargs={"file_path": s.request.json_file, "chat_api_url": s.request.chat_api_url},
         )
@@ -218,7 +221,7 @@ def create_pipeline_graph() -> GenericGraphBuilder:
 
         rewriter = create_rewriter(tool_manager=get_tool_manager(), model_name="o3")
         return rewriter.after_rewrite(s)
-
+    
     async def info_requester_node(s: DFState) -> DFState:
         info_graph = await build_info_requester_subgraph(s)
         result = await info_graph.ainvoke(s)
@@ -231,6 +234,22 @@ def create_pipeline_graph() -> GenericGraphBuilder:
                 setattr(s, f.name, getattr(result, f.name))
         return s
 
+    # ----------------- ★ 新增 exporter 节点 -----------------
+    async def exporter_node(s: DFState) -> DFState:
+        """
+        将 builder 生成的 python 流水线文件解析为 JSON 结构并落盘
+        """
+        py_path = s.temp_data.get("pipeline_file_path") or s.request.python_file_path
+        if not py_path:
+            raise RuntimeError("exporter_node: 找不到 pipeline 源文件")
+
+        graph: Dict[str, Any] = parse_pipeline_file(py_path)
+        s.temp_data["structure_code"] = graph
+
+        out_path = pathlib.Path(py_path).with_suffix(".json")
+        out_path.write_text(json.dumps(graph, indent=2, ensure_ascii=False), encoding="utf-8")
+        log.info(f"[exporter] structure saved -> {out_path}")
+        return s
     # ------------------------------------------------------------------
     # Ⅲ. 条件函数
     # ------------------------------------------------------------------
@@ -241,22 +260,20 @@ def create_pipeline_graph() -> GenericGraphBuilder:
                 s.execution_result.get("success")
                 and s.temp_data.pop("debug_sample_file", None)  
             ): 
-                log.warning(
-                    '再次进入循环builder！！'
-                )
+                log.warning('再次进入循环builder！！')
                 return "builder"
 
-            # ② 正式流程成功 → 结束
+            # ② 正式流程成功 → exporter
             if s.execution_result.get("success"):
-                return "__end__"
+                return "exporter"
 
-            # ③ 其它情况照旧
+            # ③ debug 轮次达到上限 → 结束
             if s.temp_data.get("round", 0) >= s.request.max_debug_rounds:
                 return "__end__"
             return "code_debugger"
         else:
-            # 非调试模式，成功就结束，失败也结束
-            return "__end__"
+            # 非调试模式，成功或失败都直接去 exporter
+            return "exporter"
 
     # ------------------------------------------------------------------
     # Ⅳ. 组图
@@ -269,6 +286,7 @@ def create_pipeline_graph() -> GenericGraphBuilder:
         "info_requester": info_requester_node,   
         "rewriter": rewriter_node,
         "after_rewrite": after_rewrite_node,
+        "exporter": exporter_node,           
     }
 
     edges = [

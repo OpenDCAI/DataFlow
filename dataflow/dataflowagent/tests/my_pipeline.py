@@ -5,10 +5,10 @@ from dataflow.pipeline import PipelineABC
 from dataflow.utils.storage import FileStorage
 from dataflow.serving import APILLMServing_request, LocalModelLLMServing_vllm
 
-from dataflow.operators.general_text.filter.rule_based_filter import AlphaWordsFilter, ContentNullFilter, LineEndWithEllipsisFilter, SentenceNumberFilter
-from dataflow.operators.general_text.refine.remove_extra_spaces_refiner import RemoveExtraSpacesRefiner
-from dataflow.operators.general_text.filter.rule_based_filter import AlphaWordsFilter, ContentNullFilter, LineEndWithEllipsisFilter, SentenceNumberFilter
-from dataflow.operators.general_text.refine.remove_extra_spaces_refiner import RemoveExtraSpacesRefiner
+from dataflow.operators.core_text.eval.prompted_eval import PromptedEvaluator
+from dataflow.operators.core_text.generate.prompted_generator import PromptedGenerator
+from dataflow.operators.core_text.eval.prompted_eval import PromptedEvaluator
+from dataflow.operators.core_text.generate.prompted_generator import PromptedGenerator
 
 
 
@@ -17,7 +17,7 @@ class RecommendPipeline(PipelineABC):
         super().__init__()
         # -------- FileStorage --------
         self.storage = FileStorage(
-            first_entry_file_name="/tmp/translation_sample_10.jsonl",
+            first_entry_file_name="/mnt/DataFlow/lz/proj/DataFlow/dataflow/example/GeneralTextPipeline/translation.jsonl",
             cache_path="./cache_local",
             file_name_prefix="dataflow_cache_step",
             cache_type="jsonl",
@@ -30,27 +30,15 @@ class RecommendPipeline(PipelineABC):
             max_workers=100,
         )
 
-        self.content_null_filter = ContentNullFilter()
-        self.line_end_with_ellipsis_filter = LineEndWithEllipsisFilter(threshold=0.3)
-        self.sentence_number_filter = SentenceNumberFilter(min_sentences=3, max_sentences=7500)
-        self.alpha_words_filter = AlphaWordsFilter(threshold=None, use_tokenizer=None)
-        self.remove_extra_spaces_refiner = RemoveExtraSpacesRefiner()
+        self.prompted_generator = PromptedGenerator(llm_serving=self.llm_serving, system_prompt='You are a helpful agent.', json_schema=None)
+        self.prompted_evaluator = PromptedEvaluator(llm_serving=self.llm_serving, system_prompt='Please evaluate the quality of this data on a scale from 1 to 5.')
 
     def forward(self):
-        self.content_null_filter.run(
-            storage=self.storage.step(), input_key=None, output_key='content_null_filter_label'
+        self.prompted_generator.run(
+            storage=self.storage.step(), input_key='raw_content', output_key='generated_content'
         )
-        self.line_end_with_ellipsis_filter.run(
-            storage=self.storage.step(), input_key=None, output_key='line_end_with_ellipsis_filter_label'
-        )
-        self.sentence_number_filter.run(
-            storage=self.storage.step(), input_key=None, output_key='sentence_number_filter_label'
-        )
-        self.alpha_words_filter.run(
-            storage=self.storage.step(), input_key=None, output_key='alpha_words_filter_label'
-        )
-        self.remove_extra_spaces_refiner.run(
-            storage=self.storage.step(), input_key=None
+        self.prompted_evaluator.run(
+            storage=self.storage.step(), input_key='raw_content', output_key='eval'
         )
 
 if __name__ == "__main__":

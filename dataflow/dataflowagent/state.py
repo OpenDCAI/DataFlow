@@ -53,6 +53,7 @@ class DFState:
     debug_mode: bool = True
     execution_result: Dict[str, Any] = field(default_factory=dict)
     code_debug_result: Dict[str, Any] = field(default_factory=dict)
+    # structure_code : Dict[str, Any] = field(default_factory=dict)
     def get(self, key, default=None):
         return getattr(self, key, default)
     def __setitem__(self, key, value):

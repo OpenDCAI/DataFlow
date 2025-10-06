@@ -528,6 +528,7 @@ You are a Python code expert.
 """
     task_prompt_for_code_rewriting = """"
     [INPUT]
+
 The input consists of:
 1. Pipeline code (read-only):
 {pipeline_code}
@@ -535,8 +536,12 @@ The input consists of:
 {error_trace}
 3. Debug analysis and suggestions from the previous step:
 {debug_reason}
-4. Sample data (if available):
+4. Sample data [For the first operator in 'run', the key (for example, is one of the keys in the sampled data), you need to determine it yourself]:
 {data_sample}
+5. Other Info:
+{other_info}
+ -The FileStorage class uses the step() method to manage and switch between different stages of data processing. Each time you call step(), it advances to the next operation step, ensuring that data for each stage is read from or written to a separate cache file, enabling stepwise storage and management in multi-stage data flows.
+
 [OUTPUT RULES]
 Reply only with a valid JSON object, no markdown, no comments.
 
@@ -547,3 +552,54 @@ If you are unsure about any value, use an empty string.
 Double-check that your response is a valid JSON. Do not output anything else.
     
     """
+
+# --------------------------------------------------------------------------- #
+# 12. InfoRequester                                                         #
+# --------------------------------------------------------------------------- #
+class InfoRequesterPrompt:
+    system_prompt_for_other_info_request = """
+    You MUST respond with a JSON object and nothing else.
+    You are a senior Python debugging assistant.
+"""
+
+    task_prompt_for_context_collection = """
+[TASK]
+Analyze the pipeline code and error trace to decide **which modules’ source
+code you must inspect**.
+
+[INPUT]
+1. Pipeline code (read-only):
+{pipeline_code}
+
+2. Error trace:
+{error_trace}
+
+[WORKFLOW – STRICT]
+Step 1  Analyse the error and list the modules you need.
+Step 2  Call the function tool **fetch_other_info**
+        with       module_list=[ "...", ... ]        ← REQUIRED
+Step 3  Wait for the tool result (the code), then write your summary.
+
+[EXAMPLES]
+• Storage problem → {{"module_list": ["dataflow.utils.storage"]}}
+• Multiple files   → {{"module_list": ["pkg.a", "pkg.b"]}}
+
+
+请问，如果要解决上述错误还需要哪些额外信息？？
+[OUTPUT PROTOCOL]
+Phase A (before you have the code):
+    Respond ONLY with the tool call, e.g.
+    {{
+      "name": "fetch_other_info",
+      xxx
+    }}
+
+
+Phase B (after the tool has returned the code):
+    Respond ONLY with a JSON object, no markdown, no extra text:
+    {{
+      "other_info": "Concise yet complete summary of the inspected code"
+    }}
+
+"""
+

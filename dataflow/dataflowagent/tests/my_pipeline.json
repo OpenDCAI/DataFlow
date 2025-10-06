@@ -1,0 +1,38 @@
+{
+  "nodes": [
+    {
+      "id": "prompted_generator",
+      "name": "PromptedGenerator",
+      "type": "generate",
+      "config": {
+        "init": {
+          "llm_serving": "self.llm_serving",
+          "system_prompt": "You are a helpful agent.",
+          "json_schema": null
+        },
+        "run": {
+          "storage": "self.storage.step()",
+          "input_key": "raw_content",
+          "output_key": "generated_content"
+        }
+      }
+    },
+    {
+      "id": "prompted_evaluator",
+      "name": "PromptedEvaluator",
+      "type": "eval",
+      "config": {
+        "init": {
+          "llm_serving": "self.llm_serving",
+          "system_prompt": "Please evaluate the quality of this data on a scale from 1 to 5."
+        },
+        "run": {
+          "storage": "self.storage.step()",
+          "input_key": "raw_content",
+          "output_key": "eval"
+        }
+      }
+    }
+  ],
+  "edges": []
+}

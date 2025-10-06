@@ -22,7 +22,8 @@ class BaseAgent(ABC):
                  tool_manager: Optional[ToolManager] = None,
                  model_name: Optional[str] = None,
                  temperature: float = 0.0,
-                 max_tokens: int = 4096):
+                 max_tokens: int = 4096,
+                 tool_mode: str = "auto"):
         """
         初始化Agent
         
@@ -37,7 +38,7 @@ class BaseAgent(ABC):
         self.temperature = temperature
         self.max_tokens = max_tokens
 
-        self.tool_mode = "auto"  # 默认工具选择模式，可扩展为 "auto", "required", "none"
+        self.tool_mode = tool_mode # 默认工具选择模式，可扩展为 "auto", "required", "none"
 
     @classmethod
     def create(cls, tool_manager: Optional[ToolManager] = None, **kwargs) -> "BaseAgent":
@@ -91,6 +92,7 @@ class BaseAgent(ABC):
         """
         try:
             parsed = robust_parse_json(content)
+            log.info(f'content是什么？？{content}')
             log.info(f"{self.role_name} 结果解析成功")
             return parsed
         except ValueError as e:
@@ -166,10 +168,15 @@ class BaseAgent(ABC):
         return llm
     
     def get_post_tools(self) -> List[Tool]:
-        """获取后置工具列表"""
         if not self.tool_manager:
             return []
-        return self.tool_manager.get_post_tools(self.role_name)
+        tools = self.tool_manager.get_post_tools(self.role_name)
+        uniq, seen = [], set()
+        for t in tools:
+            if t.name not in seen:
+                uniq.append(t)
+                seen.add(t.name)
+        return uniq
     
     async def process_simple_mode(self, state: DFState, pre_tool_results: Dict[str, Any]) -> Dict[str, Any]:
         """简单模式处理"""
@@ -181,7 +188,7 @@ class BaseAgent(ABC):
         try:
             answer_msg = await llm.ainvoke(messages)
             answer_text = answer_msg.content
-            log.info(answer_text)
+            log.info(f'LLM原始输出：{answer_text}')
             log.info("LLM调用成功，开始解析结果")
         except Exception as e:
             log.exception("LLM调用失败: %s", e)

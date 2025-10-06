@@ -5,7 +5,8 @@ import os
 from dataflow.cli_funcs.paths import DataFlowPath
 from dataflow.dataflowagent.state import DFRequest, DFState
 # from pipeline_nodes import create_pipeline_graph
-from dataflow.dataflowagent.workflow.wf_pipeline_recommend import create_pipeline_graph
+from dataflow.dataflowagent.workflow.wf_pipeline_recommend_extract_json import create_pipeline_graph
+# from dataflow.dataflowagent.workflow.wf_pipeline_recommend import create_pipeline_graph
 
 from IPython.display import Image, display
 
@@ -18,7 +19,7 @@ async def main() -> None:
         api_key=os.getenv("DF_API_KEY", "sk-dummy"),
         model="gpt-4o",
         json_file=f"{DATAFLOW_DIR}/dataflow/example/GeneralTextPipeline/translation.jsonl",
-        target="根据数据，推荐pipeline,保证最小可运行即可！",
+        target="根据数据，推荐pipeline,只需要2个算子！",
         python_file_path = f"{DATAFLOW_DIR}/dataflow/dataflowagent/tests/my_pipeline.py",  # pipeline的输出脚本路径
         need_debug = True, #是否需要Debug
         max_debug_rounds = 4, #Debug的轮次数量
