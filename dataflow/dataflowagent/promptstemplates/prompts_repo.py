@@ -769,10 +769,13 @@ The input consists of:
 {pipeline_code}
 2. Error trace / shell output:
 {error_trace}
+
 3. Debug analysis and suggestions from the previous step:
 {debug_reason}
+
 4. Sample data [For the first operator in 'run', the key (for example, is one of the keys in the sampled data), you need to determine it yourself]:
 {data_sample}
+
 5. Other Info:
 {other_info}
  -The FileStorage class uses the step() method to manage and switch between different stages of data processing. Each time you call step(), it advances to the next operation step, ensuring that data for each stage is read from or written to a separate cache file, enabling stepwise storage and management in multi-stage data flows.

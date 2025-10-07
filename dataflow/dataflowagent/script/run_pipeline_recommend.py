@@ -19,7 +19,7 @@ async def main() -> None:
         api_key=os.getenv("DF_API_KEY", "sk-dummy"),
         model="gpt-4o",
         json_file=f"{DATAFLOW_DIR}/dataflow/example/GeneralTextPipeline/translation.jsonl",
-        target="根据数据，推荐pipeline,只需要2个算子！",
+        target="根据数据，推荐pipeline，只需要3个算子！",
         python_file_path = f"{DATAFLOW_DIR}/dataflow/dataflowagent/tests/my_pipeline.py",  # pipeline的输出脚本路径
         need_debug = True, #是否需要Debug
         max_debug_rounds = 4, #Debug的轮次数量

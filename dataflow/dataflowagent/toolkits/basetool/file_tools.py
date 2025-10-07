@@ -272,6 +272,19 @@ def get_otherinfo_code(op_names: List[str]) -> Dict[str, str]:
     return {name: _extract_module_source(name) for name in op_names}
 
 
+# =============================高亮
+def flashy(msg: str, *, color: str = "yellow") -> str:
+    """
+    返回带 ANSI 颜色的字符串；调试场合用。
+    支持的 color: red / green / yellow / blue / magenta / cyan / white
+    """
+    colors = {
+        "black":   30, "red":     31, "green":  32, "yellow": 33,
+        "blue":    34, "magenta": 35, "cyan":   36, "white":  37,
+    }
+    code = colors.get(color, 33)
+    return f"\033[{code}m{msg}\033[0m"
+
 if __name__ == "__main__":
     # 简单测试 local_tool_for_sample
     from dataflow.dataflowagent.state import DFRequest

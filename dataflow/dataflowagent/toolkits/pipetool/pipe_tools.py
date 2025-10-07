@@ -835,32 +835,35 @@ def parse_pipeline_file(file_path: str | Path) -> Dict[str, Any]:
     # ------------------------------------------------- #
     # 4. build nodes
     # ------------------------------------------------- #
-    def build_nodes() -> Tuple[List[Dict[str, Any]], Dict[str, str], Dict[str, Tuple[str, str]]]:
+    def build_nodes() -> tuple[list[dict[str, Any]],
+                            dict[str, str],
+                            dict[str, tuple[str, str]]]:
         """
         Returns
         -------
-        nodes, var_name->node_id, produced_ports(label -> (node_id, port_name))
+        nodes                : list of node-dict
+        var2id               : var_name -> node_id        (供后续查表)
+        produced_ports       : label(str) -> (node_id, port_name)
         """
-        nodes: List[Dict[str, Any]] = []
-        var2id: Dict[str, str] = {}
-        produced_ports: Dict[str, Tuple[str, str]] = {}
+        nodes: list[dict[str, Any]] = []
+        var2id: dict[str, str] = {}
+        produced_ports: dict[str, tuple[str, str]] = {}
 
-        name_counter = defaultdict(itertools.count)  # 解决重复变量名
+        global_counter = itertools.count(1)       
 
         for var, (cls_name, init_kwargs) in init_ops.items():
-            # id 与变量名一致，如重名则追加 __2
-            idx = next(name_counter[var])
-            node_id = f"{var}" if idx == 0 else f"{var}__{idx+1}"
+            # -------- 生成 node_id -------- #
+            node_id = f"node{next(global_counter)}"    # <-- 变成 node1/node2/…
+
             var2id[var] = node_id
 
+            # forward() 第一次 run 的配置
             first_run_cfg = forward_calls.get(var, [{}])[0]
 
-            # 统计该 node 在 forward() 第一次产生的 output_key
+            # 把首次 run 产生的 output 标记为 “已经产生”
             for k, v in first_run_cfg.items():
                 if _is_output(k) and isinstance(v, str):
                     produced_ports[v] = (node_id, k)
-
-            # 推测类别
             try:
                 cls_obj = OPERATOR_REGISTRY.get(cls_name)
             except Exception:
@@ -883,13 +886,14 @@ def parse_pipeline_file(file_path: str | Path) -> Dict[str, Any]:
     # 5. build edges (按 forward 执行顺序)
     # ------------------------------------------------- #
     def build_edges(
-        produced_ports: Dict[str, Tuple[str, str]], var2id: Dict[str, str]
-    ) -> List[Dict[str, Any]]:
-        edges: List[Dict[str, Any]] = []
+        produced_ports: dict[str, tuple[str, str]],
+        var2id: dict[str, str],
+    ) -> list[dict[str, Any]]:
+        edges: list[dict[str, Any]] = []
         for var, runs in forward_calls.items():
             tgt_id = var2id.get(var)
             if not tgt_id:
-                continue  # 跳过被过滤算子
+                continue
             for run_cfg in runs:
                 for k, v in run_cfg.items():
                     if _is_input(k) and isinstance(v, str) and v in produced_ports:
@@ -906,33 +910,26 @@ def parse_pipeline_file(file_path: str | Path) -> Dict[str, Any]:
 
     nodes, var2id, produced_ports = build_nodes()
     edges = build_edges(produced_ports, var2id)
-
     return {"nodes": nodes, "edges": edges}
 
 
 # ----------------------------------------------------- #
-# CLI 方便快速测试
+# CLI 方便快速测试（免参数版）
 # ----------------------------------------------------- #
 if __name__ == "__main__":
-    import argparse
+    import json
+    from pathlib import Path
     import pprint
 
-    parser = argparse.ArgumentParser(description="Export pipeline graph schema from python file")
-    parser.add_argument("file", help="/mnt/DataFlow/lz/proj/DataFlow/dataflow/dataflowagent/tests/my_pipeline.py")
-    parser.add_argument("--out", help="output json file")
-    args = parser.parse_args()
+    PY_PATH = Path("/mnt/DataFlow/lz/proj/DataFlow/dataflow/dataflowagent/tests/my_pipeline.py")
 
-    graph = parse_pipeline_file(args.file)
+    graph = parse_pipeline_file(PY_PATH)
+
     pprint.pprint(graph, width=120)
 
-    if args.out:
-        Path(args.out).write_text(json.dumps(graph, indent=2, ensure_ascii=False), "utf-8")
-        print(f"saved to {args.out}")
-
-
-
-
-
+    OUT_PATH = PY_PATH.with_suffix(".json")
+    OUT_PATH.write_text(json.dumps(graph, indent=2, ensure_ascii=False), encoding="utf-8")
+    print(f"saved to {OUT_PATH}")
 
 
 

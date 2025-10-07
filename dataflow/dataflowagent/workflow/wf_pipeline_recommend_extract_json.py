@@ -234,7 +234,6 @@ def create_pipeline_graph() -> GenericGraphBuilder:
                 setattr(s, f.name, getattr(result, f.name))
         return s
 
-    # ----------------- ★ 新增 exporter 节点 -----------------
     async def exporter_node(s: DFState) -> DFState:
         """
         将 builder 生成的 python 流水线文件解析为 JSON 结构并落盘
@@ -245,6 +244,7 @@ def create_pipeline_graph() -> GenericGraphBuilder:
 
         graph: Dict[str, Any] = parse_pipeline_file(py_path)
         s.temp_data["structure_code"] = graph
+        s.pipeline_structure_code = graph
 
         out_path = pathlib.Path(py_path).with_suffix(".json")
         out_path.write_text(json.dumps(graph, indent=2, ensure_ascii=False), encoding="utf-8")

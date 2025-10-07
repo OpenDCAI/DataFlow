@@ -151,46 +151,47 @@ def _create_debug_sample(src_file: str | Path, sample_lines: int = 10) -> Path:
 
     return tmp_path
 
-_CRITICAL_WARNING_PATTERNS: list[re.Pattern] = [
+from typing import Callable, List
+
+Condition = Callable[[int, str, str], bool]
+
+# ------ ① 必须正常退出 ------
+def _rc_ok(rc: int, *_args) -> bool:
+    return rc == 0        # rc==0 代表脚本没有崩
+
+# ------ ② 不得出现关键 Warning ------
+_CRITICAL_WARNING_PATTERNS: List[re.Pattern] = [
     re.compile(r"Warning:\s+Unexpected key", re.I),
-    # 这里可以继续添加其它条件；
+    # 继续往这里追加 regex
 ]
 
-def _has_critical_warning(text: str) -> bool:
-    """日志中是否包含关键 Warning"""
-    return any(p.search(text) for p in _CRITICAL_WARNING_PATTERNS)
+def _no_critical_warning(_rc: int, out: str, err: str) -> bool:
+    combined = out + "\n" + err
+    return not any(p.search(combined) for p in _CRITICAL_WARNING_PATTERNS)
 
 
-async def _run_py(file_path: Path) -> Dict[str, Any]:
-    """异步执行 python 文件并捕获输出（增强版：检查关键 Warning）"""
+CONDITIONS: List[Condition] = [
+    _rc_ok,
+    _no_critical_warning,
+]
+
+async def _run_py(file_path: Path) -> dict[str, any]:
+    """执行 python 文件并根据全局 CONDITIONS 判定 success"""
     proc = await asyncio.create_subprocess_exec(
-        sys.executable,
-        str(file_path),
+        sys.executable, str(file_path),
         stdout=asyncio.subprocess.PIPE,
         stderr=asyncio.subprocess.PIPE,
     )
-    stdout, stderr = await proc.communicate()
-    stdout_s, stderr_s = stdout.decode(), stderr.decode()
+    stdout_b, stderr_b = await proc.communicate()
+    stdout, stderr = stdout_b.decode(), stderr_b.decode()
 
-    # ---- 关键 Warning 视为失败 ----
-    warn_failed = _has_critical_warning(stdout_s) or _has_critical_warning(stderr_s)
-    success = (proc.returncode == 0) and (not warn_failed)
-    if warn_failed:
-        matched_lines = []
-        for line in stdout_s.splitlines() + stderr_s.splitlines():
-            if _has_critical_warning(line):
-                matched_lines.append(line)
-        stderr_s = (
-            "\n".join(matched_lines)
-            + "\n--- above warnings are treated as ERROR by pipeline_builder ---\n"
-            + stderr_s
-        )
+    success = all(cond(proc.returncode, stdout, stderr) for cond in CONDITIONS)
 
     return {
         "success": success,
         "return_code": proc.returncode,
-        "stdout": stdout_s,
-        "stderr": stderr_s,
+        "stdout": stdout,
+        "stderr": stderr,
         "file_path": str(file_path),
     }
 
