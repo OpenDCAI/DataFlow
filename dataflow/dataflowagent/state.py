@@ -23,7 +23,7 @@ class DFRequest:
 @dataclass
 class DFState:
     request: DFRequest
-    messages: Annotated[list[BaseMessage], add_messages] # cnm 一定要是追加，2025年9月19日03:29:13
+    messages: Annotated[list[BaseMessage], add_messages] 
     agent_results: Dict[str, Any] = field(default_factory=dict)
     category: Dict[str, Any] = field(default_factory=dict)
     recommendation: Dict[str, Any] = field(default_factory=dict)
