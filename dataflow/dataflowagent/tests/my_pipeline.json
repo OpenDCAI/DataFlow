@@ -9,7 +9,7 @@
         "run": {
           "storage": "self.storage.step()",
           "input_key": "raw_content",
-          "output_key": "content_null_filter_label"
+          "output_key": "clean_content"
         }
       }
     },
@@ -24,8 +24,8 @@
         },
         "run": {
           "storage": "self.storage.step()",
-          "input_key": "raw_content",
-          "output_key": "sentence_number_filter_label"
+          "input_key": "clean_content",
+          "output_key": "sent_ok"
         }
       }
     },
@@ -39,11 +39,24 @@
         },
         "run": {
           "storage": "self.storage.step()",
-          "input_key": "raw_content",
-          "output_key": "symbol_word_ratio_filter_label"
+          "input_key": "sent_ok",
+          "output_key": "symbol_ratio_ok"
         }
       }
     }
   ],
-  "edges": []
+  "edges": [
+    {
+      "source": "node1",
+      "target": "node2",
+      "source_port": "output_key",
+      "target_port": "input_key"
+    },
+    {
+      "source": "node2",
+      "target": "node3",
+      "source_port": "output_key",
+      "target_port": "input_key"
+    }
+  ]
 }

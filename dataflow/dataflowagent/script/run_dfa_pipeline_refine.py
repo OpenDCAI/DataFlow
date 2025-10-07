@@ -14,7 +14,7 @@ from dataflow.dataflowagent.workflow.wf_pipeline_refine import create_pipeline_r
 
 async def main() -> None:
     # ====== 1. 直接在代码内赋值参数 ======
-    input_json = "/mnt/DataFlow/lz/proj/agentgroup/zewei/DFA-LG/dataflow/dataflowagent/test_pipeline.json"
+    input_json = "/mnt/DataFlow/lz/proj/DataFlow/dataflow/dataflowagent/tests/my_pipeline.json"
     output_json = "cache_local/pipeline_refine_result.json"   # 输出路径，留空则只打印
     target = "请将Pipeline调整为只包含3个节点，简化数据流"            # 你的自然语言需求
     chat_api_url = "http://123.129.219.111:3000/v1/"

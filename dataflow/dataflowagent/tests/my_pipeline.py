@@ -84,17 +84,19 @@ class RecommendPipeline(PipelineABC):
         self.content_null_filter.run(
             storage=self.storage.step(),
             input_key="raw_content",
-            output_key="content_null_filter_label",
+            output_key="clean_content",
         )
+
         self.sentence_number_filter.run(
             storage=self.storage.step(),
-            input_key="raw_content",
-            output_key="sentence_number_filter_label",
+            input_key="clean_content",           # <-- 用上一算子的结果
+            output_key="sent_ok",
         )
+
         self.symbol_word_ratio_filter.run(
             storage=self.storage.step(),
-            input_key="raw_content",
-            output_key="symbol_word_ratio_filter_label",
+            input_key="sent_ok",                 # <-- 再往下传
+            output_key="symbol_ratio_ok",
         )
 
 

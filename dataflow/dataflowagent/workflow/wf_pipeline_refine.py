@@ -5,10 +5,9 @@ from dataflow.dataflowagent.graghbuilder.gragh_builder import GenericGraphBuilde
 from dataflow.dataflowagent.toolkits.optool.op_tools import (
     local_tool_for_get_purpose,
     get_operator_content_str,
+    local_tool_for_get_match_operator_code
 )
-from dataflow.agent.toolkits.operator_processor import (
-    local_tool_for_get_match_operator_code,
-)
+
 from dataflow.dataflowagent.agentroles.match import create_match
 from dataflow.dataflowagent.agentroles.refine import (
     create_refine_target_analyzer,
