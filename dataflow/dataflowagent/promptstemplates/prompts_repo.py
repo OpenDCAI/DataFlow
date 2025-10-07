@@ -732,8 +732,42 @@ Reply only with a valid JSON object, no markdown, no comments.
 # --------------------------------------------------------------------------- #
 # 11. rewrite                                                         #
 # --------------------------------------------------------------------------- #
-class Rewriter:
+class CodeRewriter:
     system_prompt_for_code_rewriting = """
+You are a Python code expert.
+"""
+    task_prompt_for_code_rewriting = """"
+    [INPUT]
+
+The input consists of:
+1. Pipeline code (read-only):
+{pipeline_code}
+2. Error trace / shell output:
+{error_trace}
+3. Debug analysis and suggestions from the previous step:
+{debug_reason}
+4. Sample data [For the first operator in 'run', the key (for example, is one of the keys in the sampled data), you need to determine it yourself]:
+{data_sample}
+5. Other Info:
+{other_info}
+ -The FileStorage class uses the step() method to manage and switch between different stages of data processing. Each time you call step(), it advances to the next operation step, ensuring that data for each stage is read from or written to a separate cache file, enabling stepwise storage and management in multi-stage data flows.
+
+[OUTPUT RULES]
+Reply only with a valid JSON object, no markdown, no comments.
+
+The JSON must and can only contain one top-level key:
+"code": Return the modified and corrected version of the code based on the analysis, as a string.
+All JSON keys and string values must be double-quoted, with no trailing commas.
+If you are unsure about any value, use an empty string.
+Double-check that your response is a valid JSON. Do not output anything else.
+    
+    """
+
+# --------------------------------------------------------------------------- #
+# 11. Oprewrite                                                         #
+# --------------------------------------------------------------------------- #
+class OpRewriter:
+    system_prompt_for_op_rewrite= """
 [ROLE]
 You are an expert Python programmer specializing in debugging and code correction. Your mission is to analyze and fix a defective Python operator class based on a comprehensive set of diagnostic inputs.
 
@@ -756,7 +790,7 @@ Follow these critical principles:
 4.  Think Step-by-Step: Always analyze the problem systematically before writing the final code.
 """
 
-    task_prompt_for_code_rewriting = """
+    task_prompt_for_op_rewrite = """
 [INPUT]
 - Operator Code: {operator_code}
 - Instantiation Code: {instantiate_code}
@@ -780,6 +814,9 @@ Example of the required output format:
   "code": "class FixedOperator:\n    # ... corrected code here ...\n"
 }
 """
+
+
+
 
 
 

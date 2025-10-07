@@ -32,9 +32,7 @@ class Rewriter(BaseAgent):
             "error_trace": pre_tool_results.get("error_trace", ""),
             "debug_reason": pre_tool_results.get("debug_reason", ""),
             "data_sample": pre_tool_results.get("data_sample", ""),
-            "available_keys": pre_tool_results.get("available_keys", []),
-            "target": pre_tool_results.get("target", ""),
-            "preselected_input_key": pre_tool_results.get("preselected_input_key", ""),
+            "other_info": pre_tool_results.get("other_info","")
         }
 
     # ---------------- 默认值 -------------------------
@@ -44,9 +42,7 @@ class Rewriter(BaseAgent):
             "error_trace": "",
             "debug_reason": "",
             "data_sample": "",
-            "available_keys": [],
-            "target": "",
-            "preselected_input_key": "",
+            "other_info": ""
         }
 
     # ---------------- 结果落盘 -----------------------

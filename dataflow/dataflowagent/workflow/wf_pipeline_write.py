@@ -17,7 +17,7 @@ from dataflow.agent.toolkits.operator_processor import (
 from dataflow.dataflowagent.agentroles.match import create_match
 from dataflow.dataflowagent.agentroles.writer import create_writer
 from dataflow.dataflowagent.agentroles.debugger import create_code_debugger
-from dataflow.dataflowagent.agentroles.rewriter import create_rewriter
+from dataflow.dataflowagent.agentroles.oprewriter import create_rewriter
 from dataflow.dataflowagent.agentroles.append_llm_serving import create_llm_append_serving
 from dataflow.dataflowagent.agentroles.instantiator import create_llm_instantiator
 
@@ -26,7 +26,7 @@ def create_operator_write_graph() -> GenericGraphBuilder:
     """Build the operator write workflow graph.
 
     Flow: match_operator -> write_the_operator -> operator_executor
-          -> (code_debugger -> rewriter -> after_rewrite -> operator_executor)*
+          -> (code_debugger -> op_rewriter -> after_rewrite -> operator_executor)*
     """
     builder = GenericGraphBuilder(state_model=DFState, entry_point="match_operator")
 
@@ -89,20 +89,20 @@ def create_operator_write_graph() -> GenericGraphBuilder:
     def dbg_get_err(state: DFState):
         return state.execution_result.get("stderr", "") or state.execution_result.get("traceback", "")
 
-    @builder.pre_tool("pipeline_code", "rewriter")
+    @builder.pre_tool("pipeline_code", "op_rewriter")
     def rw_get_code(state: DFState):
         return state.temp_data.get("pipeline_code", "") or getattr(state, "draft_operator_code", "")
 
-    @builder.pre_tool("error_trace", "rewriter")
+    @builder.pre_tool("error_trace", "op_rewriter")
     def rw_get_err(state: DFState):
         return state.execution_result.get("stderr", "") or state.execution_result.get("traceback", "")
 
-    @builder.pre_tool("debug_reason", "rewriter")
+    @builder.pre_tool("debug_reason", "op_rewriter")
     def rw_get_reason(state: DFState):
         return state.code_debug_result.get("reason", "")
 
-    # 为 rewriter 注入数据上下文，辅助其在重写阶段完善自动选键逻辑
-    @builder.pre_tool("data_sample", "rewriter")
+    # 为 op_rewriter 注入数据上下文，辅助其在重写阶段完善自动选键逻辑
+    @builder.pre_tool("data_sample", "op_rewriter")
     def rw_get_data_sample(state: DFState):
         try:
             # 使用有效数据路径，避免取不到样例
@@ -114,7 +114,7 @@ def create_operator_write_graph() -> GenericGraphBuilder:
         except Exception:
             return []
 
-    @builder.pre_tool("available_keys", "rewriter")
+    @builder.pre_tool("available_keys", "op_rewriter")
     def rw_get_available_keys(state: DFState):
         try:
             # 优先使用运行期调试收集到的 available_keys
@@ -131,12 +131,12 @@ def create_operator_write_graph() -> GenericGraphBuilder:
         except Exception:
             return []
 
-    # 为 rewriter 额外提供目标与预选输入键，便于其进行键修复
-    @builder.pre_tool("target", "rewriter")
+    # 为 op_rewriter 额外提供目标与预选输入键，便于其进行键修复
+    @builder.pre_tool("target", "op_rewriter")
     def rw_get_target(state: DFState):
         return getattr(state.request, "target", "")
 
-    @builder.pre_tool("preselected_input_key", "rewriter")
+    @builder.pre_tool("preselected_input_key", "op_rewriter")
     def rw_get_preselected_key(state: DFState):
         try:
             from types import SimpleNamespace as _SN

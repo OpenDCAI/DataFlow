@@ -15,38 +15,38 @@ class Rewriter(BaseAgent):
     # ---------------- BaseAgent 元数据 ----------------
     @property
     def role_name(self) -> str:
-        return "rewriter"
+        return "op_rewriter"
 
     @property
     def system_prompt_template_name(self) -> str:
-        return "system_prompt_for_code_rewriting"
+        return "system_prompt_for_op_rewrite"
 
     @property
     def task_prompt_template_name(self) -> str:
-        return "task_prompt_for_code_rewriting"
+        return "task_prompt_for_op_rewrite"
 
     # ---------------- Prompt 参数 --------------------
     def get_task_prompt_params(self, pre_tool_results: Dict[str, Any]) -> Dict[str, Any]:
         return {
-            "operator_code": pre_tool_results.get("operator_code", ""),
+            "pipeline_code": pre_tool_results.get("pipeline_code", ""),
             "error_trace": pre_tool_results.get("error_trace", ""),
             "debug_reason": pre_tool_results.get("debug_reason", ""),
             "data_sample": pre_tool_results.get("data_sample", ""),
-            #"available_keys": pre_tool_results.get("available_keys", []),
+            "available_keys": pre_tool_results.get("available_keys", []),
             "target": pre_tool_results.get("target", ""),
-            #"preselected_input_key": pre_tool_results.get("preselected_input_key", ""),
+            "preselected_input_key": pre_tool_results.get("preselected_input_key", ""),
         }
 
     # ---------------- 默认值 -------------------------
     def get_default_pre_tool_results(self) -> Dict[str, Any]:
         return {
-            "operator_code": "",
+            "pipeline_code": "",
             "error_trace": "",
             "debug_reason": "",
             "data_sample": "",
-            #"available_keys": [],
+            "available_keys": [],
             "target": "",
-            #"preselected_input_key": "",
+            "preselected_input_key": "",
         }
 
     # ---------------- 结果落盘 -----------------------
@@ -60,7 +60,7 @@ class Rewriter(BaseAgent):
         if isinstance(state.execution_result, dict):
             file_path_str = state.execution_result.get("file_path")  # 由 PipelineBuilder 产出
         # 允许 caller 提前把目标文件路径放进 temp_data
-        file_path_str = file_path_str or state.temp_data.get("operator_file_path")
+        file_path_str = file_path_str or state.temp_data.get("pipeline_file_path")
 
         if not file_path_str:
             log.warning("无法确定 Pipeline 文件路径，已保存到临时文件 ./tmp_rewrite.py")
@@ -88,8 +88,8 @@ class Rewriter(BaseAgent):
         if new_code:
             saved_path = self._dump_new_code(state, new_code)
             log.info(f"[rewriter] 新代码已保存到 {saved_path}")
-            state.temp_data["operator_code"] = new_code
-            state.temp_data["operator_file_path"] = str(saved_path)
+            state.temp_data["pipeline_code"] = new_code
+            state.temp_data["pipeline_file_path"] = str(saved_path)
 
         state.rewrite_result = result
 
@@ -111,7 +111,7 @@ async def rewrite_code(
     model_name: Optional[str] = None,
     tool_manager: Optional[ToolManager] = None,
     temperature: float = 0.0,
-    #max_tokens: int = 2048,
+    max_tokens: int = 2048,
     use_agent: bool = False,
     **kwargs,
 ) -> DFState:
@@ -119,7 +119,7 @@ async def rewrite_code(
         tool_manager=tool_manager,
         model_name=model_name,
         temperature=temperature,
-        #max_tokens=max_tokens,
+        max_tokens=max_tokens,
     )
     return await rewriter.execute(state, use_agent=use_agent, **kwargs)
 
