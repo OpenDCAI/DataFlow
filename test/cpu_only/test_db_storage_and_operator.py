@@ -1,4 +1,4 @@
-from dataflow.operators.db.db_operator import DBOperator
+from dataflow.operators.db.generate.db_operator import DBOperator
 
 from dataflow.utils.storage import MyScaleDBStorage
 from dataflow.operators.reasoning import ReasoningDifficultyDatasetEvaluator

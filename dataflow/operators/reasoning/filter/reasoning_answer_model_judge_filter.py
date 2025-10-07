@@ -4,16 +4,22 @@ from dataflow.core import OperatorABC
 from dataflow.utils.storage import DataFlowStorage
 from dataflow.core import LLMServingABC
 from dataflow.prompts.reasoning.general import AnswerJudgePrompt
+from dataflow.core.prompt import prompt_restrict, DIYPromptABC
+
 import re
 import pandas as pd
 import numpy as np
+
+@prompt_restrict(
+    AnswerJudgePrompt
+)
 
 @OPERATOR_REGISTRY.register()
 class ReasoningAnswerModelJudgeFilter(OperatorABC):
     def __init__(self,
                  system_prompt: str = "You are a helpful assistant specialized in evaluating answer correctness.",
                  llm_serving: LLMServingABC = None,
-                 prompt_template = None,
+                 prompt_template = AnswerJudgePrompt | DIYPromptABC,
                  keep_all_samples: bool = False,  # 新增参数，控制是否保留所有样本
                  ):
 

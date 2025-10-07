@@ -1,3 +1,10 @@
+from dataflow.utils.registry import OPERATOR_REGISTRY
+from dataflow  import get_logger
+from dataflow.utils.storage import DataFlowStorage
+from dataflow.core import OperatorABC
+from dataflow.core import LLMServingABC
+from dataflow.core.prompt import prompt_restrict
+
 from dataflow.prompts.agenticrag import (
     DepthQAGeneratorGetIdentifierPrompt,
     DepthQAGeneratorBackwardTaskPrompt,
@@ -6,20 +13,23 @@ from dataflow.prompts.agenticrag import (
     DepthQAGeneratorAnswerPrompt,
     DepthQAGeneratorRecallScorePrompt
 )
-from dataflow.utils.registry import OPERATOR_REGISTRY
-from dataflow  import get_logger
-from dataflow.utils.storage import DataFlowStorage
-from dataflow.core import OperatorABC
-from dataflow.core import LLMServingABC
-
 import pandas as pd
 import json
 
+@prompt_restrict(
+    DepthQAGeneratorGetIdentifierPrompt,
+    DepthQAGeneratorBackwardTaskPrompt,
+    DepthQAGeneratorSupersetCheckPrompt,
+    DepthQAGeneratorQuestionPrompt,
+    DepthQAGeneratorAnswerPrompt,
+    DepthQAGeneratorRecallScorePrompt
+)
 @OPERATOR_REGISTRY.register()
 class AgenticRAGDepthQAGenerator(OperatorABC):
     def __init__(self,
                  llm_serving: LLMServingABC = None,
-                 n_rounds:int = 2
+                 n_rounds:int = 2,
+                #  prompt_template = None # prompt is fix
                  ):
         self.logger= get_logger()
         self.llm_serving = llm_serving
@@ -61,43 +71,43 @@ class AgenticRAGDepthQAGenerator(OperatorABC):
         Reformat the prompts in the dataframe to generate questions.
         """
         if prompt_type == "get_identifier":
-            self.prompts = DepthQAGeneratorGetIdentifierPrompt()
+            self.prompt_template = DepthQAGeneratorGetIdentifierPrompt()
             input_prompts = dataframe[self.input_key].tolist()
-            system_prompts = self.prompts.build_system_prompt()
-            prompts = [self.prompts.build_prompt(input_prompts) for input_prompts in input_prompts]
+            system_prompts = self.prompt_template.build_system_prompt()
+            prompts = [self.prompt_template.build_prompt(input_prompts) for input_prompts in input_prompts]
         elif prompt_type == "get_backward":
-            self.prompts = DepthQAGeneratorBackwardTaskPrompt()
+            self.prompt_template = DepthQAGeneratorBackwardTaskPrompt()
             input_prompts = dataframe[self.identifier_key].tolist()
             system_prompts = ""
-            prompts = [self.prompts.build_prompt(input_prompts) for input_prompts in input_prompts]
+            prompts = [self.prompt_template.build_prompt(input_prompts) for input_prompts in input_prompts]
         elif prompt_type == "check_superset":
-            self.prompts = DepthQAGeneratorSupersetCheckPrompt()
+            self.prompt_template = DepthQAGeneratorSupersetCheckPrompt()
             new_identifiers = dataframe[self.new_identifier_key].tolist()
             relations = dataframe[self.relation_key].tolist()
             identifiers = dataframe[self.identifier_key].tolist()
-            system_prompts = self.prompts.build_system_prompt()
-            prompts = [self.prompts.build_prompt(new_id, relation, identifier) for new_id, relation, identifier in zip(new_identifiers, relations, identifiers)]
+            system_prompts = self.prompt_template.build_system_prompt()
+            prompts = [self.prompt_template.build_prompt(new_id, relation, identifier) for new_id, relation, identifier in zip(new_identifiers, relations, identifiers)]
         elif prompt_type == "get_new_question":
-            self.prompts = DepthQAGeneratorQuestionPrompt()
+            self.prompt_template = DepthQAGeneratorQuestionPrompt()
             new_identifiers = dataframe[self.new_identifier_key].tolist()
             relations = dataframe[self.relation_key].tolist()
             identifiers = dataframe[self.identifier_key].tolist()
-            system_prompts = self.prompts.build_system_prompt()
-            prompts = [self.prompts.build_prompt(new_id, relation, identifier) for new_id, relation, identifier in zip(new_identifiers, relations, identifiers)]
+            system_prompts = self.prompt_template.build_system_prompt()
+            prompts = [self.prompt_template.build_prompt(new_id, relation, identifier) for new_id, relation, identifier in zip(new_identifiers, relations, identifiers)]
         elif prompt_type == "llm_answer":
-            self.prompts = DepthQAGeneratorAnswerPrompt()
+            self.prompt_template = DepthQAGeneratorAnswerPrompt()
             questions = dataframe[self.input_key].tolist()
             system_prompts = ""
             prompts = [
-                self.prompts.build_prompt(question) for question in questions
+                self.prompt_template.build_prompt(question) for question in questions
             ]
         elif prompt_type == "get_recall_score":
-            self.prompts = DepthQAGeneratorRecallScorePrompt()
+            self.prompt_template = DepthQAGeneratorRecallScorePrompt()
             golden_answers = dataframe["refined_answer"].tolist()
             llm_answers = dataframe["llm_answer"]
-            system_prompts = self.prompts.build_system_prompt()
+            system_prompts = self.prompt_template.build_system_prompt()
             prompts = [
-                self.prompts.build_prompt(golden_answer, llm_answer) for golden_answer, llm_answer in zip(golden_answers, llm_answers)
+                self.prompt_template.build_prompt(golden_answer, llm_answer) for golden_answer, llm_answer in zip(golden_answers, llm_answers)
             ]
         else:
             raise ValueError(f"Unknown prompt_type: {prompt_type}")

@@ -2,7 +2,7 @@ from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     # DB
-    from .db_operator import DBOperator
+    from .generate.db_operator import DBOperator
 
 else:
     import sys
