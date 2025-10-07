@@ -50,7 +50,12 @@ class DFState:
     category: Dict[str, Any] = field(default_factory=dict)
     recommendation: Dict[str, Any] = field(default_factory=dict)
     temp_data: Dict[str, Any] = field(default_factory=dict) # 供 Agent 之间传递临时数据，不伴随整个生命周期，可以随时clear；
-    debug_mode: bool = True
+    # 匹配阶段产出的候选算子名单（用于 writer 上下文注入与后续复用）
+    matched_ops: list[str] = field(default_factory=list)
+    debug_mode: bool = False
+    # 当前流水线的结构JSON（包含nodes与edges），供精修/修改流程读取与写回
+    pipeline_structure_code: Dict[str, Any] = field(default_factory=dict)
+    
     execution_result: Dict[str, Any] = field(default_factory=dict)
     code_debug_result: Dict[str, Any] = field(default_factory=dict)
     # structure_code : Dict[str, Any] = field(default_factory=dict)
