@@ -35,3 +35,4 @@ lib
 hf_cache/
 downloaded_databases/
 downloaded_databases_vec/
+dataflow/dataflowagent/toolkits/resources/ops.json
