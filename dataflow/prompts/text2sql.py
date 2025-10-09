@@ -6,9 +6,12 @@ from re import template
 import numpy as np
 import json
 from typing import List
+from dataflow.utils.registry import PROMPT_REGISTRY
+from dataflow.core.prompt import PromptABC
 
 
-class SQLConsistencyFilterPrompt:
+@PROMPT_REGISTRY.register()
+class SQLConsistencyFilterPrompt(PromptABC):
     def __init__(self):
         pass
 
@@ -48,7 +51,8 @@ class SQLConsistencyFilterPrompt:
         """
         return prompt
 
-class Text2SQLCotGeneratorPrompt:
+@PROMPT_REGISTRY.register()
+class Text2SQLCotGeneratorPrompt(PromptABC):
     def __init__(self):
         pass
 
@@ -88,7 +92,8 @@ class Text2SQLCotGeneratorPrompt:
         return prompt
 
 
-class SelectSQLGeneratorPrompt:
+@PROMPT_REGISTRY.register()
+class SelectSQLGeneratorPrompt(PromptABC):
     def __init__(self):
         self.simple_criterion = '''**Criteria:**
         Simple SQL queries may satisfy one or more of the following criteria:
@@ -396,7 +401,8 @@ class SelectSQLGeneratorPrompt:
         return prompt
 
 
-class SelectVecSQLGeneratorPrompt:
+@PROMPT_REGISTRY.register()
+class SelectVecSQLGeneratorPrompt(PromptABC):
     def __init__(self):
         self.simple_vec_criterion = '''**Criteria:**
         Simple KNN queries in SQLite-vec may satisfy one or more of the following criteria:
@@ -856,7 +862,8 @@ class SelectVecSQLGeneratorPrompt:
         return prompt, complexity
 
 
-class Text2SQLQuestionGeneratorPrompt:
+@PROMPT_REGISTRY.register()
+class Text2SQLQuestionGeneratorPrompt(PromptABC):
     def __init__(self):
         self.style2desc = {
         "Formal": '''**Formal Style**
@@ -1048,7 +1055,8 @@ class Text2SQLQuestionGeneratorPrompt:
         return prompt
 
 
-class Text2VecSQLQuestionGeneratorPrompt:
+@PROMPT_REGISTRY.register()
+class Text2VecSQLQuestionGeneratorPrompt(PromptABC):
     def __init__(self):
         pass
 
@@ -1366,7 +1374,8 @@ class Text2VecSQLQuestionGeneratorPrompt:
         return prompt
 
 
-class SQLVariationGeneratorPrompt:
+@PROMPT_REGISTRY.register()
+class SQLVariationGeneratorPrompt(PromptABC):
     def __init__(self):
         self.variation_type_prompts = [
             '''
@@ -1486,7 +1495,8 @@ class SQLVariationGeneratorPrompt:
         return prompt
 
 
-class Text2SQLPromptGeneratorPrompt:
+@PROMPT_REGISTRY.register()
+class Text2SQLPromptGeneratorPrompt(PromptABC):
     def __init__(self):
         pass
 
@@ -1526,7 +1536,9 @@ class Text2SQLPromptGeneratorPrompt:
         prompt = template.format(db_details=db_details, question_and_evidence=question_and_evidence, db_engine=db_engine)
         return prompt
 
-class Text2VecSQLPromptGeneratorPrompt:
+
+@PROMPT_REGISTRY.register()
+class Text2VecSQLPromptGeneratorPrompt(PromptABC):
     def __init__(self):
         pass
 
