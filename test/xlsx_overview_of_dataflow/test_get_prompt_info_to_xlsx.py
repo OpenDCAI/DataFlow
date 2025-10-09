@@ -1,6 +1,7 @@
 import pandas as pd
 import os
 from inspect import isclass
+from inspect import isclass, getmembers, isfunction
 from dataflow.utils.registry import PROMPT_REGISTRY, OPERATOR_REGISTRY
 
 def export_prompt_info(output_file="prompt_info.xlsx", lang="zh"):
@@ -44,6 +45,12 @@ def export_prompt_info(output_file="prompt_info.xlsx", lang="zh"):
 
 
 
+        # ✅ 获取该类所有成员函数（不包含继承自 object 的）
+        member_functions = [
+            name for name, func in getmembers(prompt_class, predicate=isfunction)
+            if func.__qualname__.startswith(prompt_class.__name__)
+        ]
+        member_functions_str = ",".join(member_functions) if member_functions else "N/A"
 
         rows.append({
             "Category": primary_type,
@@ -51,6 +58,7 @@ def export_prompt_info(output_file="prompt_info.xlsx", lang="zh"):
             "Subcategory 2": third_type,
             "name of prompt": prompt_name,
             "path of class": f"{prompt_class.__module__}.{prompt_class.__name__}",
+            "Member functions": member_functions_str,
             "Prompt description": desc,
             "Used by operator": op_full_path
         })

@@ -1,7 +1,8 @@
-from dataflow.utils.registry import OPERATOR_REGISTRY
+from dataflow.utils.registry import OPERATOR_REGISTRY, PROMPT_REGISTRY
 from inspect import signature
 from pprint import pprint
 import pytest
+from inspect import isclass, getmembers, isfunction
 
 def build_tree(type_dict):
     """
@@ -80,13 +81,74 @@ def test_all_operator_registry():
     #         print(f"  __init__ signature: {init_signature}")
     
     # prompt registry
-    from dataflow.utils.registry import PROMPT_REGISTRY
     print("\nPrompt Registry:")
+    # PROMPT_REGISTRY._get_all() # will cause bug and ERROR
     print(PROMPT_REGISTRY)
-    # pprint(PROMPT_REGISTRY.get_type_of_objects())
-    tree = build_tree(PROMPT_REGISTRY.get_type_of_objects())
+    prompt_type_dict = PROMPT_REGISTRY.get_type_of_objects()
     print("\nPrompt Type Hierarchy Statistics:")
-    print_tree(tree)
+    print_tree(build_tree(prompt_type_dict))
+
+    # 成员函数检测逻辑
+    print("\n🔍 Checking Prompt class member functions ...")
+    allowed_methods = {"build_prompt", "__init__", "build_system_prompt"}
+    invalid_prompts = []
+
+    prompt_map = PROMPT_REGISTRY.get_obj_map()
+    for name, cls in prompt_map.items():
+        if cls is None or not isclass(cls):
+            continue
+
+        # 获取类中定义的成员函数（排除继承）
+        member_funcs = [
+            func_name for func_name, func_obj in getmembers(cls, predicate=isfunction)
+            if func_obj.__qualname__.startswith(cls.__name__)
+        ]
+
+        # 找出不被允许的方法
+        disallowed = [
+            fn for fn in member_funcs
+            if not (fn in allowed_methods or fn.startswith("_"))
+        ]
+
+        if disallowed:
+            invalid_prompts.append((name, cls.__module__, disallowed))
+
+    # 报告结果
+    if invalid_prompts:
+        print("\n❌ 检测到以下 Prompt 类包含未允许的函数:")
+        for name, module, funcs in invalid_prompts:
+            print(f"- {name} ({module}) 违规函数: {funcs}")
+
+        # 构造详细错误说明
+        rule_explanation = (
+            "\nPrompt class naming rule (English):\n"
+            "Each Prompt class is only allowed to define the following public methods:\n"
+            "  - build_prompt\n"
+            "  - build_system_prompt\n"
+            "  - __init__\n"
+            "Other methods are only allowed if they start with an underscore (_), "
+            "indicating they are private helper methods.\n\n"
+            "Please check all invalid Prompt classes.\n"
+        )
+
+        # 详细列出问题
+        details = "\n".join(
+            f"  • {name} ({module}) → invalid functions: {funcs}"
+            for name, module, funcs in invalid_prompts
+        )
+
+        errors = []
+        errors.append(
+            f"❌ Found {len(invalid_prompts)} Prompt classes violating naming rules.\n"
+            f"{rule_explanation}\n"
+            f"Details:\n{details}"
+        )
+
+    else:
+        print("✅ 所有 Prompt 类成员函数均符合约定（仅包含允许函数或私有函数）")
+
+    if errors:
+        pytest.fail("\n".join(errors), pytrace=False)
 
 if __name__ == "__main__":
     # 全局table，看所有注册的算子的str名称和对应的module路径
@@ -95,7 +157,6 @@ if __name__ == "__main__":
 
     test_all_operator_registry()
     exit(0)
-
 
     OPERATOR_REGISTRY._get_all()
     print(OPERATOR_REGISTRY)
