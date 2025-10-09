@@ -87,20 +87,20 @@ class Text2SQLGeneration_APIPipeline():
         )
 
         self.llm_serving = APILLMServing_request(
-            api_url="http://123.129.219.111:3000/v1/chat/completions",
+            api_url="https://api.openai.com/v1/chat/completions",
             model_name="gpt-4o",
             max_workers=100
         )
 
         # It is recommended to use better LLMs for the generation of Chain-of-Thought (CoT) reasoning process.
         cot_generation_api_llm_serving = APILLMServing_request(
-            api_url="http://123.129.219.111:3000/v1/chat/completions",
+            api_url="https://api.openai.com/v1/chat/completions",
             model_name="gpt-4o", # You can change to a more powerful model for CoT generation
             max_workers=100
         )
 
         embedding_serving = APILLMServing_request(
-            api_url="http://123.129.219.111:3000/v1/embeddings",
+            api_url="https://api.openai.com/v1/embeddings",
             model_name="text-embedding-ada-002",
             max_workers=100
         )
