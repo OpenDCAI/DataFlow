@@ -64,7 +64,7 @@ class SuperfilteringFilter(OperatorABC):
     def run(self, storage: DataFlowStorage, input_instruction_key: str = 'instruction', input_input_key: str = 'input', input_output_key: str = 'output', output_key: str = "SuperfilteringScore"):
         self.input_instruction_key = input_instruction_key
         self.input_input_key = input_input_key
-        self.input_response_key = input_output_key
+        self.input_output_key = input_output_key
         self.output_key = output_key
         dataframe = storage.read("dataframe")
         self.logger.info(f"Running {self.__class__.__name__ } with input_instruction_key = {self.input_instruction_key}, intput_output_key = {self.input_output_key}, output_key = {self.output_key}...")
