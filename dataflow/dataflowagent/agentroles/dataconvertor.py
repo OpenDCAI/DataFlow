@@ -51,8 +51,12 @@ class DataConvertor:
         return "system_prompt_for_data_conversion"
     
     @property
-    def task_prompt_template_name(self) -> str:
-        return "task_prompt_for_data_conversion"
+    def task_prompt_template_name_pt(self) -> str:
+        return "task_prompt_for_data_conversion_pt"
+    
+    @property
+    def task_prompt_template_name_sft(self) -> str:
+        return "task_prompt_for_data_conversion_sft"
     
 
     def build_messages(self, state: DataCollectionState, column_names: List[str], sample_record: Dict[str, Any]) -> List[BaseMessage]:
@@ -63,7 +67,7 @@ class DataConvertor:
         sys_prompt = ptg.render(self.system_prompt_template_name)
         
         task_params = {'column_names': column_names, 'first_row': sample_record}
-        task_prompt = ptg.render(self.task_prompt_template_name, **task_params)
+        task_prompt = ptg.render(eval(f"self.task_prompt_template_name_{state.request.category.lower()}"), **task_params)
         
         log.info(f"系统提示词: {sys_prompt}")
         log.info(f"任务提示词: {task_prompt}")
@@ -114,12 +118,16 @@ class DataConvertor:
                 raise ValueError(f"Failed to parse GPT response as JSON: {e}")
             
         except Exception as e:
-            log.exception("数据集标注失败: %s", e)
+            log.exception("hf数据集标注失败: %s", e)
             raise Exception(f"Error during dataset annotation: {e}")
 
     
     def record_summary(self, state):
         info = ""
+
+        if state.request.category not in ['PT', 'SFT']:
+            info += f"Unsupported data category '{state.request.category}'. Only 'PT' or 'SFT' are supported.\n"
+            return info
 
         if not state.keywords:
             info += "Sorry, I couldn't extract any valid keywords from your request."
@@ -143,23 +151,20 @@ class DataConvertor:
         info += "\n"
 
         info += "Post-processing summary:\n"
+        info += "Data category: " + state.request.category + "\n"
+
         for keyword, sources in state.sources.items():
             info += f"- Keyword: {keyword}\n"
-            info += f"-- Total count:\tPT {sum(item[1] for item in sources['PT'])} records, SFT {sum(item[1] for item in sources['SFT'])} records\n"
-            if not sources['PT'] and not sources['SFT']:
-                info += "  No datasets were successfully post-processed.\n"
+            info += f"-- Total count: \t{sum(item[1] for item in sources[state.request.category])}\n"
+            if not sources[state.request.category]:
+                info += "-- No datasets were successfully post-processed.\n"
                 continue
-            info += "-- Source details:\n"
-            for category, datasets in sources.items():
-                if datasets:
-                    info += f"-- {category}:\t"
-                    for dataset_id, record_count in datasets:
-                        info += f"{dataset_id}: {record_count} records\t"
-                    info += "\n"
-                else:
-                    info += f"-- {category}: No datasets processed\n"
-        
 
+            info += "-- Source details:\n"
+            for dataset_id, record_count in sources[state.request.category]:
+                info += f"{dataset_id}: {record_count} records\t"
+            info += "\n"
+        
         info = info.strip()
         log.info("处理结果汇总:\n" + info)
         with open(os.path.join(state.request.download_dir, "summary.txt"), 'w') as f:
@@ -181,10 +186,10 @@ class DataConvertor:
         # Step 1: Convert datasets
         for keyword in state.keywords:
             if keyword not in state.downloads.keys() or not Counter([res['success'] for res in state.downloads[keyword]])[True]:
-                state.sources[keyword] = {'PT': [], 'SFT': []}
+                state.sources[keyword] = {state.request.category: []}
                 continue
             
-            data_sources = {'PT': [], 'SFT': []}
+            data_sources = {state.request.category: []}
 
             data_dir = os.path.join(state.request.download_dir, keyword.replace(" ", "_"))
             for dataset in state.downloads[keyword]:
@@ -195,35 +200,42 @@ class DataConvertor:
                     data = load_dataset(os.path.join(data_dir, 'tmp', dataset_id.replace("/", "_")))
                     for split, data_content in data.items():
                         annotation_result = await self.invoke(state, data_content.column_names, data_content[0])
-                        category = annotation_result.get('category', 'Unknown')
-                        if category == 'PT':
+
+                        if state.request.category == 'PT':
+                            text_field = annotation_result.get('text', None)
+                            if text_field is None or text_field not in data_content.column_names:
+                                log.info(f"数据集 {dataset_id}_{split} 标注结果中未包含有效的 'text' 字段，跳过该数据集")
+                                continue
+
                             data_file = os.path.join(data_dir, 'PT.jsonl')
                             with open(data_file, 'a') as f:
                                 for row in data_content:
-                                    text = row[annotation_result['text']]
+                                    text = row[text_field]
                                     json_obj = {'text': text}
                                     f.write(json.dumps(json_obj) + '\n')
                             data_sources['PT'].append((f'{dataset_id}_({split})', len(data_content)))
-                            log.info(f"数据集 {dataset_id}, split {split} 被分类为 PT，包含 {len(data_content)} 条记录。")
+                            log.info(f"从数据集 {dataset_id}, split {split} 中提取了 {len(data_content)} 条 PT 样本。")
 
-                        elif category == 'SFT':
+                        elif state.request.category == 'SFT':
+                            question_field = annotation_result.get('question', None)
+                            answer_field = annotation_result.get('answer', None)
+
+                            if question_field is None or question_field not in data_content.column_names or answer_field is None or answer_field not in data_content.column_names:
+                                log.info(f"数据集 {dataset_id}_{split} 标注结果中未包含有效的 'question'/'answer' 字段，跳过该数据集")
+                                continue
+
                             data_file = os.path.join(data_dir, 'SFT.jsonl')
                             with open(data_file, 'a') as f:
                                 for row in data_content:
-                                    question = row[annotation_result['question']]
-                                    output = row[annotation_result['output']] if annotation_result['output'] else None
-                                    answer = row[annotation_result['answer']]
+                                    question = row[question_field]
+                                    answer = row[answer_field]
                                     json_obj = {
                                         'question': question,
-                                        'output': output,
                                         'answer': answer
                                     }
                                     f.write(json.dumps(json_obj) + '\n')
                             data_sources['SFT'].append((f'{dataset_id}_({split})', len(data_content)))
-                            log.info(f"数据集 {dataset_id}, split {split} 被分类为 SFT，包含 {len(data_content)} 条记录。")
-
-                        else:
-                            raise ValueError(f"Invalid category '{category}'")
+                            log.info(f"从数据集 {dataset_id}, split {split} 中提取了 {len(data_content)} 条 SFT 样本。")
                             
                 except Exception as e:
                     log.error(f"处理数据集 {dataset_id} 时出错: {e}, 跳过该数据集")

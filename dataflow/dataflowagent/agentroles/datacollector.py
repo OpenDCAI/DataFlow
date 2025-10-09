@@ -208,6 +208,10 @@ class DataCollector:
         """
         log.info(f"开始执行 {self.role_name}")
 
+        if state.request.category not in ['PT', 'SFT']:
+            log.error(f"不支持下载类别 '{state.request.category}'，仅支持 'PT' 或 'SFT'")
+            return state
+
         # Step 1: Extract keywords from the query
         keywords = await self.invoke(state)
         if not keywords:

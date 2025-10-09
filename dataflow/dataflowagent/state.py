@@ -48,6 +48,7 @@ class DataCollectionRequest:
     download_dir: str = os.path.join(STATICS_DIR, "data_collection")
     dataset_size_category: str = '1K<n<10K'
     dataset_num_limit: int = 5
+    category: str = "PT"
 
 @dataclass
 class DataCollectionState:

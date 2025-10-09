@@ -9,8 +9,11 @@ from dataflow.dataflowagent.agentroles.dataconvertor import DataConvertor, data_
 
 async def main() -> None:
     req = DataCollectionRequest(
-        api_key="sk-J4OU0nswdAQEmN7y7pS9ytPedSvEC8NXCOhuBX5GIz3dXz3c",
-        target="我需要一些金融和法律数据"
+        target = "我需要一些金融和法律数据",    ## 输入的自然语言指令，可以包括多个领域关键词
+        category = "SFT",   ## 需要的数据类别，可选值为PT/SFT。PT表示预训练数据，SFT表示指令微调数据
+        dataset_num_limit = 5,  ## 用于hf搜索，每个关键词对应的hf数据集数量上限
+        dataset_size_category = '1K<n<10K'   ## 用于hf搜索，每个hf数据集的样本数范围。可选值包括 'n<1K', '1K<n<10K', '10K<n<100K', '100K<n<1M', 'n>1M'
+        ## download_dir  下载的数据位置。默认为os.path.join(STATICS_DIR, "data_collection")，每个关键词一个子目录，包含tmp目录(原始hf数据集)和jsonl文件(处理后的数据文件)
     )
 
 
@@ -26,7 +29,6 @@ async def main() -> None:
 
     graph = graph_builder.compile()
     final_state: DataCollectionState = await graph.ainvoke(state)
-    print("Final State:", final_state)
 
 
 

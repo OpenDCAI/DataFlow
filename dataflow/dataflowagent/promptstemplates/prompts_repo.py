@@ -524,41 +524,60 @@ class DataConvertor:
     system_prompt_for_data_conversion = """
 You are an expert in dataset classification and analysis.
 """
-    task_prompt_for_data_collection = """"
-Please classify the Hugging Face dataset below based on its structure.
+    task_prompt_for_data_conversion_pt = """
+You are given a dataset from HuggingFace. Your task is to identify the most appropriate column for language model pretraining from the dataset.
+
+[Dataset Information]
 
 Dataset Columns: {column_names}
 
 First Row Data: {first_row}
 
-Using the dataset columns and the example provided in the first row, classify the dataset into one of the following categories:
-1. Pretraining Dataset (PT): This dataset contains a single column representing a statement or declarative text.
-2. Instruction-Tuning Dataset (SFT): This dataset consists primarily of a pair of columns representing a question and an answer, with an optional reasoning process (thought process).
+[Instruction]
+
+Pretraining data typically consists of coherent text paragraphs with meaningful content. The dataset will include various fields (columns) with different types of data. You need to choose the column that contains textual content suitable for pretraining.
 
 [OUTPUT RULES]
 
-If the dataset is a Pretraining Dataset (PT), return a JSON response with the following structure in ```json block and replace "column_name" with the actual column name:
-
+If the dataset contains a column with meaningful textual content that could be used for pretraining, return the following JSON object in ```json block and replace "column_name" with the actual column name:
 {
-    "category": "PT",
     "text": "column_name"
 }
 
-
-If the dataset is an Instruction-Tuning Dataset (SFT), return a JSON response with the following structure in ```json block and replace "column_name" with the actual column names:
-
+If no such column is present, return the following JSON object in ```json block:
 {
-    "category": "SFT",
+    "text": null
+}
+"""
+    task_prompt_for_data_conversion_sft = """
+You are given a dataset from HuggingFace. Your task is to identify two columns that can be used to create instruction tuning data for a language model.
+
+[Dataset Information]
+
+Dataset Columns: {column_names}
+
+First Row Data: {first_row}
+
+[Instruction]
+
+Instruction tuning data typically consists of a question (instruction) and an answer pair. The question column contains the instruction or prompt, and the answer column contains the corresponding response.
+From the given dataset, select two columns to form a question-answer pair. Ensure the following requirements are met:
+1. Semantic Relevance: The selected columns should have clear semantic relevance, forming a logical question-answer relationship.
+2. Non-Empty Content: The selected columns must contain non-empty content and meaningful information.
+3. Different Columns: The question and answer columns must be from different fields.
+
+Please select a suitable question-answer pair from multiple fields based on these criteria.
+
+[OUTPUT RULES]
+
+If such columns exist, return the following JSON object: in ```json block and replace "column_name" with the actual column name:
+{
     "question": "column_name",
-    "output": "column_name",
     "answer": "column_name"
 }
-
-If no reasoning process (output) is present, leave the "output" field as null.
-
-If the dataset doesn't fit either category, return:
+If no such columns are found in the dataset, return the following JSON object in ```json block:
 {
-    "category": null
+    "question": null,
+    "answer": null
 }
-in ```json block
 """
