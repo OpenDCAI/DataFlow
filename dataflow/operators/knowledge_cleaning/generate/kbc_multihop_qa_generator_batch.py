@@ -1,4 +1,4 @@
-from dataflow.prompts.multihopqa import MultiHopQAGeneratorPrompt
+from dataflow.prompts.text2qa import Text2MultiHopQAGeneratorPrompt
 import pandas as pd
 from dataflow.utils.registry import OPERATOR_REGISTRY
 from dataflow import get_logger
@@ -12,6 +12,11 @@ import json
 from tqdm import tqdm
 import re
 
+from dataflow.core.prompt import prompt_restrict 
+
+@prompt_restrict(
+    Text2MultiHopQAGeneratorPrompt           
+)
 @OPERATOR_REGISTRY.register()
 class KBCMultiHopQAGeneratorBatch(OperatorABC):
     r"""A processor for generating multi-hop question-answer pairs from user
@@ -41,7 +46,7 @@ class KBCMultiHopQAGeneratorBatch(OperatorABC):
         if prompt_template:
             self.prompt_template = prompt_template
         else:
-            self.prompt_template = MultiHopQAGeneratorPrompt()
+            self.prompt_template = Text2MultiHopQAGeneratorPrompt()
 
     @staticmethod
     def get_desc(lang: str = "zh") -> tuple:
@@ -285,11 +290,11 @@ class ExampleConstructor:
         self.logger = get_logger()
         self.max_length = max_text_length
         self.min_length = min_text_length
-        # self.prompt = MultiHopQAGeneratorPrompt(lang=self.lang)
+        # self.prompt = Text2MultiHopQAGeneratorPrompt(lang=self.lang)
         if prompt_template:
             self.prompt_template = prompt_template
         else:
-            self.prompt_template = MultiHopQAGeneratorPrompt()
+            self.prompt_template = Text2MultiHopQAGeneratorPrompt()
 
     def construct_examples(
         self, raw_data: List[Dict[str, Any]]

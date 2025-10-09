@@ -50,48 +50,30 @@ class FairAnswerJudgePrompt:
 
 # =============================================================================
 # Configuration Parameters
+# 参数设置
 # =============================================================================
 
 # Judge Model Configuration (API model as judge)
+# 评估模型设置
 JUDGE_MODEL_CONFIG = {
     "model_name": "gpt-4o-mini",
-    "api_url": "http://123.129.219.111:3000/v1/chat/completions",  # 请求URL 必填
-    "api_key_env": "DF_API_KEY",  # api_key 必填
+    "api_url": "",  # 请求URL 必填 / request (required)
+    "api_key_env": "DF_API_KEY",  # api_key 必填 / api_key (required)
     "max_workers": 3,
     "max_retries": 5,
-    "timeout": 60  # 添加超时配置
 }
 
-# Target Models Configuration
-# 目标模型的默认设置（被评估的本地模型）
-DEFAULT_MODEL_CONFIG = {
-    "tensor_parallel_size": 1,
-    "max_tokens": 1024,
-    "gpu_memory_utilization": 0.8,
-    # "answer_prompt": "请回答：{question}",  # 可选
-}
-
-# Target Models Configuration
+# Target Models Configuration (List format - required, each element is a dict)
+# 被评估模型设置 (列表格式 - 必需，每个元素是字典)
 TARGET_MODELS = [
     {
-        "name": "qwen_3b",  # 模型名称（可选，默认使用路径最后一部分）
-        "path": "./Qwen2.5-3B-Instruct",  # 模型路径（必需）
+        "name": "qwen_3b",  # 模型名称（可选，默认使用路径最后一部分） / Model name (optional, uses the last part of the path by default)
+        "path": "./Qwen2.5-3B-Instruct",  # 模型路径（必需） / Model path (required)
 
         # ===== 答案生成的模型加载参数（可选）=====
-        "tensor_parallel_size": 1,  # GPU并行数量
-        "max_tokens": 1024,  # 最大生成token数
-        "gpu_memory_utilization": 0.8,  # GPU显存利用率
-        # "dtype": "float16",  # 数据类型：auto/float16/bfloat16
-        # "trust_remote_code": True,  # 是否信任远程代码
-
-        # ===== 答案生成参数（可选）=====
-        # "answer_prompt": "请回答以下问题：{question}",  # 自定义提示词
-        # "output_key": "model_generated_answer",  # 输出字段名
-
-        # ===== 文件路径参数（可选）=====
-        # "cache_dir": "./.cache/eval",  # 缓存目录
-        # "file_prefix": "answer_gen",  # 文件前缀
-        # "cache_type": "json"  # 缓存类型：json/jsonl
+        "tensor_parallel_size": 1,  # GPU并行数量 / Number of GPU parallels
+        "max_tokens": 1024,  # 最大生成token数 / Maximum number of generated tokens
+        "gpu_memory_utilization": 0.8,  # GPU显存利用率 / GPU memory utilization
     },
     {
         "name": "qwen_7b",
@@ -108,11 +90,7 @@ TARGET_MODELS = [
         # You can customize prompts for each model. If not specified, defaults to the template in build_prompt function.
         # Default prompt for evaluated models
         # IMPORTANT: This is the prompt for models being evaluated, NOT for the judge model!!!
-        "answer_prompt": """请基于学术文献回答以下问题：
-
-        问题：{question}
-
-        答案："""
+        "answer_prompt": """please answer the following question:"""  # 这里不要使用{question} / do not code {question} here
     },
 
     # 添加更多模型...
@@ -141,8 +119,6 @@ EVALUATOR_RUN_CONFIG = {
 # Evaluation Configuration
 EVAL_CONFIG = {
     "compare_method": "semantic",  # "semantic" 语义匹配 或 "match" 字段完全匹配
-    "batch_size": 8,
-    "max_tokens": 512
 }
 
 
@@ -196,14 +172,14 @@ def create_storage(data_file, cache_path):
 # =============================================================================
 
 def get_evaluator_config():
-    """返回完整配置"""
+    # 返回完整配置
+    # Return complete configuration
     return {
-        "JUDGE_MODEL_CONFIG": JUDGE_MODEL_CONFIG,
-        "TARGET_MODELS": TARGET_MODELS,
-        "DEFAULT_MODEL_CONFIG": DEFAULT_MODEL_CONFIG,
-        "DATA_CONFIG": DATA_CONFIG,
-        "EVALUATOR_RUN_CONFIG": EVALUATOR_RUN_CONFIG,
-        "EVAL_CONFIG": EVAL_CONFIG,
+        "JUDGE_MODEL_CONFIG": JUDGE_MODEL_CONFIG,  # 评估模型设置映射
+        "TARGET_MODELS": TARGET_MODELS,  # 被评估模型设置映射
+        "DATA_CONFIG": DATA_CONFIG,  # 数据设置映射
+        "EVAL_CONFIG": EVAL_CONFIG,  # 评估模式设置映射
+        "EVALUATOR_RUN_CONFIG": EVALUATOR_RUN_CONFIG,  # 评估数据集字段映射
         "create_judge_serving": create_judge_serving,
         "create_evaluator": create_evaluator,
         "create_storage": create_storage
@@ -212,10 +188,12 @@ def get_evaluator_config():
 
 # =============================================================================
 # Direct Execution Support
+# 直接运行评估
 # =============================================================================
 
 if __name__ == "__main__":
     # 直接运行时的简单评估
+    # Simple evaluation when run directly
     print("Starting API evaluation...")
     from dataflow.cli_funcs.cli_eval import run_evaluation
 
