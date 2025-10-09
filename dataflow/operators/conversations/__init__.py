@@ -7,11 +7,11 @@ if TYPE_CHECKING:
         AtomTaskGenerator,
         SequentialTaskGenerator,
         ParaSeqTaskGenerator,
-        CompositionTaskFilter,
         FunctionGenerator,
         MultiTurnConversationGenerator,
     )
     from .generate.consistent_chat_generator import ConsistentChatGenerator
+
 else:
     import sys
     from dataflow.utils.registry import LazyLoader, generate_import_structure_from_type_checking
