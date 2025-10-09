@@ -115,9 +115,9 @@ def test_all_operator_registry():
 
     # 报告结果
     if invalid_prompts:
-        print("\n❌ 检测到以下 Prompt 类包含未允许的函数:")
+        print("\n❌ Check failed, invalid Prompt classes contain disallowed functions:")
         for name, module, funcs in invalid_prompts:
-            print(f"- {name} ({module}) 违规函数: {funcs}")
+            print(f"- {name} ({module}) disallowed functions: {funcs}")
 
         # 构造详细错误说明
         rule_explanation = (
@@ -145,7 +145,7 @@ def test_all_operator_registry():
         )
 
     else:
-        print("✅ 所有 Prompt 类成员函数均符合约定（仅包含允许函数或私有函数）")
+        print("✅ All Prompt class member functions comply with the conventions (only contain allowed functions or private functions)")
 
     if errors:
         pytest.fail("\n".join(errors), pytrace=False)
