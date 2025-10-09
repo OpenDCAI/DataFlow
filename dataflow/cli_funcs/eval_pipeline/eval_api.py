@@ -57,7 +57,7 @@ class FairAnswerJudgePrompt:
 # 评估模型设置
 JUDGE_MODEL_CONFIG = {
     "model_name": "gpt-4o-mini",
-    "api_url": "http://123.129.219.111:3000/v1/chat/completions",  # 请求URL 必填 / request (required)
+    "api_url": "",  # 请求URL 必填 / request (required)
     "api_key_env": "DF_API_KEY",  # api_key 必填 / api_key (required)
     "max_workers": 3,
     "max_retries": 5,
