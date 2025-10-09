@@ -1,27 +1,27 @@
 from dataflow.operators.knowledge_cleaning import (
     KBCChunkGenerator,
-    FileOrURLToMarkdownConverter,
+    FileOrURLToMarkdownConverterBatch,
     KBCTextCleaner,
-    KBCMultiHopQAGenerator,
+    # KBCMultiHopQAGenerator,
 )
+from dataflow.operators.core_text import Text2MultiHopQAGenerator
 from dataflow.utils.storage import FileStorage
 from dataflow.serving import LocalModelLLMServing_vllm
 
 class KBCleaning_PDFvllm_GPUPipeline():
-    def __init__(self, url:str=None, raw_file:str=None):
+    def __init__(self):
 
         self.storage = FileStorage(
-            first_entry_file_name="../../example_data/KBCleaningPipeline/kbc_placeholder.json",
+            first_entry_file_name="../../example_data/KBCleaningPipeline/kbc_test_1.jsonl",
             cache_path="./.cache/gpu",
-            file_name_prefix="pdf_cleaning_step",
+            file_name_prefix="knowledge_cleaning_step_vllm_engine",
             cache_type="json",
         )
 
-        self.knowledge_cleaning_step1 = FileOrURLToMarkdownConverter(
+        self.knowledge_cleaning_step1 = FileOrURLToMarkdownConverterBatch(
             intermediate_dir="../../example_data/KBCleaningPipeline/raw/",
             lang="en",
-            mineru_backend="vlm-sglang-engine",
-            raw_file=raw_file,
+            mineru_backend="vlm-vllm-engine",
         )
 
         self.knowledge_cleaning_step2 = KBCChunkGenerator(
@@ -31,14 +31,16 @@ class KBCleaning_PDFvllm_GPUPipeline():
         )
 
     def forward(self):
-        extracted=self.knowledge_cleaning_step1.run(
-            storage=self.storage,
+        self.knowledge_cleaning_step1.run(
+            storage=self.storage.step(),
+            # input_key=
+            # output_key=
         )
         
         self.knowledge_cleaning_step2.run(
             storage=self.storage.step(),
-            input_file=extracted,
-            output_key="raw_content",
+            # input_key=
+            # output_key=
         )
 
         self.llm_serving = LocalModelLLMServing_vllm(
@@ -54,22 +56,23 @@ class KBCleaning_PDFvllm_GPUPipeline():
             lang="en"
         )
 
-        self.knowledge_cleaning_step4 = KBCMultiHopQAGenerator(
+        self.knowledge_cleaning_step4 = Text2MultiHopQAGenerator(
             llm_serving=self.llm_serving,
-            lang="en"
+            lang="en",
+            num_q = 5
         )
 
         self.knowledge_cleaning_step3.run(
             storage=self.storage.step(),
-            input_key= "raw_content",
-            output_key="cleaned",
+            # input_key=
+            # output_key=
         )
         self.knowledge_cleaning_step4.run(
             storage=self.storage.step(),
-            input_key="cleaned",
-            output_key="MultiHop_QA"
+            # input_key=
+            # output_key=
         )
         
 if __name__ == "__main__":
-    model = KBCleaning_PDFvllm_GPUPipeline(raw_file="../../example_data/KBCleaningPipeline/test.pdf")
+    model = KBCleaning_PDFvllm_GPUPipeline()
     model.forward()

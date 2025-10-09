@@ -7,6 +7,13 @@ from dataflow.utils.storage import DataFlowStorage
 from dataflow.core import OperatorABC
 from dataflow.core import LLMServingABC
 
+from dataflow.core.prompt import prompt_restrict 
+
+import re
+@prompt_restrict(
+    KnowledgeCleanerPrompt       
+)
+
 @OPERATOR_REGISTRY.register()
 class KBCTextCleaner(OperatorABC):
     '''
@@ -103,8 +110,8 @@ class KBCTextCleaner(OperatorABC):
     def run(
         self, 
         storage: DataFlowStorage, 
-        input_key:str = "raw_content", 
-        output_key:str = "cleaned"
+        input_key:str = "raw_chunk", 
+        output_key:str = "cleaned_chunk"
         ):
         '''
         Runs the knowledge cleaning process, reading from the input key and saving results to output key.

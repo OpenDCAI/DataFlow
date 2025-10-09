@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# dataflow/cli.py
+# dataflow/cli.py - Enhanced with local model judge support and eval init/run
 # ===============================================================
 # DataFlow 命令行入口
 #   dataflow -v                         查看版本并检查更新
@@ -10,6 +10,9 @@
 #   dataflow pdf2model init/train      PDF to Model 训练流程
 #   dataflow text2model init/train     Text to Model 训练流程
 #   dataflow chat                      聊天界面
+#   dataflow eval init                 初始化评估配置文件
+#   dataflow eval api                  运行API模型评估
+#   dataflow eval local                运行本地模型评估
 # ===============================================================
 
 import os
@@ -19,6 +22,7 @@ import sys
 import re
 import yaml
 import json
+import subprocess
 from pathlib import Path
 from colorama import init as color_init, Fore, Style
 from dataflow.cli_funcs import cli_env, cli_init  # 项目已有工具
@@ -57,14 +61,14 @@ def version_and_check_for_updates() -> None:
 def check_current_dir_for_model():
     """检查当前目录的模型文件，优先识别微调模型"""
     current_dir = Path.cwd()
-    
+
     # 检查 LoRA 适配器文件
     adapter_files = [
         "adapter_config.json",
         "adapter_model.bin",
         "adapter_model.safetensors"
     ]
-    
+
     # 检查基础模型文件
     model_files = [
         "config.json",
@@ -73,16 +77,16 @@ def check_current_dir_for_model():
         "tokenizer.json",
         "tokenizer_config.json"
     ]
-    
+
     # 优先检查adapter（微调模型）
     # 如果有adapter文件，就只返回微调模型，不管有没有基础模型文件
     if any((current_dir / f).exists() for f in adapter_files):
         return [("fine_tuned_model", current_dir)]
-    
+
     # 只有在没有adapter文件时，才检查base model
     if any((current_dir / f).exists() for f in model_files):
         return [("base_model", current_dir)]
-    
+
     return []
 
 
@@ -168,7 +172,7 @@ def call_dataflow_chat(model_path, model_type=None):
         else:
             # 无法判断，默认尝试text2model
             model_type = 'text2model'
-    
+
     if model_type == 'text2model':
         try:
             from dataflow.cli_funcs.cli_text import cli_text2model_chat
@@ -181,12 +185,8 @@ def call_dataflow_chat(model_path, model_type=None):
             from dataflow.cli_funcs.cli_pdf import cli_pdf2model_chat
             return cli_pdf2model_chat(str(model_path))
         except ImportError:
-            try:
-                from dataflow.cli_funcs.cli_sft import cli_pdf2model_chat
-                return cli_pdf2model_chat(str(model_path))
-            except ImportError:
-                print("Cannot find PDF model chat function")
-                return False
+            print("Cannot find PDF model chat function")
+            return False
     else:
         print(f"Unknown model type: {model_type}")
         return False
@@ -195,12 +195,12 @@ def call_dataflow_chat(model_path, model_type=None):
 def call_llamafactory_chat(model_path):
     """调用llamafactory的聊天功能（用于基础模型）"""
     import subprocess
-    
+
     chat_cmd = [
         "llamafactory-cli", "chat",
         "--model_name_or_path", str(model_path)
     ]
-    
+
     try:
         result = subprocess.run(chat_cmd, check=True)
         return True
@@ -224,16 +224,16 @@ def smart_chat_command(model_path=None, cache_path="./"):
             return False
 
         print(f"{Fore.CYAN}Using specified model: {model_path}{Style.RESET_ALL}")
-        
+
         # 检查是否有adapter文件
         adapter_files = [
             "adapter_config.json",
             "adapter_model.bin",
             "adapter_model.safetensors"
         ]
-        
+
         has_adapter = any((model_path_obj / f).exists() for f in adapter_files)
-        
+
         if has_adapter:
             # 有adapter，使用dataflow chat
             return call_dataflow_chat(model_path)
@@ -249,9 +249,8 @@ def smart_chat_command(model_path=None, cache_path="./"):
         for model_type, path in detected_models:
             if model_type == "fine_tuned_model":
                 print(f"{Fore.GREEN}Found trained model in current directory: {path.name}{Style.RESET_ALL}")
-                print(f"{Fore.CYAN}Starting chat interface...{Style.RESET_ALL}")
                 return call_dataflow_chat(path)
-        
+
         # 如果没有adapter，使用base_model
         for model_type, path in detected_models:
             if model_type == "base_model":
@@ -266,7 +265,7 @@ def smart_chat_command(model_path=None, cache_path="./"):
         model_name = Path(latest_model).name
         print(f"{Fore.GREEN}Found trained model from cache: {model_name}{Style.RESET_ALL}")
         print(f"{Fore.CYAN}Starting chat interface...{Style.RESET_ALL}")
-        
+
         # 检查缓存中的模型是否有adapter文件
         latest_model_path = Path(latest_model)
         adapter_files = [
@@ -274,7 +273,7 @@ def smart_chat_command(model_path=None, cache_path="./"):
             "adapter_model.bin",
             "adapter_model.safetensors"
         ]
-        
+
         has_adapter = any((latest_model_path / f).exists() for f in adapter_files)
         if has_adapter:
             return call_dataflow_chat(latest_model, model_type)
@@ -298,8 +297,110 @@ def smart_chat_command(model_path=None, cache_path="./"):
     return False
 
 
+# ---------------- 新的eval命令处理函数 ----------------
+def handle_python_config_init():
+    """处理Python配置文件初始化"""
+    try:
+        from dataflow.cli_funcs.cli_eval import DataFlowEvalCLI
+
+        cli = DataFlowEvalCLI()
+        success = cli.init_eval_files()  # 使用正确的方法名（复数）且无参数
+
+        if success:
+            print("Configuration files initialized successfully")
+        else:
+            print("Configuration files initialization failed")
+
+        return success
+
+    except ImportError as e:
+        print(f"Python config evaluation module unavailable: {e}")
+        print("Please check if dataflow.cli_funcs.cli_eval module exists")
+        return False
+    except Exception as e:
+        print(f"Configuration file initialization failed: {e}")
+        return False
+
+
+def handle_python_config_eval(eval_type: str, args=None):
+    """处理Python配置文件评估模式"""
+    try:
+        from dataflow.cli_funcs.cli_eval import DataFlowEvalCLI
+
+        cli = DataFlowEvalCLI()
+
+        # 使用默认文件名
+        eval_file = f"eval_{eval_type}.py"
+
+        print(f"Starting {eval_type} model evaluation: {eval_file}")
+
+        # 传递命令行参数到评估器
+        success = cli.run_eval_file(eval_file)
+
+        if success:
+            print(f"{eval_type.upper()} model evaluation completed successfully")
+        else:
+            print(f"{eval_type.upper()} model evaluation failed")
+
+        return success
+
+    except ImportError as e:
+        print(f"Python config evaluation module unavailable: {e}")
+        print("Please check if dataflow.cli_funcs.cli_eval module exists")
+        return False
+    except Exception as e:
+        print(f"Python config evaluation failed: {e}")
+        return False
+
+
+
+
+
+def handle_eval_command(args):
+    """处理评估命令 - 支持自动检测和模型指定"""
+    try:
+        eval_action = getattr(args, 'eval_action', None)
+
+        # 处理 init 子命令
+        if eval_action == 'init':
+            return handle_python_config_init()
+
+        # 处理 api 子命令
+        elif eval_action == 'api':
+            return handle_python_config_eval('api', args)
+
+        # 处理 local 子命令
+        elif eval_action == 'local':
+            return handle_python_config_eval('local', args)
+
+        # 如果没有指定子命令，显示帮助
+        else:
+            print("DataFlow Evaluation Tool")
+            print()
+            print("Available commands:")
+            print("  dataflow eval init                        # Initialize evaluation config files")
+            print("  dataflow eval api                         # Run API model evaluation (auto-detect models)")
+            print("  dataflow eval local                       # Run local model evaluation (auto-detect models)")
+            print()
+            print("Complete evaluation workflow:")
+            print("  1. dataflow eval local                     # Auto-detect and evaluate local models")
+            print("  2. View generated evaluation report        # model_comparison_report.json")
+            print()
+            print("Config file descriptions:")
+            print("  - eval_api.py: API evaluator config (GPT-4o etc.)")
+            print("  - eval_local.py: Local evaluator config")
+            return False
+
+    except Exception as e:
+        print(f"Evaluation command execution failed: {e}")
+        import traceback
+        traceback.print_exc()
+        return False
+
+
 # ---------------- CLI 主函数 ----------------
 def build_arg_parser() -> argparse.ArgumentParser:
+    """构建参数解析器"""
     parser = argparse.ArgumentParser(
         prog="dataflow",
         description=f"DataFlow Command-Line Interface  (v{__version__})",
@@ -322,6 +423,20 @@ def build_arg_parser() -> argparse.ArgumentParser:
     p_chat = top.add_parser("chat", help="Start chat interface with trained model")
     p_chat.add_argument("--model", default=None, help="Model path (default: use latest trained model from cache)")
     p_chat.add_argument("--cache", default="./", help="Cache directory path")
+
+    # --- eval 命令
+    p_eval = top.add_parser("eval", help="Model evaluation using BenchDatasetEvaluator")
+    eval_sub = p_eval.add_subparsers(dest="eval_action", help="Evaluation actions")
+
+    # eval init 子命令
+    eval_init = eval_sub.add_parser("init", help="Initialize evaluation configuration file")
+
+    # eval api 子命令
+    eval_api = eval_sub.add_parser("api", help="Run API model evaluation")
+
+    # eval local 子命令
+    eval_local = eval_sub.add_parser("local", help="Run local model evaluation")
+
 
     # --- pdf2model ---
     p_pdf2model = top.add_parser("pdf2model", help="PDF to model training pipeline")
@@ -361,16 +476,11 @@ def build_arg_parser() -> argparse.ArgumentParser:
     w_sub.add_parser("agent", help="Launch DataFlow-Agent UI (backend included)")
     w_sub.add_parser("pdf", help="Launch PDF Knowledge Base Cleaning UI")
 
-    # --- sft (LEGACY) ---
-    p_sft = top.add_parser("sft", help="PDF to SFT training pipeline (legacy)")
-    p_sft.add_argument("--pdf_path", default="./", help="PDF input directory path")
-    p_sft.add_argument("--lf_yaml", default="train_config.yaml", help="LlamaFactory YAML config file path")
-    p_sft.add_argument("--cache", default="./", help="Cache directory path")
-
     return parser
 
 
 def main() -> None:
+    """主入口函数"""
     parser = build_arg_parser()
     args = parser.parse_args()
 
@@ -384,6 +494,9 @@ def main() -> None:
 
     elif args.command == "env":
         cli_env()
+
+    elif args.command == "eval":
+        handle_eval_command(args)
 
     elif args.command == "pdf2model":
         if args.pdf2model_action == "init":

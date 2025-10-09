@@ -1,11 +1,18 @@
 '''
 A collection of prompts for the text2sql operator.
 '''
-class TextSQLConsistencyPrompt:
+import random
+from re import template
+import numpy as np
+import json
+from typing import List
+
+
+class SQLConsistencyFilterPrompt:
     def __init__(self):
         pass
 
-    def text_sql_consistency_prompt(self, question, sql, schema):
+    def build_prompt(self, question: str, sql: str, db_details: str) -> str:
         prompt = f"""
         **Task Overview**
         Determine if the SQL query correctly answers the given question based on the provided schema.
@@ -17,7 +24,7 @@ class TextSQLConsistencyPrompt:
         {sql}
 
         **Schema**
-        {schema}
+        {db_details}
 
         **Evaluation Criteria**
         1. **Logical Alignment**: Does the SQL query logically address what the question is asking?
@@ -41,11 +48,15 @@ class TextSQLConsistencyPrompt:
         """
         return prompt
 
-class CotGenerationPrompt:
+class Text2SQLCotGeneratorPrompt:
     def __init__(self):
         pass
 
-    def text2sql_cot_prompt(self, schema, question, sql):
+    def build_prompt(self, schema_str: str, question: str, sql: str, evidence: str) -> str:
+        if evidence:
+            question_with_evidence = question + "\n" + evidence
+        else:
+            question_with_evidence = question
         prompt = f"""
         You are a senior data analyst specializing in SQL. Your task is to translate a natural language question into an executable SQLite query, providing a detailed reasoning trace.
 
@@ -62,10 +73,10 @@ class CotGenerationPrompt:
         ```
 
         [Database Schema]:
-        {schema}
+        {schema_str}
 
         [Natural Language Question]:
-        {question}
+        {question_with_evidence}
 
         [Reference Solution]:
         ```sql
@@ -77,7 +88,7 @@ class CotGenerationPrompt:
         return prompt
 
 
-class SQLGenerationPrompt:
+class SelectSQLGeneratorPrompt:
     def __init__(self):
         self.simple_criterion = '''**Criteria:**
         Simple SQL queries may satisfy one or more of the following criteria:
@@ -179,65 +190,21 @@ class SQLGenerationPrompt:
         INNER JOIN DepartmentStats dstat ON ds.department_id = dstat.department_id
         ORDER BY ds.level, ds.name;
         ```'''
+        self.complexity2criterion = {
+            "Simple": self.simple_criterion,
+            "Moderate": self.moderate_criterion,
+            "Complex": self.complex_criterion, 
+            "Highly Complex": self.highly_complex_criterion
+        }
 
-    def sql_func_template(self, sql_funcs):
-        template = """### SQL Functions
-        You may consider one or more of the following SQL functions while generating the query:
-        {sql_funcs}
-        Important tips:
-        Except for the functions listed above, you may use any other functions as long as they conform to the syntax of the database engine.
-        """
-        return template.format(sql_funcs=sql_funcs)
+        self.complexity2criterion = {
+            "Simple": self.simple_criterion,
+            "Moderate": self.moderate_criterion,
+            "Complex": self.complex_criterion, 
+            "Highly Complex": self.highly_complex_criterion
+        }
 
-    def insert_stmts_template(self, insert_statements):
-        template = '''### INSERT INTO Statements
-        Below are several `INSERT INTO` statements. Use these to help generate predicates (i.e., `WHERE` clauses) in your SQL query:
-        {insert_statements}
-        '''
-        return template.format(insert_statements=insert_statements)
-
-    def sql_synthesis_prompt(self, schema_str, sql_function_prompt, db_value_prompt, complexity, criterion, db_engine, column_count):
-        template = '''**Task Overview**
-        Create an executable SQL query based on the provided information.
-
-        **Database Schema**
-        {schema_str}
-
-        {sql_function_prompt}
-
-        {db_value_prompt}
-
-        **SQL Query Complexity**
-        Ensure the SQL query matches the {complexity} level, defined as follows:
-        {criterion}
-
-        **Output Format Requirements**
-        Enclose the SQL query in a code block:
-        ```sql
-        -- Your SQL query here
-        ```
-
-        **SQL Query Requirements**
-        1. Use the syntax specific to the {db_engine} database engine.
-        2. Incorporate advanced functions if appropriate, but they are not mandatory.
-        3. Address real-world data analysis needs. Avoid trivial or nonsensical queries.
-        4. (Very important) Ensure the final SQL query selects {column_count} columns.
-
-        **Answer**
-        Let's proceed step by step.
-        '''
-        return template.format(
-            schema_str=schema_str,
-            sql_function_prompt=sql_function_prompt.strip(),
-            db_value_prompt=db_value_prompt.strip(),
-            complexity=complexity,
-            criterion=criterion.strip(),
-            db_engine=db_engine,
-            column_count=column_count
-        )
-    
-    def sqlite_funcs(self):
-        funcs = [
+        self.functions = [
             "ABS(X) \nDescription: The ABS(X) function returns the absolute value of the numeric argument X. Abs(X) returns NULL if X is NULL. Abs(X) returns 0.0 if X is a string or blob that cannot be converted to a numeric value. If X is the integer -9223372036854775808 then ABS(X) throws an integer overflow error since there is no equivalent positive 64-bit two complement value. ",
             "CHANGES() \nDescription: The CHANGES() function returns the number of database rows that were changed or inserted or deleted by the most recently completed INSERT, DELETE, or UPDATE statement, exclusive of statements in lower-level triggers. The CHANGES() SQL function is a wrapper around thesqlite3_changes64()C/C++ function and hence follows the same rules for counting changes. ",
             "CHAR(X1,X2,...,XN) \nDescription: The CHAR(X1,X2,...,XN) function returns a string composed of characters having the unicode code point values of integers X1 through XN, respectively. ",
@@ -336,12 +303,670 @@ class SQLGenerationPrompt:
             "STRFTIME(format, time-value, modifier, modifier, ...) \nDescription: Returns the date formatted according to the format string specified as the first argument. The format string supports the most common substitutions found in the STRFTIME() function from the standard C library plus two new substitutions, %f and %J. ",
             "TIMEDIFF(time-value, time-value) \nDescription: Returns a string that describes the amount of time that must be added to B in order to reach time A. The format of the TIMEDIFF() result is designed to be human-readable. "
         ]
-        return funcs
+        
+    def sql_func_template(self, sql_funcs: str) -> str:
+        template = """### SQL Functions
+        You may consider one or more of the following SQL functions while generating the query:
+        {sql_funcs}
+        Important tips:
+        Except for the functions listed above, you may use any other functions as long as they conform to the syntax of the database engine.
+        """
+        return template.format(sql_funcs=sql_funcs)
+      
+    def insert_stmts_template(self, insert_statements: str) -> str:
+        template = '''### INSERT INTO Statements
+        Below are several `INSERT INTO` statements. Use these to help generate predicates (i.e., `WHERE` clauses) in your SQL query:
+        {insert_statements}
+        '''
+        return template.format(insert_statements=insert_statements)
+
+    def sql_synthesis_prompt(self, schema_str: str, sql_function_prompt: str, db_value_prompt: str, complexity: str, criterion: str, db_engine: str, column_count: int) -> str:
+        template = '''**Task Overview**
+        Create an executable SQL query based on the provided information.
+
+        **Database Schema**
+        {schema_str}
+
+        {sql_function_prompt}
+
+        {db_value_prompt}
+
+        **SQL Query Complexity**
+        Ensure the SQL query matches the {complexity} level, defined as follows:
+        {criterion}
+
+        **Output Format Requirements**
+        Enclose the SQL query in a code block:
+        ```sql
+        -- Your SQL query here
+        ```
+
+        **SQL Query Requirements**
+        1. Use the syntax specific to the {db_engine} database engine.
+        2. Incorporate advanced functions if appropriate, but they are not mandatory.
+        3. Address real-world data analysis needs. Avoid trivial or nonsensical queries.
+        4. (Very important) Ensure the final SQL query selects {column_count} columns.
+
+        **Answer**
+        Let's proceed step by step.
+        '''
+        return template.format(
+            schema_str=schema_str,
+            sql_function_prompt=sql_function_prompt.strip(),
+            db_value_prompt=db_value_prompt.strip(),
+            complexity=complexity,
+            criterion=criterion.strip(),
+            db_engine=db_engine,
+            column_count=column_count
+        )
+
+    def build_prompt(self, insert_statements: List[str], create_statements: List[str], db_engine: str) -> str:
+        random.seed(42)
+        complexity = random.sample(["Simple", "Moderate", "Complex", "Highly Complex"], 1)[0]
+
+        if len(insert_statements) == 0:
+            db_value_prompt = ""
+        else:
+            if len(insert_statements) > 4:
+                insert_statements = random.sample(insert_statements, 4)
+            db_value_prompt = self.insert_stmts_template(
+                insert_statements="\n\n".join(insert_statements)
+            )
+
+        function_num = random.randint(0, 2)
+        if function_num == 0:
+            sql_function_prompt = "### SQL Functions\nYou can use any function supported by the database engine."
+        else:
+            sql_funcs = ""
+            sampled_functions = random.sample(self.functions, function_num)
+            for idx, func in enumerate(sampled_functions):
+                sql_funcs += f"Function {idx + 1}:\n{func.strip()}\n"
+            sql_function_prompt = self.sql_func_template(sql_funcs=sql_funcs)
+
+        column_count = np.random.geometric(0.6, 1)[0]
+        prompt = self.sql_synthesis_prompt(
+            schema_str="\n\n".join(create_statements),
+            sql_function_prompt=sql_function_prompt.strip(),
+            db_value_prompt=db_value_prompt.strip(),
+            complexity=complexity,
+            criterion=self.complexity2criterion[complexity].strip(),
+            db_engine=db_engine,
+            column_count=column_count
+        )
+        return prompt
 
 
-class QuestionGenerationPrompt:
+class SelectVecSQLGeneratorPrompt:
     def __init__(self):
-        pass
+        self.simple_vec_criterion = '''**Criteria:**
+        Simple KNN queries in SQLite-vec may satisfy one or more of the following criteria:
+        - Basic vector similarity search on a single table
+        - Uses simple `MATCH` operator with target vector
+        - Contains basic `LIMIT` or `AND` clause to restrict results after `MATCH` operator
+        - No joins or complex filtering beyond the vector search
+
+        **Example of Simple KNN Query:**
+        ```sql
+        SELECT rowid, location_embedding
+        FROM vec_table
+        WHERE location_embedding MATCH lembed('all-MiniLM-L6-v2',"572 Main Street Los Angeles, CA 90210 USA")
+        ORDER BY distance
+        LIMIT 1;
+        ```'''
+
+        self.moderate_vec_criterion = '''**Criteria:**
+        Moderate KNN queries in SQLite-vec may satisfy one or more of the following criteria:
+        - Includes simple joins with metadata tables
+        - Contains basic post-filtering of vector results
+        - May use multiple vector columns in query
+
+        **Example of Moderate KNN Query:**
+        ```sql
+        SELECT d.doc_id, d.title, d.content
+        FROM documents d
+        JOIN categories c ON d.category_id = c.id
+        WHERE d.content_embedding MATCH lembed('all-MiniLM-L6-v2',"OmniSQL is a unified SQL engine that integrates Vector search and LLM augmentation.")
+        AND k = 2
+        AND c.name = 'science'
+        ORDER BY d.distance;
+        ```'''
+
+        self.complex_vec_criterion = '''**Criteria:**
+        Complex KNN queries in SQLite-vec may satisfy one or more of the following criteria:
+        - Combines vector search with complex joins
+        - Uses CTEs to organize vector search logic
+        - Contains hybrid search (vector + full-text)
+        - Implements multi-stage filtering of results
+        - May use window functions with vector results
+        - Includes complex distance threshold conditions
+
+        **Example of Complex KNN Query:**
+        ```sql
+        WITH HighWDVOATeams AS (
+            SELECT team_id, team_name
+            FROM teams
+            WHERE team_id IN (
+                SELECT team_id
+                FROM team_metrics
+                WHERE wdvoa > 30 AND season = 2019
+            )
+        ),
+        SimilarTeams AS (
+            SELECT team_id, team_name, distance
+            FROM teams
+            WHERE team_name_embedding MATCH lembed('all-MiniLM-L6-v2',"Woven Shadows")
+            ORDER BY distance
+            LIMIT 5
+        )
+        SELECT h.team_name, AVG(p.confidence_level) AS average_confidence
+        FROM HighWDVOATeams h
+        JOIN SimilarTeams s ON h.team_id = s.team_id
+        JOIN game_predictions p ON p.game_id IN (
+            SELECT game_id
+            FROM games
+            WHERE home_team_id = h.team_id OR away_team_id = h.team_id
+        )
+        GROUP BY h.team_name
+        HAVING average_confidence > 0.7;
+        ```'''
+
+        self.highly_complex_vec_criterion = '''**Criteria:**
+        Highly complex KNN queries in SQLite-vec may satisfy one or more of the following criteria:
+        - Uses multiple CTEs with vector operations
+        - Combines multiple vector searches in one query
+        - Implements advanced hybrid search techniques
+        - Contains recursive vector search patterns
+        - Uses complex window functions over vector results
+        - May involve vector aggregation operations
+        - Implements custom distance calculations
+
+        **Example of Highly Complex KNN Query:**
+        ```sql
+        WITH BettingAnalysis AS (
+            SELECT
+                g.game_id,
+                AVG(bd.betting_spread) AS avg_initial_spread,
+                COUNT(*) AS total_bets
+            FROM games g
+            JOIN betting_data bd ON g.game_id = bd.game_id
+            GROUP BY g.game_id
+        ),
+        PredictionAnalysis AS (
+            SELECT
+                gp.game_id,
+                AVG(gp.confidence_level) AS avg_confidence,
+                SUM(CASE WHEN gp.make_pick = 1 AND g.pick_right = 1 THEN 1 ELSE 0 END) AS correct_predictions
+            FROM games g
+            JOIN game_predictions gp ON g.game_id = gp.game_id
+            GROUP BY gp.game_id
+        ),
+        TeamPerformance AS (
+            SELECT
+                tm.team_id,
+                tm.season,
+                AVG(tm.wdvoa) AS avg_wdvoa
+            FROM team_metrics tm
+            GROUP BY tm.team_id, tm.season
+        ),
+        LocationSimilarity AS (
+            SELECT
+                g.game_id,
+                g.location,
+                vec.distance AS location_similarity
+            FROM games g
+            JOIN (
+                SELECT rowid, distance
+                FROM games
+                WHERE location_embedding MATCH lembed('all-MiniLM-L6-v2',"New York")
+                ORDER BY distance
+                LIMIT 5
+            ) AS vec ON g.rowid = vec.rowid
+        )
+        SELECT
+            g.game_id,
+            ba.avg_initial_spread,
+            pa.avg_confidence,
+            tp.avg_wdvoa,
+            ls.location_similarity
+        FROM games g
+        JOIN BettingAnalysis ba ON g.game_id = ba.game_id
+        JOIN PredictionAnalysis pa ON g.game_id = pa.game_id
+        JOIN TeamPerformance tp ON g.home_team_id = tp.team_id
+        JOIN LocationSimilarity ls ON g.game_id = ls.game_id
+        WHERE pa.correct_predictions > 2
+        ORDER BY g.game_id;
+        ```'''
+
+        self.complexity2criterion_vec = {
+            "Simple": self.simple_vec_criterion,
+            "Moderate": self.moderate_vec_criterion,
+            "Complex": self.complex_vec_criterion,
+            "Highly Complex": self.highly_complex_vec_criterion
+        }
+
+
+        self.functions = [
+            "ABS(X) \nDescription: The ABS(X) function returns the absolute value of the numeric argument X. Abs(X) returns NULL if X is NULL. Abs(X) returns 0.0 if X is a string or blob that cannot be converted to a numeric value. If X is the integer -9223372036854775808 then ABS(X) throws an integer overflow error since there is no equivalent positive 64-bit two complement value. ",
+            "CHANGES() \nDescription: The CHANGES() function returns the number of database rows that were changed or inserted or deleted by the most recently completed INSERT, DELETE, or UPDATE statement, exclusive of statements in lower-level triggers. The CHANGES() SQL function is a wrapper around thesqlite3_changes64()C/C++ function and hence follows the same rules for counting changes. ",
+            "CHAR(X1,X2,...,XN) \nDescription: The CHAR(X1,X2,...,XN) function returns a string composed of characters having the unicode code point values of integers X1 through XN, respectively. ",
+            "COALESCE(X,Y,...) \nDescription: The COALESCE() function returns a copy of its first non-NULL argument, or NULL if all arguments are NULL. Coalesce() must have at least 2 arguments. ",
+            "CONCAT(X,...) \nDescription: The CONCAT(...) function returns a string which is the concatenation of the string representation of all of its non-NULL arguments. If all arguments are NULL, then CONCAT() returns an empty string. ",
+            "CONCAT_WS(SEP,X,...) \nDescription: The CONCAT_WS(SEP,...) function returns a string that is the concatenation of all non-null arguments beyond the first argument, using the text value of the first argument as a separator. If the first argument is NULL, then CONCAT_WS() returns NULL. If all arguments other than the first are NULL, then CONCAT_WS() returns an empty string. ",
+            "FORMAT(FORMAT,...) \nDescription: The FORMAT(FORMAT,...) SQL function works like thesqlite3_mprintf()C-language function and the printf() function from the standard C library. The first argument is a format string that specifies how to construct the output string using values taken from subsequent arguments. If the FORMAT argument is missing or NULL then the result is NULL. The %n format is silently ignored and does not consume an argument. The %p format is an alias for %X. The %z format is interchangeable with %s. If there are too few arguments in the argument list, missing arguments are assumed to have a NULL value, which is translated into 0 or 0.0 for numeric formats or an empty string for %s. See thebuilt-in printf()documentation for additional information. ",
+            "GLOB(X,Y) \nDescription: The GLOB(X,Y) function is equivalent to the expression \"Y GLOB X\". Note that the X and Y arguments are reversed in the GLOB() function relative to the infixGLOBoperator. Y is the string and X is the pattern. So, for example, the following expressions are equivalent:name GLOB '*helium*' GLOB('*helium*',name)If thesqlite3_create_function()interface is used to override the GLOB(X,Y) function with an alternative implementation then theGLOBoperator will invoke the alternative implementation. ",
+            "HEX(X) \nDescription: The HEX() function interprets its argument as a BLOB and returns a string which is the upper-case hexadecimal rendering of the content of that blob.If the argumentXin \"hex(X)\" is an integer or floating point number, then \"interprets its argument as a BLOB\" means that the binary number is first converted into a UTF8 text representation, then that text is interpreted as a BLOB. Hence, \"hex(12345678)\" renders as \"3132333435363738\" not the binary representation of the integer value \"0000000000BC614E\".See also:unhex() ",
+            "IFNULL(X,Y) \nDescription: The IFNULL() function returns a copy of its first non-NULL argument, or NULL if both arguments are NULL. Ifnull() must have exactly 2 arguments. The IFNULL() function is equivalent tocoalesce()with two arguments. ",
+            "IIF(X,Y,Z) \nDescription: The IIF(X,Y,Z) function returns the value Y if X is true, and Z otherwise. The IIF(X,Y,Z) function is logically equivalent to and generates the samebytecodeas theCASE expression\"CASE WHEN X THEN Y ELSE Z END\". ",
+            "INSTR(X,Y) \nDescription: The INSTR(X,Y) function finds the first occurrence of string Y within string X and returns the number of prior characters plus 1, or 0 if Y is nowhere found within X. Or, if X and Y are both BLOBs, then INSTR(X,Y) returns one more than the number bytes prior to the first occurrence of Y, or 0 if Y does not occur anywhere within X. If both arguments X and Y to INSTR(X,Y) are non-NULL and are not BLOBs then both are interpreted as strings. If either X or Y are NULL in INSTR(X,Y) then the result is NULL. ",
+            "LAST_INSERT_ROWID() \nDescription: The LAST_INSERT_ROWID() function returns theROWIDof the last row insert from the database connection which invoked the function. The LAST_INSERT_ROWID() SQL function is a wrapper around thesqlite3_last_insert_rowid()C/C++ interface function. ",
+            "LENGTH(X) \nDescription: For a string value X, the LENGTH(X) function returns the number of characters (not bytes) in X prior to the first NUL character. Since SQLite strings do not normally contain NUL characters, the LENGTH(X) function will usually return the total number of characters in the string X. For a blob value X, LENGTH(X) returns the number of bytes in the blob. If X is NULL then LENGTH(X) is NULL. If X is numeric then LENGTH(X) returns the length of a string representation of X.Note that for strings, the LENGTH(X) function returns thecharacterlength of the string, not the byte length. The character length is the number of characters in the string. The character length is always different from the byte length for UTF-16 strings, and can be different from the byte length for UTF-8 strings if the string contains multi-byte characters. Use theoctet_length()function to find the byte length of a string.For BLOB values, LENGTH(X) always returns the byte-length of the BLOB.For string values, LENGTH(X) must read the entire string into memory in order to compute the character length. But for BLOB values, that is not necessary as SQLite knows how many bytes are in the BLOB. Hence, for multi-megabyte values, the LENGTH(X) function is usually much faster for BLOBs than for strings, since it does not need to load the value into memory. ",
+            "LIKE(X,Y) or LIKE(X,Y,Z) \nDescription: The LIKE() function is used to implement the \"Y LIKE X [ESCAPE Z]\" expression. If the optional ESCAPE clause is present, then the LIKE() function is invoked with three arguments. Otherwise, it is invoked with two arguments only. Note that the X and Y parameters are reversed in the LIKE() function relative to the infixLIKEoperator. X is the pattern and Y is the string to match against that pattern. Hence, the following expressions are equivalent:name LIKE '%neon%' LIKE('%neon%',name)Thesqlite3_create_function()interface can be used to override the LIKE() function and thereby change the operation of theLIKEoperator. When overriding the LIKE() function, it may be important to override both the two and three argument versions of the LIKE() function. Otherwise, different code may be called to implement theLIKEoperator depending on whether or not an ESCAPE clause was specified. ",
+            "LIKELIHOOD(X,Y) \nDescription: The LIKELIHOOD(X,Y) function returns argument X unchanged. The value Y in LIKELIHOOD(X,Y) must be a floating point constant between 0.0 and 1.0, inclusive. The LIKELIHOOD(X) function is a no-op that the code generator optimizes away so that it consumes no CPU cycles during run-time (that is, during calls tosqlite3_step()). The purpose of the LIKELIHOOD(X,Y) function is to provide a hint to the query planner that the argument X is a boolean that is true with a probability of approximately Y. Theunlikely(X)function is short-hand for LIKELIHOOD(X,0.0625). Thelikely(X)function is short-hand for LIKELIHOOD(X,0.9375). ",
+            "LIKELY(X) \nDescription: The LIKELY(X) function returns the argument X unchanged. The LIKELY(X) function is a no-op that the code generator optimizes away so that it consumes no CPU cycles at run-time (that is, during calls tosqlite3_step()). The purpose of the LIKELY(X) function is to provide a hint to the query planner that the argument X is a boolean value that is usually true. The LIKELY(X) function is equivalent tolikelihood(X,0.9375). See also:unlikely(X). ",
+            "LOAD_EXTENSION(X) or LOAD_EXTENSION(X,Y) \nDescription: The LOAD_EXTENSION(X,Y) function loadsSQLite extensionsout of the shared library file named X using the entry point Y. The result of LOAD_EXTENSION() is always a NULL. If Y is omitted then the default entry point name is used. The LOAD_EXTENSION() function raises an exception if the extension fails to load or initialize correctly.The LOAD_EXTENSION() function will fail if the extension attempts to modify or delete an SQL function or collating sequence. The extension can add new functions or collating sequences, but cannot modify or delete existing functions or collating sequences because those functions and/or collating sequences might be used elsewhere in the currently running SQL statement. To load an extension that changes or deletes functions or collating sequences, use thesqlite3_load_extension()C-language API.For security reasons, extension loading is disabled by default and must be enabled by a prior call tosqlite3_enable_load_extension(). ",
+            "LOWER(X) \nDescription: The LOWER(X) function returns a copy of string X with all ASCII characters converted to lower case. The default built-in LOWER() function works for ASCII characters only. To do case conversions on non-ASCII characters, load the ICU extension. ",
+            "LTRIM(X) or LTRIM(X,Y) \nDescription: The LTRIM(X,Y) function returns a string formed by removing any and all characters that appear in Y from the left side of X. If the Y argument is omitted, LTRIM(X) removes spaces from the left side of X. ",
+            "MAX(X,Y,...) \nDescription: The multi-argument MAX() function returns the argument with the maximum value, or return NULL if any argument is NULL. The multi-argument MAX() function searches its arguments from left to right for an argument that defines a collating function and uses that collating function for all string comparisons. If none of the arguments to MAX() define a collating function, then the BINARY collating function is used. Note thatmax()is a simple function when it has 2 or more arguments but operates as anaggregate functionif given only a single argument. ",
+            "MIN(X,Y,...) \nDescription: The multi-argument MIN() function returns the argument with the minimum value. The multi-argument MIN() function searches its arguments from left to right for an argument that defines a collating function and uses that collating function for all string comparisons. If none of the arguments to MIN() define a collating function, then the BINARY collating function is used. Note thatmin()is a simple function when it has 2 or more arguments but operates as anaggregate functionif given only a single argument. ",
+            "NULLIF(X,Y) \nDescription: The NULLIF(X,Y) function returns its first argument if the arguments are different and NULL if the arguments are the same. The NULLIF(X,Y) function searches its arguments from left to right for an argument that defines a collating function and uses that collating function for all string comparisons. If neither argument to NULLIF() defines a collating function then the BINARY collating function is used. ",
+            "OCTET_LENGTH(X) \nDescription: The OCTET_LENGTH(X) function returns the number of bytes in the encoding of text string X. If X is NULL then OCTET_LENGTH(X) returns NULL. If X is a BLOB value, then OCTET_LENGTH(X) is the same aslength(X). If X is a numeric value, then OCTET_LENGTH(X) returns the number of bytes in a text rendering of that number.Because OCTET_LENGTH(X) returns the number of bytes in X, not the number of characters, the value returned depends on the database encoding. The OCTET_LENGTH() function can return different answers for the same input string if the database encoding is UTF16 instead of UTF8.If argument X is a table column and the value is of type text or blob, then OCTET_LENGTH(X) avoids reading the content of X from disk, as the byte length can be computed from metadata. Thus, OCTET_LENGTH(X) is efficient even if X is a column containing a multi-megabyte text or blob value. ",
+            "PRINTF(FORMAT,...) \nDescription: The PRINTF() SQL function is an alias for theformat() SQL function. The format() SQL function was originally named PRINTF(). But the name was later changed to format() for compatibility with other database engines. The PRINTF() name is retained as an alias so as not to break legacy code. ",
+            "QUOTE(X) \nDescription: The QUOTE(X) function returns the text of an SQL literal which is the value of its argument suitable for inclusion into an SQL statement. Strings are surrounded by single-quotes with escapes on interior quotes as needed. BLOBs are encoded as hexadecimal literals. Strings with embedded NUL characters cannot be represented as string literals in SQL and hence the returned string literal is truncated prior to the first NUL. ",
+            "RANDOM() \nDescription: The RANDOM() function returns a pseudo-random integer between -9223372036854775808 and +9223372036854775807. ",
+            "RANDOMBLOB(N) \nDescription: The RANDOMBLOB(N) function return an N-byte blob containing pseudo-random bytes. If N is less than 1 then a 1-byte random blob is returned.Hint: applications can generate globally unique identifiers using this function together withhex()and/orlower()like this:hex(randomblob(16))lower(hex(randomblob(16))) ",
+            "REPLACE(X,Y,Z) \nDescription: The REPLACE(X,Y,Z) function returns a string formed by substituting string Z for every occurrence of string Y in string X. TheBINARYcollating sequence is used for comparisons. If Y is an empty string then return X unchanged. If Z is not initially a string, it is cast to a UTF-8 string prior to processing. ",
+            "ROUND(X) or ROUND(X,Y) \nDescription: The ROUND(X,Y) function returns a floating-point value X rounded to Y digits to the right of the decimal point. If the Y argument is omitted or negative, it is taken to be 0. ",
+            "RTRIM(X) or RTRIM(X,Y) \nDescription: The RTRIM(X,Y) function returns a string formed by removing any and all characters that appear in Y from the right side of X. If the Y argument is omitted, RTRIM(X) removes spaces from the right side of X. ",
+            "SIGN(X) \nDescription: The SIGN(X) function returns -1, 0, or +1 if the argument X is a numeric value that is negative, zero, or positive, respectively. If the argument to SIGN(X) is NULL or is a string or blob that cannot be losslessly converted into a number, then SIGN(X) returns NULL. ",
+            "SOUNDEX(X) \nDescription: The SOUNDEX(X) function returns a string that is the soundex encoding of the string X. The string \"?000\" is returned if the argument is NULL or contains no ASCII alphabetic characters. This function is omitted from SQLite by default. It is only available if theSQLITE_SOUNDEXcompile-time option is used when SQLite is built. ",
+            "SQLITE_COMPILEOPTION_GET(N) \nDescription: The SQLITE_COMPILEOPTION_GET() SQL function is a wrapper around thesqlite3_compileoption_get()C/C++ function. This routine returns the N-th compile-time option used to build SQLite or NULL if N is out of range. See also thecompile_options pragma. ",
+            "SQLITE_COMPILEOPTION_USED(X) \nDescription: The SQLITE_COMPILEOPTION_USED() SQL function is a wrapper around thesqlite3_compileoption_used()C/C++ function. When the argument X to SQLITE_COMPILEOPTION_USED(X) is a string which is the name of a compile-time option, this routine returns true (1) or false (0) depending on whether or not that option was used during the build. ",
+            "SQLITE_OFFSET(X) \nDescription: The SQLITE_OFFSET(X) function returns the byte offset in the database file for the beginning of the record from which value would be read. If X is not a column in an ordinary table, then SQLITE_OFFSET(X) returns NULL. The value returned by SQLITE_OFFSET(X) might reference either the original table or an index, depending on the query. If the value X would normally be extracted from an index, the SQLITE_OFFSET(X) returns the offset to the corresponding index record. If the value X would be extracted from the original table, then SQLITE_OFFSET(X) returns the offset to the table record.The SQLITE_OFFSET(X) SQL function is only available if SQLite is built using the-DSQLITE_ENABLE_OFFSET_SQL_FUNCcompile-time option. ",
+            "SQLITE_SOURCE_ID() \nDescription: The SQLITE_SOURCE_ID() function returns a string that identifies the specific version of the source code that was used to build the SQLite library. The string returned by SQLITE_SOURCE_ID() is the date and time that the source code was checked in followed by the SHA3-256 hash for that check-in. This function is an SQL wrapper around thesqlite3_sourceid()C interface. ",
+            "SQLITE_VERSION() \nDescription: The SQLITE_VERSION() function returns the version string for the SQLite library that is running. This function is an SQL wrapper around thesqlite3_libversion()C-interface. ",
+            "SUBSTR(X,Y,Z) or SUBSTR(X,Y) or SUBSTRING(X,Y,Z) or SUBSTRING(X,Y) \nDescription: The SUBSTR(X,Y,Z) function returns a substring of input string X that begins with the Y-th character and which is Z characters long. If Z is omitted then SUBSTR(X,Y) returns all characters through the end of the string X beginning with the Y-th. The left-most character of X is number 1. If Y is negative then the first character of the substring is found by counting from the right rather than the left. If Z is negative then the abs(Z) characters preceding the Y-th character are returned. If X is a string then characters indices refer to actual UTF-8 characters. If X is a BLOB then the indices refer to bytes.\"substring()\" is an alias for \"substr()\" beginning with SQLite version 3.34. ",
+            "TOTAL_CHANGES() \nDescription: The TOTAL_CHANGES() function returns the number of row changes caused by INSERT, UPDATE or DELETE statements since the current database connection was opened. This function is a wrapper around thesqlite3_total_changes64()C/C++ interface. ",
+            "TRIM(X) or TRIM(X,Y) \nDescription: The TRIM(X,Y) function returns a string formed by removing any and all characters that appear in Y from both ends of X. If the Y argument is omitted, TRIM(X) removes spaces from both ends of X. ",
+            "TYPEOF(X) \nDescription: The TYPEOF(X) function returns a string that indicates thedatatypeof the expression X: \"null\", \"integer\", \"real\", \"text\", or \"blob\". ",
+            "UNHEX(X) or UNHEX(X,Y) \nDescription: The UNHEX(X,Y) function returns a BLOB value which is the decoding of the hexadecimal string X. If X contains any characters that are not hexadecimal digits and which are not in Y, then UNHEX(X,Y) returns NULL. If Y is omitted, it is understood to be an empty string and hence X must be a pure hexadecimal string. All hexadecimal digits in X must occur in pairs, with both digits of each pair beginning immediately adjacent to one another, or else UNHEX(X,Y) returns NULL. If either parameter X or Y is NULL, then UNHEX(X,Y) returns NULL. The X input may contain an arbitrary mix of upper and lower case hexadecimal digits. Hexadecimal digits in Y have no affect on the translation of X. Only characters in Y that are not hexadecimal digits are ignored in X.See also:hex() ",
+            "UNICODE(X) \nDescription: The UNICODE(X) function returns the numeric unicode code point corresponding to the first character of the string X. If the argument to UNICODE(X) is not a string then the result is undefined. ",
+            "UNLIKELY(X) \nDescription: The UNLIKELY(X) function returns the argument X unchanged. The UNLIKELY(X) function is a no-op that the code generator optimizes away so that it consumes no CPU cycles at run-time (that is, during calls tosqlite3_step()). The purpose of the UNLIKELY(X) function is to provide a hint to the query planner that the argument X is a boolean value that is usually not true. The UNLIKELY(X) function is equivalent tolikelihood(X, 0.0625). ",
+            "UPPER(X) \nDescription: The UPPER(X) function returns a copy of input string X in which all lower-case ASCII characters are converted to their upper-case equivalent. ",
+            "ZEROBLOB(N) \nDescription: The ZEROBLOB(N) function returns a BLOB consisting of N bytes of 0x00. SQLite manages these zeroblobs very efficiently. Zeroblobs can be used to reserve space for a BLOB that is later written usingincremental BLOB I/O. This SQL function is implemented using thesqlite3_result_zeroblob()routine from the C/C++ interface. ",
+            "AVG(X) \nDescription: The AVG() function returns the average value of all non-NULLXwithin a group. String and BLOB values that do not look like numbers are interpreted as 0. The result of AVG() is always a floating point value whenever there is at least one non-NULL input even if all inputs are integers. The result of AVG() is NULL if there are no non-NULL inputs. The result of AVG() is computed astotal()/count()so all of the constraints that apply tototal()also apply to AVG(). ",
+            "COUNT(X) or COUNT(*) \nDescription: The COUNT(X) function returns a count of the number of times thatXis not NULL in a group. The COUNT(*) function (with no arguments) returns the total number of rows in the group. ",
+            "GROUP_CONCAT(X) or GROUP_CONCAT(X,Y) or STRING_AGG(X,Y) \nDescription: The GROUP_CONCAT() function returns a string which is the concatenation of all non-NULL values ofX. If parameterYis present then it is used as the separator between instances ofX.A comma (\",\") is used as the separator ifYis omitted.The string_agg(X,Y) function is an alias for GROUP_CONCAT(X,Y). String_agg() is compatible with PostgreSQL and SQL-Server and GROUP_CONCAT() is compatible with MySQL.The order of the concatenated elements is arbitrary unless an ORDER BY argument is included immediately after the last parameter. ",
+            "MAX(X) \nDescription: The MAX() aggregate function returns the maximum value of all values in the group. The maximum value is the value that would be returned last in an ORDER BY on the same column. Aggregate MAX() returns NULL if and only if there are no non-NULL values in the group. ",
+            "MIN(X) \nDescription: The MIN() aggregate function returns the minimum non-NULL value of all values in the group. The minimum value is the first non-NULL value that would appear in an ORDER BY of the column. Aggregate MIN() returns NULL if and only if there are no non-NULL values in the group. ",
+            "SUM(X) or TOTAL(X) \nDescription: The SUM() and TOTAL() aggregate functions return the sum of all non-NULL values in the group. If there are no non-NULL input rows then SUM() returns NULL but TOTAL() returns 0.0. NULL is not normally a helpful result for the sum of no rows but the SQL standard requires it and most other SQL database engines implement SUM() that way so SQLite does it in the same way in order to be compatible. The non-standard TOTAL() function is provided as a convenient way to work around this design problem in the SQL language. ",
+            "ROW_NUMBER() \nDescription: The number of the row within the current partition. Rows are numbered starting from 1 in the order defined by the ORDER BY clause in the window definition, or in arbitrary order otherwise. ",
+            "RANK() \nDescription: The row_number() of the first peer in each group - the rank of the current row with gaps. If there is no ORDER BY clause, then all rows are considered peers and this function always returns 1. ",
+            "DENSE_RANK() \nDescription: The number of the current row's peer group within its partition - the rank of the current row without gaps. Rows are numbered starting from 1 in the order defined by the ORDER BY clause in the window definition. If there is no ORDER BY clause, then all rows are considered peers and this function always returns 1. ",
+            "PERCENT_RANK() \nDescription: Despite the name, this function always returns a value between 0.0 and 1.0 equal to (rank- 1)/(partition-rows- 1), whererankis the value returned by built-in window function rank() andpartition-rowsis the total number of rows in the partition. If the partition contains only one row, this function returns 0.0. ",
+            "CUME_DIST() \nDescription: The cumulative distribution. Calculated asrow-number/partition-rows, whererow-numberis the value returned by row_number() for the last peer in the group andpartition-rowsthe number of rows in the partition. ",
+            "NTILE(N) \nDescription: ArgumentNis handled as an integer. This function divides the partition into N groups as evenly as possible and assigns an integer between 1 andNto each group, in the order defined by the ORDER BY clause, or in arbitrary order otherwise. If necessary, larger groups occur first. This function returns the integer value assigned to the group that the current row is a part of. ",
+            "LAG(expr) or LAG(expr, offset) or LAG(expr, offset, default) \nDescription: The first form of the LAG() function returns the result of evaluating expressionexpragainst the previous row in the partition. Or, if there is no previous row (because the current row is the first), NULL. ",
+            "LEAD(expr) or LEAD(expr, offset) or LEAD(expr, offset, default) \nDescription: The first form of the LEAD() function returns the result of evaluating expressionexpragainst the next row in the partition. Or, if there is no next row (because the current row is the last), NULL. ",
+            "FIRST_VALUE(expr) \nDescription: This built-in window function calculates the window frame for each row in the same way as an aggregate window function. It returns the value ofexprevaluated against the first row in the window frame for each row. ",
+            "LAST_VALUE(expr) \nDescription: This built-in window function calculates the window frame for each row in the same way as an aggregate window function. It returns the value ofexprevaluated against the last row in the window frame for each row. ",
+            "NTH_VALUE(expr, N) \nDescription: This built-in window function calculates the window frame for each row in the same way as an aggregate window function. It returns the value ofexprevaluated against the rowNof the window frame. Rows are numbered within the window frame starting from 1 in the order defined by the ORDER BY clause if one is present, or in arbitrary order otherwise. If there is noNth row in the partition, then NULL is returned. ",
+            "ACOS(X) \nDescription: Return the arccosine of X. The result is in radians. ",
+            "ACOSH(X) \nDescription: Return the hyperbolic arccosine of X. ",
+            "ASIN(X) \nDescription: Return the arcsine of X. The result is in radians. ",
+            "ASINH(X) \nDescription: Return the hyperbolic arcsine of X. ",
+            "ATAN(X) \nDescription: Return the arctangent of X. The result is in radians. ",
+            "ATAN2(Y,X) \nDescription: Return the arctangent of Y/X. The result is in radians. The result is placed into correct quadrant depending on the signs of X and Y. ",
+            "ATANH(X) \nDescription: Return the hyperbolic arctangent of X. ",
+            "CEIL(X) or CEILING(X) \nDescription: Return the first representable integer value greater than or equal to X. For positive values of X, this routine rounds away from zero. For negative values of X, this routine rounds toward zero. ",
+            "COS(X) \nDescription: Return the cosine of X. X is in radians. ",
+            "COSH(X) \nDescription: Return the hyperbolic cosine of X. ",
+            "DEGREES(X) \nDescription: Convert value X from radians into degrees. ",
+            "EXP(X) \nDescription: Computee(Euler's number, approximately 2.71828182845905) raised to the power X. ",
+            "FLOOR(X) \nDescription: Return the first representable integer value less than or equal to X. For positive numbers, this function rounds toward zero. For negative numbers, this function rounds away from zero. ",
+            "LN(X) \nDescription: Return the natural logarithm of X. ",
+            "LOG(X) or LOG10(X) or LOG(B,X) \nDescription: Return the base-10 logarithm for X. Or, for the two-argument version, return the base-B logarithm of X.Compatibility note: SQLite works like PostgreSQL in that the LOG() function computes a base-10 logarithm. Most other SQL database engines compute a natural logarithm for LOG(). In the two-argument version of LOG(B,X), the first argument is the base and the second argument is the operand. This is the same as in PostgreSQL and MySQL, but is reversed from SQL Server which uses the second argument as the base and the first argument as the operand. ",
+            "LOG2(X) \nDescription: Return the logarithm base-2 for the number X. ",
+            "MOD(X,Y) \nDescription: Return the remainder after dividing X by Y. This is similar to the '%' operator, except that it works for non-integer arguments. ",
+            "PI() \nDescription: Return an approximation for π. ",
+            "POW(X,Y) or POWER(X,Y) \nDescription: Compute X raised to the power Y. ",
+            "RADIANS(X) \nDescription: Convert X from degrees into radians. ",
+            "SIN(X) \nDescription: Return the sine of X. X is in radians. ",
+            "SINH(X) \nDescription: Return the hyperbolic sine of X. ",
+            "SQRT(X) \nDescription: Return the square root of X. NULL is returned if X is negative. ",
+            "TAN(X) \nDescription: Return the tangent of X. X is in radians. ",
+            "TANH(X) \nDescription: Return the hyperbolic tangent of X. ",
+            "TRUNC(X) \nDescription: Return the representable integer in between X and 0 (inclusive) that is furthest away from zero. Or, in other words, return the integer part of X, rounding toward zero. The TRUNC() function is similar toceiling(X)andfloor(X)except that it always rounds toward zero whereas ceiling(X) and floor(X) round up and down, respectively. ",
+            "DATE(time-value, modifier, modifier, ...) \nDescription: Returns the date as text in this format: YYYY-MM-DD. ",
+            "TIME(time-value, modifier, modifier, ...) \nDescription: Returns the time as text in formatted as HH:MM:SS or as HH:MM:SS.SSS if the subsec modifier is used. ",
+            "DATETIME(time-value, modifier, modifier, ...) \nDescription: Returns the date and time formatted as YYYY-MM-DD HH:MM:SS or as YYYY-MM-DD HH:MM:SS.SSS if the subsec modifier is used. ",
+            "JULIANDAY(time-value, modifier, modifier, ...) \nDescription: Returns the Julian day - the fractional number of days since noon in Greenwich on November 24, 4714 B.C. (Proleptic Gregorian calendar). ",
+            "UNIXEPOCH(time-value, modifier, modifier, ...) \nDescription: Returns a unix timestamp - the number of seconds since 1970-01-01 00:00:00 UTC. The UNIXEPOCH() function normally returns an integer number of seconds, but with the optional subsec modifier it will return a floating point number which is the fractional number of seconds. ",
+            "STRFTIME(format, time-value, modifier, modifier, ...) \nDescription: Returns the date formatted according to the format string specified as the first argument. The format string supports the most common substitutions found in the STRFTIME() function from the standard C library plus two new substitutions, %f and %J. ",
+            "TIMEDIFF(time-value, time-value) \nDescription: Returns a string that describes the amount of time that must be added to B in order to reach time A. The format of the TIMEDIFF() result is designed to be human-readable. "
+        ]
+
+    def sql_func_template(self, sql_funcs: str) -> str:
+        template = """### SQL Functions
+        You may consider one or more of the following SQL functions while generating the query:
+        {sql_funcs}
+        Important tips:
+        Except for the functions listed above, you may use any other functions as long as they conform to the syntax of the database engine.
+        """
+        return template.format(sql_funcs=sql_funcs)
+
+    def insert_stmts_template(self, insert_statements: str) -> str:
+        template = '''### INSERT INTO Statements
+        Below are several `INSERT INTO` statements. Use these to help generate predicates (i.e., `WHERE` clauses) in your SQL query:
+        {insert_statements}
+        '''
+        return template.format(insert_statements=insert_statements)
+
+    def sql_synthesis_prompt(self, schema_str: str, sql_function_prompt: str, db_value_prompt: str, complexity: str, criterion: str, db_engine: str, column_count: int, embedding_model: str) -> str:
+        template = '''**Task Overview**
+        Create an executable VecSQL query based on the provided information.
+
+        **Database Schema**
+        {schema_str}
+
+        {sql_function_prompt}
+
+        {db_value_prompt}
+
+        **SQL Query Complexity**
+        Ensure the SQL query matches the {complexity} level, defined as follows:
+        {criterion}
+
+        **Output Format Requirements**
+        Enclose the SQL query in a code block:
+        ```sql
+        -- Your SQL query here
+        ```
+
+        **SQL Query Requirements**
+        0. (MANDATORY) The generated SQL query MUST be a VecSQL query. It MUST contain a vector similarity search using the `MATCH lembed(...)` syntax. This search MUST be performed on a column that ends with `_embedding`.
+        1. Use the syntax specific to the {db_engine} database engine.
+        2. Incorporate advanced functions if appropriate, but they are not mandatory.
+        3. Address real-world data analysis needs. Avoid trivial or nonsensical queries.
+        4. (Very important) Ensure the final SQL query selects {column_count} columns.
+        5. (Very important) Always verify that every column name you reference in a query exists in the tables you're querying. Before executing a query, ensure all referenced columns (e.g., column1, table1.id) are valid and spelled correctly.
+
+
+        **SQL extension**
+        Extension: sqlite_vec and sqlite_lembed.
+
+        There are a few Requirements you should Comply with in addition, else you can ignore these requirements below.
+        1. When generating SQL queries, you should prioritize utilizing KNN searches whenever contextually appropriate. However, you have to avoid unnecessary/forced KNN implementations for:
+        --Traditional relational data queries (especially for columns like: id, age, price)
+        --Cases where standard SQL operators (equality, range, or aggregation functions) are more efficient and semantically appropriate
+        2. Only vector type(like: float[?]) support KNN queries and the name of vector column often end with "_embedding". So, you can use knn queries to search when the column name you need to search for ends with "_embedding" or when the column name with "_embedding" is also in the list.
+        3. In any complexity level, you can choose to use KNN queries if need.
+        4. When using KNN queries, you have to add LIMIT or 'And k = ?' constraint but do not use them all in the same statement. This rule is very important, do not forget to add LIMIT or 'And k = ?' constraint after MATCH operator.
+        5. The lembed function is used to transform a string into a vector, whose type and size match the corresponding column type in the data table. The function has two parameters, the first parameter is the name of the embedding model used (default value: {embedding_model}), and the second parameter is the content of the string type you want to convert. So, you should generate some words or sentences with specific semantic information based on name, type and comment of this column. For example, you can generate "The Daily Grind Coffee Shop\n 456 Oak Avenue\n Springfield, IL 62704\n USA" when this column name is Location_embedding, column type is float[384] and comment of column is "the embedding of location".
+        6. The lembed function's second parameter MUST be a SPECIFIC semantic description.
+        - For location_embedding: Generate REAL addresses (e.g. "Stadium: 123 Main St, Boston, MA. Capacity: 50,000. Home team: Patriots")
+        - For columns containing semantically meaningful data (e.g., descriptions), generate rich, contextually appropriate information. For columns without meaningful content (e.g., placeholder names), avoid creating semantically dense output to facilitate fuzzy matching operations.
+        - For name_embedding: You should generate variationsof the original names (e.g., altered spellings, phonetic approximations, or intentionally obfuscated words/characters) to enable Subsequent fuzzy matching to identify semantically similar names. Importantly, never generate redundant information. For example, you can generate "Lige", but do not generate "Ligand Lige", "Ligand example name", "Ligand similar to Aspirin" and "Ligand name variation".
+        Examples:
+        ✅ Correct:
+            name_embedding MATCH lembed('all-MiniLM-L6-v2', "Kri")
+        ❌ Wrong:
+            name_embedding MATCH lembed('all-MiniLM-L6-v2', "A leading publisher based in Germany specializing in
+        scientific journals and books.")
+        - For text_embedding: Use ACTUAL and meaningful sentences (e.g. "Harper Lee's To Kill a Mockingbirdis a timeless exploration of racial injustice and moral growth, seen through the innocent yet perceptive eyes of Scout Finch. With its powerful themes, unforgettable characters like Atticus Finch, and Lee's poignant prose, the novel remains a searing critique of society's failures and a testament to the courage of standing for what's right.")
+        - NEVER use vague words and generic phrases like "a book review"
+        Examples:
+        ✅ Correct:
+            lembed('all-MiniLM-L6-v2', "To Kill a Mockingbird")
+        ❌ Wrong:
+            lembed('all-MiniLM-L6-v2', "name of a famous book")
+        7. When using MATCH, please fill in a vector using function lembed after MATCH that matches the column type (with the same dimension and type). Using details are in examples.
+        8. The distance column is an implicitly generated metric that appears when performing vector similarity searches (using the MATCH operator) in SQLite vector extensions like sqlite-vec. If using JOIN operator, you have to clarify which table that distance belongs to.
+        9. A SELECT statement should have no more than one MATCH operation. However, each subquery within a SELECT statement could also have no more than one MATCH operation, independent of the parent query."
+        10. When performing a KNN/vector similarity search (e.g., using MATCH or lembed), always specify a LIMIT or k=N constraint directly on the vector search operation, even if the outer query already has a LIMIT. The vector search requires its own result cap to avoid ambiguity in ranking and performance issues.
+        11. When both LIMIT and k operations are available for vector search queries, prioritize using k operation for Broader Compatibility.
+        Key Points:
+        --Vector search needs its own LIMIT/k - The outer LIMIT applies to the final filtered results, not the initial similarity search.
+        --LIMIT operator should follow closely after "ORDER BY distance".
+        ❌ Wrong Example:
+        ```sql
+        SELECT a.codec_name
+        FROM audio_codecs a
+        JOIN quality_levels q ON a.codec_id = q.quality_id
+        WHERE a.description_embedding MATCH lembed('all-MiniLM-L6-v2', "High efficiency audio codec with low latency and optimal bandwidth")
+        AND q.quality_name = 'HighQuality'
+        LIMIT 1;
+        ```
+        ✅ Correct Example:
+        ```sql
+        SELECT a.codec_name
+        FROM audio_codecs a
+        JOIN quality_levels q ON a.codec_id = q.quality_id
+        WHERE a.description_embedding MATCH lembed('all-MiniLM-L6-v2', "High efficiency audio codec with low latency and optimal bandwidth") LIMIT 1
+        AND q.quality_name = 'HighQuality';
+        ```
+        --When using JOIN operations, you need to ensure that k does not cause ambiguity in the query. In most cases, the k parameter logically belongs to the same table as the column used in the MATCH clause. So, when the column referenced in the MATCH clause includes a table qualifier (e.g., table1.embedding), the k parameter must be explicitly bound to the same table.
+        ❌ Wrong Example:
+        ```sql
+        SELECT s.stock_id, s.symbol
+        FROM stocks s
+        JOIN exchanges e ON s.exchange_id = e.exchange_id
+        WHERE s.sector_embedding MATCH lembed('all-MiniLM-L6-v2', "Tech industry sector in the USA")
+        AND e.country = 'USA'
+        AND k = 5
+        ORDER BY s.stock_id;
+        ```
+        ✅ Correct Example:
+        ```sql
+        SELECT s.stock_id, s.symbol
+        FROM stocks s
+        JOIN exchanges e ON s.exchange_id = e.exchange_id
+        WHERE s.sector_embedding MATCH lembed('all-MiniLM-L6-v2', "Tech industry sector in the USA")
+        AND e.country = 'USA'
+        AND s.k = 5
+        ORDER BY s.stock_id;
+        ```
+        12. ​Avoids runtime errors  - Many vector databases (e.g., SQLite with sqlite-vss, pgvector) enforce this requirement strictly.
+        13. Only a single 'ORDER BY distance' clause is allowed on vec0 KNN queries, not on other columns.
+        ***Example of KNN queries of sqlite-vec***
+        first example(type of vector_embedding is float[384]):
+        ```sql
+        SELECT rowid, distance
+        FROM vec_table
+        WHERE vector_embedding MATCH lembed({embedding_model},"vector of sun")
+        ORDER BY distance
+        LIMIT 1;
+        ```
+
+        second example(type of sentence_embedding is float[384]):
+        ```sql
+        select
+        movie_id,
+        title,
+        genre,
+        num_reviews,
+        mean_rating,
+        distance
+        from vec_movies
+        where sentence_embedding match lembed({embedding_model},"This is a great movie!")
+        and genre = 'scifi'
+        and num_reviews between 100 and 500
+        and mean_rating > 3.5
+        and k = 5;
+        ```
+
+        third example(type of vector_embedding is float[384]):
+        ```sql
+        select rowid, name1, name2, age, vec_to_json
+        from v
+        where vector_embedding match lembed({embedding_model},"aaa and xxx are good friends, whose age is 18.")
+        and k = 1
+        and name1 in ('alex', 'brian', 'craig')
+        and name2 in ('Rick', 'Morty')
+        and age in (21, 18);
+        ```
+
+        **Answer**
+        Let's proceed step by step.
+        '''
+        return template.format(
+            schema_str=schema_str,
+            sql_function_prompt=sql_function_prompt.strip(),
+            db_value_prompt=db_value_prompt.strip(),
+            complexity=complexity,
+            criterion=criterion.strip(),
+            db_engine=db_engine,
+            column_count=column_count,
+            embedding_model=embedding_model
+        )
+    
+    def build_prompt(self, insert_statements: List[str], create_statements: List[str], db_engine: str) -> tuple[str, str]:
+        random.seed(42)
+        complexity = random.sample(list(self.complexity2criterion_vec.keys()), 1)[0]
+
+        if len(insert_statements) == 0:
+            db_value_prompt = ""
+        else:
+            if len(insert_statements) > 4:
+                insert_statements = random.sample(insert_statements, 4)
+            db_value_prompt = self.insert_stmts_template(
+                insert_statements="\n\n".join(insert_statements)
+            )
+
+        function_num = random.randint(0, 2)
+        if function_num == 0:
+            sql_function_prompt = "### SQL Functions\nYou can use any function supported by the database engine."
+        else:
+            sql_funcs = ""
+            sampled_functions = random.sample(self.functions, min(function_num, len(self.functions)))
+            for idx, func in enumerate(sampled_functions):
+                sql_funcs += f"Function {idx + 1}:\n{func.strip()}\n"
+            sql_function_prompt = self.sql_func_template(sql_funcs=sql_funcs)
+
+        column_count = np.random.geometric(0.6, 1)[0]
+        prompt = self.sql_synthesis_prompt(
+            schema_str="\n\n".join(create_statements),
+            sql_function_prompt=sql_function_prompt.strip(),
+            db_value_prompt=db_value_prompt.strip(),
+            complexity=complexity,
+            criterion=self.complexity2criterion_vec[complexity].strip(),
+            db_engine=db_engine,
+            column_count=column_count,
+            embedding_model="\'all-MiniLM-L6-v2\'"
+        )
+        return prompt, complexity
+
+
+class Text2SQLQuestionGeneratorPrompt:
+    def __init__(self):
+        self.style2desc = {
+        "Formal": '''**Formal Style**
+        - Uses standard grammar and vocabulary.
+        - Example: Find all students older than 18 years and return their home addresses.''',
+
+        "Colloquial": '''**Colloquial Style**
+        - Employs informal vocabulary and expressions.
+        - Example: Hey! Could you help me find all the students who are over 18? I'd love to know their names and where they live.''',
+
+        "Imperative": '''**Imperative Style**
+        - Uses command or directive sentences.
+        - Example: Could you please gather all the students who are older than 18? I really need to know their names and where they live!''',
+
+        "Interrogative": '''**Interrogative Style**
+        - Uses question forms.
+        - Example: Could you tell me which students are older than 18 and what their home addresses are?''',
+
+        "Descriptive": '''**Descriptive Style**
+        - Uses detailed descriptions with contextual information.
+        - Example: I want to know the names and home addresses of all students older than 18.''',
+
+        "Concise": '''**Concise Style**
+        - Use short sentences.
+        - Example: Students older than 18, return their names and addresses.''',
+
+        "Vague": '''**Vague Style**
+        - Includes ambiguous vocabulary requiring inference.
+        - Example: What are the names and addresses of those older students? (External Knowledge: 'older students' refers to age >= 18.)''',
+
+        "Metaphorical": '''**Metaphorical Style**
+        - Uses metaphors or metaphorical expressions.
+        - Example: Find the names and addresses of those who have reached adulthood. (External Knowledge: 'reached adulthood' refers to age >= 18.)'''
+        }
+
+        self.steps_wo_ek = '''1. **Explain the SQL Query:** Provide a detailed explanation of what the query does.
+        2. **Generate a Question:** Formulate a natural language question based on the SQL query and explanation.'''
+
+        self.steps_w_ek = '''1. **Explain the SQL Query:** Provide a detailed explanation of what the query does.
+        2. **Generate a Question:** Formulate a natural language question based on the SQL query and explanation.
+        3. **External Knowledge:** For Vague or Metaphorical styles, include external knowledge to enhance clarity.'''
+
+        self.steps_multi_round = '''1. **Explain the SQL Query:** Provide a detailed explanation of what the query does.
+        2. **Generate a Dialogue:** Create a conversation between the User and the Assistant based on the SQL query and its explanation.'''
+
+        self.guidelines_wo_ek = '''1. Clearly describe the columns being selected by the SQL query. For example:
+        - "SELECT * ... FROM ..." means "Find all ...";
+        - "SELECT f.check_date, f.status, f.remarks, c.year, c.year_min, c.year_max, c.year_average, c.data_quality_score FROM ..." means "Return the check dates, statuses, remarks, years, minimum years, maximum years, average years, and quality scores for ...".
+        2. Ensure the natural language question accurately captures the semantics of the SQL query, including conditions such as predicates, `ORDER BY`, and `LIMIT` clauses.'''
+
+        self.guidelines_w_ek = '''1. Clearly describe the columns being selected by the SQL query. For example:
+        - "SELECT * ... FROM ..." means "Find all ...";
+        - "SELECT f.check_date, f.status, f.remarks, c.year, c.year_min, c.year_max, c.year_average, c.data_quality_score FROM ..." means "Return the check dates, statuses, remarks, years, minimum years, maximum years, average years, and quality scores for ...".
+        2. Ensure the natural language question accurately captures the semantics of the SQL query, including conditions such as predicates, `ORDER BY`, and `LIMIT` clauses.
+        3. If necessary, incorporate external knowledge using multiple entries separated by semicolons (";"). These can include formulas, common sense, domain-specific knowledge, or extended context, such as information from long documents. Each entry should be concise.'''
+
+        self.guidelines_multi_round = '''1. Clearly describe the columns being selected by the SQL query. For example:
+        - "SELECT * ... FROM ..." means "Find all ...";
+        - "SELECT f.check_date, f.status, f.remarks, c.year, c.year_min, c.year_max, c.year_average, c.data_quality_score FROM ..." means "Return the check dates, statuses, remarks, years, minimum years, maximum years, average years, and quality scores for ...".
+        2. Ensure the conversation accurately captures the semantics of the SQL query, including conditions such as predicates, `ORDER BY`, and `LIMIT` clauses.'''
+
+        self.output_format_wo_ek = '''Please structure your response as follows:
+
+        [EXPLANATION-START]
+        (SQL Explanation)
+        [EXPLANATION-END]
+
+        [QUESTION-START]
+        (Natural Language Question)
+        [QUESTION-END]
+
+        - **SQL Explanation**: Provide a clear and detailed explanation of the SQL query, enclosed within [EXPLANATION-START] and [EXPLANATION-END].
+        - **Natural Language Question**: Translate the SQL query into a natural language question, enclosed within [QUESTION-START] and [QUESTION-END].'''
+
+        self.output_format_w_ek = '''Please structure your response as follows:
+
+        [EXPLANATION-START]
+        (SQL Explanation)
+        [EXPLANATION-END]
+
+        [QUESTION-START]
+        (Natural Language Question)
+        [QUESTION-END]
+
+        [EXTERNAL-KNOWLEDGE-START]
+        (External Knowledge)
+        [EXTERNAL-KNOWLEDGE-END]
+
+        - **SQL Explanation**: Provide a clear and detailed explanation of the SQL query, enclosed within [EXPLANATION-START] and [EXPLANATION-END].
+        - **Natural Language Question**: Translate the SQL query into a natural language question, enclosed within [QUESTION-START] and [QUESTION-END].
+        - **External Knowledge**: Include any relevant external knowledge if applicable, enclosed within [EXTERNAL-KNOWLEDGE-START] and [EXTERNAL-KNOWLEDGE-END]. Leave this section blank if not needed.'''
+
+        self.output_format_multi_round = '''Please structure your response as follows:
+
+        [EXPLANATION-START]
+        (SQL Explanation)
+        [EXPLANATION-END]
+
+        [QUESTION-START]
+        (Natural Language Question, in the format of [{"User": ...}, {"Assistant": ...}, {"User": ...}, ....])
+        [QUESTION-END]
+
+        - **SQL Explanation**: Provide a clear and detailed explanation of the SQL query, enclosed within [EXPLANATION-START] and [EXPLANATION-END].
+        - **Natural Language Question**: Convert the SQL query into a multi-round dialogue, enclosed within [QUESTION-START] and [QUESTION-END]. Represent this as a list that captures multiple rounds of conversation between the User and the Assistant.'''
+
+        self.instruction_wo_ek = "Based on the above information, follow the reasoning steps to generate the explanation and the question corresponding to the SQL query."
+
+        self.instruction_w_ek = "Based on the above information, follow the reasoning steps to generate the explanation, the question, and the external knowledge corresponding to the SQL query."
+
+        self.instruction_multi_round = "Based on the above information, follow the reasoning steps to generate the explanation and the dialogue corresponding to the SQL query."
 
     def question_synthesis_prompt(self, style_desc, engine, column_info, sql, steps, guidelines, output_format, instruction):
         template = '''**Task Overview**
@@ -387,79 +1012,189 @@ class QuestionGenerationPrompt:
             instruction = instruction
         )  
 
+    def build_prompt(self, sql, db_id, db_id2column_info, db_type) -> str:
+        random.seed(42)
+        styles = ["Formal", "Colloquial", "Imperative", "Interrogative", "Descriptive", "Concise", "Vague", "Metaphorical"]
+        style_name = random.sample(styles, 1)[0]
+        column_name2column_desc = db_id2column_info[db_id]
+        used_column_name2column_desc = dict()
+            
+        for column_name, column_desc in column_name2column_desc.items():
+            if column_name.lower() in sql.lower():
+                used_column_name2column_desc[column_name] = column_desc
+
+        if style_name in ["Vague", "Metaphorical"]:
+            steps = self.steps_w_ek
+            guidelines = self.guidelines_w_ek
+            instruction = self.instruction_w_ek
+            output_format = self.output_format_w_ek
+        else:
+            steps = self.steps_wo_ek
+            guidelines = self.guidelines_wo_ek
+            instruction = self.instruction_wo_ek
+            output_format = self.output_format_wo_ek
+
+        prompt = self.question_synthesis_prompt(
+            style_desc=self.style2desc[style_name].strip(),
+            engine=db_type,
+            column_info=json.dumps(used_column_name2column_desc, indent=2, ensure_ascii=False).strip(),
+            sql=sql.strip(),
+            steps=steps.strip(),
+            guidelines=guidelines.strip(),
+            output_format=output_format.strip(),
+            instruction=instruction.strip()
+        )
+
+        return prompt
+
+
+class Text2VecSQLQuestionGeneratorPrompt:
+    def __init__(self):
+        pass
+
     def get_style2desc(self):
         template = {
         "Formal": '''**Formal Style**
         - Uses standard grammar and vocabulary.
-        - Example: Find all students older than 18 years and return their home addresses.''',
+        - Example: Find all students older than 18 years and return their home addresses.
+        - Vector Example: Find the three articles most closely related to Stable Diffusion and return them.''',
 
         "Colloquial": '''**Colloquial Style**
         - Employs informal vocabulary and expressions.
-        - Example: Hey! Could you help me find all the students who are over 18? I'd love to know their names and where they live.''',
+        - Example: Hey! Could you help me find all the students who are over 18? I'd love to know their names and where they live.
+        - Vector Example: Hey there! Can you grab me the top 3 articles that are most closely related to Stable Diffusion?''',
 
         "Imperative": '''**Imperative Style**
         - Uses command or directive sentences.
-        - Example: Could you please gather all the students who are older than 18? I really need to know their names and where they live!''',
+        - Example: Could you please gather all the students who are older than 18? I really need to know their names and where they live!
+        - Vector Example: Please find the three articles most closely related to Stable Diffusion and return their name.''',
 
         "Interrogative": '''**Interrogative Style**
         - Uses question forms.
-        - Example: Could you tell me which students are older than 18 and what their home addresses are?''',
+        - Example: Could you tell me which students are older than 18 and what their home addresses are?
+        - Vector Example: Could you show me the 3 articles that most have to do with Stable Diffusion?''',
 
         "Descriptive": '''**Descriptive Style**
         - Uses detailed descriptions with contextual information.
-        - Example: I want to know the names and home addresses of all students older than 18.''',
+        - Example: I want to know the names and home addresses of all students older than 18.
+        - Vector Example: I need to find articles that most closely related to Stable Diffusion, returning the top 3 matches sorted by cosine similarity.''',
 
         "Concise": '''**Concise Style**
         - Use short sentences.
-        - Example: Students older than 18, return their names and addresses.''',
+        - Example: Students older than 18, return their names and addresses.
+        - Vector Example: Top 3 related articles to Stable Diffusion.''',
 
         "Vague": '''**Vague Style**
         - Includes ambiguous vocabulary requiring inference.
-        - Example: What are the names and addresses of those older students? (External Knowledge: 'older students' refers to age >= 18.)''',
+        - Example: What are the names and addresses of those older students? (External Knowledge: 'older students' refers to age >= 18.)
+        - Vector Example: Find a few articles have to do with Stable Diffusion. (External Knowledge: 'a few' refers to vector similarity search with k=3 limit)''',
 
         "Metaphorical": '''**Metaphorical Style**
         - Uses metaphors or metaphorical expressions.
-        - Example: Find the names and addresses of those who have reached adulthood. (External Knowledge: 'reached adulthood' refers to age >= 18.)'''
+        - Example: Find the names and addresses of those who have reached adulthood. (External Knowledge: 'reached adulthood' refers to age >= 18.)
+        - Vector Example: Find a few articles have to do with SD in ai. (External Knowledge: 'SD in ai' refers to Stable Diffusion)''',
+
+        "Multi-turn Dialogue": '''**Multi-turn Dialogue Style**
+            - This involves a dialogue to clarify the user's query needs.
+            - Example: [{"User": "I want to query some student information."}, {"Assistant": "Which students' information would you like to query?"}, {"User": "Students older than 18."}, {"Assistant": "What other information would you like to know about them?"}, {"User": "Names and addresses."}, {"Assistant": "Is there anything else you need?"}, {"User": "No."}, {"Assistant": "OK, I will help you translate your request into an SQL query."}]
+            - Vector Example: 
+            User: "I'm looking for some articles."
+            Assistant: "How many articles would you like to find and What field of paper are you looking for?"
+            User: "About 3, and they are related to Stable Diffusion."
+            Assistant: "I'll search for 3 articles that most closely related to Stable Diffusion."'''
         }
         return template
 
     def get_steps_wo_ek(self):
-        template = '''1. **Explain the SQL Query:** Provide a detailed explanation of what the query does.
+        template = '''1. **Explain the SQL Query:** Provide a detailed explanation of what the query does, including any vector search operations.
         2. **Generate a Question:** Formulate a natural language question based on the SQL query and explanation.'''
         return template
 
     def get_steps_w_ek(self):
-        template = '''1. **Explain the SQL Query:** Provide a detailed explanation of what the query does.
+        template = '''1. **Explain the SQL Query:** Provide a detailed explanation of what the query does, including any vector search operations.
         2. **Generate a Question:** Formulate a natural language question based on the SQL query and explanation.
-        3. **External Knowledge:** For Vague or Metaphorical styles, include external knowledge to enhance clarity.'''
+        3. **External Knowledge:** For Vague or Metaphorical styles, include external knowledge to enhance clarity, especially for vector operations.'''
         return template
 
     def get_steps_multi_round(self):
-        template = '''1. **Explain the SQL Query:** Provide a detailed explanation of what the query does.
-        2. **Generate a Dialogue:** Create a conversation between the User and the Assistant based on the SQL query and its explanation.'''
+        template = '''1. **Explain the SQL Query:** Provide a detailed explanation of what the query does, including any vector search operations.
+        2. **Generate a Dialogue:** Create a conversation between the User and the Assistant based on the SQL query and its explanation, ensuring vector operations are properly discussed.'''
         return template
 
     def get_guidelines_wo_ek(self):
         template = '''1. Clearly describe the columns being selected by the SQL query. For example:
         - "SELECT * ... FROM ..." means "Find all ...";
         - "SELECT f.check_date, f.status, f.remarks, c.year, c.year_min, c.year_max, c.year_average, c.data_quality_score FROM ..." means "Return the check dates, statuses, remarks, years, minimum years, maximum years, average years, and quality scores for ...".
-        2. Ensure the natural language question accurately captures the semantics of the SQL query, including conditions such as predicates, `ORDER BY`, and `LIMIT` clauses.'''
+        - "SELECT rowid, vec FROM vec_table WHERE vec MATCH lembed(_,"xxx") ORDER BY distance LIMIT 2;" means "Return two of the rowid and vec that most related to xxx from vec_table, ordered by similarity distance".
+        - "SELECT rowid, vec FROM vec_table WHERE vec MATCH lembed(_,"xxx") AND k = 2;" means "Return two of the rowid and vec that most related to xxx from vec_table, ordered by similarity distance".
+        - For vector searches: Always mention the LIMIT value or K value when explaining MATCH operations.
+
+        2. Ensure the natural language question accurately captures:
+        - All conditions including vector similarity searches
+        - ORDER BY clauses (especially for distance/similarity)
+        - LIMIT and K clauses
+        - Any window functions or complex joins'''
         return template
 
     def get_guidelines_w_ek(self):
-        template = '''1. Clearly describe the columns being selected by the SQL query. For example:
-        - "SELECT * ... FROM ..." means "Find all ...";
-        - "SELECT f.check_date, f.status, f.remarks, c.year, c.year_min, c.year_max, c.year_average, c.data_quality_score FROM ..." means "Return the check dates, statuses, remarks, years, minimum years, maximum years, average years, and quality scores for ...".
-        2. Ensure the natural language question accurately captures the semantics of the SQL query, including conditions such as predicates, `ORDER BY`, and `LIMIT` clauses.
-        3. If necessary, incorporate external knowledge using multiple entries separated by semicolons (";"). These can include formulas, common sense, domain-specific knowledge, or extended context, such as information from long documents. Each entry should be concise.'''
+        template = '''1. Clearly describe the columns being selected by the SQL query (same as above).
+        2. Ensure the natural language question captures all query semantics (same as above).
+        3. For vector searches, include these common external knowledge points:
+        - "MATCH" operator performs approximate nearest neighbor (ANN) search;
+        - "k=N" specifies the number of similar items to return;
+        - Vectors are compared using Euclidean distance (L2 norm) by default;
+        - Similarity increases as distance decreases;
+        - Include any domain-specific knowledge about the vector meaning.'''
         return template
 
     def get_guidelines_multi_round(self):
-        template = '''1. Clearly describe the columns being selected by the SQL query. For example:
-        - "SELECT * ... FROM ..." means "Find all ...";
-        - "SELECT f.check_date, f.status, f.remarks, c.year, c.year_min, c.year_max, c.year_average, c.data_quality_score FROM ..." means "Return the check dates, statuses, remarks, years, minimum years, maximum years, average years, and quality scores for ...".
-        2. Ensure the conversation accurately captures the semantics of the SQL query, including conditions such as predicates, `ORDER BY`, and `LIMIT` clauses.'''
+        template = '''1. Clearly describe the columns being selected by the SQL query (same as above).
+        2. Ensure the dialogue naturally covers:
+        - The purpose of the vector search;
+        - How many similar items are needed (LIMIT);
+        - What the target vector represents;
+        - Any additional filtering or sorting requirements.'''
         return template
+
+    def get_vector_question_guidelines(self):
+        template = '''
+        **Guiding Principles for High-Quality Vector Questions:**
+
+        Your ultimate goal is to create a question that a real human would ask. To do this, you must internalize the following principles:
+
+        1.  **Translate Mechanism into Intent (The Golden Rule!)**: A vector search (`MATCH ... LIMIT N`) is a technical mechanism to find the "top N" or "best N" examples of something. Your question **MUST** reflect the user's *intent*, not the mechanism.
+            * **Prohibited Phrases**: Avoid technical jargon that describes the search process. Do NOT use phrases like: "most closely related to", "semantically similar to", "based on similarity", "concept of", "field of".
+            * **Approved Phrasing**: Instead, use natural language that implies ranking or quality. Use words like: "top 5", "best", "most representative", "leading", or simply state the entity directly. For example, a search for the top 5 professors should be phrased as "Who are the top 5 professors?", not "Who are the 5 professors most similar to the concept of a professor?".
+
+        2.  **Identify and Preserve Key Entities**: Within the `lembed()` text, identify the core keywords (e.g., "Professor", "Computer Science", "leadership skills"). These **MUST** be present in the final question to ensure it is specific and meaningful.
+
+        3.  **Rephrase Naturally, Do Not Copy Verbatim**: While preserving key entities, change the overall sentence structure to fit the requested style (Formal, Colloquial, etc.). Do not copy the entire `lembed()` string word-for-word.
+
+        ---
+        **Examples of Correct vs. Incorrect Behavior:**
+
+        **Example 1: Being Natural--like a real human would ask**
+        * **Input VecSQL**: `... WHERE p.hasPosition_embedding MATCH lembed('all-MiniLM-L6-v2', "Professor of Computer Science") AND k = 5 ...`
+        * **BAD Question**: `"Identify five professors whose roles most closely match the concept of teaching computer science at a professorial level..."` or `"Please provide the IDs, names, and course levels for the five professors who have positions most closely related to the field of computer science, ordered by similarity."`
+            * **Reasoning**: This is the classic mistake. It describes the vector search mechanism ("most closely related to") instead of asking a direct, human-like question. Too verbose and abstract. "concept of teaching computer science at a professorial level" or "who have positions most closely related to" is an unnatural way to say "Computer Science Professor".
+        * **GOOD Question**: `"Please provide the IDs and course levels for the 5 professors who specialize in computer science."` or `"Identify five computer science professors and list the levels of the courses they teach."`
+            * **Reasoning**: Correctly uses the key entities "Professor" and "Computer Science" in a formal and direct manner.
+
+        **Example 2: Preserving Entities**
+        * **Input VecSQL**: `... WHERE p.hasPosition_embedding MATCH lembed('all-MiniLM-L6-v2', "Professor of Mathematics") LIMIT 5 ...`
+        * **BAD Question**: `"Could you please find the top 5 individuals most semantically related to a specialized academic teaching role..."`
+            * **Reasoning**: Completely fails by losing the essential key entities **"Professor"** and **"Mathematics"**. The question is now uselessly vague.
+        * **GOOD Question**: `"Get me the top 5 people who are very professional in mathematics, and show me their course levels."`
+            * **Reasoning**: Preserves the critical entities in a natural, imperative sentence.
+
+        **Example 3: Being Natural**
+        * **Input VecSQL**: `... WHERE performance_embedding MATCH lembed('all-MiniLM-L6-v2', "exceptional performance with leadership skills") LIMIT 1;`
+        * **BAD Question**: `"Hey, could you help me find the employee whose performance is most closely related to being a standout leader?"`
+            * **Reasoning**: "most closely related to being..." is clunky and not like a real human would ask. It also loses the "exceptional performance" aspect.
+        * **GOOD Question**: `"Hey, can you find the employee who performance very well and with great leadership ability'? I need their SSN."` or `"Who's our top employee showing both great performance and leadership? Grab their SSN for me."`
+            * **Reasoning**: Sounds like a real person talking and naturally incorporates the key concepts.
+        ---
+        '''
 
     def get_output_format_wo_ek(self):
         template = '''Please structure your response as follows:
@@ -512,23 +1247,128 @@ class QuestionGenerationPrompt:
         return template
 
     def get_instruction_wo_ek(self):
-        template = "Based on the above information, follow the reasoning steps to generate the explanation and the question corresponding to the SQL query."
+        template = '''Based on the above information:
+        1. Analyze the SQL query, paying special attention to any vector operations
+        2. Generate a clear explanation covering all query elements
+        3. Formulate a precise natural language question
+        4. Verify all vector operations (MATCH, LIMIT, ORDER BY distance) or (MATCH, And k = ?) are properly represented'''
         return template
 
     def get_instruction_w_ek(self):
-        template = "Based on the above information, follow the reasoning steps to generate the explanation, the question, and the external knowledge corresponding to the SQL query."
+        template = '''Based on the above information:
+        1. Analyze the SQL query, especially vector operations
+        2. Generate explanation covering all elements
+        3. Formulate precise question
+        4. Add relevant external knowledge about vector operations
+        5. Verify all vector elements are properly represented'''
         return template
 
     def get_instruction_multi_round(self):
-        template = "Based on the above information, follow the reasoning steps to generate the explanation and the dialogue corresponding to the SQL query."
+        template = '''Based on the above information:
+        1. Analyze the SQL query, especially vector operations
+        2. Generate explanation covering all elements
+        3. Create natural dialogue that explores vector search parameters
+        4. Ensure LIMIT, target vector and distance sorting are discussed'''
         return template
 
-class SQLVariationPrompt:
-    def __init__(self):
-        pass
+    def question_synthesis_prompt(self, using_knn, style_desc, engine, extension, column_info, sql, steps, guidelines, output_format, instruction):
 
-    def variation_type_prompt(self, variation_type: int):
-        type_prompts = [
+
+        template = '''**Task Overview**
+        Your task is to create a high-quality natural language question based on a given SQL query and other information.
+        {using_knn}
+
+        **Style**
+        The natural language question should follow this style:
+        {style_desc}
+
+        **Database Engine**
+        {engine}
+
+        **Database Extension**
+        {extension}
+
+        **Column Information**
+        Below are column names and their corresponding descriptions:
+        {column_info}
+
+        **SQL Query**
+        Given SQL query:
+        ```sql
+        {sql}
+        ```
+
+        **Reasoning Steps**
+        {steps}
+
+        **Guidelines**
+        {guidelines}
+
+        **Output Format**
+        {output_format}
+
+        **Insturction**
+        {instruction}
+        '''
+        return template.format(
+            using_knn = using_knn,
+            style_desc = style_desc,
+            engine = engine,
+            extension = extension,
+            column_info = column_info,
+            sql = sql,
+            steps = steps,
+            guidelines = guidelines,
+            output_format = output_format,
+            instruction = instruction
+        )  
+
+    def build_prompt(self, input_sql, input_db_id, db_id2column_info, db_type, using_sqlite_vec, extension) -> str:
+        random.seed(42)
+        styles = ["Formal", "Colloquial", "Imperative", "Interrogative", "Descriptive", "Concise", "Vague", "Metaphorical"]
+        style_name = random.sample(styles, 1)[0]
+        column_name2column_desc = db_id2column_info[input_db_id]
+        used_column_name2column_desc = dict()
+            
+        for column_name, column_desc in column_name2column_desc.items():
+            if column_name.lower() in input_sql.lower():
+                used_column_name2column_desc[column_name] = column_desc
+
+        if style_name in ["Vague", "Metaphorical"]:
+            steps = self.get_steps_w_ek()
+            guidelines = self.get_guidelines_w_ek()
+            instruction = self.get_instruction_w_ek()
+            output_format = self.get_output_format_w_ek()
+        else:
+            steps = self.get_steps_wo_ek()
+            guidelines = self.get_guidelines_wo_ek()
+            instruction = self.get_instruction_wo_ek()
+            output_format = self.get_output_format_wo_ek()
+
+        if using_sqlite_vec:
+            using_knn = "Extension includes sqlite-vec, you have to use KNN queries of it."
+        else:
+            using_knn = ""
+            
+        prompt = self.question_synthesis_prompt(
+            using_knn=using_knn,
+            style_desc=self.get_style2desc()[style_name].strip(),
+            engine=db_type,
+            extension=extension,
+            column_info=json.dumps(used_column_name2column_desc, indent=2, ensure_ascii=False).strip(),
+            sql=input_sql.strip(),
+            steps=steps.strip(),
+            guidelines=guidelines.strip(),
+            output_format=output_format.strip(),
+            instruction=instruction.strip()
+        )
+
+        return prompt
+
+
+class SQLVariationGeneratorPrompt:
+    def __init__(self):
+        self.variation_type_prompts = [
             '''
             Data Value Transformations
             - Alter filter conditions, date ranges, or numerical thresholds
@@ -571,7 +1411,6 @@ class SQLVariationPrompt:
             - Add appropriate WHERE clause optimizations
             ''',
         ]
-        return type_prompts[variation_type]
 
     def insert_stmts_template(self, insert_statements):
         template = '''### INSERT INTO Statements
@@ -621,3 +1460,224 @@ class SQLVariationPrompt:
             original_sql=original_sql,
             db_engine=db_engine
         )
+
+
+    def build_prompt(self, original_sql, create_statements, insert_statements, db_engine) -> str:
+        random.seed(42)
+        if len(insert_statements) == 0:
+            db_value_prompt = ""
+        else:
+            if len(insert_statements) > 4:
+                insert_statements = random.sample(insert_statements, 4)
+            db_value_prompt = self.insert_stmts_template(
+                insert_statements="\n\n".join(insert_statements)
+            )
+
+        variation_type = random.randint(0, 5)
+        variation_prompt = self.variation_type_prompts[variation_type]
+                    
+        prompt = self.sql_variation_prompt(
+            original_sql=original_sql,
+            schema_str="\n\n".join(create_statements),
+            db_value_prompt=db_value_prompt.strip(),
+            variation_prompt=variation_prompt.strip(),
+            db_engine=db_engine
+        )
+        return prompt
+
+
+class Text2SQLPromptGeneratorPrompt:
+    def __init__(self):
+        pass
+
+    def build_prompt(self, db_details: str, question: str, evidence: str, db_engine: str) -> str:
+        if evidence:
+            question_and_evidence = f"{evidence}\n{question}"
+        else:
+            question_and_evidence = question
+            
+        template = """Task Overview: 
+        You are a data science expert. Below, you are provided with a database schema and a natural language question. Your task is to understand the schema and generate a valid SQL query to answer the question.
+
+        Database Engine:
+        {db_engine}
+
+        Database Schema:
+        {db_details}
+        This schema describes the database's structure, including tables, columns, primary keys, foreign keys, and any relevant relationships or constraints.
+
+        Question:
+        {question_and_evidence}
+
+        Instructions:
+        - Make sure you only output the information that is asked in the question. If the question asks for a specific column, make sure to only include that column in the SELECT clause, nothing more.
+        - The generated query should return all of the information asked in the question without any missing or extra information.
+        - Before generating the final SQL query, please think through the steps of how to write the query.
+
+        Output Format:
+        In your answer, please enclose the generated SQL query in a code block:
+        sql
+        -- Your SQL query
+
+
+        Take a deep breath and think step by step to find the correct SQL query.
+        """
+
+        prompt = template.format(db_details=db_details, question_and_evidence=question_and_evidence, db_engine=db_engine)
+        return prompt
+
+class Text2VecSQLPromptGeneratorPrompt:
+    def __init__(self):
+        pass
+
+    def get_sqlite_vec_description(self):
+        return """There are a few Requirements you should Comply with in addition, else you can ignore these requirements below.
+1. When generating SQL queries， you should prioritize utilizing KNN searches whenever contextually appropriate. However, you have to avoid unnecessary/forced KNN implementations for:
+--Traditional relational data queries (especially for columns like: id, age, price)
+--Cases where standard SQL operators (equality, range, or aggregation functions) are more efficient and semantically appropriate
+2. Only vector type(like: float[?]) support KNN queries and the name of vector column often end with "_embedding". So, you can use knn queries to search when the column name you need to search for ends with "_embedding" or when the column name with "_embedding" is also in the list.
+3. In any complexity level, you can choose to use KNN queries if need.
+4. When using KNN queries, you have to add LIMIT or 'And k = ?' constraint but do not use them all in the same statement. This rule is very important, do not forget to add LIMIT or 'And k = ?' constraint after MATCH operator.
+5. The lembed function is used to transform a string into a vector, whose type and size match the corresponding column type in the data table. The function has two parameters, the first parameter is the name of the embedding model used (default value: {embedding_model}), and the second parameter is the content of the string type you want to convert. So, you should generate some words or sentences with specific semantic information based on name, type and comment of this column. For example, you can generate "The Daily Grind Coffee Shop\n 456 Oak Avenue\n Springfield, IL 62704\n USA" when this column name is Location_embedding, column type is float[384] and comment of column is "the embedding of location".
+6. The lembed function's second parameter MUST be a SPECIFIC semantic description. 
+   - For location_embedding: Generate REAL addresses (e.g. "Stadium: 123 Main St, Boston, MA. Capacity: 50,000. Home team: Patriots")
+   - For columns containing semantically meaningful data (e.g., descriptions), generate rich, contextually appropriate information. For columns without meaningful content (e.g., placeholder names), avoid creating semantically dense output to facilitate fuzzy matching operations.
+   - For name_embedding: You should generate variationsof the original names (e.g., altered spellings, phonetic approximations, or intentionally obfuscated words/characters) to enable Subsequent fuzzy matching to identify semantically similar names. Importantly, never generate redundant information. For example, you can generate "Lige", but do not generate "Ligand Lige", "Ligand example name", "Ligand similar to Aspirin" and "Ligand name variation".
+   Examples:
+   ✅ Correct: 
+     name_embedding MATCH lembed('all-MiniLM-L6-v2', "Kri")
+   ❌ Wrong:  
+     name_embedding MATCH lembed('all-MiniLM-L6-v2', "A leading publisher based in Germany specializing in 
+scientific journals and books.")
+   - For text_embedding: Use ACTUAL and meaningful sentences (e.g. "Harper Lee’s To Kill a Mockingbirdis a timeless exploration of racial injustice and moral growth, seen through the innocent yet perceptive eyes of Scout Finch. With its powerful themes, unforgettable characters like Atticus Finch, and Lee’s poignant prose, the novel remains a searing critique of society’s failures and a testament to the courage of standing for what’s right.")
+   - NEVER use vague words and generic phrases like "a book review"   
+   Examples:
+   ✅ Correct: 
+     lembed('all-MiniLM-L6-v2', "To Kill a Mockingbird")
+   ❌ Wrong:  
+     lembed('all-MiniLM-L6-v2', "name of a famous book")
+7. When using MATCH, please fill in a vector using function lembed after MATCH that matches the column type (with the same dimension and type). Using details are in examples.
+8. The distance column is an ​​implicitly generated metric​​ that appears when performing vector similarity searches (using the MATCH operator) in SQLite vector extensions like sqlite-vec. If using JOIN operator, you have to clarify which table that distance belongs to.
+9. A SELECT statement should have no more than one MATCH operation. However, each subquery within a SELECT statement could also have no more than one MATCH operation, independent of the parent query."
+10. When performing a KNN/vector similarity search (e.g., using MATCH or lembed), always specify a LIMIT or k=N constraint directly on the vector search operation, even if the outer query already has a LIMIT. The vector search requires its own result cap to avoid ambiguity in ranking and performance issues. 
+11. When both LIMIT and k operations are available for vector search queries, prioritize using k operation for ​​Broader Compatibility.
+Key Points:
+​--​Vector search needs its own LIMIT/k​​ – The outer LIMIT applies to the final filtered results, not the initial similarity search.
+--LIMIT operator should follow closely after "ORDER BY distance". 
+❌ Wrong Example: 
+```sql
+SELECT a.codec_name
+FROM audio_codecs a
+JOIN quality_levels q ON a.codec_id = q.quality_id
+WHERE a.description_embedding MATCH lembed('all-MiniLM-L6-v2', "High efficiency audio codec with low latency and optimal bandwidth")
+AND q.quality_name = 'HighQuality'
+LIMIT 1;
+```
+✅ Correct Example:
+```sql
+SELECT a.codec_name
+FROM audio_codecs a
+JOIN quality_levels q ON a.codec_id = q.quality_id
+WHERE a.description_embedding MATCH lembed('all-MiniLM-L6-v2', "High efficiency audio codec with low latency and optimal bandwidth") LIMIT 1
+AND q.quality_name = 'HighQuality';
+```
+--When using JOIN operations, you need to ensure that k does not cause ambiguity in the query. In most cases, the k parameter logically belongs to the same table as the column used in the MATCH clause. So, when the column referenced in the MATCH clause includes a table qualifier (e.g., table1.embedding), the k parameter must be explicitly bound to the same table.
+❌ Wrong Example: 
+```sql
+SELECT s.stock_id, s.symbol
+FROM stocks s
+JOIN exchanges e ON s.exchange_id = e.exchange_id
+WHERE s.sector_embedding MATCH lembed('all-MiniLM-L6-v2', "Tech industry sector in the USA")
+AND e.country = 'USA'
+AND k = 5
+ORDER BY s.stock_id;
+```
+✅ Correct Example:
+```sql
+SELECT s.stock_id, s.symbol
+FROM stocks s
+JOIN exchanges e ON s.exchange_id = e.exchange_id
+WHERE s.sector_embedding MATCH lembed('all-MiniLM-L6-v2', "Tech industry sector in the USA")
+AND e.country = 'USA'
+AND s.k = 5
+ORDER BY s.stock_id;
+```
+12. ​Avoids runtime errors​​ – Many vector databases (e.g., SQLite with sqlite-vss, pgvector) enforce this requirement strictly.
+13. Only a single 'ORDER BY distance' clause is allowed on vec0 KNN queries, not on other columns.
+***Example of KNN queries of sqlite-vec***
+first example(type of vector_embedding is float[384]):
+```sql
+SELECT rowid, distance 
+FROM vec_table 
+WHERE vector_embedding MATCH lembed({embedding_model},"vector of sun")
+ORDER BY distance 
+LIMIT 1;
+```
+
+second example(type of sentence_embedding is float[384]):
+```sql
+select
+  movie_id,
+  title,
+  genre,
+  num_reviews,
+  mean_rating,
+  distance
+from vec_movies
+where sentence_embedding match lembed({embedding_model},"This is a great movie!")
+  and genre = 'scifi'
+  and num_reviews between 100 and 500
+  and mean_rating > 3.5
+  and k = 5;
+```
+
+third example(type of vector_embedding is float[384]):
+```sql
+select rowid, name1, name2, age, vec_to_json
+from v
+where vector_embedding match lembed({embedding_model},"aaa and xxx are good friends, whose age is 18.")
+  and k = 1
+  and name1 in ('alex', 'brian', 'craig')
+  and name2 in ('Rick', 'Morty')
+  and age in (21, 18);
+```"""
+
+    
+    def build_prompt(self, db_details: str, question: str, evidence: str, db_engine: str) -> str:
+        if evidence:
+            question_and_evidence = f"{evidence}\n{question}"
+        else:
+            question_and_evidence = question
+            
+        template = """Task Overview:
+You are a data science expert. Below, you are provided with a database schema and a natural language question. Your task is to understand the schema and generate a valid SQL query to answer the question.
+
+Database Engine:
+{db_engine}
+
+Database Schema:
+{db_details}
+This schema describes the database's structure, including tables, columns, primary keys, foreign keys, and any relevant relationships or constraints.
+
+Question:
+{question_and_evidence}
+
+Database Extension:
+{db_extension_description}
+
+Instructions:
+- Make sure you only output the information that is asked in the question. If the question asks for a specific column, make sure to only include that column in the SELECT clause, nothing more.
+- The generated query should return all of the information asked in the question without any missing or extra information.
+- Before generating the final SQL query, please think through the steps of how to write the query.
+
+Output Format:
+In your answer, please enclose the generated SQL query in a code block:
+sql
+-- Your SQL query
+
+
+Take a deep breath and think step by step to find the correct SQL query.
+        """
+
+        prompt = template.format(db_details=db_details, question_and_evidence=question_and_evidence, db_engine=db_engine, db_extension_description=self.get_sqlite_vec_description())
+        return prompt

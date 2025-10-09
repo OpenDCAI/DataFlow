@@ -1,9 +1,3 @@
-from dataflow.prompts.doc2qa import (
-    Doc2QAQuestionQualityPrompt,
-    Doc2QAAnswerAlignmentPrompt,
-    Doc2QAAnswerVerifiabilityPrompt,
-    Doc2QADownstreamValuePrompt
-)
 import pandas as pd
 from dataflow.utils.registry import OPERATOR_REGISTRY
 from dataflow import get_logger
@@ -11,13 +5,30 @@ import re
 from dataflow.utils.storage import DataFlowStorage
 from dataflow.core import OperatorABC
 from dataflow.core import LLMServingABC
+from dataflow.core.prompt import prompt_restrict
 
+from dataflow.prompts.text2qa import (
+    Text2QAQuestionQualityPrompt,
+    Text2QAAnswerAlignmentPrompt,
+    Text2QAAnswerVerifiabilityPrompt,
+    Text2QADownstreamValuePrompt
+)
+
+@prompt_restrict(
+    Text2QAQuestionQualityPrompt,
+    Text2QAAnswerAlignmentPrompt,
+    Text2QAAnswerVerifiabilityPrompt,
+    Text2QADownstreamValuePrompt
+)
 @OPERATOR_REGISTRY.register()
-class Doc2QASampleEvaluator(OperatorABC):
+class Text2QASampleEvaluator(OperatorABC):
     '''
     Answer Generator is a class that generates answers for given questions.
     '''
-    def __init__(self, llm_serving: LLMServingABC):
+    def __init__(self, 
+                 llm_serving: LLMServingABC,
+                #  prompt_template = None  # prompt is fix
+                 ):
         self.logger = get_logger()   
         self.llm_serving = llm_serving
     
@@ -71,16 +82,16 @@ class Doc2QASampleEvaluator(OperatorABC):
         Reformat the prompts in the dataframe to generate questions.
         """
         question_quality_inputs = []
-        self.prompts = Doc2QAQuestionQualityPrompt()
+        self.prompts = Text2QAQuestionQualityPrompt()
         question_quality_prompt = self.prompts.build_prompt()
         answer_alignment_inputs = []
-        self.prompts = Doc2QAAnswerAlignmentPrompt()
+        self.prompts = Text2QAAnswerAlignmentPrompt()
         answer_alignment_prompt = self.prompts.build_prompt()
         answer_verifiability_inputs = []
-        self.prompts = Doc2QAAnswerVerifiabilityPrompt()
+        self.prompts = Text2QAAnswerVerifiabilityPrompt()
         answer_verifiability_prompt = self.prompts.build_prompt()
         downstream_value_inputs = []
-        self.prompts = Doc2QADownstreamValuePrompt()
+        self.prompts = Text2QADownstreamValuePrompt()
         downstream_value_prompt = self.prompts.build_prompt()
 
         for index, row in dataframe.iterrows():

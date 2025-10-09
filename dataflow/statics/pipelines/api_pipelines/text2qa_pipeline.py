@@ -1,7 +1,6 @@
 from dataflow.operators.core_text import (
-    Doc2PromptGenerator,
-    Doc2QASampleEvaluator,
-    Doc2QAGenerator,
+    Text2QASampleEvaluator,
+    Text2QAGenerator,
     KCenterGreedyFilter
 )
 
@@ -34,11 +33,9 @@ class AgenticRAG_APIPipeline():
 
         self.content_chooser_step1 = KCenterGreedyFilter(embedding_serving=embedding_serving, num_samples=5)
 
-        self.doc2prompt_generator_step2 = Doc2PromptGenerator(self.llm_serving)
+        self.text2qa_generator_step3 = Text2QAGenerator(self.llm_serving)
 
-        self.doc2qa_generator_step3 = Doc2QAGenerator(self.llm_serving)
-
-        self.doc2qa_scorer_step4 = Doc2QASampleEvaluator(self.llm_serving)
+        self.text2qa_scorer_step4 = Text2QASampleEvaluator(self.llm_serving)
         
     def forward(self):
 
@@ -47,20 +44,16 @@ class AgenticRAG_APIPipeline():
             input_key = "text"
         )
 
-        self.doc2prompt_generator_step2.run(
-            storage = self.storage.step(),
-            input_key = "text"
-        )
-
-        self.doc2qa_generator_step3.run(
+        self.text2qa_generator_step3.run(
             storage = self.storage.step(),
             input_key="text",
+            input_question_num= 3,
             output_prompt_key="generated_prompt",
             output_quesion_key="generated_question",
             output_answer_key="generated_answer"
         )
 
-        self.doc2qa_scorer_step4.run(
+        self.text2qa_scorer_step4.run(
             storage = self.storage.step(),
             input_question_key="generated_question",
             input_answer_key="generated_answer",
