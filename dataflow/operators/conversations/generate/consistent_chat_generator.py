@@ -55,15 +55,9 @@ class ConsistentChatGenerator(OperatorABC):
             return "Two-stage generation of multi-turn dialogue data from scratch based on predefined topics and human intents."
 
     def run(self, storage: DataFlowStorage):
-        all_query_prompts = []
         
         # Step 1: Generate all queries using LLM
-        for intent, info_flows in self.query_prompt._get_intent_categories().items():
-            for _ in range(self.num_dialogs_per_intent):
-                info_flow = random.choice(info_flows)
-                topic = random.choice(self.query_prompt._get_topic_dict()[intent])
-                query_prompt = self.query_prompt.build_prompt(info_flow, topic)
-                all_query_prompts.append(query_prompt)
+        all_query_prompts = self.query_prompt.build_prompt(num_dialogs_per_intent=self.num_dialogs_per_intent)
         # Step 2: Generate queries by calling llm_serving once
         self.logger.info("Generating queries...")
         queries_list = self.llm_serving.generate_from_input(user_inputs=all_query_prompts)

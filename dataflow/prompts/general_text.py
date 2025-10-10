@@ -1,3 +1,4 @@
+import random
 from dataflow.utils.registry import PROMPT_REGISTRY
 from dataflow.core.prompt import PromptABC
 '''
@@ -697,14 +698,8 @@ class ConsistentQueryPrompt(PromptABC):
                 "Paying for tutoring or online lessons"
             ]
         }
-        
-    def _get_intent_categories(self):
-        return self.intent_categories
     
-    def _get_topic_dict(self):
-        return self.topic_dict
-    
-    def build_prompt(self, info_flow, topic):
+    def build_prompt(self, num_dialogs_per_intent):
         prompt = f"""
         Task Description and Rules 
         1. Generate multiple rounds of realistic user questions based on the provided topic: 
@@ -733,7 +728,14 @@ class ConsistentQueryPrompt(PromptABC):
         To generate multi-turn queries with high topic consistency, please think step-by-step. 
         The input core topic for this task is: {topic}
         """
-        return prompt
+        all_query_prompts = []
+        for intent, info_flows in self.intent_categories.items():
+            for _ in range(num_dialogs_per_intent):
+                info_flow = random.choice(info_flows)
+                topic = random.choice(self.topic_dict[intent])
+                query_prompt = prompt.format(info_flow=info_flow, topic=topic)
+                all_query_prompts.append(query_prompt)
+        return all_query_prompts
 
 
 @PROMPT_REGISTRY.register()
