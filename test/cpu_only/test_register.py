@@ -108,11 +108,18 @@ def test_all_operator_registry():
                 cls_info["run"] = params
 
                 # 检查 run 参数命名
+                # check for input_*, output_*, storage prefix
                 invalid_params = [
                     p for p in params if p not in ("self", "cls") and not (
                         p.startswith("input_") or p.startswith("output_") or p == "storage"
                     )
                 ]
+                # check for storage
+                if "storage" not in params:
+                    invalid_params.append("'storage' parameter missing")
+                elif params.index("storage") != 1:
+                    invalid_params.append(f"'storage' should be the FIRST parameter (except self/cls), but found at position '{params[1]}'")
+
                 if invalid_params:
                     invalid_run_param_ops.append((name, cls.__module__, invalid_params))
             except Exception as e:
@@ -138,8 +145,9 @@ def test_all_operator_registry():
             "All parameters of the `run()` function must be explicitly named using one of these prefixes:\n"
             "  - input_*\n"
             "  - output_*\n"
+            " Special parameter 'storage' is also allowed. And should be the FIRST parameter.\n"
             "Example:\n"
-            "  def run(self, input_text, input_image, output_result):\n"
+            "  def run(self, storage, input_text, input_image, output_result):\n"
             "Parameters other than 'self' or 'cls' that do not start with these prefixes "
             "are considered invalid.\n"
         )
