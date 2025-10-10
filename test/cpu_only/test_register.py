@@ -108,7 +108,7 @@ def test_all_operator_registry():
                 cls_info["run"] = params
 
                 # 检查 run 参数命名
-                # check for input_*, output_*, storage prefix
+                # check for input_*, output_*, storage 
                 invalid_params = [
                     p for p in params if p not in ("self", "cls") and not (
                         p.startswith("input_") or p.startswith("output_") or p == "storage"
@@ -145,7 +145,7 @@ def test_all_operator_registry():
             "All parameters of the `run()` function must be explicitly named using one of these prefixes:\n"
             "  - input_*\n"
             "  - output_*\n"
-            " Special parameter 'storage' is also allowed. And should be the FIRST parameter.\n"
+            "  - Special parameter 'storage' is also allowed. And should be the FIRST parameter.\n"
             "Example:\n"
             "  def run(self, storage, input_text, input_image, output_result):\n"
             "Parameters other than 'self' or 'cls' that do not start with these prefixes "
