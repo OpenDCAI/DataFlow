@@ -728,7 +728,7 @@ and describe the entire process.
 """
 
 # --------------------------------------------------------------------------- #
-# 11. 调试pipeline                                                         #
+# 12. 调试pipeline                                                         #
 # --------------------------------------------------------------------------- #
 class DebugPipeline:
     system_prompt_for_code_debugging = """
@@ -755,280 +755,89 @@ Reply only with a valid JSON object, no markdown, no comments.
 """
 
 # --------------------------------------------------------------------------- #
-# 11. rewrite                                                         #
+# 13. data collection                                                         #
 # --------------------------------------------------------------------------- #
-class CodeRewriter:
-    system_prompt_for_code_rewriting = """
-You are a Python code expert.
+class DataCollector:
+    system_prompt_for_data_collection = """
+You are an expert in user intent recognition.
 """
-    task_prompt_for_code_rewriting = """"
-    [INPUT]
+    task_prompt_for_data_collection = """"
+Please return one or several comma-separated noun keywords related to the input, without any explanations. Each key word should represent a simplified single word domain name. If the input does not contain any relevant noun keywords related to the dataset, return 'No valid keyword'.
 
-The input consists of:
-1. Pipeline code (read-only):
-{pipeline_code}
-2. Error trace / shell output:
-{error_trace}
+[Example]
+Input1:我想要数学和物理相关的数据
+Output1: math, physics
 
-3. Debug analysis and suggestions from the previous step:
-{debug_reason}
+Input2:收集金融和医疗相关的数据
+Output2: finance, medicine
 
-4. Sample data [For the first operator in 'run', the key (for example, is one of the keys in the sampled data), you need to determine it yourself]:
-{data_sample}
+User request: 
+{user_query}
 
-5. Other Info:
-{other_info}
- -The FileStorage class uses the step() method to manage and switch between different stages of data processing. Each time you call step(), it advances to the next operation step, ensuring that data for each stage is read from or written to a separate cache file, enabling stepwise storage and management in multi-stage data flows.
+Keywords:
+"""
+
+# --------------------------------------------------------------------------- #
+# 13. data conversion                                                         #
+# --------------------------------------------------------------------------- #
+class DataConvertor:
+    system_prompt_for_data_conversion = """
+You are an expert in dataset classification and analysis.
+"""
+    task_prompt_for_data_conversion_pt = """
+You are given a dataset from HuggingFace. Your task is to identify the most appropriate column for language model pretraining from the dataset.
+
+[Dataset Information]
+
+Dataset Columns: {column_names}
+
+First Row Data: {first_row}
+
+[Instruction]
+
+Pretraining data typically consists of coherent text paragraphs with meaningful content. The dataset will include various fields (columns) with different types of data. You need to choose the column that contains textual content suitable for pretraining.
 
 [OUTPUT RULES]
-Reply only with a valid JSON object, no markdown, no comments.
 
-The JSON must and can only contain one top-level key:
-"code": Return the modified and corrected version of the code based on the analysis, as a string.
-All JSON keys and string values must be double-quoted, with no trailing commas.
-If you are unsure about any value, use an empty string.
-Double-check that your response is a valid JSON. Do not output anything else.
-    
-    """
-
-# --------------------------------------------------------------------------- #
-# 12. InfoRequester                                                         #
-# --------------------------------------------------------------------------- #
-class InfoRequesterPrompt:
-    system_prompt_for_other_info_request = """
-    You MUST respond with a JSON object and nothing else.
-    You are a senior Python debugging assistant.
-"""
-
-    task_prompt_for_context_collection = """
-[TASK]
-Analyze the pipeline code and error trace to decide **which modules’ source
-code you must inspect**.
-
-[INPUT]
-1. Pipeline code (read-only):
-{pipeline_code}
-
-2. Error trace:
-{error_trace}
-
-[WORKFLOW – STRICT]
-Step 1  Analyse the error and list the modules you need.
-Step 2  Call the function tool **fetch_other_info**
-        with       module_list=[ "...", ... ]        ← REQUIRED
-Step 3  Wait for the tool result (the code), then write your summary.
-
-[EXAMPLES]
-• Storage problem → {{"module_list": ["dataflow.utils.storage"]}}
-• Multiple files   → {{"module_list": ["pkg.a", "pkg.b"]}}
-
-
-请问，如果要解决上述错误还需要哪些额外信息？？
-[OUTPUT PROTOCOL]
-Phase A (before you have the code):
-    Respond ONLY with the tool call, e.g.
-    {{
-      "name": "fetch_other_info",
-      xxx
-    }}
-
-
-Phase B (after the tool has returned the code):
-    Respond ONLY with a JSON object, no markdown, no extra text:
-    {{
-      "other_info": "Concise yet complete summary of the inspected code"
-    }}
-
-"""
-
-
-
-# --------------------------------------------------------------------------- #
-# 11. Oprewrite                                                         #
-# --------------------------------------------------------------------------- #
-class OpRewriter:
-    system_prompt_for_op_rewrite= """
-[ROLE]
-You are an expert Python programmer specializing in debugging and code correction. Your mission is to analyze and fix a defective Python operator class based on a comprehensive set of diagnostic inputs.
-
-[TASK]
-You will be provided with the following information:
-- `operator_code`: The source code of the Python class to be fixed.
-- `instantiate_code`: A code snippet demonstrating how the class is instantiated and used, which triggers the error.
-- `error_trace`: The full error traceback produced when running the `instantiate_code`.
-- `debug_reason`: A preliminary analysis of the root cause of the error.
-- `data_sample`: Sample data used by the operator to illustrate its intended use case.
-- `target`: A clear description of the operator's desired functionality.
-
-Your objective is to revise the `operator_code` to resolve the error identified in the `error_trace` and align its behavior with the `target` description.
-
-[RULES]
-Follow these critical principles:
-1.  Minimal Changes: Modify the code as little as possible. Focus only on the necessary fixes to make it functional and correct. Do not perform major refactoring, add new features, or change code style unnecessarily.
-2.  Correctness First: The corrected code must run the `instantiate_code` successfully and produce the expected outcome based on the `target` description and `data_sample`.
-3.  Holistic Analysis: Carefully consider all provided inputs (`error_trace`, `debug_reason`, `target`, etc.) to understand the full context of the problem before generating a solution.
-4.  Think Step-by-Step: Always analyze the problem systematically before writing the final code.
-"""
-
-    task_prompt_for_op_rewrite = """
-[INPUT]
-- Operator Code: {operator_code}
-- Instantiation Code: {instantiate_code}
-- Error Trace : {error_trace}
-- Debug Reason: {debug_reason}
-- Sample Data: {data_sample}
-- Target Description: {target}
-
-[TASK]
-Based on the context provided, your task is to fix the `operator_code` and return only the corrected version.
-
-[OUTPUT RULES]
-- Strict JSON Format: Your entire response MUST be a single, valid JSON object.
-- No Extra Text: Do not include any explanatory text, comments, markdown formatting, or any characters outside of the JSON structure.
-- Required Structure: The JSON object must contain exactly one key: `"code"`.
-- Value: The value for the `"code"` key must be a string containing the complete, corrected Python code for the operator.
-
-Example of the required output format:
-```json
+If the dataset contains a column with meaningful textual content that could be used for pretraining, return the following JSON object in ```json block and replace "column_name" with the actual column name:
 {
-  "code": "class FixedOperator:\n    # ... corrected code here ...\n"
+    "text": "column_name"
+}
+
+If no such column is present, return the following JSON object in ```json block:
+{
+    "text": null
 }
 """
+    task_prompt_for_data_conversion_sft = """
+You are given a dataset from HuggingFace. Your task is to identify two columns that can be used to create instruction tuning data for a language model.
 
+[Dataset Information]
 
+Dataset Columns: {column_names}
 
+First Row Data: {first_row}
 
+[Instruction]
 
+Instruction tuning data typically consists of a question (instruction) and an answer pair. The question column contains the instruction or prompt, and the answer column contains the corresponding response.
+From the given dataset, select two columns to form a question-answer pair. Ensure the following requirements are met:
+1. Semantic Relevance: The selected columns should have clear semantic relevance, forming a logical question-answer relationship.
+2. Non-Empty Content: The selected columns must contain non-empty content and meaningful information.
+3. Different Columns: The question and answer columns must be from different fields.
 
-# --------------------------------------------------------------------------- #
-# 12. LLM 注入 Serving                                                         #
-# --------------------------------------------------------------------------- #
-class AppendLLMServing:
-    system_prompt_for_llm_append_serving = """
-You are a Python code refactoring assistant for DataFlow operators.
-Your job is to minimally modify the given operator code to ensure it correctly initialises an LLM serving instance in the operator's __init__ method.
-Do not change class names, method signatures, or business logic.
-If the code already contains a valid llm_serving initialisation, keep it unchanged.
-"""
-
-    task_prompt_for_llm_append_serving = """
-[INPUTS]
-- pipeline_code: The complete operator source code.
-- llm_serving_snippet: The required initialisation snippet to use inside __init__.
-- example_data: A small sample of the dataset (list of JSON rows) — context only: {example_data}.
-- available_keys: List of available columns — context only: {available_keys}.
-- target: The operator's intended purpose: {target}.
- 
-
-[TASK]
-Insert the llm_serving_snippet into the first class that inherits from OperatorABC, inside its __init__ method.
-If imports are missing, add: from dataflow.serving import APILLMServing_request.
-If the code already contains llm_serving or APILLMServing_request initialisation, keep the code unchanged.
-You may use target/example_data/available_keys only to choose the most appropriate location or minimal adjustments (e.g., preserving existing attributes), but do not add runtime logic, prompts, or entry points here. This step focuses solely on correct llm_serving initialisation.
-
+Please select a suitable question-answer pair from multiple fields based on these criteria.
 
 [OUTPUT RULES]
-Return a JSON object with a single key:
-{"code": "<complete source code string>"}
-Do not include comments or extra keys.
-Do not add any __main__ entry.
-"""
 
-# --------------------------------------------------------------------------- #
-# 13. LLM 生成实例化入口                                                        #
-# --------------------------------------------------------------------------- #
-class InstantiateOperator:
-    system_prompt_for_llm_instantiate = """
-    [ROLE]
-    You are a data operator code integration assistant.
-
-    [TASK]
-    Generate a runnable entry code for the given operator code to process a jsonl data with FileStorage and llm_serving, 需要实现**target**的需求.
-"""
-
-    task_prompt_for_llm_instantiate = """
-[INPUTS]
-- target: {target}
-- pipeline_code: The complete operator source code: {pipeline_code}
-- example_data: Small dataset samples (list of JSON rows): {example_data}
-- available_keys: Keys detected from samples: {available_keys}
-- llm_serving_info: you should use the llm_serving initialisation snippet : {llm_serving_info}
-- preselected_input_key: Preferred input key (fallback candidate): {preselected_input_key}
-- test_data_path: Jsonl path to read for step0 (default is DataFlow/dataflow/dataflowagent/test_data.jsonl): {test_data_path}
-
-[TASK]
-Produce complete, runnable Python code that:
-1) Instantiates FileStorage with:
-   storage = FileStorage(first_entry_file_name=test_data_path, cache_path="./cache_local", file_name_prefix="dataflow_cache_step", cache_type="jsonl")
-   Then call storage = storage.step() before reading/writing.
-   Instantiates llm_serving with: llm_serving = APILLMServing_request(api_url="http://123.129.219.111:3000/v1/chat/completions", key_name_of_api_key="DF_API_KEY", model_name="gpt-4o")
-
-2) Parses example_data/available_keys and selects input_key strictly from available_keys. Prefer preselected_input_key if it exists in available_keys. After selection, print exactly one line to stdout:
-   [selected_input_key] <the_key>
-3) Instantiate and use the operator class defined in the pipeline code. Important: the pipeline code is provided as plain source text context and is NOT an importable module. Do NOT write imports like "from pipeline_code import ..." and do NOT rely on OPERATOR_REGISTRY.get(...) to fetch it. Your returned code must be self-contained: paste the operator class definition (verbatim, without changing its logic) before the runnable entry, then instantiate it and call its compile()/forward()/run(...) as appropriate.
-4) Uses llm_serving already present in the operator if available. If missing imports to use remote serving, add: from dataflow.serving import APILLMServing_request and initialise in the operator's __init__ only if clearly required by the class design; otherwise keep the class unchanged and assume llm_serving was appended earlier.
-5) Reads the input with dataframe = storage.read('dataframe'), writes the output back via storage.write(...). Ensure it runs end-to-end on the given samples and fulfils the target.
-6) After obtaining model outputs, print the first two results to stdout for debugging with the exact prefix on separate lines:
-   [preview_output] <result_0>
-   [preview_output] <result_1>
-
-[STRICT CONSTRAINTS]
-- Do NOT redefine or replace existing operator classes in pipeline code.
-  You may paste the class definition verbatim to make the file self-contained, but do not change its methods or behavior.
-- Use exact import for FileStorage: from dataflow.utils.storage import FileStorage.
-- If you import serving, use: from dataflow.serving import APILLMServing_request.
-- Keep changes minimal; only add the runnable entry and necessary glue code.
-- Absolutely forbid importing a module named pipeline_code; it does not exist as a module. Never write statements like: from pipeline_code import X or import pipeline_code.
-- Do not call OPERATOR_REGISTRY.get(...) to obtain the operator from registry; define the class in the same file and instantiate it directly.
-
-[OUTPUT RULES]
-Return only a JSON object with a single key:
-{"code": "<complete runnable source code>"}
-No comments, no extra keys, no extra prints except:
-- one line: [selected_input_key] <the_key>
-- up to two lines: [preview_output] <result>
-"""
-
-# --------------------------------------------------------------------------- #
-# X. 语法检查（Operator 生成后的代码审查）                                      #
-# --------------------------------------------------------------------------- #
-class GrammarCheck:
-    system_prompt_for_grammar_check = """
-[ROLE]
-你是资深的 Python 代码语法与结构审查专家。你的职责是：
-1) 严格检查给定代码的语法正确性与基本结构合理性（类定义、导入、缩进等）；
-2) 在不影响原始设计的前提下，进行最小必要的修复（如缺失导入、明显的拼写/缩进错误）。
-
-[OUTPUT RULES]
-仅返回一个JSON对象，包含如下键：
-  - grammar_ok: true/false 语法是否通过
-  - message: 字符串，若失败则给出最简明的错误说明（行号/原因）；若成功可为空字符串
-  - fixed_code: （可选）若做了轻量修复，返回修复后的完整代码字符串；若无修复则省略
-严禁返回除上述字段外的任何键；严禁解释性文字；严禁Markdown；严禁代码块标记。
-"""
-
-    task_prompt_for_grammar_check = """
-[INPUTS]
-- pipeline_code:
-{pipeline_code}
-
-- data sample:
-{sample_data}
-
-- available_keys:
-{available_keys}
-
-- target:
-{target}
-
-[TASK]
-请对 pipeline_code 进行语法与结构审查，并在必要时进行最小修复。
-注意：
-1) 不要更改业务逻辑（如类名/方法签名），仅做语法层面的最小修复；
-2) 如果你新增了导入或修复了缩进，需在 fixed_code 中返回完整修复后代码。
-
-[OUTPUT]
-只返回如下JSON：
-{"grammar_ok": true, "message": "", "fixed_code": ""}
-若 grammar_ok 为 false，则 message 必须简洁说明问题（例如："IndentationError at line 42"）。
+If such columns exist, return the following JSON object: in ```json block and replace "column_name" with the actual column name:
+{
+    "question": "column_name",
+    "answer": "column_name"
+}
+If no such columns are found in the dataset, return the following JSON object in ```json block:
+{
+    "question": null,
+    "answer": null
+}
 """

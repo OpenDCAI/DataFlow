@@ -208,7 +208,7 @@ Processing Steps:
 {output_requirement}
 """.strip()
 
-   def post_process(self, cleaned_text: str) -> str:
+   def _post_process(self, cleaned_text: str) -> str:
       """后处理逻辑（新增引用校验）"""
       if self.strict_mode:
          # 校验引用标记完整性
