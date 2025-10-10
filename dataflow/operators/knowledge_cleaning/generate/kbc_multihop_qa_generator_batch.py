@@ -211,9 +211,9 @@ class KBCMultiHopQAGeneratorBatch(OperatorABC):
 
     def run(
             self,
+            storage: DataFlowStorage = None,
             input_key: str = 'chunk_path',
             output_key: str = 'enhanced_chunk_path',
-            storage: DataFlowStorage = None,
     ):
         self.input_key, self.output_key = input_key, output_key
         dataframe = storage.read("dataframe")

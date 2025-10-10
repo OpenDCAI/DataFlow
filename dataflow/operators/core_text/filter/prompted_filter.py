@@ -12,10 +12,12 @@ class PromptedFilter(OperatorABC):
     '''
     Answer Generator is a class that generates answers for given questions.
     '''
-    def __init__(self, llm_serving: LLMServingABC, system_prompt: str = "Please evaluate the quality of this data on a scale from 1 to 5."):
+    def __init__(self, llm_serving: LLMServingABC, system_prompt: str = "Please evaluate the quality of this data on a scale from 1 to 5.", min_score = 1, max_score = 5):
         self.logger = get_logger()
         self.llm_serving = llm_serving
         self.prompted_evaluator = PromptedEvaluator(llm_serving, system_prompt)
+        self.min_score = min_score
+        self.max_score = max_score
     
     @staticmethod
     def get_desc(lang: str = "zh"):
@@ -61,7 +63,7 @@ class PromptedFilter(OperatorABC):
             return "PromptedFilter scores rows via PromptedEvaluator and filters by a configurable score range (default 1–5)."
 
 
-    def run(self, storage: DataFlowStorage, input_key: str = "raw_content", output_key: str = "eval", min_score = 5, max_score = 5):
+    def run(self, storage: DataFlowStorage, input_key: str = "raw_content", output_key: str = "eval"):
         self.logger.info("Running PromptGenerator...")
 
         # Load the raw dataframe from the input file
@@ -73,7 +75,7 @@ class PromptedFilter(OperatorABC):
 
         # Add the generated content back to the dataframe
         dataframe[output_key] = generated_outputs
-        filtered_dataframe = dataframe[(dataframe[output_key] >= min_score) & (dataframe[output_key] <= max_score)]
+        filtered_dataframe = dataframe[(dataframe[output_key] >= self.min_score) & (dataframe[output_key] <= self.max_score)]
         # Save the updated dataframe to the output file
         output_file = storage.write(filtered_dataframe)
         return output_key

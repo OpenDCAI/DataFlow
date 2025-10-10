@@ -4,7 +4,12 @@ from dataflow.core import OperatorABC
 from dataflow.utils.storage import DataFlowStorage
 import pandas as pd
 from dataflow.core import LLMServingABC
+from dataflow.core.prompt import prompt_restrict
 from dataflow.prompts.general_text import AlpagasusPrompt  
+
+@prompt_restrict(
+    AlpagasusPrompt
+)
 
 @OPERATOR_REGISTRY.register()
 class AlpagasusSampleEvaluator(OperatorABC):
@@ -56,7 +61,7 @@ class AlpagasusSampleEvaluator(OperatorABC):
             response = sample.get(input_output_key, [''])
             input_text = sample.get(input_input_key, [''])
             system_prompts.append(self.prompt.build_system_prompt(instruction, input_text, response))
-            user_prompts.append(self.prompt.build_user_prompt())
+            user_prompts.append(self.prompt.build_prompt())
         inputs = [system + "\n" + user for system, user in zip(system_prompts, user_prompts)]
         responses = self.llm_serving.generate_from_input(user_inputs=inputs)
         scores = []

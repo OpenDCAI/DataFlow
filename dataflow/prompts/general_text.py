@@ -1,12 +1,16 @@
+import random
+from dataflow.utils.registry import PROMPT_REGISTRY
+from dataflow.core.prompt import PromptABC
 '''
 A collection of prompts for the general text operator.
 '''
-class Phi4QAGeneratorPrompt:
+@PROMPT_REGISTRY.register()
+class Phi4QAGeneratorPrompt(PromptABC):
     
     def __init__(self):
         pass
     
-    def pt_generate_prompt(self, content: str) -> str:
+    def build_prompt(self, content: str) -> str:
         """
         Generate the LLM input prompt by inserting the raw content into the prompt template.
         """
@@ -21,14 +25,15 @@ class Phi4QAGeneratorPrompt:
         {content}
         """
         return prompt.format(content=content)
-    
-class SFTGeneratorSeedPrompt:
+
+@PROMPT_REGISTRY.register()    
+class SFTGeneratorSeedPrompt(PromptABC):
     
     def __init__(self, custom_prompt):
         self.custom_prompt = custom_prompt
         pass
 
-    def sft_generate_prompt(self, content: str = "") -> str:
+    def build_prompt(self, content: str = "") -> str:
         """
         Generate the LLM input prompt by inserting the raw content into the prompt template,
         with optional custom instructions to enhance flexibility.
@@ -70,10 +75,11 @@ import textwrap
 
 import textwrap
 
-class MetaPrompt:
+@PROMPT_REGISTRY.register()
+class MetaPrompt(PromptABC):
     
     def __init__(self, dimensions):
-        self.dimensions = self.format_dimensions(dimensions=dimensions)
+        self.dimensions = self._format_dimensions(dimensions=dimensions)
 
         self.system_prompt_template = textwrap.dedent("""\
 You are an expert evaluator of text content. You will be given a single piece of text and must evaluate it across six specific dimensions listed below. Each dimension includes a description and a list of concrete examples (example_list), each labeled with a quality score. Higher scores indicate better quality. Use these examples to guide your assessment.
@@ -105,7 +111,7 @@ Your output should include:
   [score1, score2, score3, score4, score5, score6]
         """)
         
-    def format_dimensions(self, dimensions):
+    def _format_dimensions(self, dimensions):
         formatted_list = []
 
         for i, item in enumerate(dimensions, 1):
@@ -125,11 +131,11 @@ Your output should include:
         dimensions_text = "\n".join(self.dimensions)
         return self.system_prompt_template.format(dimensions_list=dimensions_text)
 
-    def build_user_prompt(self, text):
+    def build_prompt(self, text):
         return self.user_prompt_template.format(text=text)
 
-
-class AlpagasusPrompt:
+@PROMPT_REGISTRY.register()
+class AlpagasusPrompt(PromptABC):
     def __init__(self, dimension='quality'):
         self.dimension = dimension
         self.system_prompt_template = """
@@ -150,13 +156,14 @@ class AlpagasusPrompt:
         """
         return self.system_prompt_template.format(instruction=instruction, input=input_text, response=response)
 
-    def build_user_prompt(self):
+    def build_prompt(self):
         """
         生成user prompt
         """
         return self.user_prompt_template.format(dimension=self.dimension)
 
-class TreeinstructPrompt:
+@PROMPT_REGISTRY.register()
+class TreeinstructPrompt(PromptABC):
     def __init__(self):
         self.system_prompt_template = """
         You are an instruction rewriter. You need to parse a given user instruction into a TREE structure following Semantic Parsing in the natural language processing field.
@@ -179,13 +186,15 @@ class TreeinstructPrompt:
         """
         return self.system_prompt_template.format(instruction=instruction)
     
-    def build_user_prompt(self):
+    def build_prompt(self):
         """
         生成 user prompt
         """
         return self.user_prompt_template
 
-class ConsistentChatPrompt:
+
+@PROMPT_REGISTRY.register()
+class ConsistentQueryPrompt(PromptABC):
     def __init__(self):
         self.intent_categories = {
             "Problem Solving Interaction": [
@@ -689,15 +698,9 @@ class ConsistentChatPrompt:
                 "Paying for tutoring or online lessons"
             ]
         }
-        
-    def get_intent_categories(self):
-        return self.intent_categories
     
-    def get_topic_dict(self):
-        return self.topic_dict
-    
-    def get_query_prompt(self, info_flow, topic):
-        prompt = f"""
+    def build_prompt(self, num_dialogs_per_intent):
+        prompt = """
         Task Description and Rules 
         1. Generate multiple rounds of realistic user questions based on the provided topic: 
         - Based on a single core topic (provided directly by the user), generate multiple rounds of realistic user questions, comprising 6-8 turns in total. 
@@ -725,9 +728,23 @@ class ConsistentChatPrompt:
         To generate multi-turn queries with high topic consistency, please think step-by-step. 
         The input core topic for this task is: {topic}
         """
-        return prompt
+        all_query_prompts = []
+        for intent, info_flows in self.intent_categories.items():
+            for _ in range(num_dialogs_per_intent):
+                info_flow = random.choice(info_flows)
+                topic = random.choice(self.topic_dict[intent])
+                query_prompt = prompt.format(info_flow=info_flow, topic=topic)
+                all_query_prompts.append(query_prompt)
+        return all_query_prompts
 
-    def get_response_prompt(self, topic, queries):
+
+@PROMPT_REGISTRY.register()
+class ConsistentResponsePrompt(PromptABC):
+    
+    def __init__(self):
+        pass
+    
+    def build_prompt(self, topic, queries):
         prompt = f"""
         Your task is to simulate a multi-turn conversation where you progressively answer a series of user questions provided under a given topic category. For each answer, focus on delivering a natural, contextually relevant, and actionable response while considering both the current question and future questions in the sequence. The goal is to ensure consistency and logical progression throughout the dialogue and to avoid unnecessary follow-up questions in the responses simultaneously. To generate multi-turn responses with high topic consistency, think step-by-step. Key Dialogue Style Requirements are as follows: 
         Content and Structure:
@@ -767,8 +784,8 @@ class ConsistentChatPrompt:
         """
         return prompt
     
-
-class CondorPrompt:
+@PROMPT_REGISTRY.register()
+class CondorQuestionPrompt(PromptABC):
     def __init__(self):
         self.tag = {
             "Marriage and Relationships": {
@@ -1144,7 +1161,7 @@ class CondorPrompt:
             "Information Retrieval"
         ]
     
-    def get_question_prompt(self, theme, domain):
+    def build_prompt(self, theme, domain):
         """
         Generates the formatted prompt for LLM input based on the theme and domain.
 
@@ -1181,7 +1198,13 @@ Now it's your turn. Please provide the three Questions of different difficulty l
         return prompt
 
     
-    def create_critique_prompt(self, question, answer):
+@PROMPT_REGISTRY.register()
+class CondorCritiquePrompt(PromptABC):
+    
+    def __init__(self):
+        pass
+    
+    def build_prompt(self, question, answer):
         dialogue = [question, answer]
         base_critique_prompt = f"""
 There is now a user’s question and a model’s response. You need to write a critique for this response, pointing out the
@@ -1205,7 +1228,13 @@ Now it’s your turn. Please provide your Critique as required:
         """
         return base_critique_prompt.format(dialogue=dialogue)
 
-    def create_refine_prompt(self, question, answer, critique):
+@PROMPT_REGISTRY.register()
+class CondorRefinePrompt(PromptABC):
+    
+    def __init__(self):
+        pass
+
+    def build_prompt(self, question, answer, critique):
         base_refine_prompt = """
 Now there is a user's question, a model's answer, and the user's feedback. Please help modify the model's answer based on the user's feedback to make it better.
 Your improved answer must strictly adhere to the following format:
@@ -1221,12 +1250,13 @@ Now it's your turn, please provide your improved answer as required:
         """
         return base_refine_prompt.format(question=question, answer=answer, critique=critique)
 
-class LanguageFilterPrompt:
+@PROMPT_REGISTRY.register()
+class LanguageFilterPrompt(PromptABC):
     
     def __init__(self):
         pass
     
-    def language_filter_prompt(self, text):
+    def build_prompt(self, text):
         prompt='''You are a language identification expert. Your task is to identify the language of the given text input.
 
         Follow these rules:You are a language identification expert. Your task is to identify the language of the given text input.

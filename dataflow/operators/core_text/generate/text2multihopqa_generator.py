@@ -215,10 +215,10 @@ class Text2MultiHopQAGenerator(OperatorABC):
         
     def run(
             self,
+            storage: DataFlowStorage=None,
             input_key:str='cleaned_chunk',
             output_key:str='QA_pairs',
             output_meta_key:str='QA_metadata',
-            storage: DataFlowStorage=None,
     ):
         self.input_key, self.output_key, self.output_meta_key = input_key, output_key, output_meta_key
         dataframe = storage.read("dataframe")

@@ -4,7 +4,12 @@ from dataflow.core import OperatorABC
 from dataflow.utils.storage import DataFlowStorage
 import pandas as pd
 from dataflow.core import LLMServingABC
-from dataflow.prompts.general_text import TreeinstructPrompt  
+from dataflow.prompts.general_text import TreeinstructPrompt 
+from dataflow.core.prompt import prompt_restrict
+
+@prompt_restrict(
+    TreeinstructPrompt
+) 
 
 @OPERATOR_REGISTRY.register()
 class TreeinstructSampleEvaluator(OperatorABC):
@@ -47,7 +52,7 @@ class TreeinstructSampleEvaluator(OperatorABC):
         for sample in samples:
             instruction = sample.get(input_instruction_key, [''])
             system_prompts.append(self.prompt.build_system_prompt(instruction))
-            user_prompts.append(self.prompt.build_user_prompt())
+            user_prompts.append(self.prompt.build_prompt())
 
         inputs = [system + "\n" + user for system, user in zip(system_prompts, user_prompts)]
         responses = self.llm_serving.generate_from_input(user_inputs=inputs)

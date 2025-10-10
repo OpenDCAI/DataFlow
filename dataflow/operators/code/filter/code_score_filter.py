@@ -22,11 +22,13 @@ class CodeGenericScoreFilter(OperatorABC):
     - Keeps samples that meet the specified threshold criteria
     """
 
-    def __init__(self):
+    def __init__(self, score_threshold: int = 8, filter_method: Literal["greater", "greater_equal", "less", "less_equal", "equal"] = "greater_equal"):
         """
         Initializes the operator.
         """
         self.logger = get_logger()
+        self.score_threshold = score_threshold
+        self.filter_method = filter_method
     
     @staticmethod
     def get_desc(lang: str = "en"):
@@ -89,9 +91,7 @@ class CodeGenericScoreFilter(OperatorABC):
         self, 
         storage: DataFlowStorage, 
         input_key: str,
-        output_key: str = "generic_score_filter_label",
-        score_threshold: int = 8,
-        filter_method: Literal["greater", "greater_equal", "less", "less_equal", "equal"] = "greater_equal"
+        output_key: str = "generic_score_filter_label"
     ) -> List[str]:
         """
         Execute the filtering process.
@@ -129,16 +129,16 @@ class CodeGenericScoreFilter(OperatorABC):
         self._validate_dataframe(dataframe)
         
         # 3. Apply the filter logic and add label
-        if filter_method == "greater_equal":
-            filter_mask = dataframe[self.input_score_key] >= score_threshold
-        elif filter_method == "greater":
-            filter_mask = dataframe[self.input_score_key] > score_threshold
-        elif filter_method == "less_equal":
-            filter_mask = dataframe[self.input_score_key] <= score_threshold
-        elif filter_method == "less":
-            filter_mask = dataframe[self.input_score_key] < score_threshold
-        elif filter_method == "equal":
-            filter_mask = dataframe[self.input_score_key] == score_threshold
+        if self.filter_method == "greater_equal":
+            filter_mask = dataframe[self.input_score_key] >= self.score_threshold
+        elif self.filter_method == "greater":
+            filter_mask = dataframe[self.input_score_key] > self.score_threshold
+        elif self.filter_method == "less_equal":
+            filter_mask = dataframe[self.input_score_key] <= self.score_threshold
+        elif self.filter_method == "less":
+            filter_mask = dataframe[self.input_score_key] < self.score_threshold
+        elif self.filter_method == "equal":
+            filter_mask = dataframe[self.input_score_key] == self.score_threshold
         else:
             # This case should ideally not be hit due to Literal type hint, but is good for robustness
             raise ValueError(f"Unsupported filter_method: '{filter_method}'")

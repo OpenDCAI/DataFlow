@@ -6,7 +6,13 @@ from dataflow.core import OperatorABC
 from dataflow.utils.storage import DataFlowStorage
 import pandas as pd
 from dataflow.core import LLMServingABC
-from dataflow.prompts.general_text import ConsistentChatPrompt
+from dataflow.prompts.general_text import ConsistentQueryPrompt, ConsistentResponsePrompt
+from dataflow.core.prompt import prompt_restrict
+
+@prompt_restrict(
+    ConsistentQueryPrompt,
+    ConsistentResponsePrompt
+) 
 
 @OPERATOR_REGISTRY.register()
 class ConsistentChatGenerator(OperatorABC):
@@ -17,7 +23,8 @@ class ConsistentChatGenerator(OperatorABC):
         self.num_dialogs_per_intent = num_dialogs_per_intent # Based on the topic_dict in the existing prompt, it is recommended to set the value to below 1000 (which can generate 9000 conversation data). Otherwise, it is recommended to add more topic_dict in dataflow.prompts.general_text.ConsistentChatPrompt to increase data richness
         self.num_turns_per_dialog = num_turns_per_dialog
         self.temperature = temperature
-        self.prompt = ConsistentChatPrompt()
+        self.query_prompt = ConsistentQueryPrompt()
+        self.response_prompt = ConsistentResponsePrompt()
         self.logger.info(f'{self.__class__.__name__} initialized.')
     
     @staticmethod
@@ -48,15 +55,9 @@ class ConsistentChatGenerator(OperatorABC):
             return "Two-stage generation of multi-turn dialogue data from scratch based on predefined topics and human intents."
 
     def run(self, storage: DataFlowStorage):
-        all_query_prompts = []
         
         # Step 1: Generate all queries using LLM
-        for intent, info_flows in self.prompt.get_intent_categories().items():
-            for _ in range(self.num_dialogs_per_intent):
-                info_flow = random.choice(info_flows)
-                topic = random.choice(self.prompt.topic_dict[intent])
-                query_prompt = self.prompt.get_query_prompt(info_flow, topic)
-                all_query_prompts.append(query_prompt)
+        all_query_prompts = self.query_prompt.build_prompt(num_dialogs_per_intent=self.num_dialogs_per_intent)
         # Step 2: Generate queries by calling llm_serving once
         self.logger.info("Generating queries...")
         queries_list = self.llm_serving.generate_from_input(user_inputs=all_query_prompts)
@@ -77,7 +78,7 @@ class ConsistentChatGenerator(OperatorABC):
         for queries in valid_queries:
             category = queries.get("category")
             turns = queries.get("turns")
-            all_response_prompts.append(self.prompt.get_response_prompt(topic=category, queries=turns))
+            all_response_prompts.append(self.response_prompt.build_prompt(topic=category, queries=turns))
         self.logger.info("Generating responses...")
         responses_list = self.llm_serving.generate_from_input(user_inputs=all_response_prompts)
 

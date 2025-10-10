@@ -79,8 +79,95 @@ def test_all_operator_registry():
     #     if hasattr(obj, '__init__'):
     #         init_signature = signature(obj.__init__)
     #         print(f"  __init__ signature: {init_signature}")
-    
-    # prompt registry
+
+    # =============== Operator run() check for input_/output_ prefix =======================
+    print("\n🔍 Checking Operator class __init__ and run signatures ...")
+
+    invalid_run_param_ops = []  # 收集 run 参数命名不合规的算子
+    operator_signatures = {}    # 存储签名信息
+
+    for name, cls in dataflow_obj_map.items():
+        if not isclass(cls):
+            continue
+
+        cls_info = {"__init__": None, "run": None}
+
+        # 获取 __init__ 签名
+        if hasattr(cls, "__init__"):
+            try:
+                sig = signature(cls.__init__)
+                cls_info["__init__"] = list(sig.parameters.keys())
+            except Exception as e:
+                cls_info["__init__"] = f"Error: {e}"
+
+        # 获取 run 签名
+        if hasattr(cls, "run"):
+            try:
+                run_sig = signature(cls.run)
+                params = list(run_sig.parameters.keys())
+                cls_info["run"] = params
+
+                # 检查 run 参数命名
+                # check for input_*, output_*, storage 
+                invalid_params = [
+                    p for p in params if p not in ("self", "cls") and not (
+                        p.startswith("input_") or p.startswith("output_") or p == "storage"
+                    )
+                ]
+                # check for storage
+                if "storage" not in params:
+                    invalid_params.append("'storage' parameter missing")
+                elif params.index("storage") != 1:
+                    invalid_params.append(f"'storage' should be the FIRST parameter (except self/cls), but found at position '{params[1]}'")
+
+                if invalid_params:
+                    invalid_run_param_ops.append((name, cls.__module__, invalid_params))
+            except Exception as e:
+                cls_info["run"] = f"Error: {e}"
+
+        operator_signatures[name] = cls_info
+
+    # 打印每个算子的签名信息
+    print("\n📘 Operator signatures summary:")
+    for op_name, info in operator_signatures.items():
+        print(f"\nOperator: {op_name}")
+        print(f"  __init__ params: {info['__init__']}")
+        print(f"  run params: {info['run']}")
+
+    # 命名规则错误报告
+    if invalid_run_param_ops:
+        print("\n❌ Run parameter naming rule violated:")
+        for name, module, invalids in invalid_run_param_ops:
+            print(f"- {name} ({module}) invalid params: {invalids}")
+
+        rule_explanation = (
+            "\nOperator run() parameter naming rule (English):\n"
+            "All parameters of the `run()` function must be explicitly named using one of these prefixes:\n"
+            "  - input_*\n"
+            "  - output_*\n"
+            "  - Special parameter 'storage' is also allowed. And should be the FIRST parameter.\n"
+            "Example:\n"
+            "  def run(self, storage, input_text, input_image, output_result):\n"
+            "Parameters other than 'self' or 'cls' that do not start with these prefixes "
+            "are considered invalid.\n"
+        )
+
+        details = "\n".join(
+            f"  • {name} ({module}) → invalid run parameters: {invalids}"
+            for name, module, invalids in invalid_run_param_ops
+        )
+
+        pytest.fail(
+            f"❌ Found {len(invalid_run_param_ops)} operators violating run() parameter naming rule.\n"
+            f"{rule_explanation}\nDetails:\n{details}",
+            pytrace=False,
+        )
+
+    else:
+        print("✅ All Operator run() parameter names comply with the conventions (input_*/output_*)")
+
+
+    # ======= prompt registry test ==============
     print("\nPrompt Registry:")
     # PROMPT_REGISTRY._get_all() # will cause bug and ERROR
     print(PROMPT_REGISTRY)
@@ -112,7 +199,7 @@ def test_all_operator_registry():
 
         if disallowed:
             invalid_prompts.append((name, cls.__module__, disallowed))
-
+    errors = []
     # 报告结果
     if invalid_prompts:
         print("\n❌ Check failed, invalid Prompt classes contain disallowed functions:")
@@ -137,7 +224,7 @@ def test_all_operator_registry():
             for name, module, funcs in invalid_prompts
         )
 
-        errors = []
+
         errors.append(
             f"❌ Found {len(invalid_prompts)} Prompt classes violating naming rules.\n"
             f"{rule_explanation}\n"

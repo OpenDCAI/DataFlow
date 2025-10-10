@@ -60,26 +60,26 @@ class ReasoningAnswerJudgeMathVerifyFilter(OperatorABC):
             self,
             storage:DataFlowStorage,
             input_key: str = "instruction",
-            answer_key: str = "student_answer",
-            gt_key: str = "correct_answer",
-            result_key: str = "result",
+            input_answer_key: str = "student_answer",
+            input_gt_key: str = "correct_answer",
+            output_result_key: str = "result",
             ) -> list:
         
         self.input_key = input_key
-        self.answer_key = answer_key
-        self.gt_key = gt_key
-        self.result_key = result_key
+        self.input_answer_key = input_answer_key
+        self.gt_key = input_gt_key
+        self.result_key = output_result_key
         
         dataframe = storage.read("dataframe")
         self.logger.info(f"Found {len(dataframe)} rows in the dataframe")
         self._validate_dataframe(dataframe)
 
         results = []
-        for answer, gt in tqdm(zip(dataframe[self.answer_key], dataframe[self.gt_key]), total=len(dataframe), desc='processed'):
+        for answer, gt in tqdm(zip(dataframe[self.input_answer_key], dataframe[self.gt_key]), total=len(dataframe), desc='processed'):
             results.append(float(verify(parse(answer), parse(gt))) > 0)
         dataframe[self.result_key] = results
 
         output_file = storage.write(dataframe)
         self.logger.info(f"Results saved to {self.output_file}")
 
-        return [input_key, answer_key, gt_key, result_key]
+        return [self.input_key, self.input_answer_key, self.gt_key, self.result_key]

@@ -6,9 +6,12 @@ from re import template
 import numpy as np
 import json
 from typing import List
+from dataflow.utils.registry import PROMPT_REGISTRY
+from dataflow.core.prompt import PromptABC
 
 
-class SQLConsistencyFilterPrompt:
+@PROMPT_REGISTRY.register()
+class SQLConsistencyFilterPrompt(PromptABC):
     def __init__(self):
         pass
 
@@ -48,7 +51,8 @@ class SQLConsistencyFilterPrompt:
         """
         return prompt
 
-class Text2SQLCotGeneratorPrompt:
+@PROMPT_REGISTRY.register()
+class Text2SQLCotGeneratorPrompt(PromptABC):
     def __init__(self):
         pass
 
@@ -88,7 +92,8 @@ class Text2SQLCotGeneratorPrompt:
         return prompt
 
 
-class SelectSQLGeneratorPrompt:
+@PROMPT_REGISTRY.register()
+class SelectSQLGeneratorPrompt(PromptABC):
     def __init__(self):
         self.simple_criterion = '''**Criteria:**
         Simple SQL queries may satisfy one or more of the following criteria:
@@ -304,7 +309,7 @@ class SelectSQLGeneratorPrompt:
             "TIMEDIFF(time-value, time-value) \nDescription: Returns a string that describes the amount of time that must be added to B in order to reach time A. The format of the TIMEDIFF() result is designed to be human-readable. "
         ]
         
-    def sql_func_template(self, sql_funcs: str) -> str:
+    def _sql_func_template(self, sql_funcs: str) -> str:
         template = """### SQL Functions
         You may consider one or more of the following SQL functions while generating the query:
         {sql_funcs}
@@ -313,14 +318,14 @@ class SelectSQLGeneratorPrompt:
         """
         return template.format(sql_funcs=sql_funcs)
       
-    def insert_stmts_template(self, insert_statements: str) -> str:
+    def _insert_stmts_template(self, insert_statements: str) -> str:
         template = '''### INSERT INTO Statements
         Below are several `INSERT INTO` statements. Use these to help generate predicates (i.e., `WHERE` clauses) in your SQL query:
         {insert_statements}
         '''
         return template.format(insert_statements=insert_statements)
 
-    def sql_synthesis_prompt(self, schema_str: str, sql_function_prompt: str, db_value_prompt: str, complexity: str, criterion: str, db_engine: str, column_count: int) -> str:
+    def _sql_synthesis_prompt(self, schema_str: str, sql_function_prompt: str, db_value_prompt: str, complexity: str, criterion: str, db_engine: str, column_count: int) -> str:
         template = '''**Task Overview**
         Create an executable SQL query based on the provided information.
 
@@ -369,7 +374,7 @@ class SelectSQLGeneratorPrompt:
         else:
             if len(insert_statements) > 4:
                 insert_statements = random.sample(insert_statements, 4)
-            db_value_prompt = self.insert_stmts_template(
+            db_value_prompt = self._insert_stmts_template(
                 insert_statements="\n\n".join(insert_statements)
             )
 
@@ -381,10 +386,10 @@ class SelectSQLGeneratorPrompt:
             sampled_functions = random.sample(self.functions, function_num)
             for idx, func in enumerate(sampled_functions):
                 sql_funcs += f"Function {idx + 1}:\n{func.strip()}\n"
-            sql_function_prompt = self.sql_func_template(sql_funcs=sql_funcs)
+            sql_function_prompt = self._sql_func_template(sql_funcs=sql_funcs)
 
         column_count = np.random.geometric(0.6, 1)[0]
-        prompt = self.sql_synthesis_prompt(
+        prompt = self._sql_synthesis_prompt(
             schema_str="\n\n".join(create_statements),
             sql_function_prompt=sql_function_prompt.strip(),
             db_value_prompt=db_value_prompt.strip(),
@@ -396,7 +401,8 @@ class SelectSQLGeneratorPrompt:
         return prompt
 
 
-class SelectVecSQLGeneratorPrompt:
+@PROMPT_REGISTRY.register()
+class SelectVecSQLGeneratorPrompt(PromptABC):
     def __init__(self):
         self.simple_vec_criterion = '''**Criteria:**
         Simple KNN queries in SQLite-vec may satisfy one or more of the following criteria:
@@ -645,7 +651,7 @@ class SelectVecSQLGeneratorPrompt:
             "TIMEDIFF(time-value, time-value) \nDescription: Returns a string that describes the amount of time that must be added to B in order to reach time A. The format of the TIMEDIFF() result is designed to be human-readable. "
         ]
 
-    def sql_func_template(self, sql_funcs: str) -> str:
+    def _sql_func_template(self, sql_funcs: str) -> str:
         template = """### SQL Functions
         You may consider one or more of the following SQL functions while generating the query:
         {sql_funcs}
@@ -654,14 +660,14 @@ class SelectVecSQLGeneratorPrompt:
         """
         return template.format(sql_funcs=sql_funcs)
 
-    def insert_stmts_template(self, insert_statements: str) -> str:
+    def _insert_stmts_template(self, insert_statements: str) -> str:
         template = '''### INSERT INTO Statements
         Below are several `INSERT INTO` statements. Use these to help generate predicates (i.e., `WHERE` clauses) in your SQL query:
         {insert_statements}
         '''
         return template.format(insert_statements=insert_statements)
 
-    def sql_synthesis_prompt(self, schema_str: str, sql_function_prompt: str, db_value_prompt: str, complexity: str, criterion: str, db_engine: str, column_count: int, embedding_model: str) -> str:
+    def _sql_synthesis_prompt(self, schema_str: str, sql_function_prompt: str, db_value_prompt: str, complexity: str, criterion: str, db_engine: str, column_count: int, embedding_model: str) -> str:
         template = '''**Task Overview**
         Create an executable VecSQL query based on the provided information.
 
@@ -828,7 +834,7 @@ class SelectVecSQLGeneratorPrompt:
         else:
             if len(insert_statements) > 4:
                 insert_statements = random.sample(insert_statements, 4)
-            db_value_prompt = self.insert_stmts_template(
+            db_value_prompt = self._insert_stmts_template(
                 insert_statements="\n\n".join(insert_statements)
             )
 
@@ -840,10 +846,10 @@ class SelectVecSQLGeneratorPrompt:
             sampled_functions = random.sample(self.functions, min(function_num, len(self.functions)))
             for idx, func in enumerate(sampled_functions):
                 sql_funcs += f"Function {idx + 1}:\n{func.strip()}\n"
-            sql_function_prompt = self.sql_func_template(sql_funcs=sql_funcs)
+            sql_function_prompt = self._sql_func_template(sql_funcs=sql_funcs)
 
         column_count = np.random.geometric(0.6, 1)[0]
-        prompt = self.sql_synthesis_prompt(
+        prompt = self._sql_synthesis_prompt(
             schema_str="\n\n".join(create_statements),
             sql_function_prompt=sql_function_prompt.strip(),
             db_value_prompt=db_value_prompt.strip(),
@@ -856,7 +862,8 @@ class SelectVecSQLGeneratorPrompt:
         return prompt, complexity
 
 
-class Text2SQLQuestionGeneratorPrompt:
+@PROMPT_REGISTRY.register()
+class Text2SQLQuestionGeneratorPrompt(PromptABC):
     def __init__(self):
         self.style2desc = {
         "Formal": '''**Formal Style**
@@ -968,7 +975,7 @@ class Text2SQLQuestionGeneratorPrompt:
 
         self.instruction_multi_round = "Based on the above information, follow the reasoning steps to generate the explanation and the dialogue corresponding to the SQL query."
 
-    def question_synthesis_prompt(self, style_desc, engine, column_info, sql, steps, guidelines, output_format, instruction):
+    def _question_synthesis_prompt(self, style_desc, engine, column_info, sql, steps, guidelines, output_format, instruction):
         template = '''**Task Overview**
         Your task is to create a high-quality natural language question based on a given SQL query and other information.
 
@@ -1034,7 +1041,7 @@ class Text2SQLQuestionGeneratorPrompt:
             instruction = self.instruction_wo_ek
             output_format = self.output_format_wo_ek
 
-        prompt = self.question_synthesis_prompt(
+        prompt = self._question_synthesis_prompt(
             style_desc=self.style2desc[style_name].strip(),
             engine=db_type,
             column_info=json.dumps(used_column_name2column_desc, indent=2, ensure_ascii=False).strip(),
@@ -1048,11 +1055,12 @@ class Text2SQLQuestionGeneratorPrompt:
         return prompt
 
 
-class Text2VecSQLQuestionGeneratorPrompt:
+@PROMPT_REGISTRY.register()
+class Text2VecSQLQuestionGeneratorPrompt(PromptABC):
     def __init__(self):
         pass
 
-    def get_style2desc(self):
+    def _get_style2desc(self):
         template = {
         "Formal": '''**Formal Style**
         - Uses standard grammar and vocabulary.
@@ -1105,23 +1113,23 @@ class Text2VecSQLQuestionGeneratorPrompt:
         }
         return template
 
-    def get_steps_wo_ek(self):
+    def _get_steps_wo_ek(self):
         template = '''1. **Explain the SQL Query:** Provide a detailed explanation of what the query does, including any vector search operations.
         2. **Generate a Question:** Formulate a natural language question based on the SQL query and explanation.'''
         return template
 
-    def get_steps_w_ek(self):
+    def _get_steps_w_ek(self):
         template = '''1. **Explain the SQL Query:** Provide a detailed explanation of what the query does, including any vector search operations.
         2. **Generate a Question:** Formulate a natural language question based on the SQL query and explanation.
         3. **External Knowledge:** For Vague or Metaphorical styles, include external knowledge to enhance clarity, especially for vector operations.'''
         return template
 
-    def get_steps_multi_round(self):
+    def _get_steps_multi_round(self):
         template = '''1. **Explain the SQL Query:** Provide a detailed explanation of what the query does, including any vector search operations.
         2. **Generate a Dialogue:** Create a conversation between the User and the Assistant based on the SQL query and its explanation, ensuring vector operations are properly discussed.'''
         return template
 
-    def get_guidelines_wo_ek(self):
+    def _get_guidelines_wo_ek(self):
         template = '''1. Clearly describe the columns being selected by the SQL query. For example:
         - "SELECT * ... FROM ..." means "Find all ...";
         - "SELECT f.check_date, f.status, f.remarks, c.year, c.year_min, c.year_max, c.year_average, c.data_quality_score FROM ..." means "Return the check dates, statuses, remarks, years, minimum years, maximum years, average years, and quality scores for ...".
@@ -1136,7 +1144,7 @@ class Text2VecSQLQuestionGeneratorPrompt:
         - Any window functions or complex joins'''
         return template
 
-    def get_guidelines_w_ek(self):
+    def _get_guidelines_w_ek(self):
         template = '''1. Clearly describe the columns being selected by the SQL query (same as above).
         2. Ensure the natural language question captures all query semantics (same as above).
         3. For vector searches, include these common external knowledge points:
@@ -1147,7 +1155,7 @@ class Text2VecSQLQuestionGeneratorPrompt:
         - Include any domain-specific knowledge about the vector meaning.'''
         return template
 
-    def get_guidelines_multi_round(self):
+    def _get_guidelines_multi_round(self):
         template = '''1. Clearly describe the columns being selected by the SQL query (same as above).
         2. Ensure the dialogue naturally covers:
         - The purpose of the vector search;
@@ -1156,7 +1164,7 @@ class Text2VecSQLQuestionGeneratorPrompt:
         - Any additional filtering or sorting requirements.'''
         return template
 
-    def get_vector_question_guidelines(self):
+    def _get_vector_question_guidelines(self):
         template = '''
         **Guiding Principles for High-Quality Vector Questions:**
 
@@ -1196,7 +1204,7 @@ class Text2VecSQLQuestionGeneratorPrompt:
         ---
         '''
 
-    def get_output_format_wo_ek(self):
+    def _get_output_format_wo_ek(self):
         template = '''Please structure your response as follows:
 
         [EXPLANATION-START]
@@ -1211,7 +1219,7 @@ class Text2VecSQLQuestionGeneratorPrompt:
         - **Natural Language Question**: Translate the SQL query into a natural language question, enclosed within [QUESTION-START] and [QUESTION-END].'''
         return template
 
-    def get_output_format_w_ek(self):
+    def _get_output_format_w_ek(self):
         template = '''Please structure your response as follows:
 
         [EXPLANATION-START]
@@ -1231,7 +1239,7 @@ class Text2VecSQLQuestionGeneratorPrompt:
         - **External Knowledge**: Include any relevant external knowledge if applicable, enclosed within [EXTERNAL-KNOWLEDGE-START] and [EXTERNAL-KNOWLEDGE-END]. Leave this section blank if not needed.'''
         return template
 
-    def get_output_format_multi_round(self):
+    def _get_output_format_multi_round(self):
         template = '''Please structure your response as follows:
 
         [EXPLANATION-START]
@@ -1246,7 +1254,7 @@ class Text2VecSQLQuestionGeneratorPrompt:
         - **Natural Language Question**: Convert the SQL query into a multi-round dialogue, enclosed within [QUESTION-START] and [QUESTION-END]. Represent this as a list that captures multiple rounds of conversation between the User and the Assistant.'''
         return template
 
-    def get_instruction_wo_ek(self):
+    def _get_instruction_wo_ek(self):
         template = '''Based on the above information:
         1. Analyze the SQL query, paying special attention to any vector operations
         2. Generate a clear explanation covering all query elements
@@ -1254,7 +1262,7 @@ class Text2VecSQLQuestionGeneratorPrompt:
         4. Verify all vector operations (MATCH, LIMIT, ORDER BY distance) or (MATCH, And k = ?) are properly represented'''
         return template
 
-    def get_instruction_w_ek(self):
+    def _get_instruction_w_ek(self):
         template = '''Based on the above information:
         1. Analyze the SQL query, especially vector operations
         2. Generate explanation covering all elements
@@ -1263,7 +1271,7 @@ class Text2VecSQLQuestionGeneratorPrompt:
         5. Verify all vector elements are properly represented'''
         return template
 
-    def get_instruction_multi_round(self):
+    def _get_instruction_multi_round(self):
         template = '''Based on the above information:
         1. Analyze the SQL query, especially vector operations
         2. Generate explanation covering all elements
@@ -1271,7 +1279,7 @@ class Text2VecSQLQuestionGeneratorPrompt:
         4. Ensure LIMIT, target vector and distance sorting are discussed'''
         return template
 
-    def question_synthesis_prompt(self, using_knn, style_desc, engine, extension, column_info, sql, steps, guidelines, output_format, instruction):
+    def _question_synthesis_prompt(self, using_knn, style_desc, engine, extension, column_info, sql, steps, guidelines, output_format, instruction):
 
 
         template = '''**Task Overview**
@@ -1335,24 +1343,24 @@ class Text2VecSQLQuestionGeneratorPrompt:
                 used_column_name2column_desc[column_name] = column_desc
 
         if style_name in ["Vague", "Metaphorical"]:
-            steps = self.get_steps_w_ek()
-            guidelines = self.get_guidelines_w_ek()
-            instruction = self.get_instruction_w_ek()
-            output_format = self.get_output_format_w_ek()
+            steps = self._get_steps_w_ek()
+            guidelines = self._get_guidelines_w_ek()
+            instruction = self._get_instruction_w_ek()
+            output_format = self._get_output_format_w_ek()
         else:
-            steps = self.get_steps_wo_ek()
-            guidelines = self.get_guidelines_wo_ek()
-            instruction = self.get_instruction_wo_ek()
-            output_format = self.get_output_format_wo_ek()
+            steps = self._get_steps_wo_ek()
+            guidelines = self._get_guidelines_wo_ek()
+            instruction = self._get_instruction_wo_ek()
+            output_format = self._get_output_format_wo_ek()
 
         if using_sqlite_vec:
             using_knn = "Extension includes sqlite-vec, you have to use KNN queries of it."
         else:
             using_knn = ""
             
-        prompt = self.question_synthesis_prompt(
+        prompt = self._question_synthesis_prompt(
             using_knn=using_knn,
-            style_desc=self.get_style2desc()[style_name].strip(),
+            style_desc=self._get_style2desc()[style_name].strip(),
             engine=db_type,
             extension=extension,
             column_info=json.dumps(used_column_name2column_desc, indent=2, ensure_ascii=False).strip(),
@@ -1366,7 +1374,8 @@ class Text2VecSQLQuestionGeneratorPrompt:
         return prompt
 
 
-class SQLVariationGeneratorPrompt:
+@PROMPT_REGISTRY.register()
+class SQLVariationGeneratorPrompt(PromptABC):
     def __init__(self):
         self.variation_type_prompts = [
             '''
@@ -1412,14 +1421,14 @@ class SQLVariationGeneratorPrompt:
             ''',
         ]
 
-    def insert_stmts_template(self, insert_statements):
+    def _insert_stmts_template(self, insert_statements):
         template = '''### INSERT INTO Statements
         Below are several `INSERT INTO` statements. Use these to help generate predicates (i.e., `WHERE` clauses) in your SQL query:
         {insert_statements}
         '''
         return template.format(insert_statements=insert_statements)
 
-    def sql_variation_prompt(self, original_sql, schema_str, db_value_prompt, variation_prompt, db_engine):
+    def _sql_variation_prompt(self, original_sql, schema_str, db_value_prompt, variation_prompt, db_engine):
         template = """**Task Overview**
         Create a new reasonable and executable SQL query by applying the specified transformations to the original query.
 
@@ -1469,14 +1478,14 @@ class SQLVariationGeneratorPrompt:
         else:
             if len(insert_statements) > 4:
                 insert_statements = random.sample(insert_statements, 4)
-            db_value_prompt = self.insert_stmts_template(
+            db_value_prompt = self._insert_stmts_template(
                 insert_statements="\n\n".join(insert_statements)
             )
 
         variation_type = random.randint(0, 5)
         variation_prompt = self.variation_type_prompts[variation_type]
                     
-        prompt = self.sql_variation_prompt(
+        prompt = self._sql_variation_prompt(
             original_sql=original_sql,
             schema_str="\n\n".join(create_statements),
             db_value_prompt=db_value_prompt.strip(),
@@ -1486,7 +1495,8 @@ class SQLVariationGeneratorPrompt:
         return prompt
 
 
-class Text2SQLPromptGeneratorPrompt:
+@PROMPT_REGISTRY.register()
+class Text2SQLPromptGeneratorPrompt(PromptABC):
     def __init__(self):
         pass
 
@@ -1526,11 +1536,13 @@ class Text2SQLPromptGeneratorPrompt:
         prompt = template.format(db_details=db_details, question_and_evidence=question_and_evidence, db_engine=db_engine)
         return prompt
 
-class Text2VecSQLPromptGeneratorPrompt:
+
+@PROMPT_REGISTRY.register()
+class Text2VecSQLPromptGeneratorPrompt(PromptABC):
     def __init__(self):
         pass
 
-    def get_sqlite_vec_description(self):
+    def _get_sqlite_vec_description(self):
         return """There are a few Requirements you should Comply with in addition, else you can ignore these requirements below.
 1. When generating SQL queries， you should prioritize utilizing KNN searches whenever contextually appropriate. However, you have to avoid unnecessary/forced KNN implementations for:
 --Traditional relational data queries (especially for columns like: id, age, price)
@@ -1679,5 +1691,5 @@ sql
 Take a deep breath and think step by step to find the correct SQL query.
         """
 
-        prompt = template.format(db_details=db_details, question_and_evidence=question_and_evidence, db_engine=db_engine, db_extension_description=self.get_sqlite_vec_description())
+        prompt = template.format(db_details=db_details, question_and_evidence=question_and_evidence, db_engine=db_engine, db_extension_description=self._get_sqlite_vec_description())
         return prompt

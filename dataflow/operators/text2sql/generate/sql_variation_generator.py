@@ -2,6 +2,7 @@ import random
 import pandas as pd
 import re
 from dataflow.prompts.text2sql import SQLVariationGeneratorPrompt
+from dataflow.core.prompt import prompt_restrict 
 from tqdm import tqdm
 from dataflow.utils.registry import OPERATOR_REGISTRY
 from dataflow.utils.storage import (DataFlowStorage, RESERVED_SYS_FIELD_LIST, RESERVED_USER_FIELD_LIST,
@@ -11,13 +12,14 @@ from dataflow import get_logger
 from dataflow.core import OperatorABC
 from dataflow.core import LLMServingABC
 
+@prompt_restrict(SQLVariationGeneratorPrompt)
 
 @OPERATOR_REGISTRY.register()
 class SQLVariationGenerator(OperatorABC):
     def __init__(self, llm_serving: LLMServingABC, 
                  database_manager: DatabaseManager,
                  num_variations: int = 10,
-                 prompt_template = None
+                 prompt_template = SQLVariationGeneratorPrompt
                  ):
         self.llm_serving = llm_serving
         self.logger = get_logger()

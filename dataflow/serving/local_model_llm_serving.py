@@ -117,7 +117,8 @@ class LocalModelLLMServing_vllm(LLMServingABC):
     
     def generate_from_input(self, 
                             user_inputs: list[str], 
-                            system_prompt: str = "You are a helpful assistant"
+                            system_prompt: str = "You are a helpful assistant",
+                            json_schema: dict = None,
                             ) -> list[str]:
         if not self.backend_initialized:
             self.start_serving()
@@ -134,6 +135,27 @@ class LocalModelLLMServing_vllm(LLMServingABC):
             add_generation_prompt=True,
             enable_thinking=True,  # Set to False to strictly disable thinking
         )
+        if json_schema is not None:
+            try:
+                from vllm import SamplingParams
+                from vllm.sampling_params import GuidedDecodingParams
+            except:
+                raise ImportError("please install vllm first like 'pip install open-dataflow[vllm]'")
+            
+            guided_decoding_params = GuidedDecodingParams(
+                json=json_schema
+            )
+
+            self.sampling_params = SamplingParams(
+                temperature=self.vllm_temperature,
+                top_p=self.vllm_top_p,
+                max_tokens=self.vllm_max_tokens,
+                top_k=self.vllm_top_k,
+                repetition_penalty=self.vllm_repetition_penalty,
+                seed=self.vllm_seed,
+                guided_decoding=guided_decoding_params
+            )
+
         responses = self.llm.generate(full_template, self.sampling_params)
         return [output.outputs[0].text for output in responses]
 

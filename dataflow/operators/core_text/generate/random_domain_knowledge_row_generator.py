@@ -9,11 +9,12 @@ from dataflow.core import LLMServingABC
 @OPERATOR_REGISTRY.register()
 
 class RandomDomainKnowledgeRowGenerator(OperatorABC):
-    def __init__(self, llm_serving: LLMServingABC, system_prompt: str = "You are a helpful agent.", user_prompt: str = "{}"):
+    def __init__(self, llm_serving: LLMServingABC, system_prompt: str = "You are a helpful agent.", user_prompt: str = "{}", generation_num: int = 1):
         self.logger = get_logger()
         self.llm_serving = llm_serving
         self.system_prompt = system_prompt
         self.user_prompt = user_prompt
+        self.generation_num = generation_num
     
     @staticmethod
     def get_desc(lang: str = "zh"):
@@ -58,7 +59,7 @@ class RandomDomainKnowledgeRowGenerator(OperatorABC):
                 "RandomDomainKnowledgeRowGenerator算子用于结合系统提示词(system_prompt)和用户自定义提示模板(user_prompt)，批量生成领域知识相关文本内容。"
             )
 
-    def run(self, storage: DataFlowStorage, output_key: str = "generated_content", generation_num: int = 1):
+    def run(self, storage: DataFlowStorage, output_key: str = "generated_content"):
         """
         主流程：基于输入数据和提示词生成文本内容。
 
@@ -80,7 +81,7 @@ class RandomDomainKnowledgeRowGenerator(OperatorABC):
         llm_inputs = []
         
         # 按generation_num生成指定数量的输入
-        for i in range(generation_num):
+        for i in range(self.generation_num):
             llm_input = self.system_prompt + self.user_prompt
             llm_inputs.append(llm_input)
             
