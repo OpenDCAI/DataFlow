@@ -1,5 +1,5 @@
 from dataflow.operators.core_text import PromptedEvaluator
-from dataflow.serving import LocalModelLLMServing, APILLMServing_request
+from dataflow.serving import APILLMServing_request
 from dataflow.utils.storage import FileStorage
 
 class GPT_evaluator():

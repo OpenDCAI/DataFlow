@@ -12,7 +12,7 @@
 """
 from dataflow.operators.core_text import RandomDomainKnowledgeRowGenerator
 from dataflow.operators.core_text import PromptedGenerator
-from dataflow.operators.general_text import GeneralFilter
+from dataflow.operators.core_text import GeneralFilter
 from dataflow.utils.storage import FileStorage
 from dataflow.serving import APILLMServing_request
 from dataflow.prompts.core_sft_from_scratch import *

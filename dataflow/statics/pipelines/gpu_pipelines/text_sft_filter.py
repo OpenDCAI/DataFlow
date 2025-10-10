@@ -1,8 +1,9 @@
 from dataflow.operators.general_text import (
     WordNumberFilter,
+)
+from dataflow.operators.text_sft import (
     SuperfilteringFilter,
-    DeitaQualityFilter,
-    InstagFilter
+    DeitaQualityFilter
 )
 from dataflow.utils.storage import FileStorage
 
@@ -35,13 +36,6 @@ class SFTTextFilter_GPUPipeline():
             model_cache_dir=self.model_cache_dir
         )
         
-        self.instag_filter_step4 = InstagFilter(
-            min_score=2,
-            max_score=10000,
-            model_cache_dir=self.model_cache_dir,
-            max_new_tokens=1024
-        )
-        
     def forward(self):
         
         self.word_number_filter_step1.run(
@@ -61,11 +55,7 @@ class SFTTextFilter_GPUPipeline():
             input_instruction_key='instruction',
             input_output_key='output'
         )
-        
-        self.instag_filter_step4.run(
-            storage=self.storage.step(),
-            input_instruction_key='instruction'
-        )
+
 if __name__ == "__main__":
     # This is the entry point for the pipeline
     pipeline = SFTTextFilter_GPUPipeline()

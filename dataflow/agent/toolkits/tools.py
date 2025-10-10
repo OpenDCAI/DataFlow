@@ -76,6 +76,10 @@ class ChatAgentRequest(BaseModel):
     # —— operator 场景独有 ——
     execute_the_operator: bool = False
 
+    # —— GPT ——
+    temperature: int = 0.4
+    max_tokens: int = 0
+
 
 class ChatResponse(BaseModel):
     id: str

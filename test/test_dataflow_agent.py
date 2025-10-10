@@ -72,7 +72,7 @@ if __name__ == "__main__":
         "py_path": f"{DATAFLOW_DIR}/test/recommend_pipeline_test.py",
         "api_key": api_key,
         "chat_api_url": chat_api_url,
-        "execute_the_pipeline": True,
+        "execute_the_pipeline": False,
         "use_local_model": False,
         "local_model_name_or_path": "/mnt/public/model/huggingface/Qwen2.5-7B-Instruct",
         "timeout": 3600,
@@ -81,7 +81,7 @@ if __name__ == "__main__":
 # /mnt/h_h_public/lh/lz/DataFlow/dataflow/example/DataflowAgent/mq_test_data.jsonl
     operator_write_params = {
         "json_file": f"{DATAFLOW_DIR}/dataflow/example/DataflowAgent/mq_test_data.jsonl",
-        "py_path": f"{DATAFLOW_DIR}/test/Q-PARA.py",
+        "py_path": f"{DATAFLOW_DIR}/test/op_test_deepseek-v3.py",
         "api_key": api_key,
         "chat_api_url": chat_api_url,
         "execute_the_operator": True,
@@ -106,7 +106,7 @@ if __name__ == "__main__":
         test_req = ChatAgentRequest(
             language="zh",
             target="我需要一个算子，使用LLMServing对医疗场景的原始题干进行同义改写，生成语义一致但表达不同的新问题，有效增加训练样本多样性，并且输入key是question，输出key是questionPARA,就在原数据上新加入key，不要生成新的行。",
-            model="deepseek-v3",
+            model="gpt-4o-mini",
             sessionKEY="dataflow_demo",
             ** operator_write_params
         )

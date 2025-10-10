@@ -1,7 +1,7 @@
 from dataflow.operators.chemistry import ExtractSmilesFromText
 from dataflow.operators.chemistry import EvaluateSmilesEquivalence
 
-from dataflow.serving import LocalModelLLMServing, APILLMServing_request
+from dataflow.serving import APILLMServing_request
 from dataflow.utils.storage import FileStorage
 from dataflow.prompts.chemistry import ExtractSmilesFromTextPrompt
 
@@ -33,12 +33,48 @@ smiles_prompt = """Extract the monomer/small molecule information from the text 
     Please make sure to output pure json which can be saved into a json file, do not output like html.
     """
 
+response_format = {
+  "type": "json_schema",
+  "json_schema": {
+    "name": "chemical_structures_response",
+    "strict": True,
+    "schema": {
+      "type": "object",
+      "properties": {
+        "chemical_structures": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "abbreviation": {
+                "type": "string"
+              },
+              "full_name": {
+                "type": "string"
+              },
+              "smiles": {
+                "type": "string"
+              }
+            },
+            "required": ["abbreviation", "full_name", "smiles"],
+            "additionalProperties": False
+          }
+        }
+      },
+      "required": ["chemical_structures"],
+      "additionalProperties": False
+    }
+  }
+}
+
+
+
 class ExtractSmiles():
     def __init__(self):
         self.storage = FileStorage(
             first_entry_file_name="../example_data/chemistry/matched_sample_10.json",
-            #first_entry_file_name="/Users/lianghao/Desktop/dataflow_code/test_dataflow/test/matched_sample_10.json",
-            cache_path="./cache_all_3",
+            #first_entry_file_name="/Users/lianghao/Desktop/dataflow_code/test_0901/example_data/chemistry/matched_sample_10.json",
+            cache_path="./cache_all_17_24_gpt_5",
             file_name_prefix="math_QA",
             cache_type="json",
         )
@@ -46,11 +82,11 @@ class ExtractSmiles():
         self.llm_serving = APILLMServing_request(
                 api_url="https://api.openai.com/v1/chat/completions",
                 model_name="gemini-2.5-flash",
-                max_workers=200
+                max_workers=200,
         )
         self.prompt_smile_extractor = ExtractSmilesFromText(
             llm_serving = self.llm_serving, 
-            prompt_template=ExtractSmilesFromTextPrompt(smiles_prompt)
+            prompt_template=ExtractSmilesFromTextPrompt(smiles_prompt),
         )
         self.smile_eval = EvaluateSmilesEquivalence()
 

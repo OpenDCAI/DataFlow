@@ -7,12 +7,12 @@
 [![Documents](https://img.shields.io/badge/Documents-Click_here-brightgreen?logo=read-the-docs)](https://OpenDCAI.github.io/DataFlow-Doc/)
 [![](https://img.shields.io/github/license/OpenDCAI/DataFlow)](https://github.com/OpenDCAI/DataFlow/blob/main/LICENSE)
 [![](https://img.shields.io/github/stars/OpenDCAI/DataFlow?style=social)](https://github.com/OpenDCAI/DataFlow)
-[![](https://img.shields.io/github/issues-raw/OpenDCAI/DataFlow)](https://github.com/OpenDCAI/DataFlow/issues)
 [![](https://img.shields.io/github/contributors/OpenDCAI/DataFlow)](https://github.com/OpenDCAI/DataFlow/graphs/contributors)
 [![](https://img.shields.io/github/repo-size/OpenDCAI/DataFlow?color=green)](https://github.com/OpenDCAI/DataFlow)
+[![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/OpenDCAI/DataFlow)
 
 <!-- [![](https://img.shields.io/github/last-commit/OpenDCAI/DataFlow)](https://github.com/OpenDCAI/DataFlow/commits/main/) -->
-
+<!--[![](https://img.shields.io/github/issues-raw/OpenDCAI/DataFlow)](https://github.com/OpenDCAI/DataFlow/issues) -->
 🎉 If you like our project, please give us a star ⭐ on GitHub for the latest update.
 
 [简体中文](./README-zh.md) | English
@@ -63,18 +63,18 @@ In the DataFlow framework, operators are divided into three core categories base
 ## 🛠️ 4. Pipelines Functionality
 ### 🔧 4.1 Ready-to-Use PipeLines
 Current Pipelines in Dataflow are as follows:
-- 📝 **Text Pipeline**: Mine question-answer pairs from large-scale plain-text data (mostly crawed from InterNet) for use in SFT and RL training.
+- [📝 **Text Pipeline**](https://opendcai.github.io/DataFlow-Doc/en/guide/textpipeline): Mine question-answer pairs from large-scale plain-text data (mostly crawed from InterNet) for use in SFT and RL training.
   - ![](./static/images/dataflow_text_pipeline.jpg)
   - [[HuggingFace🤗 demo input & output for **Text Pipeline**]](https://huggingface.co/datasets/Open-Dataflow/dataflow-demo-Text)
-- 🧠 **Reasoning Pipeline**: Enhances existing question–answer pairs with (1) extended chain-of-thought, (2) category classification, and (3) difficulty estimation.
+- [🧠 **Reasoning Pipeline**](https://opendcai.github.io/DataFlow-Doc/en/guide/reasoningpipeline/#_2-question-handling): Enhances existing question–answer pairs with (1) extended chain-of-thought, (2) category classification, and (3) difficulty estimation.
   - ![](./static/images/dataflow_reasoning_pipeline.jpg)
   - [[HuggingFace🤗 demo input & output for **Reasoning Pipeline**]](https://huggingface.co/datasets/Open-Dataflow/dataflow-demo-Reasonning)
-- 🗃️ **Text2SQL Pipeline**: Translates natural language questions into SQL queries, supplemented with explanations, chain-of-thought reasoning, and contextual schema information.
+- [🗃️ **Text2SQL Pipeline**](https://opendcai.github.io/DataFlow-Doc/en/guide/text2sqlpipeline/): Translates natural language questions into SQL queries, supplemented with explanations, chain-of-thought reasoning, and contextual schema information.
   - ![](./static/images/dataflow_text2sql_pipeline.jpg)
   - [[HuggingFace🤗 demo input & output for **Text2SQL Pipeline**]](https://huggingface.co/datasets/Open-Dataflow/dataflow-demo-Text2SQL)
-- 📚 **Knowlege Base Cleaning Pipeline**: Extract and structure knowledge from unorganized sources like tables, PDFs, and Word documents into usable entries for downstream RAG or QA pair generation.
+- [📚 **Knowlege Base Cleaning Pipeline**](https://opendcai.github.io/DataFlow-Doc/en/guide/r51ooua8/): Extract and structure knowledge from unorganized sources like tables, PDFs, and Word documents into usable entries for downstream RAG or QA pair generation.
   - ![](./static/images/dataflow_KnowledgeBaseClean_pipeline.jpg)
-- 🤖 **Agentic RAG Pipeline**: Identify and extract QA pairs from existing QA datasets or knowledge bases that require external knowledge to answer, for use in downstream training of Agnetic RAG tasks.
+- [🤖 **Agentic RAG Pipeline**](https://opendcai.github.io/DataFlow-Doc/en/guide/agenticrag_pipeline/): Identify and extract QA pairs from existing QA datasets or knowledge bases that require external knowledge to answer, for use in downstream training of Agnetic RAG tasks.
   - ![](./static/images/dataflow_agenticRAG_pipeline.jpg)
 ### ⚙️ 4.2 Flexible Operator PipeLines
 In this framework, operators are categorized into Fundamental Operators, Generic Operators, Domain-Specific Operators, and Evaluation Operators, etc., supporting data processing and evaluation functionalities. Please refer to the [documentation](https://OpenDCAI.github.io/DataFlow-Doc/) for details.

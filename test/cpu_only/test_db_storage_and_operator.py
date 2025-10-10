@@ -1,12 +1,12 @@
-from dataflow.operators.db.db_operator import DBOperator
+from dataflow.operators.db.generate.db_operator import DBOperator
 
 from dataflow.utils.storage import MyScaleDBStorage
-from dataflow.operators.reasoning import QuestionDifficultyClassifier
+from dataflow.operators.reasoning import ReasoningDifficultyDatasetEvaluator
 class DBShowCasePipeline():
     def __init__(self):
         self.storage = MyScaleDBStorage()
         self.operator_step1 = DBOperator("SELECT * FROM example_table")
-        self.operator_step2 = QuestionDifficultyClassifier()
+        self.operator_step2 = ReasoningDifficultyDatasetEvaluator()
     def run(self):
         """
         Run the DBOperator with the DBStorage.
@@ -24,7 +24,7 @@ class DBShowCasePipeline():
             storage=self.storage,
             input_key="example_input"
         )
-        print(f"Operation finished. Output keys from QuestionDifficultyClassifier: {output_keys_step2}")
+        print(f"Operation finished. Output keys from ReasoningDifficultyDatasetEvaluator: {output_keys_step2}")
 
 
         

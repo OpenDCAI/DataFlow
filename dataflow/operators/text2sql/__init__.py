@@ -7,6 +7,7 @@ if TYPE_CHECKING:
 
     # generate
     from generate.sql_generator import SQLGenerator
+    from generate.sql_by_column_generator import SQLByColumnGenerator
     from generate.sql_variation_generator import SQLVariationGenerator
     from generate.text2sql_cot_generator import Text2SQLCoTGenerator
     from generate.text2sql_prompt_generator import Text2SQLPromptGenerator
