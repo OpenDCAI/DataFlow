@@ -28,8 +28,36 @@ class Writer(BaseAgent):
 
     # ---------------- Prompt 参数 --------------------
     def get_task_prompt_params(self, pre_tool_results: Dict[str, Any]) -> Dict[str, Any]:
+        # 维持模板仅使用 {example},{target}；将数据上下文并入 example
+        example = pre_tool_results.get("example", "")
+        data_sample = pre_tool_results.get("data_sample", [])
+        available_keys = pre_tool_results.get("available_keys", [])
+        try:
+            import json
+            preview = (
+                "\n\n# 数据样例预览\n"
+                + json.dumps(data_sample[:2], ensure_ascii=False)
+                + "\n# 数据中可用的字段（keys）\n"
+                + json.dumps(available_keys, ensure_ascii=False)
+                + "\n# 运行约束\n"
+                + (
+                    "调试阶段不会传入 input_key。请将算子运行接口定义为 "
+                    "run(self, storage: DataFlowStorage, input_key: str | None = None, output_key: 根据实际情况选择)。"
+                    "当 input_key 为 None 时，算子在内部必须自动选择合适的输入字段，不允许因为缺少 input_key 而报错。"
+                )
+                + "\n# 自动选择策略（多层兜底）\n"
+                + "1) 名称优先：raw_content、text、content、sentence、instruction、input、query、problem、prompt。\n"
+                + "2) 类型统计打分：按字符串占比、非空占比、平均长度、唯一率综合评分选择文本列。\n"
+                + "3) LLM建议仅作 hint：结合 target、样例与 available_keys 让模型建议字段，最终需校验在 available_keys 且非空。\n"
+                + "4) 保守兜底：若仍无法确定，选择最文本化的列；再不行，取第一列转字符串并记录低置信度日志。\n"
+                + "\n# 输出约定\n"
+                + "输出字段名使用 output_key，默认值请设置为任务合理的名称。\n"
+            )
+            example = (example or "") + preview
+        except Exception:
+            pass
         return {
-            "example": pre_tool_results.get("example", ""),
+            "example": example,
             "target": pre_tool_results.get("target", ""),
         }
 

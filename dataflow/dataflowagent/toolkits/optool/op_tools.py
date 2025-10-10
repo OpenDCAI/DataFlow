@@ -366,6 +366,41 @@ def get_operators_by_rag(search_goal: str,category: str = "text2sql",top_k: int 
     )
     return search_fn(search_goal)
 
+def local_tool_for_get_match_operator_code(pre_task_result):
+    import time
+    import sys
+    import inspect
+    from dataflow.utils.registry import OPERATOR_REGISTRY
+
+    start_time = time.time()
+    if not pre_task_result or not isinstance(pre_task_result, dict):
+        return "# ❗ pre_task_result is empty, cannot extract operator names"
+
+    _NAME2CLS = {name: cls for name, cls in OPERATOR_REGISTRY}
+
+    blocks = []
+    for op_name in pre_task_result.get("match_operators", [])[:2]:
+        cls = _NAME2CLS.get(op_name)
+        if cls is None:
+            blocks.append(f"# --- {op_name} is not registered in OPERATOR_REGISTRY ---")
+            continue
+        try:
+            cls_src = inspect.getsource(cls)
+            module_src = inspect.getsource(sys.modules[cls.__module__])
+            # 保留所有import语句
+            import_lines = [
+                l for l in module_src.splitlines()
+                if l.strip().startswith(("import ", "from "))
+            ]
+            import_block = "\n".join(import_lines)
+            src_block = f"# === Source of {op_name} ===\n{import_block}\n\n{cls_src}"
+            blocks.append(src_block)
+        except (OSError, TypeError) as e:
+            blocks.append(f"# --- Failed to get the source code of {op_name}: {e} ---")
+    elapsed = time.time() - start_time
+    log.info(f"[local_tool_for_get_match_operator_code] Time used: {elapsed:.4f} seconds")
+    return "\n\n".join(blocks)
+
 if __name__ == "__main__":
     print(get_operators_by_rag("将自然语言转换为SQL查询语句"))
 

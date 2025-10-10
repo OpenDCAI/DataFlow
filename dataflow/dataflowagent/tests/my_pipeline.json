@@ -1,0 +1,62 @@
+{
+  "nodes": [
+    {
+      "id": "node1",
+      "name": "ContentNullFilter",
+      "type": "filter",
+      "config": {
+        "init": {},
+        "run": {
+          "storage": "self.storage.step()",
+          "input_key": "raw_content",
+          "output_key": "clean_content"
+        }
+      }
+    },
+    {
+      "id": "node2",
+      "name": "SentenceNumberFilter",
+      "type": "filter",
+      "config": {
+        "init": {
+          "min_sentences": 3,
+          "max_sentences": 7500
+        },
+        "run": {
+          "storage": "self.storage.step()",
+          "input_key": "clean_content",
+          "output_key": "sent_ok"
+        }
+      }
+    },
+    {
+      "id": "node3",
+      "name": "SymbolWordRatioFilter",
+      "type": "filter",
+      "config": {
+        "init": {
+          "threshold": 0.4
+        },
+        "run": {
+          "storage": "self.storage.step()",
+          "input_key": "sent_ok",
+          "output_key": "symbol_ratio_ok"
+        }
+      }
+    }
+  ],
+  "edges": [
+    {
+      "source": "node1",
+      "target": "node2",
+      "source_port": "output_key",
+      "target_port": "input_key"
+    },
+    {
+      "source": "node2",
+      "target": "node3",
+      "source_port": "output_key",
+      "target_port": "input_key"
+    }
+  ]
+}

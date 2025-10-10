@@ -5,7 +5,8 @@ import os
 from dataflow.cli_funcs.paths import DataFlowPath
 from dataflow.dataflowagent.state import DFRequest, DFState
 # from pipeline_nodes import create_pipeline_graph
-from dataflow.dataflowagent.workflow.wf_pipeline_recommend import create_pipeline_graph
+from dataflow.dataflowagent.workflow.wf_pipeline_recommend_extract_json import create_pipeline_graph
+# from dataflow.dataflowagent.workflow.wf_pipeline_recommend import create_pipeline_graph
 
 from IPython.display import Image, display
 
@@ -17,11 +18,11 @@ async def main() -> None:
         chat_api_url="http://123.129.219.111:3000/v1/",
         api_key=os.getenv("DF_API_KEY", "sk-dummy"),
         model="gpt-4o",
-        json_file=f"{DATAFLOW_DIR}/dataflow/example/DataflowAgent/mq_test_data.jsonl",
-        target="根据数据，推荐pipeline，必须要包含 ReasoningQuestionFilter算子，总数不超过4个！",
+        json_file=f"{DATAFLOW_DIR}/dataflow/example/GeneralTextPipeline/translation.jsonl",
+        target="根据数据，推荐pipeline，只需要3个算子！",
         python_file_path = f"{DATAFLOW_DIR}/dataflow/dataflowagent/tests/my_pipeline.py",  # pipeline的输出脚本路径
-        need_debug = False, #是否需要Debug
-        max_debug_rounds = 3, #Debug的轮次数量
+        need_debug = True, #是否需要Debug
+        max_debug_rounds = 4, #Debug的轮次数量
     )
     state = DFState(request=req, messages=[])
     state.temp_data["round"] = 0

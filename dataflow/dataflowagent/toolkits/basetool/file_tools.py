@@ -1,8 +1,10 @@
 from __future__ import annotations
 import asyncio
+import importlib
 import inspect
 import sys
 import os
+import traceback
 from pydantic import BaseModel
 import httpx
 import json
@@ -230,7 +232,58 @@ def change_pycode_lines(
     return lines
 
 
+# =======================================================获取辅助源码
+from dataflow.utils.registry import OPERATOR_REGISTRY
+def _extract_module_source(op_name: str) -> str:
+    """
+    根据 OPERATOR_REGISTRY 中登记的 `op_name`
+    返回其**完整模块**源码字符串；提取失败时返回占位提示。
 
+    1. 通过 `OPERATOR_REGISTRY.get()` 拉起 LazyLoader，拿到类对象；
+    2. 借助 `cls.__module__` 取得模块名，再用 `importlib` / `inspect`
+       提取源码；
+    3. 若出现异常，记录日志并返回占位串，保证调用方逻辑不被打断。
+    """
+    logger = get_logger()
+
+    try:
+        # ① 拉取并触发懒加载
+        cls = OPERATOR_REGISTRY.get(op_name)
+
+        # ② 确保模块已导入
+        mod = importlib.import_module(cls.__module__)
+
+        # ③ 提取源码
+        return inspect.getsource(mod)
+
+    except Exception as e:
+        logger.warning(f"无法提取 {op_name} 的源码: {e}")
+        logger.debug(traceback.format_exc())
+        return "没有找到任务源代码，直接返回 other_info 即可；"
+
+
+def get_otherinfo_code(op_names: List[str]) -> Dict[str, str]:
+    """
+    批量获取多个 operator 对应的源码字符串。
+
+    :param op_names: 由 operator 名称组成的列表
+    :return: {op_name: source_code}
+    """
+    return {name: _extract_module_source(name) for name in op_names}
+
+
+# =============================高亮
+def flashy(msg: str, *, color: str = "yellow") -> str:
+    """
+    返回带 ANSI 颜色的字符串；调试场合用。
+    支持的 color: red / green / yellow / blue / magenta / cyan / white
+    """
+    colors = {
+        "black":   30, "red":     31, "green":  32, "yellow": 33,
+        "blue":    34, "magenta": 35, "cyan":   36, "white":  37,
+    }
+    code = colors.get(color, 33)
+    return f"\033[{code}m{msg}\033[0m"
 
 if __name__ == "__main__":
     # 简单测试 local_tool_for_sample

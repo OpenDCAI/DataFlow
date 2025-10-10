@@ -15,15 +15,15 @@ class Rewriter(BaseAgent):
     # ---------------- BaseAgent 元数据 ----------------
     @property
     def role_name(self) -> str:
-        return "rewriter"
+        return "op_rewriter"
 
     @property
     def system_prompt_template_name(self) -> str:
-        return "system_prompt_for_code_rewriting"
+        return "system_prompt_for_op_rewrite"
 
     @property
     def task_prompt_template_name(self) -> str:
-        return "task_prompt_for_code_rewriting"
+        return "task_prompt_for_op_rewrite"
 
     # ---------------- Prompt 参数 --------------------
     def get_task_prompt_params(self, pre_tool_results: Dict[str, Any]) -> Dict[str, Any]:
@@ -32,7 +32,9 @@ class Rewriter(BaseAgent):
             "error_trace": pre_tool_results.get("error_trace", ""),
             "debug_reason": pre_tool_results.get("debug_reason", ""),
             "data_sample": pre_tool_results.get("data_sample", ""),
-            "other_info": pre_tool_results.get("other_info","")
+            "available_keys": pre_tool_results.get("available_keys", []),
+            "target": pre_tool_results.get("target", ""),
+            "preselected_input_key": pre_tool_results.get("preselected_input_key", ""),
         }
 
     # ---------------- 默认值 -------------------------
@@ -42,7 +44,9 @@ class Rewriter(BaseAgent):
             "error_trace": "",
             "debug_reason": "",
             "data_sample": "",
-            "other_info": ""
+            "available_keys": [],
+            "target": "",
+            "preselected_input_key": "",
         }
 
     # ---------------- 结果落盘 -----------------------
