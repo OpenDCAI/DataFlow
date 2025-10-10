@@ -14,7 +14,8 @@ class RAREDoc2QueryGenerator(OperatorABC): # Inherit from OperatorABC
     Doc2Query uses LLMs to generate reasoning-intensive questions for given documents.
     '''
 
-    def __init__(self, llm_serving: LLMServingABC): # Changed config to llm_serving
+    def __init__(self, llm_serving: LLMServingABC, max_attempts: int = 3): # Changed config to llm_serving
+    # Added max_attempts as a parameter
         self.logger = get_logger()
         self.llm_serving = llm_serving # Renamed generator to llm_serving
         self.prompt = RAREDoc2QueryGenertorPrompt()
@@ -23,7 +24,7 @@ class RAREDoc2QueryGenerator(OperatorABC): # Inherit from OperatorABC
         self.input_key = "text"
         self.output_question_key = "question"
         self.output_scenario_key = "scenario"
-        self.max_attempts = 3 # Default value, can be made configurable in run method if needed
+        self.max_attempts = max_attempts # Default value, can be made configurable in run method if needed
 
     @staticmethod
     def get_desc(lang: str = "zh"): # Removed self as it's a static method
@@ -71,7 +72,6 @@ class RAREDoc2QueryGenerator(OperatorABC): # Inherit from OperatorABC
         input_key: str = "text",
         output_question_key: str = "question",
         output_scenario_key: str = "scenario",
-        max_attempts: int = 3 # Added max_attempts as a parameter
     ):
         '''
         Runs the reasoning-intensive question generation process, reading from the input storage and saving results to output.
@@ -79,7 +79,6 @@ class RAREDoc2QueryGenerator(OperatorABC): # Inherit from OperatorABC
         self.input_key = input_key
         self.output_question_key = output_question_key
         self.output_scenario_key = output_scenario_key
-        self.max_attempts = max_attempts
 
         dataframe = storage.read("dataframe") # Read from storage
         self._validate_dataframe(dataframe)

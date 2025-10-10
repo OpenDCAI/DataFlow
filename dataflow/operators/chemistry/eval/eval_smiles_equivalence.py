@@ -107,8 +107,8 @@ class EvaluateSmilesEquivalence(OperatorABC):
     def run(
         self,
         storage: DataFlowStorage,
-        golden_key: str = "golden_label",
-        synth_key: str = "synth_smiles",
+        input_golden_key: str = "golden_label",
+        input_synth_key: str = "synth_smiles",
         output_key: str = "final_result",
     ):
         """
@@ -129,8 +129,8 @@ class EvaluateSmilesEquivalence(OperatorABC):
 
         # 逐行（块）评估
         for idx, row in dataframe.iterrows():
-            golden_label = row.get(golden_key, [])  # list[dict]
-            synth_smiles = row.get(synth_key, [])   # list[dict]（可能为空）
+            golden_label = row.get(input_golden_key, [])  # list[dict]
+            synth_smiles = row.get(input_synth_key, [])   # list[dict]（可能为空）
 
             final_result, block_score, block_total, block_accuracy = \
                 self._score_one_block(golden_label, synth_smiles)

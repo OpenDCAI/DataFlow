@@ -7,11 +7,12 @@ from transformers import AutoTokenizer
 
 @OPERATOR_REGISTRY.register()
 class ReasoningTokenDatasetEvaluator(OperatorABC):
-    def __init__(self):
+    def __init__(self, model_name_or_path: str):
         self.logger = get_logger()
         self.logger.info(f'Initializing {self.__class__.__name__}...')
         self.logger.info(f'{self.__class__.__name__} initialized.')
         self.information_name = "Token Information"
+        self.model_name_or_path = model_name_or_path
 
     @staticmethod
     def get_desc(lang: str = "zh"):
@@ -80,10 +81,9 @@ class ReasoningTokenDatasetEvaluator(OperatorABC):
         self.logger.info(f"Token information: {token_info}")
         return token_info
     
-    def run(self,storage: DataFlowStorage, input_question_key: str, input_answer_key: str, model_name_or_path: str):
+    def run(self,storage: DataFlowStorage, input_question_key: str, input_answer_key: str):
         self.input_question_key = input_question_key
         self.input_answer_key = input_answer_key
-        self.model_name_or_path = model_name_or_path
         dataframe = storage.read("dataframe")
         if self.input_question_key not in dataframe.columns:
             self.logger.error(f"Input key {self.input_question_key} not found in dataframe columns.")
