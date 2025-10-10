@@ -6,15 +6,15 @@ from dataflow.operators.knowledge_cleaning import (
 )
 from dataflow.operators.core_text import Text2MultiHopQAGenerator
 from dataflow.utils.storage import FileStorage
-from dataflow.serving import LocalModelLLMServing_vllm, LocalModelLLMServing_sglang
+from dataflow.serving import LocalModelLLMServing_vllm
 
-class KBCleaning_PDFSglang_GPUPipeline():
+class KBCleaning_PDFvllm_GPUPipeline():
     def __init__(self):
 
         self.storage = FileStorage(
-            first_entry_file_name="../../example_data/KBCleaningPipeline/kbc_test_1.jsonl",
+            first_entry_file_name="../../example_data/KBCleaningPipeline/kbc_test.jsonl",
             cache_path="./.cache/gpu",
-            file_name_prefix="knowledge_cleaning_step_sglang_engine",
+            file_name_prefix="knowledge_cleaning_step_vllm_engine",
             cache_type="json",
         )
 
@@ -43,11 +43,12 @@ class KBCleaning_PDFSglang_GPUPipeline():
             # output_key=
         )
 
-        self.llm_serving = LocalModelLLMServing_sglang(
+        self.llm_serving = LocalModelLLMServing_vllm(
             hf_model_name_or_path="Qwen/Qwen2.5-7B-Instruct",
-            sgl_dp_size=1, # data parallel size
-            sgl_tp_size=1, # tensor parallel size
-            sgl_max_new_tokens=2048,
+            vllm_max_tokens=2048,
+            vllm_tensor_parallel_size=4,
+            vllm_gpu_memory_utilization=0.6,
+            vllm_repetition_penalty=1.2
         )
 
         self.knowledge_cleaning_step3 = KBCTextCleaner(
@@ -57,7 +58,7 @@ class KBCleaning_PDFSglang_GPUPipeline():
 
         self.knowledge_cleaning_step4 = Text2MultiHopQAGenerator(
             llm_serving=self.llm_serving,
-            lang="en"
+            lang="en",
             num_q = 5
         )
 
@@ -73,5 +74,5 @@ class KBCleaning_PDFSglang_GPUPipeline():
         )
         
 if __name__ == "__main__":
-    model = KBCleaning_PDFSglang_GPUPipeline()
+    model = KBCleaning_PDFvllm_GPUPipeline()
     model.forward()
