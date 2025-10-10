@@ -40,29 +40,26 @@ class CoreFilterPipeline:
         # 各阶段Prompted LLM与过滤器
         self.init_scorer = PromptedGenerator(
             llm_serving=llm_serving,
-            system_prompt=get_filter_init_scorer_system_prompt() + get_filter_init_scorer_user_prompt(),
+            system_prompt=FilterInitScorerPrompt().build_prompt(""),
         )
         self.init_filter = GeneralFilter([lambda df: df['init_score'] > 1])
         self.refiner = PromptedGenerator(
             llm_serving=llm_serving,
-            system_prompt=get_filter_refiner_system_prompt() + get_filter_init_scorer_user_prompt(),
+            system_prompt=FilterRefinerPrompt().build_prompt(""),
         )
         self.rewriter = PromptedGenerator(
             llm_serving=llm_serving,
-            system_prompt=get_filter_rewriter_system_prompt() + get_filter_rewriter_user_prompt(),
+            system_prompt=FilterRewriterPrompt().build_prompt(""),
         )
         self.final_scorer = PromptedGenerator(
             llm_serving=llm_serving,
-            system_prompt=get_filter_final_scorer_system_prompt() + get_filter_final_scorer_user_prompt(),
+            system_prompt=FilterFinalScorerPrompt().build_prompt(""),
         )
         self.final_filter = GeneralFilter([lambda df: df['final_score'] >= 4])
     
     def wrap_data_into_input_key(self):
-        # 读取self.storage中的文件，并封装进"input_key"字段，value为文件内容
         df = self.storage.step().read("dataframe")
-        # 将每一行的数据整体作为raw_content字段的值
         df[input_key] = df.apply(lambda row: row.to_dict(), axis=1)
-        # 只保留raw_content字段
         df = df[[input_key]]
         self.storage.write(df)
 

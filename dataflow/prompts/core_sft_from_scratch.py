@@ -1,3 +1,6 @@
+from dataflow.utils.registry import PROMPT_REGISTRY
+from dataflow.core.prompt import PromptABC
+
 domain_keys = {
     "general_conversation": "General conversation and casual chatting",
     "knowledge_qa": "Knowledge-based question answering (history, science, culture, etc.)",
@@ -19,8 +22,16 @@ domain_keys = {
 }
 
 
-def get_sft_from_scratch_generator_system_prompt():
-    return """You are a sophisticated data generation assistant specialized in creating high-quality Supervised Fine-Tuning (SFT) datasets for large language models.
+@PROMPT_REGISTRY.register()
+class SFTFromScratchGeneratorPrompt(PromptABC):
+    """
+    Prompt for generating brand-new SFT samples from scratch.
+    """
+    def __init__(self):
+        pass
+
+    def build_prompt(self) -> str:
+        system_prompt = """You are a sophisticated data generation assistant specialized in creating high-quality Supervised Fine-Tuning (SFT) datasets for large language models.
 
 Your mission is to generate diverse, realistic, and instruction-following training samples that will help models become more helpful, accurate, and aligned with human preferences.
 
@@ -55,10 +66,8 @@ Your mission is to generate diverse, realistic, and instruction-following traini
 - Output valid JSON in a single line with no formatting
 - Properly escape special characters in strings
 - Ensure all required fields are present and correctly typed"""
-
-
-def get_sft_from_scratch_generator_user_prompt():
-    return f"""Generate ONE premium-quality SFT training sample as a single-line JSON object.
+        
+        user_prompt = f"""Generate ONE premium-quality SFT training sample as a single-line JSON object.
 
 ## Requirements:
 - **instruction**: A realistic user request that varies in style, complexity, and specificity
@@ -80,13 +89,22 @@ def get_sft_from_scratch_generator_user_prompt():
 - Balance theoretical knowledge with practical applications
 
 ## Format Example:
-{{"instruction": "Create a Python function that calculates compound interest with error handling", "input": "", "output": "def compound_interest(principal, rate, time, n=1):\\n    if principal <= 0 or rate < 0 or time < 0 or n <= 0:\\n        raise ValueError('Invalid input: principal must be positive, rate and time non-negative, n positive')\\n    return principal * (1 + rate/n)**(n*time)\\n\\n# Example usage:\\n# result = compound_interest(1000, 0.05, 2, 4)  # $1000 at 5% for 2 years, compounded quarterly", "domain": "coding"}}
+{{"instruction": "Create a Python function that calculates compound interest with error handling", "input": "", "output": "def compound_interest(principal, rate, time, n=1):\\n    if principal <= 0 or rate < 0 or time < 0 or n <= 0:\\n        raise ValueError('Invalid input: principal must be positive, rate and time non-negative, n positive')\\n    return principal * (1 + rate/n)**(n*time)\\n\\n# Example usage:\\n# result = compound_interest(1000, 0.05, 2, 4)", "domain": "coding"}}
 
 Output only the JSON - no explanations or additional text."""
+        return system_prompt + "\n\n" + user_prompt
 
 
-def get_sft_from_scratch_rewriter_system_prompt():
-    return """You are an expert data diversity specialist focused on generating varied, high-quality SFT training samples.
+@PROMPT_REGISTRY.register()
+class SFTFromScratchRewriterPrompt(PromptABC):
+    """
+    Prompt for rewriting existing SFT samples to improve diversity.
+    """
+    def __init__(self):
+        pass
+
+    def build_prompt(self, original_sample: str) -> str:
+        system_prompt = """You are an expert data diversity specialist focused on generating varied, high-quality SFT training samples.
 
 Your task is to rewrite existing SFT samples to maximize training diversity while preserving their educational value and correctness.
 
@@ -123,13 +141,9 @@ Your task is to rewrite existing SFT samples to maximize training diversity whil
 - Professional yet accessible tone
 
 Your rewritten version should feel like a completely different person asking a related question, while maintaining the same educational value."""
+        
+        user_prompt = f"""Transform the following SFT sample into a high-quality variant that maximizes diversity while preserving correctness and educational value.
 
-
-def get_sft_from_scratch_rewriter_user_prompt():
-    return """Transform the following SFT sample into a high-quality variant that maximizes diversity while preserving correctness and educational value.
-
-Original Sample:
-{}
 
 ## Rewriting Instructions:
 1. Significantly change the wording and structure
@@ -140,11 +154,23 @@ Original Sample:
 
 Output Format: Single-line JSON with keys: instruction, input, output, domain
 
+
+Original Sample:
+{original_sample}
 No explanations - output only the JSON."""
+        return system_prompt + "\n\n" + user_prompt
 
 
-def get_sft_from_scratch_scorer_system_prompt():
-    return """You are a meticulous SFT data quality evaluator with expertise in machine learning training data.
+@PROMPT_REGISTRY.register()
+class SFTFromScratchScorerPrompt(PromptABC):
+    """
+    Prompt for scoring the overall quality of generated SFT samples (1–5 scale).
+    """
+    def __init__(self):
+        pass
+
+    def build_prompt(self, sft_sample: str) -> str:
+        system_prompt = """You are a meticulous SFT data quality evaluator with expertise in machine learning training data.
 
 Your role is to assess the overall quality of SFT training samples using a comprehensive evaluation framework.
 
@@ -193,11 +219,10 @@ Your role is to assess the overall quality of SFT training samples using a compr
 - **Language Quality:** Is the text natural, well-written, and appropriate?
 
 REMEMBER: Output ONLY the integer score. Nothing else."""
+        
+        user_prompt = f"""Score this SFT training sample (1-5 integer only):
 
-
-def get_sft_from_scratch_scorer_user_prompt():
-    return """Score this SFT training sample (1-5 integer only):
-
-{}
+{sft_sample}
 
 Output format: single integer 1-5, no other text"""
+        return system_prompt + "\n\n" + user_prompt

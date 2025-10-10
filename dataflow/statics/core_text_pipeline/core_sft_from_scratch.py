@@ -38,16 +38,15 @@ class CoreSftFromScratchPipeline:
 
         self.generator = RandomDomainKnowledgeRowGenerator(
             llm_serving=llm_serving,
-            system_prompt=get_sft_from_scratch_generator_system_prompt(),
-            user_prompt=get_sft_from_scratch_generator_user_prompt()
+            system_prompt=SFTFromScratchGeneratorPrompt().build_prompt(),
         )
         self.rewriter = PromptedGenerator(
             llm_serving=llm_serving,
-            system_prompt=get_sft_from_scratch_rewriter_system_prompt() + get_sft_from_scratch_rewriter_user_prompt(),
+            system_prompt=SFTFromScratchRewriterPrompt().build_prompt(""),
         )
         self.scorer = PromptedGenerator(
             llm_serving=llm_serving,
-            system_prompt=get_sft_from_scratch_scorer_system_prompt() + get_sft_from_scratch_scorer_user_prompt(),
+            system_prompt=SFTFromScratchScorerPrompt().build_prompt(""),
         )
         self.filter = GeneralFilter([
             lambda df: df['score_raw'] > 3,
