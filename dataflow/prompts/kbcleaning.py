@@ -216,7 +216,53 @@ Processing Steps:
                               lambda m: f"【引用图片：{m.group(1)[2:-1]}" if "图片" in m.group(1) else m.group(0), 
                               cleaned_text)
       return cleaned_text
-   
+
+
+
+class MathVQAExtractPrompt(PromptABC):
+    def __init__(self):
+        pass
+
+    def build_prompt(self):
+        PROMPT = """You are given two images—page_n and page_n+1—each annotated with detected bounding boxes and corresponding labels (for the last page, there is no page_n+1). Your task is to extract from page_n only:
+1. All mathematical problems whose text begins on page_n.
+2. The answers to those problems, if they appear on page_n.
+3. The chapter information (main titles and subtitles) as it appears on page_n.
+4. The exact value of n is in the label of the image; when you output, you should use that value of n.
+
+Strict extraction rules:
+- If you think the page is not the main text page, such as a cover page, catalog page, header/footer only, etc., output `<empty></empty>`.
+- Extract a problem only if its first words appear on page_n.
+- Do not extract any problem or answer that begins exclusively on page_n+1.
+- Do not extract any problem or answer that began on page_n–1, even if it continues onto page_n.
+- Preserve each problem’s original label/number. If an answer box appears directly below its question, infer that it shares the same label.
+- If a question and its answer/proof are contiguous on page_n, wrap them together as a single `<qa_pair>`…`</qa_pair>` block, e.g.:
+  `<qa_pair><label>例1</label><question>…</question><answer>…</answer></qa_pair>`
+- For problem and answer text, output exactly what appears (no translation). Render all mathematical expressions in LaTeX.
+- Whenever the question or answer refers to a figure or diagram, record it with `<pic>IMAGE_NAME|BOX_LABEL</pic>`, using the label from the detection model and the image name (page_n or page_n+1).
+- Extract all headings that represent structural information in the main body of the text (e.g., chapter titles, section titles such as “习题1.a”, lecture headings like “第一讲 相似”). Treat composite titles as a single unit (so “第一讲 相似” is one title, not two). Do not extract running headers or footers.
+
+If no qualifying content is found, output:
+<empty></empty>
+
+Output format (all tags run together, no extra whitespace or newlines except between entries):
+<question><label>…</label>QUESTION_TEXT<pic>…</pic>…</question>
+<answer><label>…</label>ANSWER_TEXT<pic>…</pic>…</answer>
+<title>MAIN_TITLE_OR_SUBTITLE</title>
+[repeat as needed or `<empty></empty>`]
+
+Example (for page_1 & page_2):
+<question><label>例1</label>Calculate \(x\) such that \(x^2-1=0\).<pic>page_1|fig1</pic></question>
+<answer><label>例1</label>\(x=\pm1\).</answer>
+<title>Chapter 2</title>
+<title>Section 2.1</title>
+
+Please now process the provided page_n and page_n+1 images and output your result.
+"""
+        return PROMPT
+
+
+
 class MathbookQuestionExtractPrompt:
    def __init__(self):
       pass

@@ -48,7 +48,10 @@ class APIVLMServing_openai(LLMServingABC):
             api_key=api_key,
             base_url=api_url
         )
-
+    def start_serving(self):
+        pass
+    def cleanup(self):
+        pass
     def _encode_image_to_base64(self, image_path: str) -> Tuple[str, str]:
         """
         Read an image file and convert it to a base64-encoded string, returning the image data and MIME format.
