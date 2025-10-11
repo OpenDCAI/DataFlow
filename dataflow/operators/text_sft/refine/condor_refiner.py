@@ -6,7 +6,13 @@ from dataflow.core import OperatorABC
 from dataflow.utils.storage import DataFlowStorage
 import pandas as pd
 from dataflow.core import LLMServingABC
-from dataflow.prompts.general_text import CondorPrompt
+from dataflow.prompts.general_text import CondorCritiquePrompt, CondorRefinePrompt
+from dataflow.core.prompt import prompt_restrict
+
+@prompt_restrict(
+    CondorCritiquePrompt,
+    CondorRefinePrompt
+)
 
 @OPERATOR_REGISTRY.register()
 class CondorRefiner(OperatorABC):
@@ -14,7 +20,8 @@ class CondorRefiner(OperatorABC):
         self.logger = get_logger()
         self.logger.info(f'Initializing {self.__class__.__name__}...')
         self.llm_serving = llm_serving
-        self.prompt = CondorPrompt()  # 创建 CondorPrompt 类的实例
+        self.critique_prompt = CondorCritiquePrompt()  # 创建 CondorPrompt 类的实例
+        self.refine_prompt = CondorRefinePrompt()
         self.logger.info(f'{self.__class__.__name__} initialized.')
     
     @staticmethod
@@ -49,13 +56,13 @@ class CondorRefiner(OperatorABC):
 
     def generate_critique(self, question, answer):
         # 批量生成 Critique
-        critique_prompts = [self.prompt.create_critique_prompt(q, a) for q, a in zip(question, answer)]
+        critique_prompts = [self.critique_prompt.build_prompt(q, a) for q, a in zip(question, answer)]
         critique_responses = self.llm_serving.generate_from_input(critique_prompts)
         return critique_responses
 
     def generate_refined_answer(self, question, answer, critique):
         # 批量生成修改后的答案
-        refine_prompts = [self.prompt.create_refine_prompt(q, a, c) for q, a, c in zip(question, answer, critique)]
+        refine_prompts = [self.refine_prompt.build_prompt(q, a, c) for q, a, c in zip(question, answer, critique)]
         refined_answers = self.llm_serving.generate_from_input(refine_prompts)
         refined_answers = [answer.replace('[Improved Answer Start]', '').replace('[Improved Answer End]', '').strip() for answer in refined_answers]
         return refined_answers

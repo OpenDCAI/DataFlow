@@ -68,11 +68,11 @@ class BleuSampleEvaluator(OperatorABC):
         self.logger.info("Evaluation complete!")
         return scores
     
-    def run(self, storage: DataFlowStorage, input_key: str, reference_key: str, output_key: str='BleuScore'):
+    def run(self, storage: DataFlowStorage, input_key: str, input_reference_key: str, output_key: str='BleuScore'):
         self.input_key = input_key
-        self.reference_key = reference_key
+        self.reference_key = input_reference_key
         self.output_key = output_key
         dataframe = storage.read("dataframe")        
-        scores = self.eval(dataframe, input_key, reference_key)
+        scores = self.eval(dataframe, input_key, self.reference_key)
         dataframe[self.output_key] = scores
         storage.write(dataframe)

@@ -9,6 +9,11 @@ from dataflow.utils.storage import DataFlowStorage
 from dataflow.core import OperatorABC
 from dataflow.core import LLMServingABC
 from dataflow.serving import LocalModelLLMServing_vllm
+from dataflow.core.prompt import prompt_restrict
+
+@prompt_restrict(
+    SFTGeneratorSeedPrompt
+)
 
 def extract_json_object(model_output):
     """提取第一个包含 instruction 和 output 字段的 JSON 对象"""
@@ -77,7 +82,7 @@ class SFTGeneratorSeed(OperatorABC):
         # Prepare LLM inputs by formatting the prompt with raw content from the dataframe
         for index, row in dataframe.iterrows():
             raw_content = row.get(self.input_key, '')
-            llm_input = self.prompts.sft_generate_prompt(content=raw_content)
+            llm_input = self.prompts.build_prompt(content=raw_content)
             llm_inputs.append(llm_input)
         
         # Generate the text using the model

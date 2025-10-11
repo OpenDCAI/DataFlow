@@ -6,8 +6,12 @@ from dataflow.core import OperatorABC
 from dataflow.utils.storage import DataFlowStorage
 import pandas as pd
 from dataflow.core import LLMServingABC
-from dataflow.prompts.general_text import CondorPrompt
+from dataflow.prompts.general_text import CondorQuestionPrompt
+from dataflow.core.prompt import prompt_restrict
 
+@prompt_restrict(
+    CondorQuestionPrompt
+) 
 
 @OPERATOR_REGISTRY.register()
 class CondorGenerator(OperatorABC):
@@ -17,7 +21,7 @@ class CondorGenerator(OperatorABC):
         self.logger.info(f'Initializing {self.__class__.__name__}...')
         self.llm_serving = llm_serving
         self.num_questions = num_samples // 3  # 每个prompt生成3个难度的问题
-        self.prompt = CondorPrompt()
+        self.prompt = CondorQuestionPrompt()
         self.use_task_diversity = use_task_diversity  # 是否使用任务场景增强多样性
         self.logger.info(f'{self.__class__.__name__} initialized.')
     
@@ -94,7 +98,7 @@ class CondorGenerator(OperatorABC):
                 task_type = random.choice(self.prompt.task_types)
             
             # 获取生成问题的prompt（保留原有的3难度生成逻辑）
-            prompt = self.prompt.get_question_prompt(theme, domain)
+            prompt = self.prompt.build_prompt(theme, domain)
             
             # 如果使用任务场景，在prompt中添加场景说明
             if task_type:

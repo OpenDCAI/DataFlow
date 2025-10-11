@@ -88,8 +88,9 @@ class RAREBM25HardNegGenerator(OperatorABC):
     It reads a dataframe with queries and positive documents, and appends a column with hard negatives.
     '''
 
-    def __init__(self):
+    def __init__(self, num_neg: int = 3):
         self.logger = get_logger()
+        self.num_neg = num_neg
 
     @staticmethod
     def get_desc(lang: str = "zh") -> str:
@@ -130,7 +131,6 @@ class RAREBM25HardNegGenerator(OperatorABC):
         input_question_key: str = "question",
         input_text_key: str = "text",
         output_negatives_key: str = "hard_negatives",
-        num_neg: int = 3
     ) -> list:
         '''
         Runs the hard negative mining process.
@@ -154,7 +154,7 @@ class RAREBM25HardNegGenerator(OperatorABC):
         for index, row in dataframe.iterrows():
             query = row[input_question_key]
             # 'index' serves as the gold_id for the current positive document
-            negs = bm25_miner.select_hard_negatives(query, gold_id=index, num_neg=num_neg)
+            negs = bm25_miner.select_hard_negatives(query, gold_id=index, num_neg=self.num_neg)
             hard_negatives_list.append(negs)
         
         dataframe[output_negatives_key] = hard_negatives_list

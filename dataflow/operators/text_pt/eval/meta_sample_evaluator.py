@@ -6,6 +6,7 @@ import pandas as pd
 from dataflow.core import LLMServingABC
 from dataflow.prompts.general_text import MetaPrompt  
 import ast
+from dataflow.core.prompt import prompt_restrict
 
 example_dimensions = [
     {
@@ -94,6 +95,10 @@ example_dimensions = [
     }
 ]
 
+@prompt_restrict(
+    MetaPrompt
+)
+
 @OPERATOR_REGISTRY.register()
 class MetaSampleEvaluator(OperatorABC):
     def __init__(self, 
@@ -170,7 +175,7 @@ class MetaSampleEvaluator(OperatorABC):
         user_prompts = []
         for sample in samples:
             input_text = sample.get(input_key, '')
-            user_prompt = self.prompt.build_user_prompt(input_text)
+            user_prompt = self.prompt.build_prompt(input_text)
             full_prompt = system_prompt + "\n" + user_prompt
             user_prompts.append(full_prompt)
 

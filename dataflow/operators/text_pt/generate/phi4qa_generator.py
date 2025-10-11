@@ -6,6 +6,11 @@ from dataflow import get_logger
 from dataflow.utils.storage import DataFlowStorage
 from dataflow.core import OperatorABC
 from dataflow.core import LLMServingABC
+from dataflow.core.prompt import prompt_restrict
+
+@prompt_restrict(
+    Phi4QAGeneratorPrompt
+)
 
 @OPERATOR_REGISTRY.register()
 class Phi4QAGenerator(OperatorABC):
@@ -62,7 +67,7 @@ class Phi4QAGenerator(OperatorABC):
         for index, row in dataframe.iterrows():
             raw_content = row.get(self.input_key, '')
             if raw_content:
-                llm_input = self.prompts.pt_generate_prompt(raw_content)
+                llm_input = self.prompts.build_prompt(raw_content)
                 llm_inputs.append(llm_input)
         
         # Generate the text using the model

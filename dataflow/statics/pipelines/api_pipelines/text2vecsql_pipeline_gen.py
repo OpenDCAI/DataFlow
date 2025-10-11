@@ -84,7 +84,7 @@ class Text2VecSQLGeneration_APIPipeline():
         )
 
         self.llm_serving = APILLMServing_request(
-            api_url="http://123.129.219.111:3000/v1/chat/completions",
+            api_url="https://api.openai.com/v1/chat/completions",
             model_name="gpt-4o",
             max_workers=100
         )
