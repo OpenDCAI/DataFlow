@@ -7,6 +7,11 @@ from dataflow.utils.storage import DataFlowStorage
 from dataflow.prompts.func_call import CompositionTaskFilterPrompt
 from dataflow.logger import get_logger
 from dataflow.utils.registry import OPERATOR_REGISTRY
+from dataflow.core.prompt import prompt_restrict
+
+@prompt_restrict(
+    CompositionTaskFilterPrompt
+)
 
 @OPERATOR_REGISTRY.register()
 class CompositionTaskFilter(OperatorABC):

@@ -3,10 +3,15 @@ import pandas as pd
 import numpy as np
 from tqdm import tqdm
 from dataflow.core import OperatorABC, LLMServingABC
+from dataflow.core.prompt import prompt_restrict
 from dataflow.utils.storage import DataFlowStorage
 from dataflow.prompts.func_call import ConversationEvalPrompt
 from dataflow.logger import get_logger
 from dataflow.utils.registry import OPERATOR_REGISTRY
+
+@prompt_restrict(
+    ConversationEvalPrompt
+)
 
 @OPERATOR_REGISTRY.register()
 class FuncCallConversationSampleEvaluator(OperatorABC):

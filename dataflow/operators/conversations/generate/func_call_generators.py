@@ -17,6 +17,11 @@ from dataflow.prompts.func_call import (
 )
 from dataflow.logger import get_logger
 from dataflow.utils.registry import OPERATOR_REGISTRY
+from dataflow.core.prompt import prompt_restrict
+
+@prompt_restrict(
+    ExtractScenarioPrompt
+)
 
 @OPERATOR_REGISTRY.register()
 class ScenarioExtractGenerator(OperatorABC):
@@ -70,6 +75,9 @@ class ScenarioExtractGenerator(OperatorABC):
         self.logger.info(f"Results saved to {output_file}")
         return [self.output_key]
 
+@prompt_restrict(
+    ExpandScenarioPrompt
+)
 
 @OPERATOR_REGISTRY.register()
 class ScenarioExpandGenerator(OperatorABC):
@@ -121,6 +129,10 @@ class ScenarioExpandGenerator(OperatorABC):
         output_file = storage.write(dataframe)
         self.logger.info(f"Results saved to {output_file}")
         return [self.output_key]  
+    
+@prompt_restrict(
+    FuncAtomicTaskGeneratePrompt
+)
 
 @OPERATOR_REGISTRY.register()
 class AtomTaskGenerator(OperatorABC):
@@ -172,6 +184,10 @@ class AtomTaskGenerator(OperatorABC):
         output_file = storage.write(dataframe)
         self.logger.info(f"Results saved to {output_file}")
         return [self.output_key]  
+
+@prompt_restrict(
+    SequentialTaskGeneratePrompt
+)
 
 @OPERATOR_REGISTRY.register()
 class SequentialTaskGenerator(OperatorABC):
@@ -243,6 +259,10 @@ class SequentialTaskGenerator(OperatorABC):
         output_file = storage.write(dataframe)
         self.logger.info(f"Results saved to {output_file}")
         return [self.output_subsequent_task_key, output_composition_task_key]  
+    
+@prompt_restrict(
+    ParathenSeqTaskGeneratePrompt
+)
 
 @OPERATOR_REGISTRY.register()
 class ParaSeqTaskGenerator(OperatorABC):
@@ -324,7 +344,11 @@ class ParaSeqTaskGenerator(OperatorABC):
         output_file = storage.write(dataframe)
         self.logger.info(f"Results saved to {output_file}")
         return [self.output_parallel_task_key, self.output_subsequent_task_key, output_composition_task_key]  
-    
+
+@prompt_restrict(
+    FuncGeneratePrompt
+)    
+
 @OPERATOR_REGISTRY.register()
 class FunctionGenerator(OperatorABC):
     def __init__(self, llm_serving: LLMServingABC):
@@ -383,6 +407,12 @@ class FunctionGenerator(OperatorABC):
         output_file = storage.write(dataframe)
         self.logger.info(f"Results saved to {output_file}")
         return [self.output_key]
+    
+@prompt_restrict(
+    ConversationUserPrompt,
+    ConversationAssistantPrompt,
+    ConversationToolPrompt
+)
     
 @OPERATOR_REGISTRY.register()
 class MultiTurnConversationGenerator(OperatorABC):
