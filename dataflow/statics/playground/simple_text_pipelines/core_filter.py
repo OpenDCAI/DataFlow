@@ -15,7 +15,6 @@ from dataflow.operators.core_text import PromptedGenerator
 from dataflow.operators.core_text import GeneralFilter
 from dataflow.utils.storage import FileStorage
 from dataflow.serving import APILLMServing_request
-# from dataflow.prompts.core_filter import *
 
 input_key="raw_content" #指定输入的字段
 
