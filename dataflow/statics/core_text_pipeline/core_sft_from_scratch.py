@@ -15,9 +15,8 @@ from dataflow.operators.core_text import PromptedGenerator
 from dataflow.operators.core_text import GeneralFilter
 from dataflow.utils.storage import FileStorage
 from dataflow.serving import APILLMServing_request
-from dataflow.prompts.core_sft_from_scratch import *
 import pandas as pd
-from dataflow.prompts.core_sft_from_scratch import (
+from dataflow.prompts.general_text import (
     SFTFromScratchGeneratorPrompt
 )
 

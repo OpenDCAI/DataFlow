@@ -6,7 +6,7 @@ from dataflow.utils.storage import DataFlowStorage
 from dataflow.core import OperatorABC
 from dataflow.core import LLMServingABC
 from dataflow.core.prompt import prompt_restrict
-from dataflow.prompts.core_sft_from_scratch import SFTFromScratchGeneratorPrompt
+from dataflow.prompts.general_text import SFTFromScratchGeneratorPrompt
 
 @prompt_restrict(
     SFTFromScratchGeneratorPrompt
