@@ -1,9 +1,9 @@
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from .generate.func_call_operators import (
-        ScenarioExtractor,
-        ScenarioExpander,
+    from .generate.func_call_generators import (
+        ScenarioExtractGenerator,
+        ScenarioExpandGenerator,
         AtomTaskGenerator,
         SequentialTaskGenerator,
         ParaSeqTaskGenerator,
@@ -11,6 +11,10 @@ if TYPE_CHECKING:
         MultiTurnConversationGenerator,
     )
     from .generate.consistent_chat_generator import ConsistentChatGenerator
+    
+    from .eval.func_call_conversation_sample_evaluator import FuncCallConversationSampleEvaluator
+    
+    from .filter.composition_task_filter import CompositionTaskFilter
 
 else:
     import sys

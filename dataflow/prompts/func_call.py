@@ -1,12 +1,16 @@
 '''
 Prompts for Bottom-Up Then Top-dOwN (BUTTON) multi-turn dialogue generating pipeline.
 '''
+from dataflow.utils.registry import PROMPT_REGISTRY
+from dataflow.core.prompt import PromptABC
 
-class FuncCallPrompt:
+@PROMPT_REGISTRY.register()
+class ExtractScenarioPrompt(PromptABC):
+    
     def __init__(self):
         pass
     
-    def extract_scenario_prompt(self, conversation):
+    def build_prompt(self, conversation):
         prompt = """
         Please analyze the conversation below between a user and an
         assistant bot and identify the general life scenario it
@@ -20,8 +24,14 @@ class FuncCallPrompt:
         Concise Overview of the Scenario:
         """
         return prompt.format(conversation=conversation)
+
+@PROMPT_REGISTRY.register()
+class ExpandScenarioPrompt(PromptABC):
     
-    def expand_scenario_prompt(self, scenario):
+    def __init__(self):
+        pass
+    
+    def build_prompt(self, scenario):
         prompt = """
         Based on the provided daily scenario, creatively generate a new
         and entirely different scenario. The new scenario must meet
@@ -39,8 +49,14 @@ class FuncCallPrompt:
         Modified Scenario:
         """
         return prompt.format(scenario=scenario)
+
+@PROMPT_REGISTRY.register()
+class FuncAtomicTaskGeneratePrompt(PromptABC):
     
-    def atomic_task_generate_prompt(self, scenario):
+    def __init__(self):
+        pass
+    
+    def build_prompt(self, scenario):
         prompt = """
         You are training a model that can take a user's task description
         or query, and available functions as input, and generate a
@@ -71,8 +87,14 @@ class FuncCallPrompt:
         extra notation or format:
         """
         return prompt.format(scenario=scenario)
+
+@PROMPT_REGISTRY.register()
+class SequentialTaskGeneratePrompt(PromptABC):
     
-    def sequential_task_generate_prompt(self, task):
+    def __init__(self):
+        pass
+
+    def build_prompt(self, task):
         prompt = """
         You are training a model that can take a user's task description
         or query, and available functions as input, and generate a
@@ -120,7 +142,13 @@ class FuncCallPrompt:
         """
         return prompt.format(task=task)
     
-    def parallel_then_sequential_task_generate_prompt(self, task):
+@PROMPT_REGISTRY.register()
+class ParathenSeqTaskGeneratePrompt(PromptABC):
+    
+    def __init__(self):
+        pass
+
+    def build_prompt(self, task):
         prompt = """
         You are training a model that can take a user's task description
         or query, and available functions as input, and generate a
@@ -192,7 +220,13 @@ class FuncCallPrompt:
         """
         return prompt.format(task=task)
     
-    def filter_composition_task_prompt(self, task, sub_tasks):
+@PROMPT_REGISTRY.register()
+class CompositionTaskFilterPrompt(PromptABC):
+    
+    def __init__(self):
+        pass
+
+    def build_prompt(self, task, sub_tasks):
         prompt = """
         You are an expert in task decomposition. Currently, you are
         given a composition task and its potential task breakdown.
@@ -209,7 +243,13 @@ class FuncCallPrompt:
         """
         return prompt.format(task=task, sub_tasks=sub_tasks)
     
-    def function_generate_prompt(self, task, sub_tasks):
+@PROMPT_REGISTRY.register()
+class FuncGeneratePrompt(PromptABC):
+    
+    def __init__(self):
+        pass
+
+    def build_prompt(self, task, sub_tasks):
         prompt = """
         You are training a model that can take a user's task description
         or query, and available functions as input, and generate a
@@ -291,7 +331,13 @@ class FuncCallPrompt:
         """
         return prompt.format(task=task, sub_tasks=sub_tasks)
 
-    def user_agent_prompt(self, task):
+@PROMPT_REGISTRY.register()
+class ConversationUserPrompt(PromptABC):
+    
+    def __init__(self):
+        pass
+
+    def build_prompt(self, task):
         prompt = """
         Assume you are playing the role of a user engaging with an AI assistant in a multi-turn task-solving scenario.
         Currently, your goal is to complete a predefined task, and you
@@ -317,8 +363,14 @@ class FuncCallPrompt:
         human>".
         """
         return prompt.format(task=task)
+
+@PROMPT_REGISTRY.register()
+class ConversationAssistantPrompt(PromptABC):
     
-    def assistant_agent_prompt(self, sub_task, sub_task_func):
+    def __init__(self):
+        pass
+
+    def build_prompt(self, sub_task, sub_task_func):
         prompt = """
         You are simulating the role of an expert in using functions (i.e
         ., tools) to solve users' tasks. You already possess
@@ -394,8 +446,14 @@ class FuncCallPrompt:
         to the result of the function call.
         """
         return prompt.format(sub_task=sub_task, sub_task_func=sub_task_func)
+
+@PROMPT_REGISTRY.register()
+class ConversationToolPrompt(PromptABC):
     
-    def tool_agent_prompt(self, function):
+    def __init__(self):
+        pass
+
+    def build_prompt(self, function):
         prompt = """
         You are simulating a computer system with powerful computational
         capabilities and a complete setup. You possess ample
@@ -424,4 +482,41 @@ class FuncCallPrompt:
         </func_return>
         """
         return prompt.format(function=function)
+    
+@PROMPT_REGISTRY.register()
+class ConversationEvalPrompt(PromptABC):
+    
+    def __init__(self):
+        pass
+
+    def build_prompt(self, conversation):
+        prompt = """
+        You are a strict evaluator of function-calling dialogues.
+
+        You will be given only the conversation content (a list of messages with role and content).
+        This may include tags like <observation>, <thought>, <func_call>, <func_return>, <final>.
+
+        Your task: Assign a quality score 1 to 5 based solely on the correctness and logical flow of tool usage.
+
+        Scoring rules:
+        - 5 = Excellent: correct tool usage, logical sequence, arguments reasonable.
+        - 4 = Good: mostly correct, only minor flaws.
+        - 3 = Fair: noticeable problems but still somewhat usable.
+        - 2 = Poor: major issues, unreliable.
+        - 1 = Very Bad: incoherent or irrelevant tool use.
+
+        You must output strictly in JSON format only, with no additional text.
+        Output format:
+        {{
+            "score": <int from 1 to 5>,
+            "explanation": "<short reasoning>"
+        }}
+
+        Now evaluate this conversation:
+
+        <conversation>
+        {conversation}
+        </conversation>
+        """
+        return prompt.format(conversation=conversation)
             
