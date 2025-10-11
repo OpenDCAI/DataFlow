@@ -7,7 +7,6 @@ from tqdm import tqdm
 from dataflow.core import LLMServingABC
 from dataflow.logger import get_logger
 
-
 class LiteLLMServing(LLMServingABC):
     """
     LiteLLM-based serving class that provides unified interface for multiple LLM providers.
@@ -19,30 +18,35 @@ class LiteLLMServing(LLMServingABC):
     
     Doc: https://docs.litellm.ai/docs/providers
     """
+    def start_serving(self) -> None:
+        self.logger.info("LiteLLMServing: no local service to start.")
+        return
     
     def __init__(self, 
-                 model: str = "gpt-4o",
-                 key_name_of_api_key: str = "OPENAI_API_KEY",
-                 api_base: Optional[str] = None,
+                 api_url: str = "https://api.openai.com/v1/chat/completions",
+                 key_name_of_api_key: str = "DF_API_KEY",
+                 model_name: str = "gpt-4o",
+                 max_workers: int = 10,
+                 max_retries: int = 5,
                  api_version: Optional[str] = None,
                  temperature: float = 0.7,
                  max_tokens: int = 1024,
                  top_p: float = 1.0,
-                 max_workers: int = 10,
                  timeout: int = 60,
                  **kwargs: Any):
         """
         Initialize LiteLLM serving instance.
         
         Args:
-            model: Model name (e.g., "gpt-4o", "claude-3-sonnet", "command-r-plus")
-            key_name_of_api_key: Environment variable name for API key (default: "OPENAI_API_KEY")
-            api_base: Custom API base URL
+            api_url: Custom API base URL
+            key_name_of_api_key: Environment variable name for API key (default: "DF_API_KEY")
+            model_name: Model name (e.g., "gpt-4o", "claude-3-sonnet", "command-r-plus")
+            max_workers: Number of concurrent workers for batch processing
+            max_retries: Number of LLM inference retry chances for each input
             api_version: API version for providers that support it
             temperature: Sampling temperature
             max_tokens: Maximum tokens to generate
             top_p: Top-p sampling parameter
-            max_workers: Number of concurrent workers for batch processing
             timeout: Request timeout in seconds
             **kwargs: Additional parameters passed to litellm.completion()
             
@@ -61,11 +65,12 @@ class LiteLLMServing(LLMServingABC):
                 "pip install open-dataflow[litellm] or pip install litellm"
             )
         
-        self.model = model
-        self.api_base = api_base
+        self.model_name = model_name
+        self.api_url = api_url
         self.api_version = api_version
         self.temperature = temperature
         self.max_tokens = max_tokens
+        self.max_retries = max_retries
         self.top_p = top_p
         self.max_workers = max_workers
         self.timeout = timeout
@@ -83,26 +88,26 @@ class LiteLLMServing(LLMServingABC):
         # Validate model by making a test call
         self._validate_setup()
         
-        self.logger.info(f"LiteLLMServing initialized with model: {model}")
+        self.logger.info(f"LiteLLMServing initialized with model: {model_name}")
     
     def switch_model(self, 
-                     model: str,
+                     model_name: str,
                      key_name_of_api_key: Optional[str] = None,
-                     api_base: Optional[str] = None,
+                     api_url: Optional[str] = None,
                      api_version: Optional[str] = None,
                      **kwargs: Any):
         """
         Switch to a different model with potentially different API configuration.
         
         Args:
-            model: Model name to switch to
+            model_name: Model name to switch to
             key_name_of_api_key: New environment variable name for API key (optional)
-            api_base: New API base URL (optional)
+            api_url: New API base URL (optional)
             api_version: New API version (optional)
             **kwargs: Additional parameters for the new model
         """
         # Update model
-        self.model = model
+        self.model_name = model_name
         
         # Update API key if new environment variable provided
         if key_name_of_api_key is not None:
@@ -114,8 +119,8 @@ class LiteLLMServing(LLMServingABC):
             self.key_name_of_api_key = key_name_of_api_key
         
         # Update other API configuration if provided
-        if api_base is not None:
-            self.api_base = api_base
+        if api_url is not None:
+            self.api_url = api_url
         if api_version is not None:
             self.api_version = api_version
         
@@ -128,7 +133,7 @@ class LiteLLMServing(LLMServingABC):
         
         # Validate the new configuration
         self._validate_setup()
-        self.logger.success(f"Switched to model: {model}")
+        self.logger.success(f"Switched to model: {model_name}")
     
     def format_response(self, response: Dict[str, Any]) -> str:
         """
@@ -180,7 +185,7 @@ class LiteLLMServing(LLMServingABC):
         try:
             # Prepare completion parameters
             completion_params = {
-                "model": self.model,
+                "model": self.model_name,
                 "messages": [{"role": "user", "content": "Hi"}],
                 "max_tokens": 1,
                 "timeout": self.timeout
@@ -189,8 +194,8 @@ class LiteLLMServing(LLMServingABC):
             # Add optional parameters if provided
             if self.api_key:
                 completion_params["api_key"] = self.api_key
-            if self.api_base:
-                completion_params["api_base"] = self.api_base
+            if self.api_url:
+                completion_params["api_base"] = self.api_url
             if self.api_version:
                 completion_params["api_version"] = self.api_version
                 
@@ -201,13 +206,12 @@ class LiteLLMServing(LLMServingABC):
             self.logger.error(f"LiteLLM setup validation failed: {e}")
             raise ValueError(f"Failed to validate LiteLLM setup: {e}")
     
-    def _generate_single(self, user_input: str, system_prompt: str, retry_times: int = 3) -> str:
+    def _generate_single(self, user_input: str, system_prompt: str) -> str:
         """Generate response for a single input with retry logic.
         
         Args:
             user_input: User input text
             system_prompt: System prompt
-            retry_times: Number of retry attempts for transient errors
             
         Returns:
             Generated response string
@@ -222,7 +226,7 @@ class LiteLLMServing(LLMServingABC):
         
         # Prepare completion parameters
         completion_params = {
-            "model": self.model,
+            "model": self.model_name,
             "messages": messages,
             "temperature": self.temperature,
             "max_tokens": self.max_tokens,
@@ -234,13 +238,13 @@ class LiteLLMServing(LLMServingABC):
         # Add optional parameters if provided
         if self.api_key:
             completion_params["api_key"] = self.api_key
-        if self.api_base:
-            completion_params["api_base"] = self.api_base
+        if self.api_url:
+            completion_params["api_base"] = self.api_url
         if self.api_version:
             completion_params["api_version"] = self.api_version
         
         last_error = None
-        for attempt in range(retry_times):
+        for attempt in range(self.max_retries):
             try:
                 response = self._litellm.completion(**completion_params)
                 # Convert response to dict format for format_response
@@ -248,7 +252,7 @@ class LiteLLMServing(LLMServingABC):
                 return self.format_response(response_dict)
             except Exception as e:
                 last_error = e
-                if attempt < retry_times - 1:
+                if attempt < self.max_retries - 1:
                     # Check if error is retryable
                     error_str = str(e).lower()
                     if any(retryable in error_str for retryable in 
@@ -259,7 +263,7 @@ class LiteLLMServing(LLMServingABC):
                         continue
                     
                 # Non-retryable error or last attempt
-                self.logger.error(f"Error generating response (attempt {attempt + 1}/{retry_times}): {e}")
+                self.logger.error(f"Error generating response (attempt {attempt + 1}/{self.max_retries}): {e}")
                 break
         
         # Raise the last error instead of returning error string
@@ -333,22 +337,22 @@ class LiteLLMServing(LLMServingABC):
         
         # Prepare embedding parameters
         embedding_params = {
-            "model": self.model,
+            "model": self.model_name,
             "timeout": self.timeout
         }
         
         # Add optional parameters if provided
         if self.api_key:
             embedding_params["api_key"] = self.api_key
-        if self.api_base:
-            embedding_params["api_base"] = self.api_base
+        if self.api_url:
+            embedding_params["api_base"] = self.api_url
         if self.api_version:
             embedding_params["api_version"] = self.api_version
         
         # Process embeddings with retry logic
-        def embed_with_retry(text: str, retry_times: int = 3):
+        def embed_with_retry(text: str):
             last_error = None
-            for attempt in range(retry_times):
+            for attempt in range(self.max_retries):
                 try:
                     response = self._litellm.embedding(
                         input=[text],
@@ -357,7 +361,7 @@ class LiteLLMServing(LLMServingABC):
                     return response['data'][0]['embedding']
                 except Exception as e:
                     last_error = e
-                    if attempt < retry_times - 1:
+                    if attempt < self.max_retries - 1:
                         error_str = str(e).lower()
                         if any(retryable in error_str for retryable in 
                                ["rate limit", "timeout", "connection", "503", "502", "429"]):
@@ -365,7 +369,7 @@ class LiteLLMServing(LLMServingABC):
                             self.logger.warning(f"Retryable error in embedding, waiting {wait_time}s: {e}")
                             time.sleep(wait_time)
                             continue
-                    self.logger.error(f"Error generating embedding (attempt {attempt + 1}/{retry_times}): {e}")
+                    self.logger.error(f"Error generating embedding (attempt {attempt + 1}/{self.max_retries}): {e}")
                     break
             raise last_error
         

@@ -12,15 +12,21 @@ from dataflow.prompts.general_text import SFTFromScratchGeneratorPrompt
     SFTFromScratchGeneratorPrompt
 )
 
+
 @OPERATOR_REGISTRY.register()
 class RandomDomainKnowledgeRowGenerator(OperatorABC):
     def __init__(
     self, 
     llm_serving: LLMServingABC,  
-    prompt_template : SFTFromScratchGeneratorPrompt):
+    prompt_template : SFTFromScratchGeneratorPrompt,
+    generation_num : int,
+    domain_keys : str
+    ):
         self.logger = get_logger()
         self.llm_serving = llm_serving
         self.prompt_template = prompt_template
+        self.generation_num = generation_num
+        self.domain_keys = domain_keys
     
     @staticmethod
     def get_desc(lang: str = "zh"):
@@ -70,7 +76,7 @@ class RandomDomainKnowledgeRowGenerator(OperatorABC):
                 )
 
 
-    def run(self, storage: DataFlowStorage, output_key: str = "generated_content", generation_num: int = 1, domain_keys = ""):
+    def run(self, storage: DataFlowStorage, output_key: str = "generated_content"):
         """
         主流程：基于输入数据和提示词生成文本内容。
 
@@ -92,8 +98,8 @@ class RandomDomainKnowledgeRowGenerator(OperatorABC):
         llm_inputs = []
         
         # 按generation_num生成指定数量的输入
-        for i in range(generation_num):
-            llm_inputs.append(self.prompt_template.build_prompt(domain_keys))
+        for i in range(self.generation_num):
+            llm_inputs.append(self.prompt_template.build_prompt(self.domain_keys))
             
         try:
             self.logger.info("Generating text using the model...")

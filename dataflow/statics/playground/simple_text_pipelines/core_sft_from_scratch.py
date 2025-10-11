@@ -128,8 +128,7 @@ def GetSFTFromScratchScorerPrompt():
     Output format: single integer 1-5, no other text"""
     return system_prompt + "\n\n" + user_prompt
 
-
-#example domain_seed_keys
+#example seed domain_keys
 domain_keys = {
     "general_conversation": "General conversation and casual chatting",
     "knowledge_qa": "Knowledge-based question answering (history, science, culture, etc.)",
@@ -151,7 +150,6 @@ domain_keys = {
 }
 
 
-
 class CoreSftFromScratchPipeline:
     def __init__(self):
         self.storage = FileStorage(
@@ -171,7 +169,9 @@ class CoreSftFromScratchPipeline:
 
         self.generator = RandomDomainKnowledgeRowGenerator(
             llm_serving=llm_serving,
-            prompt_template=SFTFromScratchGeneratorPrompt()
+            prompt_template=SFTFromScratchGeneratorPrompt(),
+            generation_num=self.generated_samples_num // 2,
+            domain_keys=str(list(domain_keys.keys()))
         )
         self.rewriter = PromptedGenerator(
             llm_serving=llm_serving,
@@ -211,9 +211,7 @@ class CoreSftFromScratchPipeline:
         # 生成
         self.generator.run(
             storage=self.storage.step(),
-            generation_num=self.generated_samples_num // 2,
             output_key="raw_generation",
-            domain_keys=str(domain_keys.keys())
         )
         # 重写，丰富
         self.rewriter.run(
