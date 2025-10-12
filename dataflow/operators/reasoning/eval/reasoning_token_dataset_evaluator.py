@@ -47,8 +47,8 @@ class ReasoningTokenDatasetEvaluator(OperatorABC):
     
     def get_token_info(self, samples, input_question_key, input_answer_key, model_name_or_path):
         tokenizer = AutoTokenizer.from_pretrained(model_name_or_path)
-        questions = [sample.get(input_question_key, '') for sample in samples]
-        answers = [sample.get(input_answer_key, '') for sample in samples]
+        questions = [sample.get(input_question_key, '') or '' for sample in samples]
+        answers = [sample.get(input_answer_key, '') or '' for sample in samples]
 
         questions_tokens_length = [len(tokenizer.encode(question, add_special_tokens=False)) for question in questions]
         answers_tokens_length = [len(tokenizer.encode(answer, add_special_tokens=False)) for answer in answers]
