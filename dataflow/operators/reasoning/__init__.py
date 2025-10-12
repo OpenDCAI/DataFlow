@@ -20,7 +20,6 @@ if TYPE_CHECKING:
     # filter
     from .filter.reasoning_answer_formatter_filter import ReasoningAnswerFormatterFilter
     from .filter.reasoning_answer_groundtruth_filter import ReasoningAnswerGroundTruthFilter
-    from .filter.reasoning_answer_judge_mathverify_filter import ReasoningAnswerJudgeMathVerifyFilter
     from .filter.reasoning_answer_ngram_filter import ReasoningAnswerNgramFilter
     from .filter.reasoning_answer_pipeline_root_filter import ReasoningAnswerPipelineRootFilter
     from .filter.reasoning_answer_token_length_filter import ReasoningAnswerTokenLengthFilter
