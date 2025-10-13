@@ -5,7 +5,7 @@ from dataflow.utils.storage import FileStorage
 class GPT_generator():
     def __init__(self):
         self.storage = FileStorage(
-            first_entry_file_name= "../../dataflow/example/GeneralTextPipeline/translation.jsonl",
+            first_entry_file_name= "../example_data/GeneralTextPipeline/translation.jsonl",
             cache_path="./cache",
             file_name_prefix="translation",
             cache_type="jsonl",
@@ -13,23 +13,15 @@ class GPT_generator():
         self.model_cache_dir = './dataflow_cache'
         self.llm_serving = APILLMServing_request(
                 api_url="https://api.openai.com/v1/chat/completions",
-                model_name="gpt-5",
+                model_name="gpt-4o",
                 max_workers=10,
                 # custom_llm_provider="openai", # if your are using custom llm provider's api
         )
 
         self.prompt_generator = PromptedGenerator(
             llm_serving = self.llm_serving,
-            system_prompt = "Please translate to Chinese. Please answer in JSON format.",
-            json_schema={
-                "type": "object",
-                "properties": {
-                    "original": {"type": "string"},
-                    "translation": {"type": "string"}
-                },
-                "required": ["original", "translation"],
-                "additionalProperties": False,
-            },
+            system_prompt = "Please translate to Chinese.",
+
         )        
 
     def forward(self):

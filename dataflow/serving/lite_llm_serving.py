@@ -21,6 +21,9 @@ class LiteLLMServing(LLMServingABC):
     def start_serving(self) -> None:
         self.logger.info("LiteLLMServing: no local service to start.")
         return
+    def start_serving(self) -> None:
+        self.logger.info("LiteLLMServing: no local service to start.")
+        return
     
     def __init__(self, 
                  api_url: str = "https://api.openai.com/v1/chat/completions",
@@ -33,6 +36,7 @@ class LiteLLMServing(LLMServingABC):
                  max_tokens: int = 1024,
                  top_p: float = 1.0,
                  timeout: int = 60,
+                 custom_llm_provider: str = None,
                  **kwargs: Any):
         """
         Initialize LiteLLM serving instance.
@@ -43,11 +47,20 @@ class LiteLLMServing(LLMServingABC):
             model_name: Model name (e.g., "gpt-4o", "claude-3-sonnet", "command-r-plus")
             max_workers: Number of concurrent workers for batch processing
             max_retries: Number of LLM inference retry chances for each input
+            api_url: Custom API base URL
+            key_name_of_api_key: Environment variable name for API key (default: "DF_API_KEY")
+            model_name: Model name (e.g., "gpt-4o", "claude-3-sonnet", "command-r-plus")
+            max_workers: Number of concurrent workers for batch processing
+            max_retries: Number of LLM inference retry chances for each input
             api_version: API version for providers that support it
             temperature: Sampling temperature
             max_tokens: Maximum tokens to generate
             top_p: Top-p sampling parameter
             timeout: Request timeout in seconds
+            custom_llm_provider: 
+                Optional custom provider name registered in LiteLLM for routing requests to 
+                non-default backends (e.g., self-hosted OpenAI-compatible APIs or private endpoints).  
+                Example: `"my_local_llm"` or `"company-internal-provider"`.
             **kwargs: Additional parameters passed to litellm.completion()
             
         Note:
@@ -84,7 +97,8 @@ class LiteLLMServing(LLMServingABC):
             self.logger.error(error_msg)
             raise ValueError(error_msg)
         self.key_name_of_api_key = key_name_of_api_key
-        
+        if custom_llm_provider is not None:
+            self.custom_llm_provider = custom_llm_provider
         # Validate model by making a test call
         self._validate_setup()
         
@@ -198,7 +212,8 @@ class LiteLLMServing(LLMServingABC):
                 completion_params["api_base"] = self.api_url
             if self.api_version:
                 completion_params["api_version"] = self.api_version
-                
+            if hasattr(self, "custom_llm_provider"):
+                completion_params["custom_llm_provider"] = self.custom_llm_provider
             # Make a minimal test call to validate setup
             response = self._litellm.completion(**completion_params)
             self.logger.success("LiteLLM setup validation successful")
@@ -206,7 +221,7 @@ class LiteLLMServing(LLMServingABC):
             self.logger.error(f"LiteLLM setup validation failed: {e}")
             raise ValueError(f"Failed to validate LiteLLM setup: {e}")
     
-    def _generate_single(self, user_input: str, system_prompt: str) -> str:
+    def _generate_single(self, user_input: str, system_prompt: str, json_schema: dict = None) -> str:
         """Generate response for a single input with retry logic.
         
         Args:
@@ -242,7 +257,19 @@ class LiteLLMServing(LLMServingABC):
             completion_params["api_base"] = self.api_url
         if self.api_version:
             completion_params["api_version"] = self.api_version
+        if json_schema is not None:
+            completion_params["response_format"] = {
+                "type": "json_schema",
+                "json_schema": {
+                    "name": "structural_response",
+                    "strict": True,
+                    "schema": json_schema
+                }
+            }
         
+        if hasattr(self, "custom_llm_provider"):
+            completion_params["custom_llm_provider"] = self.custom_llm_provider
+
         last_error = None
         for attempt in range(self.max_retries):
             try:
@@ -271,7 +298,9 @@ class LiteLLMServing(LLMServingABC):
     
     def generate_from_input(self, 
                           user_inputs: List[str], 
-                          system_prompt: str = "You are a helpful assistant") -> List[str]:
+                          system_prompt: str = "You are a helpful assistant",
+                          json_schema: dict = None,
+                          ) -> List[str]:
         """
         Generate responses for a list of inputs using concurrent processing.
         
@@ -288,7 +317,7 @@ class LiteLLMServing(LLMServingABC):
         # Single input case
         if len(user_inputs) == 1:
             try:
-                return [self._generate_single(user_inputs[0], system_prompt)]
+                return [self._generate_single(user_inputs[0], system_prompt, json_schema)]
             except Exception as e:
                 # For consistency with batch processing, return error message in list
                 error_msg = f"Error: {str(e)}"
@@ -300,7 +329,7 @@ class LiteLLMServing(LLMServingABC):
         
         def generate_with_index(idx: int, user_input: str) -> Tuple[int, str]:
             try:
-                response = self._generate_single(user_input, system_prompt)
+                response = self._generate_single(user_input, system_prompt,json_schema)
                 return idx, response
             except Exception as e:
                 # For batch processing, return error message to maintain list structure
