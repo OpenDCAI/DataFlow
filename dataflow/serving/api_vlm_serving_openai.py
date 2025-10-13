@@ -17,6 +17,9 @@ class APIVLMServing_openai(LLMServingABC):
     Provides methods for single-image chat, batch image processing, and multi-image analysis,
     with support for concurrent requests.
     """
+    def start_serving(self) -> None:
+        self.logger.info("APIVLMServing_opneai: no local service to start.")
+        return
 
     def __init__(
         self,
