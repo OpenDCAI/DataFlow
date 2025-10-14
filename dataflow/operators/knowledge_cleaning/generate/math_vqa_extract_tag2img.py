@@ -10,7 +10,7 @@ from dataflow import get_logger
 from dataflow.core import OperatorABC
 
 class MathVQAExtractTag2Img(OperatorABC):
-    def __init__(self, layout_json_dir, pdf_image_dir, output_image_dir):
+    def __init__(self, layout_json_dir, pdf_image_dir, output_image_dir, layout_prefix='doclay_page_', image_prefix='page_'):
         """
         初始化处理器。
 
@@ -22,6 +22,8 @@ class MathVQAExtractTag2Img(OperatorABC):
         self.layout_json_dir = layout_json_dir
         self.pdf_image_dir = pdf_image_dir
         self.output_image_dir = output_image_dir
+        self.layout_prefix = layout_prefix  # 用于处理布局JSON文件的前缀
+        self.image_prefix = image_prefix    # 用于处理PDF图片文件的前缀
         
         self.image_counter = 0  # 用于生成唯一的图片文件名
         self.bbox_cache = {}    # 缓存已加载的JSON数据，避免重复读取文件
@@ -42,7 +44,7 @@ class MathVQAExtractTag2Img(OperatorABC):
         Returns:
             list or None: 边界框坐标 [x1, y1, x2, y2]，如果未找到则返回 None。
         """
-        json_filename = f"doclay_page_{page_num}.json"
+        json_filename = f"{self.layout_prefix}{page_num}.json"
         
         # 检查缓存
         if json_filename not in self.bbox_cache:
@@ -89,7 +91,7 @@ class MathVQAExtractTag2Img(OperatorABC):
             return original_tag
 
         # 2. 定位并读取原始图片
-        original_image_path = os.path.join(self.pdf_image_dir, f"page_{page_num}.jpg")
+        original_image_path = os.path.join(self.pdf_image_dir, f"{self.image_prefix}{page_num}.jpg")
         if not os.path.exists(original_image_path):
             self.logger.warning(f"原始图片文件未找到: {original_image_path}。将保持原样。")
             return original_tag
@@ -172,6 +174,8 @@ class MathVQAExtractTag2Img(OperatorABC):
                 for line in tqdm(f_in, desc="处理QA数据"):
                     try:
                         qa_item = json.loads(line)
+                        if 'question' in qa_item and isinstance(qa_item['question'], str):
+                            qa_item['question'] = self.process_text(qa_item['question'])
                         if 'answer' in qa_item and isinstance(qa_item['answer'], str):
                             qa_item['answer'] = self.process_text(qa_item['answer'])
                         processed_qas.append(qa_item)

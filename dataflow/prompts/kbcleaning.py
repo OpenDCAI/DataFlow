@@ -223,18 +223,17 @@ class MathVQAExtractPrompt(PromptABC):
     def __init__(self):
         pass
 
-    def build_prompt(self):
-        PROMPT = """You are given two images—page_n and page_n+1—each annotated with detected bounding boxes and corresponding labels (for the last page, there is no page_n+1). Your task is to extract from page_n only:
-1. All mathematical problems whose text begins on page_n.
-2. The answers to those problems, if they appear on page_n.
-3. The chapter information (main titles and subtitles) as it appears on page_n.
-4. The exact value of n is in the label of the image; when you output, you should use that value of n.
+    def build_prompt(self, subject: str = "math") -> str:
+        PROMPT = f"""
+        You are an expert in {subject} competition. You are given an image—page_n—annotated with detected bounding boxes and corresponding labels. Your task is to extract from page_n only:
+1. All {subject} problems whose text begins on page_n and the answers to those problems.
+2. If the problem or answer is not complete (because they continue onto page_n+1), omit them. If the problem is complete but the answer not, omit both the problem and the answer. DO NOT INCLUDE INCOMPLETE PROBLEMS OR ANSWERS.
+3. Normally, a box at the beginning of a page with no title (such as "1.1", "例 1", "example 1", "解", "solution", "答案", "answer") is the continuation of the problem or answer from the previous page, even if it appears to be an independent paragraph. Omit them.
+4. The chapter information (main titles and subtitles) as it appears on page_n.
+5. The exact value of n is in the label of the image (provided in text); when you output, you should use that value of n. DO **NOT** USE PAGE NUMBERS IN THE IMAGES AS n.
 
 Strict extraction rules:
 - If you think the page is not the main text page, such as a cover page, catalog page, header/footer only, etc., output `<empty></empty>`.
-- Extract a problem only if its first words appear on page_n.
-- Do not extract any problem or answer that begins exclusively on page_n+1.
-- Do not extract any problem or answer that began on page_n–1, even if it continues onto page_n.
 - Preserve each problem’s original label/number. If an answer box appears directly below its question, infer that it shares the same label.
 - If a question and its answer/proof are contiguous on page_n, wrap them together as a single `<qa_pair>`…`</qa_pair>` block, e.g.:
   `<qa_pair><label>例1</label><question>…</question><answer>…</answer></qa_pair>`
@@ -257,7 +256,7 @@ Example (for page_1 & page_2):
 <title>Chapter 2</title>
 <title>Section 2.1</title>
 
-Please now process the provided page_n and page_n+1 images and output your result.
+Please now process the provided page_n image and output your result.
 """
         return PROMPT
 

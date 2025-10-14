@@ -23,16 +23,13 @@ class MathVQAExtractPicExtractor(OperatorABC):
         list_of_image_paths = []
         list_of_image_labels = []
         labels = ["page_" + image_file.split("_")[-1].split(".")[0] for image_file in image_files]
-        for index in range(len(image_files) - 1):
-            list_of_image_paths.append([image_files[index], image_files[index + 1]])
-            list_of_image_labels.append([labels[index], labels[index + 1]])
-        # 对于最后一页,没有下一页，单独插入
-        list_of_image_paths.append([image_files[-1]])
-        list_of_image_labels.append([labels[-1]])
+        for index in range(len(image_files)):
+            list_of_image_paths.append([image_files[index]])
+            list_of_image_labels.append([labels[index]])
         return list_of_image_paths, list_of_image_labels
 
 
-    def run(self, input_layout_path: str, output_folder: str):
+    def run(self, input_layout_path: str, output_folder: str, subject: str = "math"):
         # 从layout_path/images中读取所有图片的文件名,确保为绝对路径
         image_files = [os.path.join(input_layout_path, "images", image_file) for image_file in os.listdir(os.path.join(input_layout_path, "images"))]
         # 确保end with jpg & png
@@ -44,14 +41,14 @@ class MathVQAExtractPicExtractor(OperatorABC):
         image_files.sort(key=filename2idx)
 
         list_of_image_paths, list_of_image_labels = self._format_instructions(image_files)
-        system_prompt = self.prompt.build_prompt()
+        system_prompt = self.prompt.build_prompt(subject)
 
         responses = self.llm_serving.generate_from_input_multi_images(list_of_image_paths, list_of_image_labels, system_prompt, self.model)
 
         # 将list of image paths和list of image labels和repsonses作为三列组织为jsonl
         list_of_dict = []
-        for image_path, image_label, response in zip(list_of_image_paths, list_of_image_labels, responses):
-            list_of_dict.append({"image_path": image_path, "image_label": image_label, "response": response})
+        for id, (image_path, image_label, response) in enumerate(zip(list_of_image_paths, list_of_image_labels, responses)):
+            list_of_dict.append({"id": id, "image_path": image_path, "image_label": image_label, "response": response})
         df = pd.DataFrame(list_of_dict)
 
         # 将df保存为jsonl文件

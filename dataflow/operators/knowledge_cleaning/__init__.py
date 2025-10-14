@@ -16,6 +16,7 @@ if TYPE_CHECKING:
     from .generate.math_vqa_extract_pic_extractor import MathVQAExtractPicExtractor
     from .generate.math_vqa_extract_qapair_extractor import MathVQAExtractQAPairExtractor
     from .generate.math_vqa_extract_tag2img import MathVQAExtractTag2Img
+    from .generate.math_vqa_img_helper import MathVQAClipHeader, MathVQAConcatenateImages
 
 
 else:
