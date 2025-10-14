@@ -47,8 +47,8 @@ class MathVQAExtractPicExtractor(OperatorABC):
 
         # 将list of image paths和list of image labels和repsonses作为三列组织为jsonl
         list_of_dict = []
-        for id, (image_path, image_label, response) in enumerate(zip(list_of_image_paths, list_of_image_labels, responses)):
-            list_of_dict.append({"id": id, "image_path": image_path, "image_label": image_label, "response": response})
+        for page, (image_path, image_label, response) in enumerate(zip(list_of_image_paths, list_of_image_labels, responses)):
+            list_of_dict.append({"page": page, "image_path": image_path, "image_label": image_label, "response": response})
         df = pd.DataFrame(list_of_dict)
 
         # 将df保存为jsonl文件

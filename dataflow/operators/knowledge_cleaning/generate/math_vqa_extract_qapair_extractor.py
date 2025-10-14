@@ -8,7 +8,7 @@ class MathVQAExtractQAPairExtractor(OperatorABC):
     def __init__(self):
         self.logger = get_logger()
     
-    def extract_qa_pairs_from_text(self, id: int, text: str):
+    def extract_qa_pairs_from_text(self, page: int, text: str):
         """
         从一段 response 文本中提取所有 <qa_pair>…</qa_pair>
         并返回 [{'question': ..., 'answer': ...}, …]
@@ -25,7 +25,7 @@ class MathVQAExtractQAPairExtractor(OperatorABC):
             question = q_match.group(1).strip()
             answer = a_match.group(1).strip()
             qa_list.append({
-                'id': id,
+                'page': page,
                 'question': question,
                 'answer': answer
             })
@@ -36,13 +36,13 @@ class MathVQAExtractQAPairExtractor(OperatorABC):
         # 从vqa_extract_path中读取jsonl文件
         df = pd.read_json(input_vqa_extract_path, lines=True)
 
-        items = df[['id', 'response']].to_dict(orient='records')
+        items = df[['page', 'response']].to_dict(orient='records')
         responses = [item['response'] for item in items]
-        ids = [item['id'] for item in items]
+        pages = [item['page'] for item in items]
 
         qa_pairs = []
-        for id, response in zip(ids, responses):
-            qa_pairs.extend(self.extract_qa_pairs_from_text(id, response))
+        for page, response in zip(pages, responses):
+            qa_pairs.extend(self.extract_qa_pairs_from_text(page, response))
 
         # 将qa_pairs保存为jsonl文件
         df = pd.DataFrame(qa_pairs)
