@@ -15,6 +15,9 @@
 <!--[![](https://img.shields.io/github/issues-raw/OpenDCAI/DataFlow)](https://github.com/OpenDCAI/DataFlow/issues) -->
 🎉 If you like our project, please give us a star ⭐ on GitHub for the latest update.
 
+**Beginner-friendly learning resources (continuously updated)**: 🎬 [DataFlow Video Tutorials](https://space.bilibili.com/3546929239689711?spm_id_from=333.337.0.0); 📚 [DataFlow Written Tutorials](https://wcny4qa9krto.feishu.cn/wiki/I9tbw2qnBi0lEakmmAGclTysnFd)
+
+
 [简体中文](./README-zh.md) | English
 
 
