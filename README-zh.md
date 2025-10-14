@@ -14,6 +14,9 @@
 
 🎉 如果你认可我们的项目，欢迎在 GitHub 上点个 ⭐ Star，关注项目最新进展。
 
+**新手友好的学习资源（持续更新中）**：🎬  [DataFlow 视频教程](https://space.bilibili.com/3546929239689711?spm_id_from=333.337.0.0)；📚 [DataFlow 图文教程](https://wcny4qa9krto.feishu.cn/wiki/I9tbw2qnBi0lEakmmAGclTysnFd)
+
+
 简体中文 | [English](./README.md)
 
 </div>
