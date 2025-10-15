@@ -215,10 +215,28 @@ ADP是OriginHub推出的智能数据平台，具备四大核心能力：DataFlow
 <img src="./static/logo/baichuan.png" alt="Baichuan" height="30"/> 
 <img src="./static/logo/ant_group.png" alt="Ant Group" height="30"/>
 
-## 💐 8. 致谢
+
+## 🏆 8. 获奖与荣誉
+
+我们荣获了两项国际顶级人工智能竞赛的**第一名**，展示了 DataFlow 系统在数据智能与推理任务中的卓越性能与创新性：
+
+| 比赛名称                                                              | 赛道                | 奖项         | 主办方                                       | 时间         |
+| ----------------------------------------------------------------- | ----------------- | ---------- | ----------------------------------------- | ---------- |
+| **ICML 2025 自动化数学推理挑战赛（Automated Math Reasoning and Extensions）** | 赛道二：基于图表与表达式的物理推理 | 🥇 **第一名** | ICML AI for Math Workshop & AWS Codabench | 2025年7月18日 |
+| **2025 智源语言与智能技术竞赛（LIC）**                                         | 赛道二：智源研究院赛道       | 🥇 **一等奖** | 智源研究院 & 百度                                | 2025年8月10日 |
+
+<div align="center">
+  <img src="./static/images/icml_certificate.jpg" width="60%" alt="ICML 2025 证书"><br>
+  <sub><em>ICML 2025 自动化数学推理挑战赛一等奖</em></sub>
+  <br><br>
+  <img src="./static/images/lic_certificate.jpg" width="55%" alt="LIC 2025 证书"><br>
+  <sub><em>智源语言与智能技术竞赛一等奖</em></sub>
+</div>
+
+## 💐 9. 致谢
 我们衷心感谢 [MinerU](https://github.com/opendatalab/MinerU) 的卓越工作，其强大的 PDF/文档文本提取功能为数据加载提供了关键支持。
 
-## 🤝 9. 社区与支持
+## 🤝 10. 社区与支持
 
 欢迎加入 DataFlow 开源社区，提出问题、分享想法、与其他开发者一起共建项目！
 
@@ -232,7 +250,7 @@ ADP是OriginHub推出的智能数据平台，具备四大核心能力：DataFlow
   <img src="./static/images/community_ch.jpg" width="60%">
 </div>
 
-## 📜 10. 引用
+## 📜 11. 引用
 
 如果 DataFlow 对你的研究或项目有帮助，欢迎引用支持我们：
 
@@ -246,7 +264,7 @@ ADP是OriginHub推出的智能数据平台，具备四大核心能力：DataFlow
 }
 ```
 
-## 📊 11. 统计信息
+## 📊 12. 统计信息
 <div align="center">
   <a href="https://star-history.com/#OpenDCAI/DataFlow&Date">
     <picture>

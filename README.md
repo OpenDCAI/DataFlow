@@ -229,10 +229,27 @@ Our team has published the following papers that form core components of the Dat
 <img src="./static/logo/baichuan.png" alt="Baichuan" height="30"/> 
 <img src="./static/logo/ant_group.png" alt="Ant Group" height="30"/>
 
-## 💐 8. Acknowledgements
+## 🏆 8. Awards & Achievements
+
+We are honored to have received **first-place awards** in two major international AI competitions, recognizing the excellence and robustness of DataFlow and its reasoning capabilities:
+
+| Competition                                                         | Track                                                      | Award                     | Organizer                                                 | Date            |
+| ------------------------------------------------------------------- | ---------------------------------------------------------- | ------------------------- | --------------------------------------------------------- | --------------- |
+| **ICML 2025 Challenges on Automated Math Reasoning and Extensions** | Track 2: *Physics Reasoning with Diagrams and Expressions* | 🥇 **First Place Winner** | ICML AI for Math Workshop & AWS Codabench                 | July 18, 2025   |
+| **2025 Language and Intelligence Challenge (LIC)**                  | Track 2: *Beijing Academy of Artificial Intelligence*      | 🥇 **First Prize**        | Beijing Academy of Artificial Intelligence (BAAI) & Baidu | August 10, 2025 |
+
+<div align="center">
+  <img src="./static/images/icml_certificate.jpg" width="60%" alt="ICML 2025 Certificate"><br>
+  <sub><em>ICML 2025 Automated Math Reasoning Challenge — First Place Winner</em></sub>
+  <br><br>
+  <img src="./static/images/lic_certificate.jpg" width="55%" alt="LIC 2025 Certificate"><br>
+  <sub><em>BAAI Language & Intelligence Challenge 2025 — First Prize</em></sub>
+</div>
+
+## 💐 9. Acknowledgements
 We sincerely appreciate [MinerU](https://github.com/opendatalab/MinerU)'s outstanding contribution, particularly its robust text extraction capabilities from PDFs and documents, which greatly facilitates data loading.
 
-## 🤝 9. Community & Support
+## 🤝 10. Community & Support
 Join the DataFlow open-source community to ask questions, share ideas, and collaborate with other developers!
 
 •	📮 [GitHub Issues](../../issues): Report bugs or suggest features
@@ -245,7 +262,7 @@ Join the DataFlow open-source community to ask questions, share ideas, and colla
   <img src="./static/images/community_en.jpg" width="60%">
 </div>
 
-## 📜 10. Citation
+## 📜 11. Citation
 If you use DataFlow in your research, feel free to give us a cite.
 ```bibtex
 @misc{dataflow2025,
@@ -257,7 +274,7 @@ If you use DataFlow in your research, feel free to give us a cite.
 }
 ```
 
-## 📊 11. Statistics
+## 📊 12. Statistics
 <div align="center">
   <a href="https://star-history.com/#OpenDCAI/DataFlow&Date">
     <picture>
