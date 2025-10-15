@@ -10,6 +10,8 @@ from .localmodel_lalm_serving import LocalModelLALMServing_vllm
 
 from .LocalSentenceLLMServing import LocalEmbeddingServing
 
+from .light_rag_serving import LightRAGServing
+
 __all__ = [
     "APILLMServing_request",
     "LocalModelLLMServing_vllm",
@@ -17,6 +19,7 @@ __all__ = [
     "APIVLMServing_openai",
     "PerspectiveAPIServing",
     "LiteLLMServing",
-    "LocalModelLALMServing_vllm"
-    "LocalHostLLMAPIServing_vllm"
+    "LocalModelLALMServing_vllm",
+    "LocalHostLLMAPIServing_vllm",
+    "LightRAGServing"
 ]

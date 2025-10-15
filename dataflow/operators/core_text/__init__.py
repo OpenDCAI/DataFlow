@@ -6,6 +6,7 @@ if TYPE_CHECKING:
     from .generate.random_domain_knowledge_row_generator import RandomDomainKnowledgeRowGenerator   
     from .generate.text2qa_generator import Text2QAGenerator
     from .generate.text2multihopqa_generator import Text2MultiHopQAGenerator
+    from .generate.retrieval_generator import RetrievalGenerator
     from .eval.bench_dataset_evaluator import BenchDatasetEvaluator
     from .eval.text2qa_sample_evaluator import Text2QASampleEvaluator
     from .eval.prompted_eval import PromptedEvaluator
