@@ -57,6 +57,17 @@ def modified_draw_bbox_with_number(i, bbox_list, page, c, rgb_config, fill_confi
         c.restoreState()
 
     return c
+
+def modified_draw_bbox_without_number(i, bbox_list, page, c, rgb_config, fill_config):
+    new_rgb = [float(color) / 255 for color in rgb_config]
+    page_data = bbox_list[i]
+
+    for bbox in page_data:
+        rect = cal_canvas_rect(page, bbox)  # Define the rectangle  
+
+        c.setStrokeColorRGB(new_rgb[0], new_rgb[1], new_rgb[2])
+        c.rect(rect[0], rect[1], rect[2], rect[3], stroke=1, fill=0)
+    return c
         
 @OPERATOR_REGISTRY.register()
 class VQAExtractDocLayoutMinerU(OperatorABC):
@@ -69,6 +80,7 @@ class VQAExtractDocLayoutMinerU(OperatorABC):
         try:
             import mineru
             mineru.utils.draw_bbox.draw_bbox_with_number = modified_draw_bbox_with_number   # 修改画图逻辑
+            mineru.utils.draw_bbox.draw_bbox_without_number = modified_draw_bbox_without_number   # 修改画图逻辑
             from mineru.cli.client import main as mineru_main
         except ImportError:
             raise Exception(
@@ -105,6 +117,6 @@ class VQAExtractDocLayoutMinerU(OperatorABC):
             if e.code != 0:
                 raise RuntimeError(f"MinerU execution failed with exit code: {e.code}")
 
-        output_json_file = os.path.join(intermediate_dir, pdf_name, MinerU_Version[mineru_backend], f"{pdf_name}_model.json")
+        output_json_file = os.path.join(intermediate_dir, pdf_name, MinerU_Version[mineru_backend], f"{pdf_name}_content_list.json")
         output_layout_file = os.path.join(intermediate_dir, pdf_name, MinerU_Version[mineru_backend], f"{pdf_name}_layout.pdf")
         return output_json_file, output_layout_file

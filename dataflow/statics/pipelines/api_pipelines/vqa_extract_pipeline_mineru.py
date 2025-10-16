@@ -62,7 +62,7 @@ class VQA_deduplicate:
         self.deduplicate.run(self.storage.step(), input_keys=["question", "answer"])
 
 if __name__ == "__main__":
-    vqa_extract = VQA_extract("./dataflow/example/KBCleaningPipeline/questionextract_test.pdf", subject="math")
+    vqa_extract = VQA_extract("./dataflow/example/KBCleaningPipeline/physics_test.pdf", subject="physics")
     vqa_extract.run()
     
     # 将jsonl文件先倒转过来 (因为有时候最后的答案是完整的，而前面的不完整)

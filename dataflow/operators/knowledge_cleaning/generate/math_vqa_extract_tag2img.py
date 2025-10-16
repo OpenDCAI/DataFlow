@@ -59,16 +59,28 @@ class MathVQAExtractTag2Img(OperatorABC):
                 self.logger.error(f"读取或解析JSON文件失败: {json_path}, 错误: {e}")
                 return None
 
-        layout_data = self.bbox_cache[json_filename][int(page_num)]
-        
-        # 在detections中查找figure_id
-        i = -1
-        for detection in layout_data:
-            if detection.get("type") not in ["header", "footer", "page_number", "page_annotation"]:
-                i += 1
-            # class_name 也可以是 'figure'，id 可能是 'figure1', 'figure2' 等
-            if i == int(figure_id):
-                return detection.get("bbox")
+        try:
+            layout_data = self.bbox_cache[json_filename]
+            
+            # 在detections中查找figure_id
+            i = -1
+            for detection in layout_data:
+                if detection.get("page_idx") == int(page_num) and detection.get("type") in ["text", "ref_text", "title", "equation", "list", "index", "image", "table", "code"]:
+                    i += 1
+                # class_name 也可以是 'figure'，id 可能是 'figure1', 'figure2' 等
+                    if i == int(figure_id):
+                        return detection.get("bbox")
+                    if detection.get("type") == "image":
+                        i += len(detection.get("image_caption", []))
+                        i += len(detection.get("image_footnote", []))
+                    elif detection.get("type") == "table":
+                        i += len(detection.get("table_caption", []))
+                        i += len(detection.get("table_footnote", []))
+                    elif detection.get("type") == "code":
+                        i += len(detection.get("code_caption", []))
+        except (IndexError, ValueError, KeyError) as e:
+            self.logger.error(f"处理布局数据时出错: {e}")
+            return None
         
         self.logger.warning(f"在 {json_filename} 中未找到 ID 为 '{figure_id}' 的检测框。")
         return None
@@ -108,7 +120,7 @@ class MathVQAExtractTag2Img(OperatorABC):
         # 3. 裁剪图片
         x1, y1, x2, y2 = bbox
         h, w = img.shape[:2]
-        cropped_img = img[int(y1*h):int(y2*h), int(x1*w):int(x2*w)]
+        cropped_img = img[int(y1*h/1000):int(y2*h/1000), int(x1*w/1000):int(x2*w/1000)]
         
         if cropped_img.size == 0:
             self.logger.warning(f"裁剪出的图片为空 (bbox: {bbox})，来自: {original_image_path}。")
