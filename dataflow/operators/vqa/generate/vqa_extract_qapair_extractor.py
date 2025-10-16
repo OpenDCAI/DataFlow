@@ -5,7 +5,7 @@ import pandas as pd
 import re
 
 @OPERATOR_REGISTRY.register()
-class MathVQAExtractQAPairExtractor(OperatorABC):
+class VQAExtractQAPairExtractor(OperatorABC):
     def __init__(self):
         self.logger = get_logger()
     

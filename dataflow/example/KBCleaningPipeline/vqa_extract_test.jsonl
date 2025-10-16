@@ -1,0 +1,2 @@
+{"pdf_path": "./dataflow/example/KBCleaningPipeline/questionextract_test.pdf", "subject": "math", "output_dir": "../vqa_output_math"}
+{"pdf_path": "./dataflow/example/KBCleaningPipeline/physics_test.pdf", "subject": "physics", "output_dir": "../vqa_output_physics"}

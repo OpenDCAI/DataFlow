@@ -6,7 +6,7 @@ from dataflow.utils.registry import OPERATOR_REGISTRY
 from dataflow import get_logger
 
 @OPERATOR_REGISTRY.register()
-class MathVQAClipHeader(OperatorABC):
+class VQAClipHeader(OperatorABC):
     def __init__(self):
         self.logger = get_logger()
     def run(self, storage, input_image_path: str, input_layout_path:str, output_image_folder: str, input_layout_prefix: str = 'doclay'):
@@ -42,7 +42,7 @@ class MathVQAClipHeader(OperatorABC):
             self.logger.info(f"Cropped image saved to {output_image_path}")
             
 @OPERATOR_REGISTRY.register()
-class MathVQAConcatenateImages(OperatorABC):
+class VQAConcatenateImages(OperatorABC):
     def __init__(self):
         self.logger = get_logger()
     def run(self, storage, input_image_folder: str, output_image_folder: str):
@@ -76,14 +76,14 @@ class MathVQAConcatenateImages(OperatorABC):
             self.logger.info(f"Concatenated image saved to {output_image_path}")
             
 if __name__ == "__main__":
-    operator = MathVQAClipHeader()
+    operator = VQAClipHeader()
     operator.run(
         input_image_path='../vqa/pdf_images',
         input_layout_path='../vqa/layout_images/json',
         output_image_folder='../vqa/cropped_images'
     )
     
-    operator = MathVQAConcatenateImages()
+    operator = VQAConcatenateImages()
     operator.run(
         input_image_folder='../vqa/cropped_images',
         output_image_folder='../vqa/concatenated_images'

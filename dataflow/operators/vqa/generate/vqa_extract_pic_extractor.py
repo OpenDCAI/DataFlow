@@ -4,15 +4,15 @@ from dataflow.core import OperatorABC
 from dataflow.core import LLMServingABC
 import pandas as pd
 import random
-from dataflow.prompts.kbcleaning import MathVQAExtractPrompt
+from dataflow.prompts.vqa import VQAExtractPrompt
 import os
 from typing import List
 
 from dataflow.core.prompt import prompt_restrict 
 
-@prompt_restrict(MathVQAExtractPrompt)
+@prompt_restrict(VQAExtractPrompt)
 @OPERATOR_REGISTRY.register()
-class MathVQAExtractPicExtractor(OperatorABC):
+class VQAExtractPicExtractor(OperatorABC):
     def __init__(self,
                 llm_serving: LLMServingABC = None,
                 model: str = "o4-mini",
@@ -20,7 +20,7 @@ class MathVQAExtractPicExtractor(OperatorABC):
                 ):
         self.logger = get_logger()
         self.llm_serving = llm_serving
-        self.prompt = MathVQAExtractPrompt()
+        self.prompt = VQAExtractPrompt()
         self.model = model
         self.subject = subject
 

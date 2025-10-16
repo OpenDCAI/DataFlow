@@ -5,7 +5,7 @@ from dataflow.utils.registry import OPERATOR_REGISTRY
 from dataflow import get_logger
 
 @OPERATOR_REGISTRY.register()
-class MathVQAExtractPdf2Img(OperatorABC):
+class VQAExtractPdf2Img(OperatorABC):
     def __init__(self, dpi: int = 300):
         self.logger = get_logger()
         self.dpi = dpi

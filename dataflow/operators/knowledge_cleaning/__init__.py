@@ -10,14 +10,6 @@ if TYPE_CHECKING:
     from .generate.kbc_text_cleaner_batch import KBCTextCleanerBatch
     # from .generate.mathbook_question_extract import MathBookQuestionExtract
     # from .generate.kbc_multihop_qa_generator import KBCMultiHopQAGenerator
-    from .generate.kbc_multihop_qa_generator_batch import KBCMultiHopQAGeneratorBatch
-    from .generate.math_vqa_extract_pdf2img import MathVQAExtractPdf2Img
-    from .generate.math_vqa_extract_doclayout import VQAExtractDocLayoutMinerU
-    from .generate.math_vqa_extract_pic_extractor import MathVQAExtractPicExtractor
-    from .generate.math_vqa_extract_qapair_extractor import MathVQAExtractQAPairExtractor
-    from .generate.math_vqa_extract_tag2img import MathVQAExtractTag2Img
-    from .generate.math_vqa_img_helper import MathVQAClipHeader, MathVQAConcatenateImages
-
 
 else:
     import sys
