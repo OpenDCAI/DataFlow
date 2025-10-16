@@ -226,11 +226,20 @@ ADP是OriginHub推出的智能数据平台，具备四大核心能力：DataFlow
 | **2025 智源语言与智能技术竞赛（LIC）**                                         | 赛道二：智源研究院赛道       | 🥇 **一等奖** | 智源研究院 & 百度                                | 2025年8月10日 |
 
 <div align="center">
-  <img src="./static/images/icml_certificate.jpg" width="60%" alt="ICML 2025 证书"><br>
-  <sub><em>ICML 2025 自动化数学推理挑战赛一等奖</em></sub>
-  <br><br>
-  <img src="./static/images/lic_certificate.jpg" width="55%" alt="LIC 2025 证书"><br>
-  <sub><em>智源语言与智能技术竞赛一等奖</em></sub>
+
+<table>
+  <tr>
+    <td align="center" width="50%">
+      <img src="./static/images/icml_certificate.jpg" alt="ICML 2025 Certificate" width="95%"><br>
+      <sub><em>ICML 2025 Automated Math Reasoning Challenge — First Place Winner</em></sub>
+    </td>
+    <td align="center" width="30%">
+      <img src="./static/images/lic_certificate.jpg" alt="LIC 2025 Certificate" width="95%"><br>
+      <sub><em>BAAI Language & Intelligence Challenge 2025 — First Prize</em></sub>
+    </td>
+  </tr>
+</table>
+
 </div>
 
 ## 💐 9. 致谢
