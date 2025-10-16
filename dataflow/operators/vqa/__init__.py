@@ -1,7 +1,6 @@
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from .generate.kbc_multihop_qa_generator_batch import KBCMultiHopQAGeneratorBatch
     from .generate.vqa_extract_pdf2img import VQAExtractPdf2Img
     from .generate.vqa_extract_doclayout import VQAExtractDocLayoutMinerU
     from .generate.vqa_extract_pic_extractor import VQAExtractPicExtractor
