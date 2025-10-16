@@ -239,12 +239,22 @@ We are honored to have received **first-place awards** in two major internationa
 | **2025 Language and Intelligence Challenge (LIC)**                  | Track 2: *Beijing Academy of Artificial Intelligence*      | 🥇 **First Prize**        | Beijing Academy of Artificial Intelligence (BAAI) & Baidu | August 10, 2025 |
 
 <div align="center">
-  <img src="./static/images/icml_certificate.jpg" width="60%" alt="ICML 2025 Certificate"><br>
-  <sub><em>ICML 2025 Automated Math Reasoning Challenge — First Place Winner</em></sub>
-  <br><br>
-  <img src="./static/images/lic_certificate.jpg" width="55%" alt="LIC 2025 Certificate"><br>
-  <sub><em>BAAI Language & Intelligence Challenge 2025 — First Prize</em></sub>
+
+<table>
+  <tr>
+    <td align="center" width="50%">
+      <img src="./static/images/icml_certificate.jpg" alt="ICML 2025 Certificate" width="95%"><br>
+      <sub><em>ICML 2025 Automated Math Reasoning Challenge — First Place Winner</em></sub>
+    </td>
+    <td align="center" width="30%">
+      <img src="./static/images/lic_certificate.jpg" alt="LIC 2025 Certificate" width="95%"><br>
+      <sub><em>BAAI Language & Intelligence Challenge 2025 — First Prize</em></sub>
+    </td>
+  </tr>
+</table>
+
 </div>
+
 
 ## 💐 9. Acknowledgements
 We sincerely appreciate [MinerU](https://github.com/opendatalab/MinerU)'s outstanding contribution, particularly its robust text extraction capabilities from PDFs and documents, which greatly facilitates data loading.
