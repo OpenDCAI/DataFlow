@@ -9,7 +9,7 @@ class MathVQAExtractPdf2Img(OperatorABC):
     def __init__(self, dpi: int = 300):
         self.logger = get_logger()
         self.dpi = dpi
-    def run(self, input_pdf_path: str, output_image_folder: str):
+    def run(self, storage, input_pdf_path: str, output_image_folder: str):
         '''
         用来把pdf文件转换为图片的辅助函数
         输入：

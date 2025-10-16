@@ -31,7 +31,7 @@ class MathVQAExtractQAPairExtractor(OperatorABC):
             })
         return qa_list
     
-    def run(self, input_vqa_extract_path: str, output_qa_path: str):
+    def run(self, storage, input_vqa_extract_path: str, output_qa_path: str):
 
         # 从vqa_extract_path中读取jsonl文件
         df = pd.read_json(input_vqa_extract_path, lines=True)

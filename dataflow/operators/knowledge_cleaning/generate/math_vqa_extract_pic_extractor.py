@@ -12,12 +12,14 @@ from typing import List
 class MathVQAExtractPicExtractor(OperatorABC):
     def __init__(self,
                 llm_serving: LLMServingABC = None,
-                model: str = "o4-mini"
+                model: str = "o4-mini",
+                subject: str = "math"
                 ):
         self.logger = get_logger()
         self.llm_serving = llm_serving
         self.prompt = MathVQAExtractPrompt()
         self.model = model
+        self.subject = subject
 
     def _format_instructions(self, image_files: List[str]):
         list_of_image_paths = []
@@ -29,7 +31,7 @@ class MathVQAExtractPicExtractor(OperatorABC):
         return list_of_image_paths, list_of_image_labels
 
 
-    def run(self, input_layout_path: str, output_folder: str, subject: str = "math"):
+    def run(self, storage, input_layout_path: str, output_folder: str):
         # 从layout_path/images中读取所有图片的文件名,确保为绝对路径
         image_files = [os.path.join(input_layout_path, image_file) for image_file in os.listdir(input_layout_path)]
         # 确保end with jpg & png
@@ -41,7 +43,7 @@ class MathVQAExtractPicExtractor(OperatorABC):
         image_files.sort(key=filename2idx)
 
         list_of_image_paths, list_of_image_labels = self._format_instructions(image_files)
-        system_prompt = self.prompt.build_prompt(subject)
+        system_prompt = self.prompt.build_prompt(self.subject)
 
         responses = self.llm_serving.generate_from_input_multi_images(list_of_image_paths, list_of_image_labels, system_prompt, self.model)
 

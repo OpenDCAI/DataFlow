@@ -170,7 +170,7 @@ class MathVQAExtractTag2Img(OperatorABC):
         except Exception as e:
             self.logger.error(f"写入 Markdown 文件失败: {output_md_file}, 错误: {e}")
 
-    def run(self, input_qa_file, output_qa_file, output_md_file=None):
+    def run(self, storage, input_qa_file, output_qa_file, output_md_file=None):
         """
         处理包含 QA 对的 JSON Lines 文件，并输出：
         1) 处理后的 JSON Lines 文件 (output_qa_file)

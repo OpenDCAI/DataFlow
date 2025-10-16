@@ -9,7 +9,7 @@ from dataflow import get_logger
 class MathVQAClipHeader(OperatorABC):
     def __init__(self):
         self.logger = get_logger()
-    def run(self, input_image_path: str, input_layout_path:str, output_image_folder: str, input_layout_prefix: str = 'doclay'):
+    def run(self, storage, input_image_path: str, input_layout_path:str, output_image_folder: str, input_layout_prefix: str = 'doclay'):
         '''
         Clip the headers and footers of images according to document layouts.
         输入：
@@ -44,7 +44,7 @@ class MathVQAClipHeader(OperatorABC):
 class MathVQAConcatenateImages(OperatorABC):
     def __init__(self):
         self.logger = get_logger()
-    def run(self, input_image_folder: str, output_image_folder: str):
+    def run(self, storage, input_image_folder: str, output_image_folder: str):
         '''
         Concatenate adjacent images in a folder vertically (according to id).
         输入：

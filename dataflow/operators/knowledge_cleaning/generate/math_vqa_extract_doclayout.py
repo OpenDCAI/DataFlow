@@ -236,12 +236,12 @@ def modified_draw_layout_bbox(pdf_info, pdf_bytes, out_path, filename):
         
 @OPERATOR_REGISTRY.register()
 class VQAExtractDocLayoutMinerU(OperatorABC):
-    def __init__(self):
+    def __init__(self, mineru_backend: Literal["vlm-transformers","vlm-vllm-engine"] = "vlm-transformers"):
         self.logger = get_logger()
+        self.mineru_backend = mineru_backend
 
-    def run(self, pdf_file_path:str,
-                        output_folder:str,
-                        mineru_backend: Literal["vlm-transformers", "pipeline", "vlm-vllm-engine"] = "vlm-transformers"):
+    def run(self, storage, input_pdf_file_path:str,
+                        output_folder:str):
         try:
             import mineru
             mineru.utils.draw_bbox.draw_layout_bbox = modified_draw_layout_bbox   # 修改画图逻辑
@@ -261,16 +261,16 @@ class VQAExtractDocLayoutMinerU(OperatorABC):
 
         MinerU_Version = {"pipeline": "auto", "vlm-transformers": "vlm", "vlm-vllm-engine": "vllm"}
         
-        if mineru_backend == "pipeline":
+        if self.mineru_backend == "pipeline":
             raise ValueError("The 'pipeline' backend is not supported due to its incompatible output format. Please use 'vlm-transformers' or 'vlm-vllm-engine' instead.")
 
-        raw_file = Path(pdf_file_path)
+        raw_file = Path(input_pdf_file_path)
         pdf_name = raw_file.stem
         intermediate_dir = output_folder
         args = [
             "-p", str(raw_file),
             "-o", str(intermediate_dir),
-            "-b", mineru_backend,
+            "-b", self.mineru_backend,
             "--source", "local"
         ]
 
@@ -281,6 +281,6 @@ class VQAExtractDocLayoutMinerU(OperatorABC):
             if e.code != 0:
                 raise RuntimeError(f"MinerU execution failed with exit code: {e.code}")
 
-        output_json_file = os.path.join(intermediate_dir, pdf_name, MinerU_Version[mineru_backend], f"{pdf_name}_content_list.json")
-        output_layout_file = os.path.join(intermediate_dir, pdf_name, MinerU_Version[mineru_backend], f"{pdf_name}_layout.pdf")
+        output_json_file = os.path.join(intermediate_dir, pdf_name, MinerU_Version[self.mineru_backend], f"{pdf_name}_content_list.json")
+        output_layout_file = os.path.join(intermediate_dir, pdf_name, MinerU_Version[self.mineru_backend], f"{pdf_name}_layout.pdf")
         return output_json_file, output_layout_file
