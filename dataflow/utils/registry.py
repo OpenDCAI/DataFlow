@@ -57,19 +57,24 @@ class Registry():
         BACKBONE_REGISTRY.register(MyBackbone)
     """
 
-    def __init__(self, name, sub_modules: list[str] = []):
+    def __init__(self, name):
         """
         Args:
             name (str): the name of this registry
         """
         self._name = name
         self._obj_map = {}
-        if len(sub_modules) > 0:
-            self.loader_map = dict(zip(sub_modules, [None] * len(sub_modules)))
+        self._base_folder = Path(__file__).resolve().parents[1]
+        self._sub_modules = list(os.listdir(self._base_folder / name))
+        if "__init__.py" in self._sub_modules:
+            self._sub_modules.remove("__init__.py")
+        if "__pycache__" in self._sub_modules:
+            self._sub_modules.remove("__pycache__")
+        if len(self._sub_modules) > 0:
+            self.loader_map = dict(zip(self._sub_modules, [None] * len(self._sub_modules)))
         
     def _init_loaders(self):
         for module_name in self.loader_map.keys():
-            print(module_name, "fuckds")
             module_path = f"dataflow.{self._name}.{module_name}"
             self.loader_map[module_name] = importlib.import_module(module_path)
 
@@ -158,60 +163,23 @@ class Registry():
         """
         return self._obj_map
     
-    def get_type_of_operator(self):
+    def get_type_of_objects(self):
         """
-        Classify the operator type by its path of registration.
-        This is used to classify operators into different categories.
-        :return: A dictionary with operator type as keys and their name as values.
+        Classify the object type by its path of registration.
+        This is used to classify objects into different categories.
+        :return: A dictionary with object type as keys and their name as values.
         """
-        # eval operators
-        eval_operators = []
-        filter_operators = []
-        generate_operators = []
-        refine_operators = []
-        conversations_operators = []
-        db_operators = []
-
+        object_types_dict = {}
         for name, obj in self._obj_map.items():
-            if 'eval' in obj.__module__:
-                eval_operators.append(name)
-            elif 'filter' in obj.__module__:
-                filter_operators.append(name)
-            elif 'generate' in obj.__module__:
-                generate_operators.append(name)
-            elif 'refine' in obj.__module__:
-                refine_operators.append(name)
-            elif 'conversations' in obj.__module__:
-                conversations_operators.append(name)
-            elif 'db' in obj.__module__:
-                db_operators.append(name)
+            module_str = obj.__module__
+            # print(obj.__name__, module_str)
+            parts = module_str.split(".")
+            object_types_dict[name] = parts[1:]
+        return object_types_dict
 
-        return {
-            'eval': eval_operators,
-            'filter': filter_operators,
-            'generate': generate_operators,
-            'refine': refine_operators,
-            'conversations': conversations_operators,
-            'db': db_operators
-        }
+OPERATOR_REGISTRY = Registry(name='operators')
 
-OPERATOR_REGISTRY = Registry(
-    name='operators', 
-    sub_modules=[
-        'agentic_rag',
-        'chemistry',
-        'conversations',
-        'core_speech',
-        'core_text',
-        'core_vision',
-        'db',
-        'general_text',
-        'knowledge_cleaning',
-        'rare',
-        'reasoning',
-        'text2sql'
-    ]
-)
+PROMPT_REGISTRY = Registry(name='prompts')
 
 class LazyLoader(types.ModuleType):
 

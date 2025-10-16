@@ -1,15 +1,14 @@
 from dataflow.operators.general_text import (
-    MinHashDeduplicator,
-    ColonEndFilter,
     WordNumberFilter,
     BlocklistFilter,
+    MinHashDeduplicateFilter,
+    ColonEndFilter,
     SentenceNumberFilter,
     LineEndWithEllipsisFilter,
     ContentNullFilter,
     MeanWordLengthFilter,
     SymbolWordRatioFilter,
     HtmlEntityFilter,
-    IDCardFilter,
     NoPuncFilter,
     SpecialCharacterFilter,
     WatermarkFilter,
@@ -19,12 +18,13 @@ from dataflow.operators.general_text import (
     UniqueWordsFilter,
     CharNumberFilter,
     LineStartWithBulletpointFilter,
-    LineWithJavascriptFilter
-)
-from dataflow.operators.refine import (
+    LineWithJavascriptFilter,
     HtmlUrlRemoverRefiner,
     RemoveEmojiRefiner,
     RemoveExtraSpacesRefiner
+)
+from dataflow.operators.text_pt import (
+    MetaSampleEvaluator,
 )
 
 from dataflow.utils.storage import FileStorage
@@ -40,7 +40,7 @@ class PTTextFilter_CPUPipeline():
         self.remove_extra_spaces_refiner = RemoveExtraSpacesRefiner()
         self.remove_emoji_refiner = RemoveEmojiRefiner()
         self.html_remove_refiner = HtmlUrlRemoverRefiner()
-        self.minhash_deduplicator = MinHashDeduplicator(num_perm=128, threshold=0.9, use_n_gram=True, ngram=5)
+        self.minhash_deduplicator = MinHashDeduplicateFilter(num_perm=128, threshold=0.9, use_n_gram=True, ngram=5)
         self.blocklist_filter = BlocklistFilter()
         self.word_number_filter = WordNumberFilter(min_words=20, max_words=100000)
         self.colon_end_filter = ColonEndFilter()
@@ -50,7 +50,6 @@ class PTTextFilter_CPUPipeline():
         self.mean_word_length_filter = MeanWordLengthFilter(min_length=3, max_length=10)
         self.symbol_word_ratio_filter = SymbolWordRatioFilter(threshold=0.4)
         self.html_entity_filter = HtmlEntityFilter()
-        self.id_card_filter = IDCardFilter(threshold=3)
         self.no_punc_filter = NoPuncFilter(threshold=112)
         self.special_character_filter = SpecialCharacterFilter()
         self.watermark_filter = WatermarkFilter(watermarks=['Copyright', 'Watermark', 'Confidential'])
@@ -63,15 +62,15 @@ class PTTextFilter_CPUPipeline():
         self.line_with_javascript_filter = LineWithJavascriptFilter(threshold=3)
     
     def forward(self):
-        self.remove_extra_spaces_refiner.run(
-            storage=self.storage.step(),
-            input_key="raw_content"
-        )
         self.remove_emoji_refiner.run(
             storage=self.storage.step(),
             input_key="raw_content"
         )
         self.html_remove_refiner.run(
+            storage=self.storage.step(),
+            input_key="raw_content"
+        )
+        self.remove_extra_spaces_refiner.run(
             storage=self.storage.step(),
             input_key="raw_content"
         )
@@ -112,10 +111,6 @@ class PTTextFilter_CPUPipeline():
             input_key='raw_content',
         )
         self.html_entity_filter.run(
-            storage = self.storage.step(),
-            input_key='raw_content',
-        )
-        self.id_card_filter.run(
             storage = self.storage.step(),
             input_key='raw_content',
         )

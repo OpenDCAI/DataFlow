@@ -1,12 +1,18 @@
+import random
+from dataflow.utils.registry import PROMPT_REGISTRY
+from dataflow.core.prompt import PromptABC
 '''
 A collection of prompts for the general text operator.
 '''
-class PretrainGeneratorPrompt:
-    
+from dataflow.utils.registry import PROMPT_REGISTRY
+from dataflow.core.prompt import PromptABC
+
+@PROMPT_REGISTRY.register()
+class Phi4QAGeneratorPrompt(PromptABC):
     def __init__(self):
         pass
     
-    def pt_generate_prompt(self, content: str) -> str:
+    def build_prompt(self, content: str) -> str:
         """
         Generate the LLM input prompt by inserting the raw content into the prompt template.
         """
@@ -21,14 +27,15 @@ class PretrainGeneratorPrompt:
         {content}
         """
         return prompt.format(content=content)
-    
-class SFTGeneratorSeedPrompt:
+
+@PROMPT_REGISTRY.register()    
+class SFTGeneratorSeedPrompt(PromptABC):
     
     def __init__(self, custom_prompt):
         self.custom_prompt = custom_prompt
         pass
 
-    def sft_generate_prompt(self, content: str = "") -> str:
+    def build_prompt(self, content: str = "") -> str:
         """
         Generate the LLM input prompt by inserting the raw content into the prompt template,
         with optional custom instructions to enhance flexibility.
@@ -70,10 +77,11 @@ import textwrap
 
 import textwrap
 
-class MetaPrompt:
+@PROMPT_REGISTRY.register()
+class MetaPrompt(PromptABC):
     
     def __init__(self, dimensions):
-        self.dimensions = self.format_dimensions(dimensions=dimensions)
+        self.dimensions = self._format_dimensions(dimensions=dimensions)
 
         self.system_prompt_template = textwrap.dedent("""\
 You are an expert evaluator of text content. You will be given a single piece of text and must evaluate it across six specific dimensions listed below. Each dimension includes a description and a list of concrete examples (example_list), each labeled with a quality score. Higher scores indicate better quality. Use these examples to guide your assessment.
@@ -105,7 +113,7 @@ Your output should include:
   [score1, score2, score3, score4, score5, score6]
         """)
         
-    def format_dimensions(self, dimensions):
+    def _format_dimensions(self, dimensions):
         formatted_list = []
 
         for i, item in enumerate(dimensions, 1):
@@ -125,11 +133,11 @@ Your output should include:
         dimensions_text = "\n".join(self.dimensions)
         return self.system_prompt_template.format(dimensions_list=dimensions_text)
 
-    def build_user_prompt(self, text):
+    def build_prompt(self, text):
         return self.user_prompt_template.format(text=text)
 
-
-class AlpagasusPrompt:
+@PROMPT_REGISTRY.register()
+class AlpagasusPrompt(PromptABC):
     def __init__(self, dimension='quality'):
         self.dimension = dimension
         self.system_prompt_template = """
@@ -150,13 +158,14 @@ class AlpagasusPrompt:
         """
         return self.system_prompt_template.format(instruction=instruction, input=input_text, response=response)
 
-    def build_user_prompt(self):
+    def build_prompt(self):
         """
         生成user prompt
         """
         return self.user_prompt_template.format(dimension=self.dimension)
 
-class TreeinstructPrompt:
+@PROMPT_REGISTRY.register()
+class TreeinstructPrompt(PromptABC):
     def __init__(self):
         self.system_prompt_template = """
         You are an instruction rewriter. You need to parse a given user instruction into a TREE structure following Semantic Parsing in the natural language processing field.
@@ -179,13 +188,15 @@ class TreeinstructPrompt:
         """
         return self.system_prompt_template.format(instruction=instruction)
     
-    def build_user_prompt(self):
+    def build_prompt(self):
         """
         生成 user prompt
         """
         return self.user_prompt_template
 
-class ConsistentChatPrompt:
+
+@PROMPT_REGISTRY.register()
+class ConsistentQueryPrompt(PromptABC):
     def __init__(self):
         self.intent_categories = {
             "Problem Solving Interaction": [
@@ -274,8 +285,7 @@ class ConsistentChatPrompt:
                 "Solving battery drain issues in electric vehicles",
                 "Resetting a smart TV to factory settings",
                 "Troubleshooting a wireless keyboard that won't connect",
-                "How to install a backup camera in a car",
-                "Diagnosing a home circuit breaker that keeps tripping"
+                "How to install a backup camera in a car"
             ],
             "Educational Interaction": [
                 "Learning a new language online",
@@ -326,9 +336,9 @@ class ConsistentChatPrompt:
                 "Introduction to cybersecurity principles",
                 "Understanding different learning styles",
                 "Basics of health and nutrition science",
-                "Learning how to debate effectively",
-                "Introduction to robotics and automation"
+                "Learning how to debate effectively"
             ],
+
             "Health Consultation Interaction": [
                 "Tips for maintaining a healthy diet",
                 "Analyzing symptoms of the common cold",
@@ -378,8 +388,7 @@ class ConsistentChatPrompt:
                 "Navigating food labels and nutrition facts",
                 "Identifying signs of eating disorders",
                 "How to stay active while traveling",
-                "The role of gut health in overall wellness",
-                "When to seek professional mental health support"
+                "The role of gut health in overall wellness"
             ],
             "Exploratory Interaction": [
                 "Exploring the concept of time travel",
@@ -430,8 +439,7 @@ class ConsistentChatPrompt:
                 "The psychology behind conspiracy theories",
                 "Exploring the idea of digital immortality",
                 "How ancient seafaring changed the world map",
-                "The role of chaos theory in understanding the universe",
-                "How major inventions changed human history"
+                "The role of chaos theory in understanding the universe"
             ],
             "Entertainment Interaction": [
                 "Creating a video game character",
@@ -482,8 +490,7 @@ class ConsistentChatPrompt:
                 "Writing dialogue for an animated series",
                 "Planning a short film festival with friends",
                 "Exploring sound design for entertainment media",
-                "Building a fan community around fictional works",
-                "Creating a cinematic trailer for a book or game"
+                "Building a fan community around fictional works"
             ],
             "Simulation Interaction": [
                 "Business negotiations and decision-making",
@@ -535,9 +542,9 @@ class ConsistentChatPrompt:
                 "Virtual museum curation and exhibition planning",
                 "Simulating interpersonal communication in therapy sessions",
                 "Simulating AI behavior in self-driving vehicles",
-                "Virtual internship simulation for workplace readiness",
-                "Simulating marine ecosystem conservation planning"
+                "Virtual internship simulation for workplace readiness"
             ],
+
             "Emotional Support Interaction": [
                 "Coping with the death of a loved one",
                 "Supporting a friend through a breakup",
@@ -587,8 +594,7 @@ class ConsistentChatPrompt:
                 "Dealing with emotional triggers in daily life",
                 "Finding peace with an unresolved conflict",
                 "Managing emotions after relocation or immigration",
-                "Coping with fear of abandonment",
-                "Practicing self-compassion during recovery"
+                "Coping with fear of abandonment"
             ],
             "Information Retrieval Interaction": [
                 "Finding the best tech product reviews online",
@@ -640,8 +646,7 @@ class ConsistentChatPrompt:
                 "Researching funding opportunities for small businesses",
                 "Searching for media coverage on social justice issues",
                 "Finding open data sets for machine learning training",
-                "Looking up safety information on household chemicals",
-                "Researching legal precedents in constitutional law"
+                "Looking up safety information on household chemicals"
             ],
             "Transaction Interaction": [
                 "Booking a flight online for a vacation",
@@ -692,19 +697,12 @@ class ConsistentChatPrompt:
                 "Paying for parking through a mobile parking app",
                 "Ordering prescription medication online",
                 "Reserving coworking space for remote work",
-                "Paying for tutoring or online lessons",
-                "Booking professional photography or videography services"
+                "Paying for tutoring or online lessons"
             ]
         }
-        
-    def get_intent_categories(self):
-        return self.intent_categories
     
-    def get_topic_dict(self):
-        return self.topic_dict
-    
-    def get_query_prompt(self, info_flow, topic):
-        prompt = f"""
+    def build_prompt(self, num_dialogs_per_intent):
+        prompt = """
         Task Description and Rules 
         1. Generate multiple rounds of realistic user questions based on the provided topic: 
         - Based on a single core topic (provided directly by the user), generate multiple rounds of realistic user questions, comprising 6-8 turns in total. 
@@ -732,9 +730,23 @@ class ConsistentChatPrompt:
         To generate multi-turn queries with high topic consistency, please think step-by-step. 
         The input core topic for this task is: {topic}
         """
-        return prompt
+        all_query_prompts = []
+        for intent, info_flows in self.intent_categories.items():
+            for _ in range(num_dialogs_per_intent):
+                info_flow = random.choice(info_flows)
+                topic = random.choice(self.topic_dict[intent])
+                query_prompt = prompt.format(info_flow=info_flow, topic=topic)
+                all_query_prompts.append(query_prompt)
+        return all_query_prompts
 
-    def get_response_prompt(self, topic, queries):
+
+@PROMPT_REGISTRY.register()
+class ConsistentResponsePrompt(PromptABC):
+    
+    def __init__(self):
+        pass
+    
+    def build_prompt(self, topic, queries):
         prompt = f"""
         Your task is to simulate a multi-turn conversation where you progressively answer a series of user questions provided under a given topic category. For each answer, focus on delivering a natural, contextually relevant, and actionable response while considering both the current question and future questions in the sequence. The goal is to ensure consistency and logical progression throughout the dialogue and to avoid unnecessary follow-up questions in the responses simultaneously. To generate multi-turn responses with high topic consistency, think step-by-step. Key Dialogue Style Requirements are as follows: 
         Content and Structure:
@@ -774,8 +786,8 @@ class ConsistentChatPrompt:
         """
         return prompt
     
-
-class CondorPrompt:
+@PROMPT_REGISTRY.register()
+class CondorQuestionPrompt(PromptABC):
     def __init__(self):
         self.tag = {
             "Marriage and Relationships": {
@@ -1139,8 +1151,19 @@ class CondorPrompt:
                 "Military Exercises": ["Exercise Types", "Exercise Scale", "Exercise Objectives"]
             }
         }
+        
+        # 任务类型（增强场景多样性，参考论文中的常见交互场景）
+        self.task_types = [
+            "Daily Conversation",
+            "Creative Task",
+            "Role Playing",
+            "Problem Solving",
+            "Educational Explanation",
+            "Emotional Support",
+            "Information Retrieval"
+        ]
     
-    def get_question_prompt(self, theme, domain):
+    def build_prompt(self, theme, domain):
         """
         Generates the formatted prompt for LLM input based on the theme and domain.
 
@@ -1175,8 +1198,15 @@ question.\\
 Now it's your turn. Please provide the three Questions of different difficulty levels you created about the theme of {theme} for {domain}, according to the requirements.
 """
         return prompt
+
     
-    def create_critique_prompt(self, question, answer):
+@PROMPT_REGISTRY.register()
+class CondorCritiquePrompt(PromptABC):
+    
+    def __init__(self):
+        pass
+    
+    def build_prompt(self, question, answer):
         dialogue = [question, answer]
         base_critique_prompt = f"""
 There is now a user’s question and a model’s response. You need to write a critique for this response, pointing out the
@@ -1200,7 +1230,13 @@ Now it’s your turn. Please provide your Critique as required:
         """
         return base_critique_prompt.format(dialogue=dialogue)
 
-    def create_refine_prompt(self, question, answer, critique):
+@PROMPT_REGISTRY.register()
+class CondorRefinePrompt(PromptABC):
+    
+    def __init__(self):
+        pass
+
+    def build_prompt(self, question, answer, critique):
         base_refine_prompt = """
 Now there is a user's question, a model's answer, and the user's feedback. Please help modify the model's answer based on the user's feedback to make it better.
 Your improved answer must strictly adhere to the following format:
@@ -1216,12 +1252,13 @@ Now it's your turn, please provide your improved answer as required:
         """
         return base_refine_prompt.format(question=question, answer=answer, critique=critique)
 
-class LanguageFilterPrompt:
+@PROMPT_REGISTRY.register()
+class LanguageFilterPrompt(PromptABC):
     
     def __init__(self):
         pass
     
-    def language_filter_prompt(self, text):
+    def build_prompt(self, text):
         prompt='''You are a language identification expert. Your task is to identify the language of the given text input.
 
         Follow these rules:You are a language identification expert. Your task is to identify the language of the given text input.
@@ -1271,3 +1308,77 @@ class LanguageFilterPrompt:
         Language:
         '''
         return prompt.format(text=text)
+
+
+
+@PROMPT_REGISTRY.register()
+class SFTFromScratchGeneratorPrompt(PromptABC):
+    """
+    Prompt for generating brand-new SFT samples from scratch.
+    """
+    def __init__(self):
+        pass
+
+    def build_prompt(self, domain_keys: str) -> str:
+        system_prompt = """You are a sophisticated data generation assistant specialized in creating high-quality Supervised Fine-Tuning (SFT) datasets for large language models.
+
+Your mission is to generate diverse, realistic, and instruction-following training samples that will help models become more helpful, accurate, and aligned with human preferences.
+
+## Core Principles:
+
+**1. Structural Excellence:**
+- instruction: Clear, specific, and actionable user request
+- input: Contextual information when relevant (empty string if none needed)
+- output: Comprehensive, accurate, and genuinely helpful response
+- domain: Single domain classification from the provided taxonomy
+
+**2. Quality Standards:**
+- Responses must be factually accurate and demonstrate expertise
+- Use natural, conversational language appropriate to the context
+- Provide complete solutions that fully address the instruction
+- Maintain consistency between instruction complexity and response depth
+- Include relevant examples, explanations, or step-by-step guidance when beneficial
+
+**3. Diversity Requirements:**
+- Vary instruction phrasing and complexity levels
+- Mix different user personas and contexts
+- Include both simple and complex scenarios within each domain
+- Generate instructions that reflect real-world use cases
+
+**4. Safety & Ethics:**
+- No harmful, illegal, discriminatory, or misleading content
+- Respect privacy and avoid generating personal information
+- Maintain neutrality on controversial topics
+- Provide balanced perspectives when appropriate
+
+**5. Technical Format:**
+- Output valid JSON in a single line with no formatting
+- Properly escape special characters in strings
+- Ensure all required fields are present and correctly typed"""
+        
+        user_prompt = f"""Generate ONE premium-quality SFT training sample as a single-line JSON object.
+
+## Requirements:
+- **instruction**: A realistic user request that varies in style, complexity, and specificity
+- **input**: Additional context when it enhances the scenario (otherwise empty string)
+- **output**: A comprehensive, expert-level response that fully satisfies the instruction
+- **domain**: Select the most appropriate domain from: {domain_keys}
+
+## Quality Checklist:
+✓ Instruction is clear and represents authentic user needs
+✓ Response demonstrates expertise and provides genuine value
+✓ Appropriate level of detail for the complexity of the request
+✓ Natural, human-like language throughout
+✓ Perfect JSON formatting in a single line
+
+## Diversity Goals:
+- Mix formal/informal language styles
+- Include various difficulty levels and user contexts
+- Represent different cultural perspectives when relevant
+- Balance theoretical knowledge with practical applications
+
+## Format Example:
+{{"instruction": "Create a Python function that calculates compound interest with error handling", "input": "", "output": "def compound_interest(principal, rate, time, n=1):\\n    if principal <= 0 or rate < 0 or time < 0 or n <= 0:\\n        raise ValueError('Invalid input: principal must be positive, rate and time non-negative, n positive')\\n    return principal * (1 + rate/n)**(n*time)\\n\\n# Example usage:\\n# result = compound_interest(1000, 0.05, 2, 4)", "domain": "coding"}}
+
+Output only the JSON - no explanations or additional text."""
+        return system_prompt + "\n\n" + user_prompt

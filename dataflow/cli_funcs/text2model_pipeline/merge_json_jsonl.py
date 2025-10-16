@@ -37,36 +37,19 @@ def extract_text_from_json(json_file_path):
 
 
 def extract_text_from_data(data):
-    """从JSON数据中提取文本内容，确保返回tokenizer友好的格式"""
+    """从JSON数据中提取文本内容，保持原始状态"""
     text_fields = ['text', 'content', 'body', 'raw_text', 'message', 'description', 'summary']
     
     def clean_text(text):
-        """清理文本，确保tokenizer兼容"""
+        """最小化处理，保持原始文本"""
         if not isinstance(text, str):
             return None
         
-        # 移除或替换问题字符
-        text = text.replace('\x00', '')  # 移除null字符
-        text = text.replace('\ufeff', '')  # 移除BOM
-        text = text.replace('\r\n', '\n')  # 统一换行符
-        text = text.replace('\r', '\n')
-        
-        # 移除控制字符（保留常见的换行、制表符）
-        import re
-        text = re.sub(r'[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]', '', text)
-        
-        # 确保文本不为空
         text = text.strip()
         if not text:
             return None
             
-        # 限制文本长度（防止过长文本导致问题）
-        max_length = 50000  # 50K字符限制
-        if len(text) > max_length:
-            print(f"  ⚠️  Warning: Text too long ({len(text)} chars), truncating to {max_length}")
-            text = text[:max_length]
-        
-        return text
+        return text  # 直接返回，不做任何清理或截断
     
     if isinstance(data, dict):
         # 查找文本字段
@@ -114,7 +97,7 @@ def extract_text_from_data(data):
 
 
 def create_text_files(json_files, cache_path_obj):
-    """将JSON文件中的文本内容转换为独立的文本文件，确保格式正确"""
+    """将JSON文件中的文本内容转换为独立的文本文件，保持原始格式"""
     temp_dir = cache_path_obj / ".cache" / "gpu" / "temp_texts"
     temp_dir.mkdir(parents=True, exist_ok=True)
     
@@ -139,7 +122,7 @@ def create_text_files(json_files, cache_path_obj):
             if not text_content or not isinstance(text_content, str) or not text_content.strip():
                 continue
             
-            # 最终验证和清理文本
+            # 最终验证文本（最小验证）
             final_text = validate_and_clean_text(text_content)
             if not final_text:
                 print(f"  ⚠️  Text content failed validation")
@@ -173,54 +156,18 @@ def create_text_files(json_files, cache_path_obj):
 
 
 def validate_and_clean_text(text):
-    """验证并清理文本，确保tokenizer兼容"""
+    """完全保持原始文本，不做任何验证或清理"""
     if not isinstance(text, str):
         return None
     
-    # 基本清理
-    text = text.strip()
     if not text:
         return None
     
-    # 移除或替换问题字符
-    import re
-    
-    # 移除null字符和其他控制字符
-    text = re.sub(r'[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]', '', text)
-    
-    # 移除BOM
-    text = text.replace('\ufeff', '')
-    
-    # 统一换行符
-    text = text.replace('\r\n', '\n').replace('\r', '\n')
-    
-    # 移除过多的连续空白字符
-    text = re.sub(r'\n{3,}', '\n\n', text)  # 最多保留两个连续换行
-    text = re.sub(r'[ \t]{2,}', ' ', text)  # 多个空格/制表符替换为单个空格
-    
-    # 确保文本不为空
-    text = text.strip()
-    if not text:
-        return None
-    
-    # 检查文本长度
-    if len(text) < 10:  # 太短的文本可能无意义
-        return None
-    
-    # 限制最大长度
-    max_length = 50000
-    if len(text) > max_length:
-        text = text[:max_length]
-        # 尝试在句号处截断，避免截断句子
-        last_period = text.rfind('.')
-        if last_period > max_length * 0.8:  # 如果句号位置合理
-            text = text[:last_period + 1]
-    
-    return text
+    return text  # 完全保持原始文本
 
 
 def verify_text_file(file_path):
-    """验证文本文件是否可以被正确读取和tokenize"""
+    """验证文本文件是否可以被正确读取"""
     try:
         with open(file_path, 'r', encoding='utf-8') as f:
             content = f.read()
@@ -228,22 +175,6 @@ def verify_text_file(file_path):
         # 基本检查
         if not content or not content.strip():
             return False
-        
-        # 检查是否包含非法字符
-        if '\x00' in content:
-            return False
-        
-        # 检查是否是纯文本（不是JSON等结构化数据）
-        content_stripped = content.strip()
-        if (content_stripped.startswith('{') and content_stripped.endswith('}')) or \
-           (content_stripped.startswith('[') and content_stripped.endswith(']')):
-            # 可能是JSON，需要进一步验证
-            try:
-                import json
-                json.loads(content)
-                return False  # 如果是有效JSON，则不是纯文本
-            except:
-                pass  # 不是有效JSON，可能是包含{}[]的普通文本，继续
         
         return True
         

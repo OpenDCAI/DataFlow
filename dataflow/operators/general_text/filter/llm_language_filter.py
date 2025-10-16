@@ -24,7 +24,7 @@ class LLMLanguageFilter(OperatorABC):
         return "使用大语言模型识别语言并过滤数据" if lang == "zh" else "Using large language models to identify languages and filter data."
     
     def _reformat_prompt(self, dataframe):
-        formatted_prompts = [self.prompt.language_filter_prompt(text=item) for item in tqdm(dataframe[self.input_key], desc="Reformatting Prompt...")]
+        formatted_prompts = [self.prompt.build_prompt(text=item) for item in tqdm(dataframe[self.input_key], desc="Reformatting Prompt...")]
         return formatted_prompts
 
     def run(self, storage: DataFlowStorage, input_key: str, output_key: str = 'language_label'):

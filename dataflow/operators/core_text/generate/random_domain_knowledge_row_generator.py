@@ -5,60 +5,78 @@ from dataflow import get_logger
 from dataflow.utils.storage import DataFlowStorage
 from dataflow.core import OperatorABC
 from dataflow.core import LLMServingABC
+from dataflow.core.prompt import prompt_restrict
+from dataflow.prompts.general_text import SFTFromScratchGeneratorPrompt
+
+@prompt_restrict(
+    SFTFromScratchGeneratorPrompt
+)
+
 
 @OPERATOR_REGISTRY.register()
-
 class RandomDomainKnowledgeRowGenerator(OperatorABC):
-    def __init__(self, llm_serving: LLMServingABC, system_prompt: str = "You are a helpful agent.", user_prompt: str = "{}"):
+    def __init__(
+    self, 
+    llm_serving: LLMServingABC,  
+    prompt_template : SFTFromScratchGeneratorPrompt,
+    generation_num : int,
+    domain_keys : str
+    ):
         self.logger = get_logger()
         self.llm_serving = llm_serving
-        self.system_prompt = system_prompt
-        self.user_prompt = user_prompt
+        self.prompt_template = prompt_template
+        self.generation_num = generation_num
+        self.domain_keys = domain_keys
     
     @staticmethod
     def get_desc(lang: str = "zh"):
-        if lang == "zh":
-            return (
-                "RandomDomainKnowledgeRowGenerator算子用于结合系统提示词(system_prompt)和用户自定义提示模板(user_prompt)，批量生成领域知识相关文本内容。\n"
-                "注意：本算子随机生成的SFT数据所参考的领域是人为预先设定的，具体领域列表可参考prompt中的domain_keys。\n"
-                "核心功能：\n"
-                "- 支持无输入数据时，按generation_num参数生成指定数量的内容；\n"
-                "- 支持自定义system_prompt和user_prompt，user_prompt可通过'{}'占位符灵活插入输入内容或整行字典；\n"
-                "- 支持指定输出字段(output_key)\n"
-                "参数说明：\n"
-                "- llm_serving：LLM服务对象，需实现LLMServingABC接口；\n"
-                "- system_prompt：系统提示词，定义模型行为，默认为'You are a helpful agent.'；\n"
-                "- user_prompt：用户提示词模板，默认为'{}'，可通过'{}'占位符插入输入内容或整行字典；\n"
-                "- output_key：输出生成内容字段名，默认为'generated_content'；\n"
-                "- generation_num：无输入数据时生成内容的数量，默认为1；\n"
-                "输出：\n"
-                "- 包含生成内容的DataFrame；\n"
-                "- 返回输出字段名(output_key)，供后续算子引用。"
-            )
-        elif lang == "en":
-            return (
-                "RandomDomainKnowledgeRowGenerator operator is used to batch generate domain knowledge related text by combining a system prompt (system_prompt) and a user-defined prompt template (user_prompt).\n"
-                "Note: The domains referenced for randomly generated SFT data are manually predefined, see the domain_keys in the prompt for the specific list.\n"
-                "Main features:\n"
-                "- Supports generating a specified number of outputs according to the generation_num parameter when there is no input data;\n"
-                "- Supports custom system_prompt and user_prompt, user_prompt can flexibly insert input content or the entire row dict via '{}' placeholder;\n"
-                "- Supports specifying the output field (output_key)\n"
-                "Parameter description:\n"
-                "- llm_serving: LLM serving object, must implement LLMServingABC interface;\n"
-                "- system_prompt: System prompt, defines model behavior, default is 'You are a helpful agent.';\n"
-                "- user_prompt: User prompt template, default is '{}', can insert input content or row dict via '{}' placeholder;\n"
-                "- output_key: Output field name for generated content, default is 'generated_content';\n"
-                "- generation_num: Number of outputs to generate when there is no input data, default is 1;\n"
-                "Output:\n"
-                "- DataFrame containing generated content;\n"
-                "- Returns output field name (output_key) for subsequent operator reference."
-            )
-        else:
-            return (
-                "RandomDomainKnowledgeRowGenerator算子用于结合系统提示词(system_prompt)和用户自定义提示模板(user_prompt)，批量生成领域知识相关文本内容。"
-            )
+        def get_desc(lang: str = "zh"):
+            if lang == "zh":
+                return (
+                    "RandomDomainKnowledgeRowGenerator算子用于结合提示模板(prompt_template)与LLM服务对象(llm_serving)，"
+                    "批量生成与指定领域相关的文本内容。\n\n"
+                    "功能说明：\n"
+                    "- 结合SFTFromScratchGeneratorPrompt模板，根据domain_keys随机选择领域并生成内容；\n"
+                    "- 当输入DataFrame为空时，可通过generation_num参数控制生成样本数量；\n"
+                    "- 生成的文本结果将写入指定字段(output_key)，并返回该字段名供后续算子使用。\n\n"
+                    "参数说明：\n"
+                    "- llm_serving：LLM服务对象，需实现LLMServingABC接口；\n"
+                    "- prompt_template：提示模板实例，需为SFTFromScratchGeneratorPrompt类型；\n"
+                    "- storage：DataFlowStorage对象，用于读取与写入数据；\n"
+                    "- output_key：生成结果写入的字段名，默认为'generated_content'；\n"
+                    "- generation_num：生成内容数量，默认为1；\n"
+                    "- domain_keys：指定或限制生成内容所属领域。\n\n"
+                    "输出说明：\n"
+                    "- 返回值：输出字段名(output_key)，供后续算子引用；\n"
+                    "- 同时将包含生成内容的新DataFrame写回至存储。"
+                )
 
-    def run(self, storage: DataFlowStorage, output_key: str = "generated_content", generation_num: int = 1):
+            elif lang == "en":
+                return (
+                    "The RandomDomainKnowledgeRowGenerator operator generates domain-related text content "
+                    "by combining a prompt template (prompt_template) with an LLM serving instance (llm_serving).\n\n"
+                    "Function Description:\n"
+                    "- Utilizes the SFTFromScratchGeneratorPrompt template to randomly select domains via domain_keys;\n"
+                    "- Supports content generation when no input DataFrame is available, controlled by generation_num;\n"
+                    "- Generated text is written to the specified output field (output_key), and the field name is returned.\n\n"
+                    "Parameter Description:\n"
+                    "- llm_serving: LLM serving object implementing the LLMServingABC interface;\n"
+                    "- prompt_template: Prompt template instance of type SFTFromScratchGeneratorPrompt;\n"
+                    "- storage: DataFlowStorage object used for reading and writing data;\n"
+                    "- output_key: Name of the field to write generated results (default: 'generated_content');\n"
+                    "- generation_num: Number of contents to generate when there is no input data (default: 1);\n"
+                    "- domain_keys: Domain key(s) specifying or constraining the generation domain; empty string for random.\n\n"
+                    "Output Description:\n"
+                    "- Returns the output field name (output_key) for downstream reference;\n"
+                    "- Writes the DataFrame containing generated content back to storage."
+                )
+            else:
+                return (
+                    "RandomDomainKnowledgeRowGenerator算子用于结合提示模板(prompt_template)与LLM服务对象(llm_serving)，批量生成领域文本内容。"
+                )
+
+
+    def run(self, storage: DataFlowStorage, output_key: str = "generated_content"):
         """
         主流程：基于输入数据和提示词生成文本内容。
 
@@ -80,9 +98,8 @@ class RandomDomainKnowledgeRowGenerator(OperatorABC):
         llm_inputs = []
         
         # 按generation_num生成指定数量的输入
-        for i in range(generation_num):
-            llm_input = self.system_prompt + self.user_prompt
-            llm_inputs.append(llm_input)
+        for i in range(self.generation_num):
+            llm_inputs.append(self.prompt_template.build_prompt(self.domain_keys))
             
         try:
             self.logger.info("Generating text using the model...")

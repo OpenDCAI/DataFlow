@@ -1,19 +1,28 @@
-from dataflow.prompts.reasoning.diy import DiyQuestionSynthesisPrompt
 from dataflow.utils.registry import OPERATOR_REGISTRY
 from dataflow import get_logger
 from dataflow.utils.storage import DataFlowStorage
 from dataflow.core import OperatorABC
 from dataflow.core import LLMServingABC
+from dataflow.prompts.reasoning.math import MathQuestionSynthesisPrompt
+from dataflow.prompts.reasoning.general import GeneralQuestionSynthesisPrompt
+from dataflow.prompts.reasoning.diy import DiyQuestionSynthesisPrompt
+from dataflow.core.prompt import prompt_restrict, DIYPromptABC
+
 import pandas as pd
 import random
-from dataflow.prompts.reasoning.math import MathQuestionSynthesisPrompt
+
+@prompt_restrict(
+    MathQuestionSynthesisPrompt,
+    GeneralQuestionSynthesisPrompt,
+    DiyQuestionSynthesisPrompt
+)
 
 @OPERATOR_REGISTRY.register()
 class ReasoningQuestionGenerator(OperatorABC):
     def __init__(self,
                 num_prompts: int = 1,
                 llm_serving: LLMServingABC = None,
-                prompt_template = None,
+                prompt_template = MathQuestionSynthesisPrompt | GeneralQuestionSynthesisPrompt | DiyQuestionSynthesisPrompt | DIYPromptABC
                 ):
         """
         Initialize the QuestionGenerator with the provided configuration.

@@ -278,9 +278,24 @@ class FileStorage(DataFlowStorage):
     
 from threading import Lock
 import math
+from dataflow.utils.db_pool.myscale_pool import ClickHouseConnectionPool
 
-_clickhouse_clients = {}
-_clickhouse_clients_lock = Lock()
+# 推荐在模块级别创建全局池
+myscale_pool = None
+
+def get_myscale_pool(db_config):
+    global myscale_pool
+    if myscale_pool is None:
+        myscale_pool = ClickHouseConnectionPool(
+            host=db_config['host'],
+            port=db_config.get('port', 9000),
+            user=db_config.get('user', 'default'),
+            password=db_config.get('password', ''),
+            database=db_config.get('database', 'default'),
+            min_connections=5,
+            max_connections=50,
+        )
+    return myscale_pool
 
 # 预定义字段前缀
 SYS_FIELD_PREFIX = 'sys:'
@@ -289,30 +304,6 @@ USER_FIELD_PREFIX = 'user:'
 # 保留字段列表
 RESERVED_SYS_FIELD_LIST=["raw_data_id"]
 RESERVED_USER_FIELD_LIST=[]
-
-# 获取 ClickHouse Client 实例
-def get_clickhouse_client(db_config):
-    key = (
-        db_config['host'],
-        db_config.get('port', 9000),
-        db_config.get('user', 'default'),
-        db_config.get('database', 'dataflow'),
-    )
-    with _clickhouse_clients_lock:
-        if key not in _clickhouse_clients:
-            try:
-                from clickhouse_driver import Client
-            except ImportError as e:
-                raise ImportError("clickhouse_driver is required for MyScaleDBStorage but not installed. Please install it via 'pip install clickhouse-driver'.") from e
-            _clickhouse_clients[key] = Client(
-                host=db_config['host'],
-                port=db_config.get('port', 9000),
-                user=db_config.get('user', 'default'),
-                password=db_config.get('password', ''),
-                database=db_config.get('database', 'default'),
-                # settings={"use_numpy": True}
-            )
-        return _clickhouse_clients[key]
 
 # 安全加载 json 数据
 def safe_json_loads(x):
@@ -388,7 +379,6 @@ class MyScaleDBStorage(DataFlowStorage):
         page_num: int, 当前页码（默认 0）
         """
         self.db_config = db_config
-        self.client = get_clickhouse_client(db_config)
         self.table = db_config.get('table', 'dataflow_table')
         self.logger = get_logger()
         self.pipeline_id: str = pipeline_id
@@ -402,89 +392,101 @@ class MyScaleDBStorage(DataFlowStorage):
         """
         Read data from Myscale/ClickHouse table.
         """
-        where_clauses = []
-        params = {}
-        if self.pipeline_id:
-            where_clauses.append("pipeline_id = %(pipeline_id)s")
-            params['pipeline_id'] = self.pipeline_id
-        if self.input_task_id:
-            where_clauses.append("task_id = %(task_id)s")
-            params['task_id'] = self.input_task_id
-        where_sql = f"WHERE {' AND '.join(where_clauses)}" if where_clauses else ""
-        limit_offset = f"LIMIT {self.page_size} OFFSET {(self.page_num-1)*self.page_size}" if self.page_size else ""
-        sql = f"SELECT * FROM {self.table} {where_sql} {limit_offset}"
-        self.logger.info(f"Reading from DB: {sql} with params {params}")
-        result = self.client.execute(sql, params, with_column_types=True)
-        rows, col_types = result
-        columns = [col[0] for col in col_types]
-        df = pd.DataFrame(rows, columns=columns)
-        # 解析 data 字段为 dict
-        if 'data' not in df.columns:
-            raise ValueError("Result does not contain required 'data' field.")
+        pool = get_myscale_pool(self.db_config)
+        with pool.get_connection() as client:
+            where_clauses = []
+            params = {}
+            if self.pipeline_id:
+                where_clauses.append("pipeline_id = %(pipeline_id)s")
+                params['pipeline_id'] = self.pipeline_id
+            if self.input_task_id:
+                where_clauses.append("task_id = %(task_id)s")
+                params['task_id'] = self.input_task_id
+            where_sql = f"WHERE {' AND '.join(where_clauses)}" if where_clauses else ""
+            limit_offset = f"LIMIT {self.page_size} OFFSET {(self.page_num-1)*self.page_size}" if self.page_size else ""
+            sql = f"SELECT * FROM {self.table} {where_sql} {limit_offset}"
+            self.logger.info(f"Reading from DB: {sql} with params {params}")
+            result = client.execute(sql, params, with_column_types=True)
+            rows, col_types = result
+            columns = [col[0] for col in col_types]
+            df = pd.DataFrame(rows, columns=columns)
+            # 解析 data 字段为 dict
+            if 'data' not in df.columns:
+                raise ValueError("Result does not contain required 'data' field.")
 
-        # 只保留 data 字段
-        data_series = df['data'].apply(safe_json_loads)
-        if output_type == "dataframe":
-            # 提取 data 一列并自动展开为多列（如果 data 是 dict）
-            result_df = pd.DataFrame({'data': data_series})
-            if not data_series.empty and isinstance(data_series.iloc[0], dict):
-                expanded = data_series.apply(pd.Series)
-                # 合并展开列和原始 data 列
-                result_df = pd.concat([result_df, expanded], axis=1)
-            return result_df
-        elif output_type == "dict":
-            # 返回 data 字段的 dict 列表
-            return list(data_series)
-        else:
-            raise ValueError(f"Unsupported output type: {output_type}")
+            # 只保留 data 字段
+            data_series = df['data'].apply(safe_json_loads)
+            if output_type == "dataframe":
+                # 提取 data 一列并自动展开为多列（如果 data 是 dict）
+                result_df = pd.DataFrame({'data': data_series})
+                if not data_series.empty and isinstance(data_series.iloc[0], dict):
+                    expanded = data_series.apply(pd.Series)
+                    # 合并展开列和原始 data 列
+                    result_df = pd.concat([result_df, expanded], axis=1)
+                return result_df
+            elif output_type == "dict":
+                # 返回 data 字段的 dict 列表
+                return list(data_series)
+            else:
+                raise ValueError(f"Unsupported output type: {output_type}")
 
     def write(self, data: Any) -> Any:
         """
         Write data to Myscale/ClickHouse table.
         data: pd.DataFrame or List[dict]，每行是data字段内容（dict）。
         """
-        if isinstance(data, list):
-            df = pd.DataFrame(data)
-        elif isinstance(data, pd.DataFrame):
-            df = data
-        else:
-            raise ValueError(f"Unsupported data type: {type(data)}")
-        # data 字段本身就是每行的内容
-        if 'data' not in df.columns:
-            # 兼容直接传入 dict 列表的情况
-            df['data'] = df.apply(lambda row: row.to_dict(), axis=1)
-        # 统一处理 data 列
-        df['data'] = df['data'].apply(lambda x: x if isinstance(x, dict) else (json.loads(x) if isinstance(x, str) else {}))
-        # 合并所有非系统字段到 data 字段并删除原列
-        system_cols = {'pipeline_id', 'task_id', 'raw_data_id', 'min_hashes', 'data'}
-        for col in df.columns:
-            if col not in system_cols:
-                df['data'] = df.apply(lambda row: safe_merge(row, col), axis=1)
-                df = df.drop(columns=[col])
-        # 自动填充 pipeline_id, task_id, raw_data_id, min_hashes
-        df['pipeline_id'] = self.pipeline_id
-        df['task_id'] = self.output_task_id
-        df['raw_data_id'] = df['data'].apply(lambda d: d.get(SYS_FIELD_PREFIX + 'raw_data_id', 0) if isinstance(d, dict) else 0)
-        df['min_hashes'] = df['data'].apply(lambda d: _default_min_hashes(d) if isinstance(d, dict) else [0])
-        # data 字段转为 JSON 字符串
-        df['data'] = df['data'].apply(lambda x: json.dumps(x, ensure_ascii=False) if not isinstance(x, str) else x)
-        # 只保留必需字段
-        required_cols = ['pipeline_id', 'task_id', 'raw_data_id', 'min_hashes', 'data']
-        df = df[required_cols]
-        records = df.to_dict(orient="records")
-        values = [
-            (
-                rec['pipeline_id'],
-                rec['task_id'],
-                int(rec['raw_data_id']),
-                rec['min_hashes'],
-                rec['data']
-            ) for rec in records
-        ]
-        insert_sql = f"""
-        INSERT INTO {self.table} (pipeline_id, task_id, raw_data_id, min_hashes, data)
-        VALUES
+        pool = get_myscale_pool(self.db_config)
+        with pool.get_connection() as client:
+            if isinstance(data, list):
+                df = pd.DataFrame(data)
+            elif isinstance(data, pd.DataFrame):
+                df = data
+            else:
+                raise ValueError(f"Unsupported data type: {type(data)}")
+            # data 字段本身就是每行的内容
+            if 'data' not in df.columns:
+                # 兼容直接传入 dict 列表的情况
+                df['data'] = df.apply(lambda row: row.to_dict(), axis=1)
+            # 统一处理 data 列
+            df['data'] = df['data'].apply(lambda x: x if isinstance(x, dict) else (json.loads(x) if isinstance(x, str) else {}))
+            # 合并所有非系统字段到 data 字段并删除原列
+            system_cols = {'pipeline_id', 'task_id', 'raw_data_id', 'min_hashes', 'data'}
+            for col in df.columns:
+                if col not in system_cols:
+                    df['data'] = df.apply(lambda row: safe_merge(row, col), axis=1)
+                    df = df.drop(columns=[col])
+            # 自动填充 pipeline_id, task_id, raw_data_id, min_hashes
+            df['pipeline_id'] = self.pipeline_id
+            df['task_id'] = self.output_task_id
+            df['raw_data_id'] = df['data'].apply(lambda d: d.get(SYS_FIELD_PREFIX + 'raw_data_id', 0) if isinstance(d, dict) else 0)
+            df['min_hashes'] = df['data'].apply(lambda d: _default_min_hashes(d) if isinstance(d, dict) else [0])
+            # data 字段转为 JSON 字符串
+            df['data'] = df['data'].apply(lambda x: json.dumps(x, ensure_ascii=False) if not isinstance(x, str) else x)
+            # 只保留必需字段
+            required_cols = ['pipeline_id', 'task_id', 'raw_data_id', 'min_hashes', 'data']
+            df = df[required_cols]
+            records = df.to_dict(orient="records")
+            values = [
+                (
+                    rec['pipeline_id'],
+                    rec['task_id'],
+                    int(rec['raw_data_id']),
+                    rec['min_hashes'],
+                    rec['data']
+                ) for rec in records
+            ]
+            insert_sql = f"""
+            INSERT INTO {self.table} (pipeline_id, task_id, raw_data_id, min_hashes, data)
+            VALUES
+            """
+            self.logger.info(f"Inserting {len(values)} rows into {self.table}")
+            client.execute(insert_sql, values)
+            return f"Inserted {len(values)} rows into {self.table}"
+
+    def get_keys_from_dataframe(self) -> list[str]:
         """
-        self.logger.info(f"Inserting {len(values)} rows into {self.table}")
-        self.client.execute(insert_sql, values)
-        return f"Inserted {len(values)} rows into {self.table}"
+        Get keys from the dataframe stored in MyScale/ClickHouse database.
+        Returns column names from the dataframe after reading from database.
+        """
+        dataframe = self.read(output_type="dataframe")
+        return dataframe.columns.tolist() if isinstance(dataframe, pd.DataFrame) else []

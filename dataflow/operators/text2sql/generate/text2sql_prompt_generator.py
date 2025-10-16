@@ -4,50 +4,27 @@ from tqdm import tqdm
 from typing import Dict, Optional
 from dataflow.utils.registry import OPERATOR_REGISTRY
 from dataflow import get_logger
+from dataflow.prompts.text2sql import Text2SQLPromptGeneratorPrompt
+from dataflow.core.prompt import prompt_restrict 
 from dataflow.core import OperatorABC
 from dataflow.utils.storage import DataFlowStorage
 from dataflow.utils.text2sql.database_manager import DatabaseManager
 
+@prompt_restrict(Text2SQLPromptGeneratorPrompt)
 
 @OPERATOR_REGISTRY.register()
 class Text2SQLPromptGenerator(OperatorABC):
     def __init__(self, 
                 database_manager: DatabaseManager,
-                prompt_template: str = "",
-                schema_config: Optional[Dict] = None
+                prompt_template = Text2SQLPromptGeneratorPrompt
             ):
 
-        if not prompt_template:
-            self.prompt_template = '''Task Overview:
-            /* Given the following database schema: */
-            {schema}
-            /* Answer the following: {question} */
-            Let's think step by step'''
-        else:
-            self.prompt_template = prompt_template
-        
-        if not schema_config:
-            self.schema_config = {
-                'format': 'ddl',  # Optional: 'ddl', 'formatted_schema'
-                'use_example': True  # Whether to include example data
-            }
-        else:
-            self.schema_config = schema_config
+        if prompt_template is None:
+            prompt_template = Text2SQLPromptGeneratorPrompt()
+        self.prompt_template = prompt_template
         
         self.logger = get_logger()
         self.database_manager = database_manager
-        self._validate_config()
-
-    def _validate_config(self):
-        if "{schema}" not in self.prompt_template or "{question}" not in self.prompt_template:
-            raise ValueError("prompt_template must contain {schema} and {question} placeholders")
-        
-        valid_formats = ['ddl', 'formatted_schema']
-        if self.schema_config.get('format') not in valid_formats:
-            raise ValueError(f"schema_config.format must be one of {valid_formats}")
-        
-        if not isinstance(self.schema_config.get('use_example'), bool):
-            raise ValueError("schema_config.use_example must be a boolean")
 
     @staticmethod
     def get_desc(lang):
@@ -74,67 +51,20 @@ class Text2SQLPromptGenerator(OperatorABC):
         else:
             return "Prompt generator for Text2SQL tasks."
 
-    def get_schema_for_db(self, db_id: str) -> Dict:
-        return self.database_manager.get_database_schema(db_id)
-
-    def format_schema_according_to_config(self, db_id: str) -> str:
-        format_type = self.schema_config.get('format', 'formatted_schema')
-        use_example = self.schema_config.get('use_example', True)
-        
-        if format_type == 'ddl':
-            if use_example:
-                return self.database_manager.generate_ddl_with_examples(db_id)
-            else:
-                return self.database_manager.generate_ddl_without_examples(db_id)
-        elif format_type == 'formatted_schema':
-            if use_example:
-                return self.database_manager.generate_formatted_schema_with_examples(db_id)
-            else:
-                return self.database_manager.generate_formatted_schema_without_examples(db_id)
-        else:
-            raise ValueError(f"Unsupported format type: {format_type}")
-
-    def generate_prompt(self, db_id: str, question: str) -> str:
-        formatted_schema = self.format_schema_according_to_config(db_id)
-        generated_prompt = self.prompt_template.format(
-            schema=formatted_schema, 
-            question=question
-        )
-        return generated_prompt
-
-    def _process_item(self, item: Dict) -> Dict:
-        try:
-            db_id = item[self.input_db_id_key]
-            question = item[self.input_question_key]
-            
-            db_id = re.sub(r'[^A-Za-z0-9_]', '', str(db_id).replace('\n', ''))
-            
-            prompt = self.generate_prompt(db_id, question)
-            
-            result = {
-                **item,
-                self.output_sft_prompt_key: prompt
-            }
-            
-            return result
-            
-        except Exception as e:
-            self.logger.error(f"Error processing item: {e}")
-            return {
-                **item,
-                self.output_sft_prompt_key: f"Error processing item: {e}",
-                '_error': str(e)
-            }
+    def get_create_statements_and_insert_statements(self, db_id: str) -> str:
+        return self.database_manager.get_create_statements_and_insert_statements(db_id)
 
     def run(self, storage: DataFlowStorage, 
             input_question_key: str = "question",
             input_db_id_key: str = "db_id",
+            input_evidence_key: str = "evidence",
             output_prompt_key: str = "prompt"
         ):
         
         self.input_question_key = input_question_key
         self.input_db_id_key = input_db_id_key
-        self.output_sft_prompt_key = output_prompt_key
+        self.input_evidence_key = input_evidence_key
+        self.output_prompt_key = output_prompt_key
 
         self.logger.info("Starting prompt generation...")
         raw_dataframe = storage.read("dataframe")
@@ -148,7 +78,28 @@ class Text2SQLPromptGenerator(OperatorABC):
         final_results = []
 
         for item in tqdm(items, desc="Generating prompts"):
-            result = self._process_item(item)
+            db_id = item[self.input_db_id_key]
+            question = item[self.input_question_key]
+
+            if self.input_evidence_key in item:
+                evidence = item[self.input_evidence_key]
+            else:
+                evidence = ""
+        
+            db_id = re.sub(r'[^A-Za-z0-9_]', '', str(db_id).replace('\n', ''))
+
+            db_details = self.database_manager.get_db_details(db_id)
+            prompt = self.prompt_template.build_prompt(
+                db_details=db_details, 
+                question=question,
+                evidence=evidence,
+                db_engine=self.database_manager.db_type
+            ) 
+            
+            result = {
+                **item,
+                self.output_prompt_key: prompt
+            }
             final_results.append(result)
    
         if len(final_results) != len(items):
@@ -157,4 +108,4 @@ class Text2SQLPromptGenerator(OperatorABC):
         output_file = storage.write(pd.DataFrame(final_results))
         self.logger.info(f"Prompt generation completed, saved to {output_file}")
 
-        return [self.output_sft_prompt_key]
+        return [self.output_prompt_key]

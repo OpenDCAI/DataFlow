@@ -1,17 +1,21 @@
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from .func_call_operators import (
-        ScenarioExtractor,
-        ScenarioExpander,
+    from .generate.func_call_generators import (
+        ScenarioExtractGenerator,
+        ScenarioExpandGenerator,
         AtomTaskGenerator,
         SequentialTaskGenerator,
         ParaSeqTaskGenerator,
-        CompositionTaskFilter,
         FunctionGenerator,
         MultiTurnConversationGenerator,
     )
-    from .consistent_chat import ConsistentChatGenerator
+    from .generate.consistent_chat_generator import ConsistentChatGenerator
+    
+    from .eval.func_call_conversation_sample_evaluator import FuncCallConversationSampleEvaluator
+    
+    from .filter.composition_task_filter import CompositionTaskFilter
+
 else:
     import sys
     from dataflow.utils.registry import LazyLoader, generate_import_structure_from_type_checking

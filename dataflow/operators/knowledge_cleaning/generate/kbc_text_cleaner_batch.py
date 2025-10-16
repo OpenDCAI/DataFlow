@@ -7,6 +7,12 @@ from dataflow.utils.storage import DataFlowStorage
 from dataflow.core import OperatorABC
 from dataflow.core import LLMServingABC
 
+from dataflow.core.prompt import prompt_restrict 
+
+import re
+@prompt_restrict(
+    KnowledgeCleanerPrompt       
+)
 
 @OPERATOR_REGISTRY.register()
 class KBCTextCleanerBatch(OperatorABC):

@@ -32,8 +32,8 @@ class ExtractSmilesFromText(OperatorABC):
                 "\n输入参数：\n"
                 "- llm_serving：LLM 服务对象，需实现 LLMServingABC 接口\n"
                 "- prompt_template：提示词模板对象，用于构造模型输入\n"
-                "- content_key：包含 OCR 文本的列名（默认 'text'）\n"
-                "- abbreviation_key：包含缩写/单体信息的列名（默认 'abbreviations'），可为空\n"
+                "- input_content_key： OCR 文本的列名（默认 'text'）\n"
+                "- input_abbreviation_key：包含缩写/单体信息的列名（默认 'abbreviations'），可为空\n"
                 "- output_key：写回抽取结果的列名（默认 'synth_smiles'）\n"
                 "\n输出参数：\n"
                 "- DataFrame，其中 output_key 列为模型返回并经 JSON 解析后的 SMILES 结构\n"
@@ -50,8 +50,8 @@ class ExtractSmilesFromText(OperatorABC):
                 "\nInput Parameters:\n"
                 "- llm_serving: LLM serving object implementing LLMServingABC\n"
                 "- prompt_template: Prompt template object used to build model input\n"
-                "- content_key: Column name containing OCR text (default 'text')\n"
-                "- abbreviation_key: Column name containing abbreviations/monomer info (default 'abbreviations'); optional\n"
+                "- input_content_key: Column name containing OCR text (default 'text')\n"
+                "- input_abbreviation_key: Column name containing abbreviations/monomer info (default 'abbreviations'); optional\n"
                 "- output_key: Column name to store extracted results (default 'synth_smiles')\n"
                 "\nOutput:\n"
                 "- DataFrame with output_key column containing JSON-parsed SMILES structures\n"
@@ -139,7 +139,7 @@ class ExtractSmilesFromText(OperatorABC):
             self.logger.warning(f"[safe_json_load] 解析失败，第{self.json_failures}次；错误：{type(e).__name__}: {e}；预览: {preview}")
             return []
 
-    def run(self, storage: DataFlowStorage, content_key: str = "text", abbreviation_key: str = "abbreviations", output_key: str = "synth_smiles"):
+    def run(self, storage: DataFlowStorage, input_content_key: str = "text", input_abbreviation_key: str = "abbreviations", output_key: str = "synth_smiles"):
         # self.input_key, self.output_key = input_key, output_key
         self.logger.info("Running PromptGenerator...")
 
@@ -152,8 +152,8 @@ class ExtractSmilesFromText(OperatorABC):
 
         # Prepare LLM inputs by formatting the prompt with raw content from the dataframe
         for index, row in dataframe.iterrows():
-            content = row.get(content_key, '')
-            monomer = row.get(abbreviation_key, '')
+            content = row.get(input_content_key, '')
+            monomer = row.get(input_abbreviation_key, '')
             llm_input = self.prompt_template.build_prompt(monomer) + content 
             llm_inputs.append(llm_input)
         

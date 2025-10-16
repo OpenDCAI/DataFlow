@@ -7,11 +7,12 @@ from transformers import AutoTokenizer
 
 @OPERATOR_REGISTRY.register()
 class ReasoningTokenDatasetEvaluator(OperatorABC):
-    def __init__(self):
+    def __init__(self, model_name_or_path: str):
         self.logger = get_logger()
         self.logger.info(f'Initializing {self.__class__.__name__}...')
         self.logger.info(f'{self.__class__.__name__} initialized.')
         self.information_name = "Token Information"
+        self.model_name_or_path = model_name_or_path
 
     @staticmethod
     def get_desc(lang: str = "zh"):
@@ -46,8 +47,8 @@ class ReasoningTokenDatasetEvaluator(OperatorABC):
     
     def get_token_info(self, samples, input_question_key, input_answer_key, model_name_or_path):
         tokenizer = AutoTokenizer.from_pretrained(model_name_or_path)
-        questions = [sample.get(input_question_key, '') for sample in samples]
-        answers = [sample.get(input_answer_key, '') for sample in samples]
+        questions = [sample.get(input_question_key, '') or '' for sample in samples]
+        answers = [sample.get(input_answer_key, '') or '' for sample in samples]
 
         questions_tokens_length = [len(tokenizer.encode(question, add_special_tokens=False)) for question in questions]
         answers_tokens_length = [len(tokenizer.encode(answer, add_special_tokens=False)) for answer in answers]
@@ -80,10 +81,9 @@ class ReasoningTokenDatasetEvaluator(OperatorABC):
         self.logger.info(f"Token information: {token_info}")
         return token_info
     
-    def run(self,storage: DataFlowStorage, input_question_key: str, input_answer_key: str, model_name_or_path: str):
+    def run(self,storage: DataFlowStorage, input_question_key: str, input_answer_key: str):
         self.input_question_key = input_question_key
         self.input_answer_key = input_answer_key
-        self.model_name_or_path = model_name_or_path
         dataframe = storage.read("dataframe")
         if self.input_question_key not in dataframe.columns:
             self.logger.error(f"Input key {self.input_question_key} not found in dataframe columns.")

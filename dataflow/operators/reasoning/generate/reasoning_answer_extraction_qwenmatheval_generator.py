@@ -1,13 +1,14 @@
-import pandas as pd
-from tqdm import tqdm
-import logging
-import re
-from word2number import w2n
 from dataflow.utils.registry import OPERATOR_REGISTRY
 from dataflow import get_logger
 from dataflow.core import OperatorABC
 from dataflow.utils.storage import DataFlowStorage
 from dataflow.utils.reasoning.AnswerExtraction import StringCleaner, UnitTextManager, AnswerExtractor
+
+from word2number import w2n
+from tqdm import tqdm
+import pandas as pd
+import logging
+import re
 
 # The main class to manage the entire extraction process
 @OPERATOR_REGISTRY.register()
@@ -55,24 +56,24 @@ class ReasoningAnswerExtractionQwenMathEvalGenerator(OperatorABC):
         else:
             return "AnswerExtraction_QwenMathEval performs mathematical answer normalization and standardization."
 
-    def run(self, storage: DataFlowStorage, response_key:str = "pseudo_correct_solution_example", extraction_key:str = "extraction"):
+    def run(self, storage: DataFlowStorage, input_key:str = "pseudo_correct_solution_example", output_key:str = "extraction"):
         """
         Executes the answer extraction process.
         """
-        self.response_key, self.extraction_key = response_key, extraction_key
+        self.input_key, self.output_key = input_key, output_key
         raw_dataframe = storage.read("dataframe")
         key_list = raw_dataframe.columns.to_list()
-        if self.response_key not in key_list:
-            raise ValueError(f"response_key: {self.response_key} not found in dataframe columns.")
+        if self.input_key not in key_list:
+            raise ValueError(f"input_key: {self.input_key} not found in dataframe columns.")
 
         self.logger.info(f"Found {len(raw_dataframe)} rows.")
         extractions = [
             self.answer_extractor.extract_answer(resp, self.data_name)
-            for resp in tqdm(raw_dataframe[self.response_key], desc='Processing')
+            for resp in tqdm(raw_dataframe[self.input_key], desc='Processing')
         ]
-        raw_dataframe[self.extraction_key] = extractions
+        raw_dataframe[self.output_key] = extractions
 
         output_file = storage.write(raw_dataframe)
         self.logger.info(f"Extracted answers saved to {output_file}")
         
-        return [extraction_key]
+        return [output_key]

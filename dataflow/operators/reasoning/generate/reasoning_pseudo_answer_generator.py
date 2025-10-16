@@ -1,13 +1,18 @@
-from collections import defaultdict, Counter
 from dataflow.utils.registry import OPERATOR_REGISTRY
 from dataflow import get_logger
-import pandas as pd
 from dataflow.utils.storage import DataFlowStorage
 from dataflow.core import OperatorABC
-
-from dataflow.prompts.reasoning.math import MathAnswerGeneratorPrompt
 from dataflow.core import LLMServingABC
 from dataflow.utils.reasoning.AnswerExtraction import StringCleaner, UnitTextManager, AnswerExtractor
+from dataflow.prompts.reasoning.math import MathAnswerGeneratorPrompt
+from dataflow.core.prompt import prompt_restrict
+
+from collections import defaultdict, Counter
+import pandas as pd
+
+@prompt_restrict(
+    MathAnswerGeneratorPrompt
+)
 
 @OPERATOR_REGISTRY.register()
 class ReasoningPseudoAnswerGenerator(OperatorABC):

@@ -2,7 +2,7 @@ from dataflow.pipeline import PipelineABC
 from dataflow.operators.general_text import (
     LLMLanguageFilter,
 )
-from dataflow.operators.general_text import MetaScorer
+from dataflow.operators.text_pt import MetaSampleEvaluator
 from dataflow.operators.core_text import PromptedGenerator
 from dataflow.serving import APILLMServing_request, LocalModelLLMServing_vllm, LocalHostLLMAPIServing_vllm
 from dataflow.utils.storage import FileStorage

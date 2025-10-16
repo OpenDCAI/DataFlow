@@ -11,9 +11,14 @@ class PromptedGenerator(OperatorABC):
     '''
     Answer Generator is a class that generates answers for given questions.
     '''
-    def __init__(self, llm_serving: LLMServingABC, system_prompt: str = "You are a helpful agent."):
+    def __init__(self, 
+                llm_serving: LLMServingABC, 
+                system_prompt: str = "You are a helpful agent.",
+                json_schema: dict = None,
+                ):
         self.logger = get_logger()
         self.llm_serving = llm_serving
+        self.json_schema = json_schema
         self.system_prompt = system_prompt
     
     @staticmethod
@@ -68,7 +73,10 @@ class PromptedGenerator(OperatorABC):
         # Generate the text using the model
         try:
             self.logger.info("Generating text using the model...")
-            generated_outputs = self.llm_serving.generate_from_input(llm_inputs)
+            if self.json_schema is not None:
+                generated_outputs = self.llm_serving.generate_from_input(llm_inputs, json_schema = self.json_schema)
+            else:
+                generated_outputs = self.llm_serving.generate_from_input(llm_inputs)
             self.logger.info("Text generation completed.")
         except Exception as e:
             self.logger.error(f"Error during text generation: {e}")

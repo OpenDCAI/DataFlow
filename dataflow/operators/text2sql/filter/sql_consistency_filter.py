@@ -1,7 +1,8 @@
 from typing import Dict
 from tqdm import tqdm
 import re
-from dataflow.prompts.text2sql import TextSQLConsistencyPrompt
+from dataflow.prompts.text2sql import SQLConsistencyFilterPrompt
+from dataflow.core.prompt import prompt_restrict 
 from dataflow.utils.registry import OPERATOR_REGISTRY
 from dataflow import get_logger
 from dataflow.core import OperatorABC
@@ -9,12 +10,19 @@ from dataflow.core import LLMServingABC
 from dataflow.utils.storage import DataFlowStorage
 from dataflow.utils.text2sql.database_manager import DatabaseManager
 
+@prompt_restrict(SQLConsistencyFilterPrompt)
 
 @OPERATOR_REGISTRY.register()
 class SQLConsistencyFilter(OperatorABC):
-    def __init__(self, llm_serving: LLMServingABC, database_manager: DatabaseManager):
-        self.llm_serving = llm_serving     
-        self.prompt = TextSQLConsistencyPrompt()
+    def __init__(self, 
+            llm_serving: LLMServingABC, 
+            database_manager: DatabaseManager,
+            prompt_template = SQLConsistencyFilterPrompt
+        ):
+        self.llm_serving = llm_serving
+        if prompt_template is None:
+            prompt_template = SQLConsistencyFilterPrompt()
+        self.prompt_template = prompt_template
         self.database_manager = database_manager
         self.logger = get_logger()
 
@@ -48,12 +56,6 @@ class SQLConsistencyFilter(OperatorABC):
                 return True
         return False
         
-    def generate_consistency_prompt(self, question, sql, schema):
-        return self.prompt.text_sql_consistency_prompt(question, sql, schema)
-
-    def format_schema_according_to_config(self, db_id: str) -> str:
-        return self.database_manager.generate_ddl_without_examples(db_id)
-
     def check_column(self, dataframe):
         required_columns = [self.input_sql_key, self.input_db_id_key, self.input_question_key]
         missing_columns = [col for col in required_columns if col not in dataframe.columns]
@@ -79,8 +81,8 @@ class SQLConsistencyFilter(OperatorABC):
             sql = row[self.input_sql_key]
             question = row[self.input_question_key]
             db_id = row[self.input_db_id_key]
-            ddl = self.format_schema_according_to_config(db_id)
-            prompt = self.prompt.text_sql_consistency_prompt(question, sql, ddl)
+            db_details = self.database_manager.get_db_details(db_id)
+            prompt = self.prompt_template.build_prompt(question, sql, db_details)
             prompts.append(prompt)
             
         responses = self.llm_serving.generate_from_input(prompts, "")

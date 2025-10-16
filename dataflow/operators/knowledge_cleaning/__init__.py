@@ -8,8 +8,8 @@ if TYPE_CHECKING:
     from .generate.file_or_url_to_markdown_converter_batch import FileOrURLToMarkdownConverterBatch
     from .generate.kbc_text_cleaner import KBCTextCleaner
     from .generate.kbc_text_cleaner_batch import KBCTextCleanerBatch
-    from .generate.mathbook_question_extract import MathBookQuestionExtract
-    from .generate.kbc_multihop_qa_generator import KBCMultiHopQAGenerator
+    # from .generate.mathbook_question_extract import MathBookQuestionExtract
+    # from .generate.kbc_multihop_qa_generator import KBCMultiHopQAGenerator
     from .generate.kbc_multihop_qa_generator_batch import KBCMultiHopQAGeneratorBatch
 
 
