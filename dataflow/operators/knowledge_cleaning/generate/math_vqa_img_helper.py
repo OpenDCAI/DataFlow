@@ -5,8 +5,6 @@ import json
 from dataflow.utils.registry import OPERATOR_REGISTRY
 from dataflow import get_logger
 
-import ipdb
-
 @OPERATOR_REGISTRY.register()
 class MathVQAClipHeader(OperatorABC):
     def __init__(self):
