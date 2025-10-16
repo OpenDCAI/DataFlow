@@ -33,7 +33,7 @@ class KBCleaning_batchvllm_GPUPipeline():
         self.knowledge_cleaning_step1 = FileOrURLToMarkdownConverterBatch(
             intermediate_dir=str(cache_path / ".cache"),
             lang="en",
-            mineru_backend="pipeline",
+            mineru_backend="pipeline",  # pipeline 暂未支持vlm-vllm-engine / no support vlm-vllm-engine
         )
 
         self.knowledge_cleaning_step2 = KBCChunkGeneratorBatch (
