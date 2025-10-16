@@ -33,20 +33,20 @@ class VQA_extract:
         #     model_name = "gpt-4o-mini",
         #     max_workers = 10,
         # )
-        self.pic_extractor = MathVQAExtractPicExtractor(self.llm_serving)
+        self.pic_extractor = MathVQAExtractPicExtractor(self.llm_serving, subject=self.subject)
         self.qapair_extractor = MathVQAExtractQAPairExtractor()
         
     def run(self):
         os.makedirs("../vqa", exist_ok=True)
-        output_json_path, output_layout_path = self.doc_item_layout.run(self.pdf_path, "../vqa/")
-        self.pdf2img.run(output_layout_path, "../vqa/pdf_images")
-        self.clip_header.run("../vqa/pdf_images", output_json_path, "../vqa/cropped_images")
-        self.concatenate_images.run("../vqa/cropped_images", "../vqa/concatenated_images")
-        self.pic_extractor.run("../vqa/concatenated_images", "../vqa/vqa_extract", subject=self.subject)
-        self.qapair_extractor.run("../vqa/vqa_extract/vqa_extract.jsonl", "../vqa/vqa_extract/qapair_extract.jsonl")
+        output_json_path, output_layout_path = self.doc_item_layout.run(None, self.pdf_path, "../vqa/")
+        self.pdf2img.run(None, output_layout_path, "../vqa/pdf_images")
+        self.clip_header.run(None, "../vqa/pdf_images", output_json_path, "../vqa/cropped_images")
+        self.concatenate_images.run(None, "../vqa/cropped_images", "../vqa/concatenated_images")
+        self.pic_extractor.run(None, "../vqa/concatenated_images", "../vqa/vqa_extract")
+        self.qapair_extractor.run(None, "../vqa/vqa_extract/vqa_extract.jsonl", "../vqa/vqa_extract/qapair_extract.jsonl")
         
         piclabeltranslator = MathVQAExtractTag2Img(output_json_path, "../vqa/pdf_images", "../vqa/vqa_extract_cut_images", layout_prefix="doclay_concatenated_", image_prefix='page_')
-        piclabeltranslator.run("../vqa/vqa_extract/qapair_extract.jsonl", "../vqa/vqa_extract/qapair_extract_cut.jsonl", "../vqa/vqa_extract/qapair_extract_cut.md")
+        piclabeltranslator.run(None, "../vqa/vqa_extract/qapair_extract.jsonl", "../vqa/vqa_extract/qapair_extract_cut.jsonl", "../vqa/vqa_extract/qapair_extract_cut.md")
 
 class VQA_deduplicate:
     def __init__(self, input_path: str):
@@ -62,7 +62,7 @@ class VQA_deduplicate:
         self.deduplicate.run(self.storage.step(), input_keys=["question", "answer"])
 
 if __name__ == "__main__":
-    vqa_extract = VQA_extract("./dataflow/example/KBCleaningPipeline/chemistry_test.pdf", subject="chemistry")
+    vqa_extract = VQA_extract("./dataflow/example/KBCleaningPipeline/physics_test.pdf", subject="physics")
     vqa_extract.run()
     
     # 将jsonl文件先倒转过来 (因为有时候最后的答案是完整的，而前面的不完整)
