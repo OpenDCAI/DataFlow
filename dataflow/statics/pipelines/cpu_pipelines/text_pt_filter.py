@@ -9,7 +9,6 @@ from dataflow.operators.general_text import (
     MeanWordLengthFilter,
     SymbolWordRatioFilter,
     HtmlEntityFilter,
-    IDCardFilter,
     NoPuncFilter,
     SpecialCharacterFilter,
     WatermarkFilter,
@@ -51,7 +50,6 @@ class PTTextFilter_CPUPipeline():
         self.mean_word_length_filter = MeanWordLengthFilter(min_length=3, max_length=10)
         self.symbol_word_ratio_filter = SymbolWordRatioFilter(threshold=0.4)
         self.html_entity_filter = HtmlEntityFilter()
-        self.id_card_filter = IDCardFilter(threshold=3)
         self.no_punc_filter = NoPuncFilter(threshold=112)
         self.special_character_filter = SpecialCharacterFilter()
         self.watermark_filter = WatermarkFilter(watermarks=['Copyright', 'Watermark', 'Confidential'])
@@ -64,15 +62,15 @@ class PTTextFilter_CPUPipeline():
         self.line_with_javascript_filter = LineWithJavascriptFilter(threshold=3)
     
     def forward(self):
-        self.remove_extra_spaces_refiner.run(
-            storage=self.storage.step(),
-            input_key="raw_content"
-        )
         self.remove_emoji_refiner.run(
             storage=self.storage.step(),
             input_key="raw_content"
         )
         self.html_remove_refiner.run(
+            storage=self.storage.step(),
+            input_key="raw_content"
+        )
+        self.remove_extra_spaces_refiner.run(
             storage=self.storage.step(),
             input_key="raw_content"
         )
@@ -113,10 +111,6 @@ class PTTextFilter_CPUPipeline():
             input_key='raw_content',
         )
         self.html_entity_filter.run(
-            storage = self.storage.step(),
-            input_key='raw_content',
-        )
-        self.id_card_filter.run(
             storage = self.storage.step(),
             input_key='raw_content',
         )
