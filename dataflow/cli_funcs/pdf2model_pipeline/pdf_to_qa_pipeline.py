@@ -4,10 +4,10 @@ import argparse
 import os
 from pathlib import Path
 from dataflow.operators.knowledge_cleaning import (
-    KBCChunkGeneratorBatch as CorpusTextSplitterBatch,
+    KBCChunkGeneratorBatch,
     FileOrURLToMarkdownConverterBatch,
-    KBCTextCleanerBatch as KnowledgeCleanerBatch,
-    KBCMultiHopQAGeneratorBatch as MultiHopQAGeneratorBatch,
+    KBCTextCleanerBatch,
+    KBCMultiHopQAGeneratorBatch,
     QAExtractor
 )
 from dataflow.utils.storage import FileStorage
@@ -33,10 +33,10 @@ class KBCleaning_batchvllm_GPUPipeline():
         self.knowledge_cleaning_step1 = FileOrURLToMarkdownConverterBatch(
             intermediate_dir=str(cache_path / ".cache"),
             lang="en",
-            mineru_backend="vlm",
+            mineru_backend="pipeline",
         )
 
-        self.knowledge_cleaning_step2 = CorpusTextSplitterBatch(
+        self.knowledge_cleaning_step2 = KBCChunkGeneratorBatch (
             split_method="token",
             chunk_size=512,
             tokenizer_name="./Qwen2.5-7B-Instruct",
@@ -70,12 +70,12 @@ class KBCleaning_batchvllm_GPUPipeline():
             vllm_repetition_penalty=1.2
         )
 
-        self.knowledge_cleaning_step3 = KnowledgeCleanerBatch(
+        self.knowledge_cleaning_step3 = KBCTextCleanerBatch(
             llm_serving=self.llm_serving,
             lang="en"
         )
 
-        self.knowledge_cleaning_step4 = MultiHopQAGeneratorBatch(
+        self.knowledge_cleaning_step4 = KBCMultiHopQAGeneratorBatch(
             llm_serving=self.llm_serving,
             lang="en",
         )
