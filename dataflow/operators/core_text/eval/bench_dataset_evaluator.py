@@ -1,5 +1,6 @@
 from dataflow.utils.reasoning.AnswerExtraction import StringCleaner, UnitTextManager, AnswerExtractor
 from dataflow.prompts.reasoning.general import AnswerJudgePrompt
+from dataflow.core.prompt import DIYPromptABC
 from dataflow.utils.registry import OPERATOR_REGISTRY
 from dataflow.utils.storage import DataFlowStorage
 from dataflow.core import LLMServingABC
@@ -21,7 +22,7 @@ class BenchDatasetEvaluator(OperatorABC):
                 compare_method: Literal["match", "semantic"] = "match",
                 system_prompt: str = "You are a helpful assistant specialized in evaluating answer correctness.",
                 llm_serving: LLMServingABC = None,
-                prompt_template = None
+                prompt_template: DIYPromptABC = None
                 ):
         
         if eval_result_path is None:
