@@ -70,14 +70,6 @@ class MathVQAExtractTag2Img(OperatorABC):
                 # class_name 也可以是 'figure'，id 可能是 'figure1', 'figure2' 等
                     if i == int(figure_id):
                         return detection.get("bbox")
-                    if detection.get("type") == "image":
-                        i += len(detection.get("image_caption", []))
-                        i += len(detection.get("image_footnote", []))
-                    elif detection.get("type") == "table":
-                        i += len(detection.get("table_caption", []))
-                        i += len(detection.get("table_footnote", []))
-                    elif detection.get("type") == "code":
-                        i += len(detection.get("code_caption", []))
         except (IndexError, ValueError, KeyError) as e:
             self.logger.error(f"处理布局数据时出错: {e}")
             return None

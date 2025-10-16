@@ -238,6 +238,7 @@ Strict extraction rules:
   `<qa_pair><label>例1</label><question>…</question><answer>…</answer></qa_pair>`
 - For problem and answer text, output exactly what appears (no translation). Render all mathematical expressions in LaTeX.
 - Whenever the question or answer refers to a figure or diagram, record it with `<pic>tagA:boxB</pic>`, such as `<pic>tag5:box7</pic>`. tagA:boxB is labeled (in exactly the same format) in the image beside the figure or diagram in RED color. Be careful that the original caption of the book may also exist, but usually in format A.B (normally in black color). Do NOT use the original caption in the book!!! Additionally, the figure/diagram may be surrounded by multiple labels (some from other boxes), be careful to pick the correct one. The correct one will be at the upper right of the figure/diagram. If you are not sure, you are free to put multiple labels, e.g. `<pic>tag5:box7</pic> <pic>tag5:box8</pic>`. NEVER leave it blank or make up a label!
+- You should always put the `<pic>...</pic>` tag at the exact position where the figure/diagram is referenced in the text. If there are multiple references, put multiple tags at the correct positions.
 - Extract all headings that represent structural information in the main body of the text (e.g., chapter titles, section titles such as “习题1.a”, lecture headings like “第一讲 相似”). Treat composite titles as a single unit (so “第一讲 相似” is one title, not two). Do not extract running headers or footers.
 
 If no qualifying content is found, output:

@@ -5,6 +5,8 @@ import json
 from dataflow.utils.registry import OPERATOR_REGISTRY
 from dataflow import get_logger
 
+import ipdb
+
 @OPERATOR_REGISTRY.register()
 class MathVQAClipHeader(OperatorABC):
     def __init__(self):
@@ -28,13 +30,15 @@ class MathVQAClipHeader(OperatorABC):
             image_id = image_path.split('/')[-1].split('.')[0].split('_')[-1]
             image = cv.imread(image_path)
             h, w, _ = image.shape
-            header_height = h
+            header_height = 1000
             footer_height = 0
-            for block in layout[int(image_id)]:
+            for block in layout:
+                if block['page_idx'] != int(image_id):
+                    continue
                 if block['type'] not in ['header', 'footer', 'page_number', 'page_annotation']:
                     header_height = min(header_height, block['bbox'][1])
                     footer_height = max(footer_height, block['bbox'][3])
-            cropped_image = image[int(header_height * h):int(footer_height * h), 0:w]
+            cropped_image = image[int(header_height * h / 1000):int(footer_height * h / 1000), 0:w]
             output_image_path = os.path.join(output_image_folder, image_name)
             cv.imwrite(output_image_path, cropped_image)
             self.logger.info(f"Cropped image saved to {output_image_path}")
