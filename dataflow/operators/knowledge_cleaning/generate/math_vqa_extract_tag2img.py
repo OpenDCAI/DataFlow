@@ -10,7 +10,7 @@ from dataflow import get_logger
 from dataflow.core import OperatorABC
 
 class MathVQAExtractTag2Img(OperatorABC):
-    def __init__(self, layout_json_dir, pdf_image_dir, output_image_dir, layout_prefix='doclay_page_', image_prefix='page_'):
+    def __init__(self, layout_json, pdf_image_dir, output_image_dir, layout_prefix='doclay_page_', image_prefix='page_'):
         """
         初始化处理器。
 
@@ -19,7 +19,7 @@ class MathVQAExtractTag2Img(OperatorABC):
             pdf_image_dir (str): 存储从PDF转换的原始页面图片的目录。
             output_image_dir (str): 用于保存裁剪出的图片的目录。
         """
-        self.layout_json_dir = layout_json_dir
+        self.layout_json = layout_json
         self.pdf_image_dir = pdf_image_dir
         self.output_image_dir = output_image_dir
         self.layout_prefix = layout_prefix  # 用于处理布局JSON文件的前缀
@@ -44,11 +44,11 @@ class MathVQAExtractTag2Img(OperatorABC):
         Returns:
             list or None: 边界框坐标 [x1, y1, x2, y2]，如果未找到则返回 None。
         """
-        json_filename = f"{self.layout_prefix}{page_num}.json"
+        json_filename = self.layout_json
         
         # 检查缓存
         if json_filename not in self.bbox_cache:
-            json_path = os.path.join(self.layout_json_dir, json_filename)
+            json_path = json_filename
             if not os.path.exists(json_path):
                 self.logger.warning(f"布局JSON文件未找到: {json_path}")
                 return None
@@ -59,12 +59,15 @@ class MathVQAExtractTag2Img(OperatorABC):
                 self.logger.error(f"读取或解析JSON文件失败: {json_path}, 错误: {e}")
                 return None
 
-        layout_data = self.bbox_cache[json_filename]
+        layout_data = self.bbox_cache[json_filename][int(page_num)]
         
         # 在detections中查找figure_id
-        for detection in layout_data.get("detections", []):
+        i = -1
+        for detection in layout_data:
+            if detection.get("type") not in ["header", "footer", "page_number", "page_annotation"]:
+                i += 1
             # class_name 也可以是 'figure'，id 可能是 'figure1', 'figure2' 等
-            if detection.get("id") == figure_id:
+            if i == int(figure_id):
                 return detection.get("bbox")
         
         self.logger.warning(f"在 {json_filename} 中未找到 ID 为 '{figure_id}' 的检测框。")
@@ -75,11 +78,12 @@ class MathVQAExtractTag2Img(OperatorABC):
         这是 re.sub 的回调函数，用于处理每个匹配到的 <pic> 标签。
         """
         original_tag = match.group(0)
-        tag_content = match.group(1) # 例如: "page_67|figure2"
+        tag_content = match.group(1) # 例如: "page5:box7"
 
         try:
-            page_info, figure_id = tag_content.split('|')
-            page_num = page_info.replace('page_', '')
+            page_info, figure_id = tag_content.split(':')
+            page_num = page_info.replace('tag', '')
+            figure_id = figure_id.replace('box', '')
         except ValueError:
             self.logger.error(f"标记格式错误: {original_tag}。将保持原样。")
             return original_tag
@@ -102,8 +106,9 @@ class MathVQAExtractTag2Img(OperatorABC):
             return original_tag
 
         # 3. 裁剪图片
-        x1, y1, x2, y2 = map(int, bbox)
-        cropped_img = img[y1:y2, x1:x2]
+        x1, y1, x2, y2 = bbox
+        h, w = img.shape[:2]
+        cropped_img = img[int(y1*h):int(y2*h), int(x1*w):int(x2*w)]
         
         if cropped_img.size == 0:
             self.logger.warning(f"裁剪出的图片为空 (bbox: {bbox})，来自: {original_image_path}。")

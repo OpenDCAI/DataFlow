@@ -1,5 +1,5 @@
 from dataflow.operators.knowledge_cleaning import MathVQAExtractPdf2Img
-from dataflow.operators.knowledge_cleaning import MathVQAExtractDocLayout
+from dataflow.operators.knowledge_cleaning import VQAExtractDocLayoutMinerU
 from dataflow.operators.knowledge_cleaning import MathVQAExtractPicExtractor
 from dataflow.operators.knowledge_cleaning import MathVQAExtractQAPairExtractor
 from dataflow.operators.knowledge_cleaning import MathVQAExtractTag2Img
@@ -8,6 +8,7 @@ from dataflow.operators.knowledge_cleaning import MathVQAConcatenateImages
 from dataflow.serving import APIVLMServing_openai
 from dataflow.serving import APILLMServing_request
 import os
+import json
 
 from dataflow.utils.storage import FileStorage
 from dataflow.operators.general_text.filter.minhash_deduplicate_filter import MinHashDeduplicateFilter
@@ -19,7 +20,7 @@ class VQA_extract:
         self.subject = subject
         self.output_prefix = output_prefix
         self.pdf2img = MathVQAExtractPdf2Img()
-        self.doc_item_layout = MathVQAExtractDocLayout("/mnt/DataFlow/djw/doclayout_yolo_docstructbench_imgsz1024.pt")
+        self.doc_item_layout = VQAExtractDocLayoutMinerU()
         self.clip_header = MathVQAClipHeader()
         self.concatenate_images = MathVQAConcatenateImages()
         self.llm_serving = APIVLMServing_openai(
@@ -34,17 +35,18 @@ class VQA_extract:
         # )
         self.pic_extractor = MathVQAExtractPicExtractor(self.llm_serving)
         self.qapair_extractor = MathVQAExtractQAPairExtractor()
-        self.piclabeltranslator = MathVQAExtractTag2Img("../vqa/layout_concatenated_images/json", "../vqa/concatenated_images", "../vqa/vqa_extract_cut_images", layout_prefix="doclay_concatenated_", image_prefix='concatenated_')
+        
     def run(self):
         os.makedirs("../vqa", exist_ok=True)
-        self.pdf2img.run(self.pdf_path, "../vqa/pdf_images")
-        self.doc_item_layout.run("../vqa/pdf_images", "../vqa/layout_images", self.output_prefix)
-        self.clip_header.run("../vqa/pdf_images", "../vqa/layout_images/json", "../vqa/cropped_images")
+        output_json_path, output_layout_path = self.doc_item_layout.run(self.pdf_path, "../vqa/")
+        self.pdf2img.run(output_layout_path, "../vqa/pdf_images")
+        self.clip_header.run("../vqa/pdf_images", output_json_path, "../vqa/cropped_images")
         self.concatenate_images.run("../vqa/cropped_images", "../vqa/concatenated_images")
-        self.doc_item_layout.run("../vqa/concatenated_images", "../vqa/layout_concatenated_images", self.output_prefix)
-        self.pic_extractor.run("../vqa/layout_concatenated_images", "../vqa/vqa_extract", subject=self.subject)
+        self.pic_extractor.run("../vqa/concatenated_images", "../vqa/vqa_extract", subject=self.subject)
         self.qapair_extractor.run("../vqa/vqa_extract/vqa_extract.jsonl", "../vqa/vqa_extract/qapair_extract.jsonl")
-        self.piclabeltranslator.run("../vqa/vqa_extract/qapair_extract.jsonl", "../vqa/vqa_extract/qapair_extract_cut.jsonl", "../vqa/vqa_extract/qapair_extract_cut.md")
+        
+        piclabeltranslator = MathVQAExtractTag2Img(output_json_path, "../vqa/pdf_images", "../vqa/vqa_extract_cut_images", layout_prefix="doclay_concatenated_", image_prefix='page_')
+        piclabeltranslator.run("../vqa/vqa_extract/qapair_extract.jsonl", "../vqa/vqa_extract/qapair_extract_cut.jsonl", "../vqa/vqa_extract/qapair_extract_cut.md")
 
 class VQA_deduplicate:
     def __init__(self, input_path: str):
@@ -60,7 +62,7 @@ class VQA_deduplicate:
         self.deduplicate.run(self.storage.step(), input_keys=["question", "answer"])
 
 if __name__ == "__main__":
-    vqa_extract = VQA_extract("./dataflow/example/KBCleaningPipeline/chemistry_test.pdf", subject="chemistry")
+    vqa_extract = VQA_extract("./dataflow/example/KBCleaningPipeline/questionextract_test.pdf", subject="math")
     vqa_extract.run()
     
     # 将jsonl文件先倒转过来 (因为有时候最后的答案是完整的，而前面的不完整)

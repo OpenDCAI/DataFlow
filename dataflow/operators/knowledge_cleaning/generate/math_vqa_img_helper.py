@@ -19,26 +19,22 @@ class MathVQAClipHeader(OperatorABC):
         '''
         if not os.path.exists(output_image_folder):
             os.makedirs(output_image_folder)
+        with open(input_layout_path, 'r') as f:
+            layout = json.load(f)
         for image_name in os.listdir(input_image_path):
             if not image_name.endswith('.png') and not image_name.endswith('.jpg'):
                 continue
             image_path = os.path.join(input_image_path, image_name)
-            layout_path = os.path.join(input_layout_path, image_name.replace('.png', '.json').replace('.jpg', '.json'))
-            layout_path = layout_path.replace('page_', input_layout_prefix + '_' + 'page_')  # Adjust the layout path prefix if necessary
-            if not os.path.exists(layout_path):
-                self.logger.warning(f"Layout file {layout_path} does not exist. Skipping {image_name}.")
-                continue
-            with open(layout_path, 'r') as f:
-                layout = json.load(f)
+            image_id = image_path.split('/')[-1].split('.')[0].split('_')[-1]
             image = cv.imread(image_path)
             h, w, _ = image.shape
             header_height = h
             footer_height = 0
-            for block in layout['detections']:
-                if block['class_name'] != 'abandon':
+            for block in layout[int(image_id)]:
+                if block['type'] not in ['header', 'footer', 'page_number', 'page_annotation']:
                     header_height = min(header_height, block['bbox'][1])
                     footer_height = max(footer_height, block['bbox'][3])
-            cropped_image = image[header_height:footer_height, 0:w]
+            cropped_image = image[int(header_height * h):int(footer_height * h), 0:w]
             output_image_path = os.path.join(output_image_folder, image_name)
             cv.imwrite(output_image_path, cropped_image)
             self.logger.info(f"Cropped image saved to {output_image_path}")

@@ -31,7 +31,7 @@ class MathVQAExtractPicExtractor(OperatorABC):
 
     def run(self, input_layout_path: str, output_folder: str, subject: str = "math"):
         # 从layout_path/images中读取所有图片的文件名,确保为绝对路径
-        image_files = [os.path.join(input_layout_path, "images", image_file) for image_file in os.listdir(os.path.join(input_layout_path, "images"))]
+        image_files = [os.path.join(input_layout_path, image_file) for image_file in os.listdir(input_layout_path)]
         # 确保end with jpg & png
         image_files = [image_file for image_file in image_files if image_file.endswith(".jpg") or image_file.endswith(".png")]
 

@@ -230,7 +230,6 @@ class MathVQAExtractPrompt(PromptABC):
 2. If the problem or answer is not complete (because they continue onto page_n+1), omit them. If the problem is complete but the answer not, omit both the problem and the answer. DO NOT INCLUDE INCOMPLETE PROBLEMS OR ANSWERS.
 3. Normally, a box at the beginning of a page with no title (such as "1.1", "例 1", "example 1", "解", "solution", "答案", "answer") is the continuation of the problem or answer from the previous page, even if it appears to be an independent paragraph. Omit them.
 4. The chapter information (main titles and subtitles) as it appears on page_n.
-5. The exact value of n is in the label of the image (provided in text); when you output, you should use that value of n. DO **NOT** USE PAGE NUMBERS IN THE IMAGES AS n.
 
 Strict extraction rules:
 - If you think the page is not the main text page, such as a cover page, catalog page, header/footer only, etc., output `<empty></empty>`.
@@ -238,7 +237,7 @@ Strict extraction rules:
 - If a question and its answer/proof are contiguous on page_n, wrap them together as a single `<qa_pair>`…`</qa_pair>` block, e.g.:
   `<qa_pair><label>例1</label><question>…</question><answer>…</answer></qa_pair>`
 - For problem and answer text, output exactly what appears (no translation). Render all mathematical expressions in LaTeX.
-- Whenever the question or answer refers to a figure or diagram, record it with `<pic>IMAGE_NAME|BOX_LABEL</pic>`, using the label from the detection model and the image name (page_n or page_n+1).
+- Whenever the question or answer refers to a figure or diagram, record it with `<pic>tagA:boxB</pic>`, such as `<pic>tag5:box7</pic>`. pageA:boxB is labeled (in exactly the same format) in the image beside the figure or diagram in RED color. Be careful that the original caption of the book may also exist, but usually in format A.B (normally in black color). Do NOT use the original caption in the book!!! Additionally, the figure/diagram may be surrounded by multiple labels (some from other boxes), be careful to pick the correct one. The correct one will be at the upper right of the figure/diagram. If you are not sure, you are free to put multiple labels, e.g. `<pic>tag5:box7</pic> <pic>tag5:box8</pic>`. NEVER leave it blank or make up a label!
 - Extract all headings that represent structural information in the main body of the text (e.g., chapter titles, section titles such as “习题1.a”, lecture headings like “第一讲 相似”). Treat composite titles as a single unit (so “第一讲 相似” is one title, not two). Do not extract running headers or footers.
 
 If no qualifying content is found, output:
@@ -251,7 +250,7 @@ Output format (all tags run together, no extra whitespace or newlines except bet
 [repeat as needed or `<empty></empty>`]
 
 Example (for page_1 & page_2):
-<question><label>例1</label>Calculate \(x\) such that \(x^2-1=0\).<pic>page_1|fig1</pic></question>
+<question><label>例1</label>Calculate \(x\) such that \(x^2-1=0\).<pic>tag5:box7</pic></question>
 <answer><label>例1</label>\(x=\pm1\).</answer>
 <title>Chapter 2</title>
 <title>Section 2.1</title>

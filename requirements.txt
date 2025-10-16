@@ -71,4 +71,4 @@ soundfile
 # map visualize
 # matplotlib - removed as no longer needed
 
-doclayout_yolo
+mineru[core]>=2.5.0
