@@ -8,6 +8,9 @@ from dataflow.prompts.kbcleaning import MathVQAExtractPrompt
 import os
 from typing import List
 
+from dataflow.core.prompt import prompt_restrict 
+
+@prompt_restrict(MathVQAExtractPrompt)
 @OPERATOR_REGISTRY.register()
 class MathVQAExtractPicExtractor(OperatorABC):
     def __init__(self,

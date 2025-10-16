@@ -9,6 +9,7 @@ from dataflow.utils.registry import OPERATOR_REGISTRY
 from dataflow import get_logger
 from dataflow.core import OperatorABC
 
+@OPERATOR_REGISTRY.register()
 class MathVQAExtractTag2Img(OperatorABC):
     def __init__(self, layout_json, pdf_image_dir, output_image_dir, layout_prefix='doclay_page_', image_prefix='page_'):
         """

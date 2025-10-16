@@ -4,6 +4,7 @@ from dataflow.core import OperatorABC
 import pandas as pd
 import re
 
+@OPERATOR_REGISTRY.register()
 class MathVQAExtractQAPairExtractor(OperatorABC):
     def __init__(self):
         self.logger = get_logger()

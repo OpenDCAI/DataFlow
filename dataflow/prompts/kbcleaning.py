@@ -218,7 +218,7 @@ Processing Steps:
       return cleaned_text
 
 
-
+@PROMPT_REGISTRY.register()
 class MathVQAExtractPrompt(PromptABC):
     def __init__(self):
         pass
@@ -261,7 +261,7 @@ Please now process the provided page_n image and output your result.
         return PROMPT
 
 
-
+@PROMPT_REGISTRY.register()
 class MathbookQuestionExtractPrompt:
    def __init__(self):
       pass

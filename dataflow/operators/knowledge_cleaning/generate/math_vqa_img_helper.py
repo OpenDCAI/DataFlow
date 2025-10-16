@@ -41,6 +41,7 @@ class MathVQAClipHeader(OperatorABC):
             cv.imwrite(output_image_path, cropped_image)
             self.logger.info(f"Cropped image saved to {output_image_path}")
             
+@OPERATOR_REGISTRY.register()
 class MathVQAConcatenateImages(OperatorABC):
     def __init__(self):
         self.logger = get_logger()
