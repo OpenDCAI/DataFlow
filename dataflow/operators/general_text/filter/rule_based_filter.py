@@ -1202,7 +1202,7 @@ class UniqueWordsFilter(OperatorABC):
                 "运行参数：\n"
                 "- storage：DataFlowStorage对象\n"
                 "- input_key：输入文本字段名\n"
-                "- output_key：输出标签字段名，默认为'unique_words_filter'\n"
+                "- output_key：输出标签字段名，默认为'unique_words_filter_label'\n"
                 "返回值：\n"
                 "- 包含output_key的列表"
             )
@@ -1214,14 +1214,14 @@ class UniqueWordsFilter(OperatorABC):
                 "Run Parameters:\n"
                 "- storage: DataFlowStorage object\n"
                 "- input_key: Input text field name\n"
-                "- output_key: Output label field name, default is 'unique_words_filter'\n"
+                "- output_key: Output label field name, default is 'unique_words_filter_label'\n"
                 "Returns:\n"
                 "- List containing output_key"
             )
         else:
             return "UniqueWordsFilter checks unique word ratio using set operations and threshold comparison."
         
-    def run(self, storage: DataFlowStorage, input_key: str, output_key: str='unique_words_filter'):
+    def run(self, storage: DataFlowStorage, input_key: str, output_key: str='unique_words_filter_label'):
         self.input_key = input_key
         self.output_key = output_key
         dataframe = storage.read("dataframe")
