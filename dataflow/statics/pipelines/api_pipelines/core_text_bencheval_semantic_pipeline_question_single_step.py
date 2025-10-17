@@ -1,4 +1,4 @@
-from dataflow.operators.core_text import BenchDatasetEvaluator
+from dataflow.operators.core_text import BenchDatasetEvaluatorQuestion
 from dataflow.operators.reasoning import ReasoningAnswerGenerator
 from dataflow.utils.storage import FileStorage
 from dataflow.serving import APILLMServing_request, LocalModelLLMServing_vllm
@@ -26,7 +26,7 @@ class BenchEvalPipeline():
                     max_workers=30
         )
         
-        self.evaluator_step = BenchDatasetEvaluator(
+        self.evaluator_step = BenchDatasetEvaluatorQuestion(
             eval_result_path="./cache_local/eval_result/eval_result.jsonl",
             compare_method="semantic", # or match
             llm_serving=self.llm_serving_judger,
@@ -37,7 +37,8 @@ class BenchEvalPipeline():
         self.evaluator_step.run(
             storage = self.storage.step(),
             input_test_answer_key="model_answer",
-            input_gt_answer_key="golden_label"
+            input_gt_answer_key="golden_label",
+            input_question_key="question",
         )
 
 if __name__ == "__main__":
