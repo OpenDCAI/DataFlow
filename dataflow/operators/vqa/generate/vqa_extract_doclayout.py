@@ -14,8 +14,6 @@ from pathlib import Path
 
 from io import BytesIO
 
-from reportlab.pdfgen import canvas
-
 def modified_draw_bbox_with_number(i, bbox_list, page, c, rgb_config, fill_config, draw_bbox=True):
     new_rgb = [float(color) / 255 for color in rgb_config]
     page_data = bbox_list[i]
@@ -263,7 +261,15 @@ class VQAExtractDocLayoutMinerU(OperatorABC):
             Please use pip install pypdf.
             """
         )
-
+        try:
+            from reportlab.pdfgen import canvas
+        except ImportError:
+            raise Exception(
+            """
+            reportlab is not installed in this environment yet.
+            Please use pip install reportlab.
+            """
+        )
 
         os.environ['MINERU_MODEL_SOURCE'] = "local"  # 可选：从本地加载模型
 
