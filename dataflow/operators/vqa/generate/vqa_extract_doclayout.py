@@ -14,7 +14,6 @@ from pathlib import Path
 
 from io import BytesIO
 
-from pypdf import PdfReader, PdfWriter, PageObject
 from reportlab.pdfgen import canvas
 
 def modified_draw_bbox_with_number(i, bbox_list, page, c, rgb_config, fill_config, draw_bbox=True):
@@ -253,6 +252,15 @@ class VQAExtractDocLayoutMinerU(OperatorABC):
             Please refer to https://github.com/opendatalab/mineru to install.
             Or you can just execute 'pip install mineru[pipeline]' and 'mineru-models-download' to fix this error.
             Please make sure you have GPU on your machine.
+            """
+        )
+        try:
+            from pypdf import PdfReader, PdfWriter, PageObject
+        except ImportError:
+            raise Exception(
+            """
+            pypdf is not installed in this environment yet.
+            Please use pip install pypdf.
             """
         )
 
