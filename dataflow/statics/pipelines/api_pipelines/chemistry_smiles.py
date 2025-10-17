@@ -80,7 +80,7 @@ class ExtractSmiles():
         )
         self.model_cache_dir = './dataflow_cache'
         self.llm_serving = APILLMServing_request(
-                api_url="https://api.openai.com/v1/chat/completions",
+                api_url="http://123.129.219.111:3000/v1/chat/completions",
                 model_name="gemini-2.5-flash",
                 max_workers=200,
         )
@@ -94,8 +94,8 @@ class ExtractSmiles():
         # Initial filters
         self.prompt_smile_extractor.run(
             storage = self.storage.step(),
-            content_key = "text",
-            abbreviation_key = "abbreviations",
+            input_content_key = "text",
+            input_abbreviation_key = "abbreviations",
             output_key = "synth_smiles"
         )
         self.smile_eval.run(
