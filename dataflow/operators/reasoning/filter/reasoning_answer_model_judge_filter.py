@@ -3,7 +3,7 @@ from dataflow import get_logger
 from dataflow.core import OperatorABC
 from dataflow.utils.storage import DataFlowStorage
 from dataflow.core import LLMServingABC
-from dataflow.prompts.reasoning.general import AnswerJudgePrompt
+from dataflow.prompts.model_evaluation.general import AnswerJudgePrompt
 from dataflow.core.prompt import prompt_restrict, DIYPromptABC
 
 import re
