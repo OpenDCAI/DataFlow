@@ -15,9 +15,9 @@ def success(self, message, *args, **kwargs):
 
 logging.Logger.success = success  # 添加方法到 Logger 类
 
-def get_logger(level=default_log_level) -> logging.Logger:
+def get_logger(level=default_log_level, title="DataFlow") -> logging.Logger:
     # 创建logger对象
-    logger = logging.getLogger("DataFlow")
+    logger = logging.getLogger(title)
     if not logger.handlers:
         logger.setLevel(level)
         # 创建控制台日志处理器
