@@ -4,9 +4,10 @@ import argparse
 import os
 from pathlib import Path
 from dataflow.operators.knowledge_cleaning import (
-    KBCChunkGeneratorBatch as CorpusTextSplitterBatch,
-    KBCTextCleanerBatch as KnowledgeCleanerBatch,
-    KBCMultiHopQAGeneratorBatch as MultiHopQAGeneratorBatch,
+    KBCChunkGeneratorBatch,
+    KBCTextCleanerBatch,
+    KBCMultiHopQAGeneratorBatch,
+    QAExtractor
 )
 # from dataflow.operators.knowledge_cleaning import (
 #     CorpusTextSplitterBatch,
@@ -33,10 +34,15 @@ class Text2QAPipeline:
             cache_type="json",
         )
 
-        self.text_splitting_step = CorpusTextSplitterBatch(
+        self.text_splitting_step = KBCChunkGeneratorBatch(
             split_method="token",
             chunk_size=512,
             tokenizer_name="Qwen/Qwen2.5-7B-Instruct",
+        )
+
+        self.extract_format_qa = QAExtractor(
+            qa_key="qa_pairs",
+            output_json_file="./.cache/data/qa.json",
         )
 
     def forward(self):
@@ -55,12 +61,12 @@ class Text2QAPipeline:
             vllm_repetition_penalty=1.2
         )
 
-        self.knowledge_cleaning_step = KnowledgeCleanerBatch(
+        self.knowledge_cleaning_step = KBCTextCleanerBatch(
             llm_serving=self.llm_serving,
             lang="en"
         )
 
-        self.qa_generation_step = MultiHopQAGeneratorBatch(
+        self.qa_generation_step = KBCMultiHopQAGeneratorBatch(
             llm_serving=self.llm_serving,
             lang="en"
         )
@@ -75,7 +81,14 @@ class Text2QAPipeline:
             storage=self.storage.step(),
         )
 
-        print("Pipeline completed! Output saved to: ./.cache/gpu/text2qa_step_step3.json")
+        print("🔄 Step 4: Extract and format QA...")
+        self.extract_format_qa.run(
+            storage=self.storage.step(),
+            input_key="question,reasoning_steps",
+            output_key="answer"
+        )
+
+        print("Pipeline completed!")
 
 
 def main():

@@ -11,7 +11,7 @@ if TYPE_CHECKING:
     # from .generate.mathbook_question_extract import MathBookQuestionExtract
     # from .generate.kbc_multihop_qa_generator import KBCMultiHopQAGenerator
     from .generate.kbc_multihop_qa_generator_batch import KBCMultiHopQAGeneratorBatch
-
+    from .generate.qa_extract import QAExtractor
 
 else:
     import sys
