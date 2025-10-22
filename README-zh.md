@@ -163,45 +163,7 @@ dataflow -v
 
 > **注意**：Docker 镜像包含 CUDA 12.4.1 支持，并预装了 vLLM 用于 GPU 加速。请确保您已安装 [NVIDIA Container Toolkit](https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/install-guide.html) 以使用 GPU 功能。
 
-### 🚀 5.2 使用Gradio Web界面
-
-DataFlow提供了两个交互式Web界面，帮助你使用算子、流水线和智能体：
-
-#### 5.2.1 DataFlow算子界面
-
-启动DataFlow算子界面来测试和可视化所有算子和流水线：
-
-```bash
-dataflow webui
-```
-
-该命令将启动一个交互式 Web 界面，使你能够可视化并灵活使用所有算子和流水线。
-
-#### 5.2.2 DataFlow智能体界面
-
-启动DataFlow智能体界面进行算子编写和流水线设计：
-
-```bash
-dataflow webui agent
-```
-
-该命令将启动 DataFlow-Agent 界面，提供自动化算子编写功能和流水线推荐服务。
-
-https://github.com/user-attachments/assets/5c6aa003-9504-4e2a-9f4e-97bae739894a
-
-### 🌐 5.3 ADP智能数据平台
-
-除了本地Gradio界面，DataFlow还提供了基于Web的ADP智能数据平台：[https://adp.originhub.tech/login](https://adp.originhub.tech/login)
-
-ADP是OriginHub推出的智能数据平台，具备四大核心能力：DataFlow数据准备全流程自动化、融合大规模多模态知识库的知识系统、多Agent协同的智能协作，以及支撑数据全链路管理的AI数据库，旨在加速企业通过AI能力充分发挥独有数据的价值。
-
-<p align="center">
-  <a href="https://adp.originhub.tech/login">
-    <img src="https://github.com/user-attachments/assets/c63ac954-f0c8-4a1a-bfc8-5752c25a22cf" alt="ADP Platform Interface" width="75%">
-  </a>
-</p>
-
-### 📖 5.4 参考DataFlow项目文档
+### 📖 5.2 参考DataFlow项目文档
 
 详细**使用说明**和**入门指南**，请参考我们的 [项目文档](https://OpenDCAI.github.io/DataFlow-Doc/)。
 

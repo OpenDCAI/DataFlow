@@ -172,59 +172,7 @@ dataflow -v
 
 > **Note**: The Docker image includes CUDA 12.4.1 support and comes with vLLM pre-installed for GPU acceleration. Make sure you have [NVIDIA Container Toolkit](https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/install-guide.html) installed to use GPU features.
 
-
-
-### 🚀 5.2 Using the Gradio Web Interface
-
-DataFlow provides two interactive web interfaces to help you use operators, pipelines, and agents:
-
-#### 5.2.1 DataFlow Operators Interface
-
-Launch the DataFlow operator interface to test and visualize all operators and pipelines:
-
-```bash
-dataflow webui
-```
-
-This command will start an interactive web interface, allowing you to visualize and flexibly use all operators and pipelines.
-
-#### 5.2.2 DataFlow Agent Interface
-
-Launch the DataFlow agent interface for operator authoring and pipeline design:
-
-```bash
-dataflow webui agent
-```
-
-This command will start the DataFlow-Agent interface, providing automated operator authoring and pipeline recommendation services.
-
-https://github.com/user-attachments/assets/fda1ad47-a9f3-447a-b5c0-cf4c9ad64763
-
-### 🌐 5.3 ADP Intelligent Data Platform
-
-Beyond the local Gradio interface, **DataFlow** is also available as a fully-managed SaaS solution on the **ADP Intelligent Data Platform**.
-
-[**ADP**](https://adp.originhub.tech) is an end-to-end system by OriginHub, designed to help enterprises accelerate the development of custom Agents and Models by integrating Large Language Models (LLMs) with private data.
-
-#### Core Capabilities:
-
-* 🤖 **Automated Data Preparation**: Leverage DataFlow for full-process automation of your data workflows.
-* 📚 **Unified Knowledge System**: Integrate and manage large-scale, multimodal knowledge bases.
-* 🤝 **Intelligent Collaboration**: Build and orchestrate powerful multi-agent systems.
-* 🗄️ **AI-Native Database**: Manage the full lifecycle of your multimodal data with a purpose-built AI database.
-
-<p align="center">
-  <a href="https://adp.originhub.tech/login">
-    <img src="https://github.com/user-attachments/assets/c63ac954-f0c8-4a1a-bfc8-5752c25a22cf" alt="ADP Platform Interface" width="75%">
-  </a>
-</p>
-
-#### Get Started for Free
-
-
-👉 **[Sign up now to claim your free compute credits!](https://adp.originhub.tech)**
-
-### 📖 5.4 Reference Project Documentation
+### 📖 5.2 Reference Project Documentation
 
 For detailed **usage instructions** and **getting started guide**, please visit our [Documentation](https://OpenDCAI.github.io/DataFlow-Doc/).
 
