@@ -129,6 +129,51 @@ open-dataflow codebase version: 1.0.0
 You are using the latest version: 1.0.0.
 ```
 
+#### 🐳 5.1.1 Docker Installation (Alternative)
+
+We also provide a **Dockerfile** for easy deployment and a **pre-built Docker image** for immediate use.
+
+##### Option 1: Use Pre-built Docker Image
+
+You can directly pull and use our pre-built Docker image:
+
+```shell
+# Pull the pre-built image
+docker pull molyheci/dataflow:cu124
+
+# Run the container with GPU support
+docker run --gpus all -it molyheci/dataflow:cu124
+
+# Inside the container, verify installation
+dataflow -v
+```
+
+##### Option 2: Build from Dockerfile
+
+Alternatively, you can build the Docker image from the provided Dockerfile:
+
+```shell
+# Clone the repository (HTTPS)
+git clone https://github.com/OpenDCAI/DataFlow.git
+# Or use SSH
+# git clone git@github.com:OpenDCAI/DataFlow.git
+
+cd DataFlow
+
+# Build the Docker image
+docker build -t dataflow:custom .
+
+# Run the container
+docker run --gpus all -it dataflow:custom
+
+# Inside the container, verify installation
+dataflow -v
+```
+
+> **Note**: The Docker image includes CUDA 12.4.1 support and comes with vLLM pre-installed for GPU acceleration. Make sure you have [NVIDIA Container Toolkit](https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/install-guide.html) installed to use GPU features.
+
+
+
 ### 🚀 5.2 Using the Gradio Web Interface
 
 DataFlow provides two interactive web interfaces to help you use operators, pipelines, and agents:

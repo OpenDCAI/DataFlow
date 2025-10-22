@@ -120,6 +120,49 @@ open-dataflow codebase version: 1.0.0
 You are using the latest version: 1.0.0.
 ```
 
+#### 🐳 5.1.1 Docker安装（可选方式）
+
+我们还提供了 **Dockerfile** 以便于部署，同时也提供了**预构建的 Docker 镜像**供您直接使用。
+
+##### 方式一：使用预构建的 Docker 镜像
+
+您可以直接拉取并使用我们预构建的 Docker 镜像：
+
+```shell
+# 拉取预构建镜像
+docker pull molyheci/dataflow:cu124
+
+# 使用 GPU 支持运行容器
+docker run --gpus all -it molyheci/dataflow:cu124
+
+# 在容器内验证安装
+dataflow -v
+```
+
+##### 方式二：从 Dockerfile 构建
+
+或者，您也可以从项目提供的 Dockerfile 构建镜像：
+
+```shell
+# 克隆代码仓库（HTTPS 方式）
+git clone https://github.com/OpenDCAI/DataFlow.git
+# 或使用 SSH 方式
+# git clone git@github.com:OpenDCAI/DataFlow.git
+
+cd DataFlow
+
+# 构建 Docker 镜像
+docker build -t dataflow:custom .
+
+# 运行容器
+docker run --gpus all -it dataflow:custom
+
+# 在容器内验证安装
+dataflow -v
+```
+
+> **注意**：Docker 镜像包含 CUDA 12.4.1 支持，并预装了 vLLM 用于 GPU 加速。请确保您已安装 [NVIDIA Container Toolkit](https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/install-guide.html) 以使用 GPU 功能。
+
 ### 🚀 5.2 使用Gradio Web界面
 
 DataFlow提供了两个交互式Web界面，帮助你使用算子、流水线和智能体：
