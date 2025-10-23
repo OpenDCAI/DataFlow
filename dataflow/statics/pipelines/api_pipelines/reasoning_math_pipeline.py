@@ -1,6 +1,6 @@
 from dataflow.operators.reasoning import (
-    ReasoningCategoryDatasetEvaluator,
-    ReasoningDifficultyDatasetEvaluator,
+    ReasoningQuestionCategorySampleEvaluator,
+    ReasoningQuestionDifficultySampleEvaluator,
     ReasoningQuestionGenerator,
     ReasoningAnswerGenerator,
 )
@@ -28,7 +28,7 @@ class ReasoningMath_APIPipeline():
     def __init__(self, llm_serving: LLMServingABC = None):
 
         self.storage = FileStorage(
-            first_entry_file_name="../example_data/ReasoningPipeline/pipeline_math_short.json",
+            first_entry_file_name="/mnt/DataFlow/scy/DataFlow/dataflow/example/ReasoningPipeline/pipeline_math_short.json",
             cache_path="./cache_local",
             file_name_prefix="dataflow_cache_step",
             cache_type="jsonl",
@@ -36,7 +36,7 @@ class ReasoningMath_APIPipeline():
 
         # use API server as LLM serving
         self.llm_serving = APILLMServing_request(
-                api_url="http://api.openai.com/v1/chat/completions",
+                api_url="http://123.129.219.111:3000/v1/chat/completions",
                 model_name="gpt-4o",
                 max_workers=100
         )
@@ -66,10 +66,10 @@ class ReasoningMath_APIPipeline():
             llm_serving=self.llm_serving,
             prompt_template=MathQuestionFilterPrompt()
         )
-        self.question_difficulty_classifier_step4 = ReasoningDifficultyDatasetEvaluator(
+        self.question_difficulty_classifier_step4 = ReasoningQuestionDifficultySampleEvaluator(
             llm_serving=self.llm_serving
         )
-        self.question_category_classifier_step5 = ReasoningCategoryDatasetEvaluator(
+        self.question_category_classifier_step5 = ReasoningQuestionCategorySampleEvaluator(
             llm_serving=self.llm_serving
         )
         ########################## branch ############################
@@ -82,10 +82,10 @@ class ReasoningMath_APIPipeline():
         
         self.answer_format_filter_step8 = ReasoningAnswerFormatterFilter()
         
-        self.answer_token_length_filter_step9 = ReasoningAnswerTokenLengthFilter(
-            max_answer_token_length = 8192,
-            tokenizer_dir = "Qwen/Qwen2.5-0.5B-Instruct"
-        )
+        # self.answer_token_length_filter_step9 = ReasoningAnswerTokenLengthFilter(
+        #     max_answer_token_length = 8192,
+        #     tokenizer_dir = "Qwen/Qwen2.5-0.5B-Instruct"
+        # )
         
         self.answer_groundtruth_filter_step10 = ReasoningAnswerGroundTruthFilter()
         
@@ -140,10 +140,10 @@ class ReasoningMath_APIPipeline():
             storage = self.storage.step(),
             input_key = "generated_cot",
         )
-        self.answer_token_length_filter_step9.run(
-            storage = self.storage.step(),
-            input_key =  "generated_cot"
-        )
+        # self.answer_token_length_filter_step9.run(
+        #     storage = self.storage.step(),
+        #     input_key =  "generated_cot"
+        # )
         self.answer_groundtruth_filter_step10.run(
             storage = self.storage.step(),
             input_test_answer_key = "generated_cot",
