@@ -100,16 +100,17 @@ class CodeQualityScoreFilter(OperatorABC):
         return dataframe[final_filter]
 
 
-    def run(self, storage: DataFlowStorage, input_key: str, output_key: str = 'quality_score_filter_label'):
-        self.input_key = input_key
+    def run(self, storage: DataFlowStorage, input_instruction_key: str, input_code_key: str, output_key: str = 'quality_score_filter_label'):
+        self.input_code_key = input_code_key
+        self.input_instruction_key = input_instruction_key
         self.output_key = output_key
-        self.logger.info(f"Running {self.__class__.__name__} with input_key: {self.input_key} and output_key: {self.output_key}...")
+        self.logger.info(f"Running {self.__class__.__name__} with input_key: {self.input_code_key} and output_key: {self.output_key}...")
         
         dataframe = storage.read("dataframe")
         
         # Use existing quality_score if available, otherwise evaluate
         if "quality_score" not in dataframe.columns:
-            scores, feedbacks = self.scorer.eval(dataframe, self.input_key)
+            scores, feedbacks = self.scorer.eval(dataframe, self.input_instruction_key, self.input_code_key)
             dataframe["quality_score"] = scores
             dataframe["quality_feedback"] = feedbacks
         
