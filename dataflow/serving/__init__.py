@@ -9,17 +9,9 @@ from .localhost_llm_api_serving import LocalHostLLMAPIServing_vllm
 from .localmodel_lalm_serving import LocalModelLALMServing_vllm
 
 from .LocalSentenceLLMServing import LocalEmbeddingServing
-try:
-    from .light_rag_serving import LightRAGServing
-except ImportError:
-    raise Exception(
-    """
-    lightrag is not installed in this environment yet.
-    Please use pip install lightrag-hku.
-    1111111
-    """
-    )
-    
+
+from .light_rag_serving import LightRAGServing
+
 __all__ = [
     "APILLMServing_request",
     "LocalModelLLMServing_vllm",
@@ -27,7 +19,6 @@ __all__ = [
     "APIVLMServing_openai",
     "PerspectiveAPIServing",
     "LiteLLMServing",
-    "LocalModelLALMServing_vllm",
-    "LightRAGServing",
+    "LocalModelLALMServing_vllm"
     "LocalHostLLMAPIServing_vllm"
 ]
