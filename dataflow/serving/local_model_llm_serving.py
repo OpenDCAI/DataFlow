@@ -92,19 +92,19 @@ class LocalModelLLMServing_vllm(LLMServingABC):
         try:
             from vllm import LLM, SamplingParams
         except ValueError as ve:
-            # valueerror 一般是 transformers 版本不匹配导致的
+            # A ValueError typically indicates a transformers version mismatch
             raise ImportError(
-                "Import vllm failed due to a ValueError: "
-                "this is often caused by a transformers 版本冲突，"
-                "请检查并升级/降级 transformers 至 vllm 要求的版本。"
+                "Failed to import vllm due to a ValueError: this is often caused by a transformers version conflict. "
+                "Please check your transformers package and upgrade or downgrade it to the version required by vllm."
             ) from ve
         except ImportError as ie:
-            # vllm 根本没装
+            # vllm is not installed
             raise ImportError(
-                "请先安装 vllm：\n"
+                "vllm is not installed. Please install it by running:\n"
                 "    pip install open-dataflow[vllm]\n"
-                "如果已经安装，请确认 install 环境和当前运行环境一致。"
+                "If it is already installed, ensure that the installation environment matches your current runtime environment."
             ) from ie
+
 
         # Set the environment variable for vllm to use spawn method for multiprocessing
         # See https://docs.vllm.ai/en/v0.7.1/design/multiprocessing.html 
