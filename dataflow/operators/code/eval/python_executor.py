@@ -258,13 +258,8 @@ class GenericRuntime:
         self._local_vars = copy.copy(self.LOCAL_DICT) if self.LOCAL_DICT else None
         self._captured_figures = []
 
-        if isinstance(self.HEADERS, list):
-            headers_code = "\n".join(self.HEADERS)
-        else:
-            headers_code = self.HEADERS
-
-        if headers_code:
-            self.exec_code(headers_code)
+        for c in self.HEADERS:
+            self.exec_code(c)
 
     def exec_code(self, code_piece: str) -> None:
         # Security check
@@ -307,21 +302,22 @@ plt.close()
 
 
 class ImageRuntime(GenericRuntime):
-    HEADERS = """
-    try:
-        import matplotlib
-        matplotlib.use('Agg')  # Use non-interactive backend
-        import matplotlib.pyplot as plt
-        MATPLOTLIB_AVAILABLE = True
-    except ImportError:
-        MATPLOTLIB_AVAILABLE = False
-        plt = None
-    from PIL import Image
-    import io
-    import base64
-    import numpy as np
-    _captured_figures = []  # Initialize image capture list
-    """
+    HEADERS = [
+        """try:
+    import matplotlib
+    matplotlib.use('Agg')
+    import matplotlib.pyplot as plt
+    MATPLOTLIB_AVAILABLE = True
+except ImportError:
+    MATPLOTLIB_AVAILABLE = False
+    plt = None
+""",
+        "from PIL import Image",
+        "import io",
+        "import base64",
+        "import numpy as np",
+        "_captured_figures = []",  # Initialize image capture list
+    ]
 
     def __init__(self, messages):
         super().__init__()
@@ -389,7 +385,7 @@ class PythonExecutor:
         if self.persistent_worker is None:
             self.persistent_worker = PersistentWorker()
 
-    def process_generation_to_code(self, gens: List[str]) -> List[List[str]]:
+    def process_generation_to_code(self, gens: str):
         return [g.split("\n") for g in gens]
 
     def execute(
