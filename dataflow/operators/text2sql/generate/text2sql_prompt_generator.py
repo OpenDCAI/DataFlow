@@ -16,7 +16,7 @@ from dataflow.utils.text2sql.database_manager import DatabaseManager
 class Text2SQLPromptGenerator(OperatorABC):
     def __init__(self, 
                 database_manager: DatabaseManager,
-                prompt_template = Text2SQLPromptGeneratorPrompt
+                prompt_template = Text2SQLPromptGeneratorPrompt | Text2VecSQLPromptGeneratorPrompt
             ):
 
         if prompt_template is None:

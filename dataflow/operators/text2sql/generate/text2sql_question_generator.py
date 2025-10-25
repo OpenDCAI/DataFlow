@@ -21,7 +21,7 @@ class Text2SQLQuestionGenerator(OperatorABC):
                 embedding_serving: LLMServingABC, 
                 database_manager: DatabaseManager, 
                 question_candidates_num: int = 5,
-                prompt_template = Text2SQLQuestionGeneratorPrompt
+                prompt_template = Text2SQLQuestionGeneratorPrompt | Text2VecSQLQuestionGeneratorPrompt
                 ):
                 
         self.llm_serving = llm_serving
