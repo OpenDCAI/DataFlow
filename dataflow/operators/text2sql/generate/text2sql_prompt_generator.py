@@ -4,13 +4,13 @@ from tqdm import tqdm
 from typing import Dict, Optional
 from dataflow.utils.registry import OPERATOR_REGISTRY
 from dataflow import get_logger
-from dataflow.prompts.text2sql import Text2SQLPromptGeneratorPrompt
+from dataflow.prompts.text2sql import Text2SQLPromptGeneratorPrompt, Text2VecSQLPromptGeneratorPrompt
 from dataflow.core.prompt import prompt_restrict 
 from dataflow.core import OperatorABC
 from dataflow.utils.storage import DataFlowStorage
 from dataflow.utils.text2sql.database_manager import DatabaseManager
 
-@prompt_restrict(Text2SQLPromptGeneratorPrompt)
+@prompt_restrict(Text2SQLPromptGeneratorPrompt, Text2VecSQLPromptGeneratorPrompt)
 
 @OPERATOR_REGISTRY.register()
 class Text2SQLPromptGenerator(OperatorABC):
