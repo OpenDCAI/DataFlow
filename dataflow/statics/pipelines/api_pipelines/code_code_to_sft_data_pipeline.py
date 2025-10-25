@@ -71,13 +71,15 @@ class CodeSFTSynthesis_APIPipeline():
         # Step 3: Evaluate the generated (instruction, code) pairs
         self.pair_evaluator_step3.run(
             storage=self.storage.step(),
-            input_key="generated_instruction"
+            input_instruction_key="generated_instruction",
+            input_code_key="generated_code" 
         )
         
         # Step 4: Filter out low-quality samples
         self.score_filter_step4.run(
             storage=self.storage.step(),
-            input_key="generated_instruction",
+            input_instruction_key = "generated_instruction",
+            input_code_key = "generated_code",
             output_key="quality_score_filter_label"
         )
         
