@@ -238,10 +238,10 @@ class VQAExtractDocLayoutMinerU(OperatorABC):
                         output_folder:str):
         try:
             import mineru
-            mineru.utils.draw_bbox.draw_layout_bbox = modified_draw_layout_bbox   # 修改画图逻辑
-            from mineru.cli.client import main as mineru_main
             from mineru.utils.draw_bbox import cal_canvas_rect
             from mineru.utils.enum_class import BlockType, ContentType, SplitFlag
+            mineru.utils.draw_bbox.draw_layout_bbox = modified_draw_layout_bbox   # 修改画图逻辑
+            from mineru.cli.client import main as mineru_main
 
         except ImportError:
             raise Exception(
