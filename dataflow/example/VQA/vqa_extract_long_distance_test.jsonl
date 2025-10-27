@@ -1,0 +1,1 @@
+{"question_pdf_path": "./dataflow/example/VQA/math_question.pdf", "answer_pdf_path": "./dataflow/example/VQA/math_answer.pdf", "subject": "math", "output_dir": "../vqa_output_math"}

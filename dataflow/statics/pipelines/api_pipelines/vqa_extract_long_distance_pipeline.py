@@ -73,23 +73,18 @@ def merge_qa_pair(question_jsonl, answer_jsonl, output_jsonl):
 
 class VQA_long_distance_extract:
     def __init__(self, input_pdf_paths_jsonl_file: str, output_prefix: str = "doclay"):
-        # self.pdf_path = pdf_path
-        # self.subject = subject
         self.input_pdf_paths_jsonl_file = input_pdf_paths_jsonl_file
         self.output_prefix = output_prefix
         self.pdf2img = VQAExtractPdf2Img()
         self.doc_item_layout = VQAExtractDocLayoutMinerU()
         self.llm_serving = APIVLMServing_openai(
-            api_url = "http://123.129.219.111:3000/v1",
-            model_name = "gpt-o4-mini",
+            api_url = "http://api.openai.com/v1",
+            model_name = "o4-mini",
             max_workers = 100,
         )
-        # self.text_serving = APILLMServing_request(
-        #     api_url = "http://123.129.219.111:3000/v1/chat/completions",
-        #     model_name = "gpt-4o-mini",
-        #     max_workers = 10,
-        # )
+        self.pic_extractor = VQAExtractPicExtractor(self.llm_serving, interleaved=False)
         self.qapair_extractor = VQAExtractQAPairExtractor()
+        self.piclabeltranslator = VQAExtractTag2Img(layout_prefix="doclay_concatenated_", image_prefix='page_')
         
     def run(self):
         with open(self.input_pdf_paths_jsonl_file, "r") as f:
@@ -108,23 +103,21 @@ class VQA_long_distance_extract:
             output_json_path, output_layout_path = self.doc_item_layout.run(None, question_pdf_path, question_output_dir)
             self.pdf2img.run(None, output_layout_path, os.path.join(question_output_dir, "pdf_images"))
             
-            pic_extractor = VQAExtractPicExtractor(self.llm_serving, subject=subject, interleaved=False)
-            pic_extractor.run(None, os.path.join(question_output_dir, "pdf_images"), os.path.join(question_output_dir, "vqa_extract"))
+            self.pic_extractor.run(None, os.path.join(question_output_dir, "pdf_images"), subject, os.path.join(question_output_dir, "vqa_extract"))
             self.qapair_extractor.run(None, os.path.join(question_output_dir, "vqa_extract/vqa_extract.jsonl"), os.path.join(question_output_dir, "vqa_extract/qapair_extract.jsonl"))
             
-            piclabeltranslator = VQAExtractTag2Img(output_json_path, os.path.join(question_output_dir, "pdf_images"), os.path.join(output_dir, "vqa_extract_question_cut_images"), layout_prefix="doclay_concatenated_", image_prefix='page_')
-            piclabeltranslator.run(None, os.path.join(question_output_dir, "vqa_extract/qapair_extract.jsonl"), os.path.join(question_output_dir, "vqa_extract/qapair_extract_cut.jsonl"), os.path.join(question_output_dir, "vqa_extract/qapair_extract_cut.md"))
+            self.piclabeltranslator.run(None, output_json_path, os.path.join(question_output_dir, "pdf_images"), os.path.join(output_dir, "vqa_extract_question_cut_images"), 
+                                        os.path.join(question_output_dir, "vqa_extract/qapair_extract.jsonl"), os.path.join(question_output_dir, "vqa_extract/qapair_extract_cut.jsonl"), os.path.join(question_output_dir, "vqa_extract/qapair_extract_cut.md"))
 
             # 处理answer pdf
             answer_output_dir = os.path.join(output_dir, "answer")
             os.makedirs(answer_output_dir, exist_ok=True)
             output_json_path, output_layout_path = self.doc_item_layout.run(None, answer_pdf_path, answer_output_dir)
             self.pdf2img.run(None, output_layout_path, os.path.join(answer_output_dir, "pdf_images"))
-            pic_extractor = VQAExtractPicExtractor(self.llm_serving, subject=subject, interleaved=False)
-            pic_extractor.run(None, os.path.join(answer_output_dir, "pdf_images"), os.path.join(answer_output_dir, "vqa_extract"))
+            self.pic_extractor.run(None, os.path.join(answer_output_dir, "pdf_images"), subject, os.path.join(answer_output_dir, "vqa_extract"))
             self.qapair_extractor.run(None, os.path.join(answer_output_dir, "vqa_extract/vqa_extract.jsonl"), os.path.join(answer_output_dir, "vqa_extract/qapair_extract.jsonl"))
-            piclabeltranslator = VQAExtractTag2Img(output_json_path, os.path.join(answer_output_dir, "pdf_images"), os.path.join(output_dir, "vqa_extract_answer_cut_images"), layout_prefix="doclay_concatenated_", image_prefix='page_')
-            piclabeltranslator.run(None, os.path.join(answer_output_dir, "vqa_extract/qapair_extract.jsonl"), os.path.join(answer_output_dir, "vqa_extract/qapair_extract_cut.jsonl"), os.path.join(answer_output_dir, "vqa_extract/qapair_extract_cut.md"))
+            self.piclabeltranslator.run(None, output_json_path, os.path.join(answer_output_dir, "pdf_images"), os.path.join(output_dir, "vqa_extract_answer_cut_images"), 
+                                   os.path.join(answer_output_dir, "vqa_extract/qapair_extract.jsonl"), os.path.join(answer_output_dir, "vqa_extract/qapair_extract_cut.jsonl"), os.path.join(answer_output_dir, "vqa_extract/qapair_extract_cut.md"))
             
             # 合并question和answer的qapair_extract_cut.jsonl
             merge_qa_pair(
@@ -148,5 +141,5 @@ class VQA_long_distance_extract:
 
 
 if __name__ == "__main__":
-    vqa_extract = VQA_long_distance_extract("/mnt/DataFlow/djw/vqa_extract_long_distance_test.jsonl") # jsonl中每一行包含question_pdf_path, answer_pdf_path, subject (math, physics, chemistry, ...), output_dir
+    vqa_extract = VQA_long_distance_extract("./dataflow/example/VQA/vqa_extract_long_distance_test.jsonl") # jsonl中每一行包含question_pdf_path, answer_pdf_path, subject (math, physics, chemistry, ...), output_dir
     vqa_extract.run()

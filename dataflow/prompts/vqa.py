@@ -12,7 +12,7 @@ class VQAExtractPrompt(PromptABC):
           PROMPT = f"""
         You are an expert in {subject} competition. You are given an image—page_n—annotated with detected bounding boxes and corresponding labels. Your task is to extract from page_n only:
 1. All {subject} problems whose text begins on page_n and the answers with solutions to those problems.
-2. If the problem or answer is not complete (because they continue onto page_n+1), omit them. If the problem is complete but the solution not, omit both the problem and the solution. DO NOT INCLUDE INCOMPLETE PROBLEMS OR ANSWERS. However, if only the solution is incomplete, you may still include the question and the short answer if they are complete.
+2. If the problem or answer is not complete (because they continue onto page_n+1), omit them. If the problem is complete but the solution not, omit both the problem and the solution. DO NOT INCLUDE INCOMPLETE PROBLEMS OR ANSWERS. However, if only the solution is incomplete, you may still include the question and the short answer if they are complete and leave the solution empty.
 3. Normally, a box at the beginning of a page with no problem number (such as "1.1", "例 1", "example 1", "解", "solution", "答案", "answer") is the continuation of the problem or solution from the previous page, even if it appears to be an independent paragraph. Omit them.
 4. The chapter information as it appears on page_n.
 """
@@ -20,11 +20,11 @@ class VQAExtractPrompt(PromptABC):
           PROMPT = f"""
         You are an expert in {subject} competition. You are given an image—page_n—annotated with detected bounding boxes and corresponding labels. Your task is to extract from page_n only:
 1. All {subject} problems whose text appears on page_n. In the provided page, there will be all questions or all answers with solutions, but not mixed.
-2. If the problem or answer is not complete (because they continue onto page_n+1), omit them. DO NOT INCLUDE INCOMPLETE QUESTIONS OR ANSWERS. However, if only the solution is incomplete, you may still include the question and the short answer if they are complete.
+2. If the problem or answer is not complete (because they continue onto page_n+1), omit them. DO NOT INCLUDE INCOMPLETE QUESTIONS OR ANSWERS. However, if only the solution is incomplete, you may still include the question and the short answer (sometimes only a letter or number) if they are complete and leave the solution empty.
 3. Normally, a box at the beginning of a page with no problem number (such as "1.1", "例 1", "example 1", "解", "solution", "答案", "answer") is the continuation of the problem or solution from the previous page, even if it appears to be an independent paragraph. Omit them.
 4. The chapter information as it appears on page_n.
 """
-          PROMPT +="""
+        PROMPT +="""
 Strict extraction rules:
 - If you think the page is not the main text page, such as a cover page, catalog page, header/footer only, etc., output `<empty></empty>`.
 - Preserve each problem’s original label/number, such as "例1", "Example 3", "习题1", "11". Do not include the period after the number.
@@ -54,7 +54,7 @@ Output format (all tags run together, no extra whitespace or newlines except bet
 <qa_pair><label>…</label><question>QUESTION_TEXT<pic>…</pic>…</question>
 <answer>ANSWER_TEXT<pic>…</pic>…</answer><solution>SOLUTION_TEXT</solution></qa_pair>
 <qa_pair><label>…</label><question>QUESTION_TEXT<pic>…</pic>…</question>
-<answer>ANSWER_TEXT<pic>…</pic>…</answer><solution>SOLUTION_TEXT</solution></qa_pair>
+<answer>ANSWER_TEXT<pic>…</pic>…</answer><solution></solution></qa_pair>
 </chapter>
 <chapter><title>MAIN_TITLE</title>
 <qa_pair><label>…</label><question>QUESTION_TEXT<pic>…</pic>…</question>
@@ -67,7 +67,7 @@ Example:
 <qa_pair><label>例1</label><question>Calculate \(x\) such that \(x^2-1=0\).<pic>tag5:box7</pic></question>
 <answer>\(x=\pm1\).</answer><solution>SOLUTION_TEXT</solution></qa_pair>
 <qa_pair><label>例2</label><question>Calculate \(x\) such that \(x^2-4=0\).<pic>tag5:box8</pic></question>
-<answer>\(x=\pm2\).</answer><solution>SOLUTION_TEXT</solution></qa_pair>
+<answer>\(x=\pm2\).</answer><solution></solution></qa_pair>
 </chapter>
 <chapter><title>Chapter 3</title>
 <qa_pair><label>例1</label><question>Calculate \(x\) such that \(x^3-1=0\).<pic>tag6:box7</pic></question>
