@@ -303,14 +303,15 @@ plt.close()
 
 class ImageRuntime(GenericRuntime):
     HEADERS = [
-        "try:",
-        "    import matplotlib",
-        "    matplotlib.use('Agg')",  # Use non-interactive backend
-        "    import matplotlib.pyplot as plt",
-        "    MATPLOTLIB_AVAILABLE = True",
-        "except ImportError:",
-        "    MATPLOTLIB_AVAILABLE = False",
-        "    plt = None",
+        """try:
+    import matplotlib
+    matplotlib.use('Agg')
+    import matplotlib.pyplot as plt
+    MATPLOTLIB_AVAILABLE = True
+except ImportError:
+    MATPLOTLIB_AVAILABLE = False
+    plt = None
+""",
         "from PIL import Image",
         "import io",
         "import base64",

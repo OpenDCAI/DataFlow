@@ -90,9 +90,22 @@ class LocalModelLLMServing_vllm(LLMServingABC):
         # Import vLLM and set up the environment for multiprocessing
         # vLLM requires the multiprocessing method to be set to spawn
         try:
-            from vllm import LLM,SamplingParams
-        except:
-            raise ImportError("please install vllm first like 'pip install open-dataflow[vllm]'")
+            from vllm import LLM, SamplingParams
+        except ValueError as ve:
+            # A ValueError typically indicates a transformers version mismatch
+            raise ImportError(
+                "Failed to import vllm due to a ValueError: this is often caused by a transformers version conflict. "
+                "Please check your transformers package and upgrade or downgrade it to the version required by vllm."
+            ) from ve
+        except ImportError as ie:
+            # vllm is not installed
+            raise ImportError(
+                "vllm is not installed. Please install it by running:\n"
+                "    pip install open-dataflow[vllm]\n"
+                "If it is already installed, ensure that the installation environment matches your current runtime environment."
+            ) from ie
+
+
         # Set the environment variable for vllm to use spawn method for multiprocessing
         # See https://docs.vllm.ai/en/v0.7.1/design/multiprocessing.html 
         os.environ['VLLM_WORKER_MULTIPROC_METHOD'] = "spawn"

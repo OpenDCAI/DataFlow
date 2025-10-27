@@ -4,7 +4,7 @@ import pandas as pd
 from tqdm import tqdm
 import numpy as np
 from scipy.spatial.distance import cdist
-from dataflow.prompts.text2sql import Text2SQLQuestionGeneratorPrompt
+from dataflow.prompts.text2sql import Text2SQLQuestionGeneratorPrompt, Text2VecSQLQuestionGeneratorPrompt
 from dataflow.core.prompt import prompt_restrict 
 from dataflow.utils.registry import OPERATOR_REGISTRY
 from dataflow import get_logger
@@ -12,7 +12,7 @@ from dataflow.core import OperatorABC, LLMServingABC
 from dataflow.utils.storage import DataFlowStorage
 from dataflow.utils.text2sql.database_manager import DatabaseManager
 
-@prompt_restrict(Text2SQLQuestionGeneratorPrompt)
+@prompt_restrict(Text2SQLQuestionGeneratorPrompt, Text2VecSQLQuestionGeneratorPrompt)
 
 @OPERATOR_REGISTRY.register()
 class Text2SQLQuestionGenerator(OperatorABC):
@@ -21,7 +21,7 @@ class Text2SQLQuestionGenerator(OperatorABC):
                 embedding_serving: LLMServingABC, 
                 database_manager: DatabaseManager, 
                 question_candidates_num: int = 5,
-                prompt_template = Text2SQLQuestionGeneratorPrompt
+                prompt_template = Text2SQLQuestionGeneratorPrompt | Text2VecSQLQuestionGeneratorPrompt
                 ):
                 
         self.llm_serving = llm_serving

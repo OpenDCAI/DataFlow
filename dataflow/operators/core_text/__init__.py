@@ -7,6 +7,7 @@ if TYPE_CHECKING:
     from .generate.text2qa_generator import Text2QAGenerator
     from .generate.text2multihopqa_generator import Text2MultiHopQAGenerator
     from .generate.embedding_generator import EmbeddingGenerator
+    from .generate.retrieval_generator import RetrievalGenerator
     from .eval.bench_dataset_evaluator import BenchDatasetEvaluator
     from .eval.bench_dataset_evaluator_question import BenchDatasetEvaluatorQuestion
     from .eval.text2qa_sample_evaluator import Text2QASampleEvaluator

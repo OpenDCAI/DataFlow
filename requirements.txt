@@ -5,8 +5,7 @@ torch
 torchvision
 torchaudio
 tqdm
-transformers
-aisuite
+transformers<4.54.0
 math_verify
 word2number
 accelerate

@@ -77,24 +77,6 @@ class CodeQualitySampleEvaluator(OperatorABC):
         if conflict:
             raise ValueError(f"The following column(s) already exist and would be overwritten by CodeQualitySampleEvaluator: {conflict}")
 
-    def _build_prompts(self, dataframe: pd.DataFrame) -> List[str]:
-        """
-        Builds a list of prompts for the LLM based on the instruction-code pairs.
-        """
-        prompts = []
-        for _, row in dataframe.iterrows():
-            pair = row[self.input_key]
-            if isinstance(pair, dict):
-                instruction = pair.get('instruction', '')
-                code = pair.get('code', '')
-            else:
-                instruction = str(pair)
-                code = str(pair)
-            
-            prompt = self.prompt_template.build_prompt(instruction=instruction, code=code)
-            prompts.append(prompt)
-        return prompts
-
     def _score_func(self, instruction: str, code: str) -> Tuple[int, str]:
         """
         Evaluate a single instruction-code pair and return score and feedback.
@@ -139,7 +121,7 @@ class CodeQualitySampleEvaluator(OperatorABC):
             self.logger.warning(f"Failed to parse LLM evaluation output: '{response}'")
             return 0, "Failed to parse LLM evaluation output."
 
-    def eval(self, dataframe: pd.DataFrame, input_key: str) -> Tuple[List[int], List[str]]:
+    def eval(self, dataframe: pd.DataFrame, input_instruction_key: str, input_code_key: str) -> Tuple[List[int], List[str]]:
         """
         Evaluate instruction-code pairs and return scores and feedbacks.
         
@@ -156,15 +138,9 @@ class CodeQualitySampleEvaluator(OperatorABC):
         feedbacks = []
         
         for _, row in dataframe.iterrows():
-            pair = row[input_key]
-            if isinstance(pair, dict):
-                instruction = pair.get('instruction', '')
-                code = pair.get('code', '')
-            else:
-                # Try to get instruction and code from separate columns
-                instruction = row.get('generated_instruction', str(pair))
-                code = row.get('generated_code', str(pair))
-            
+            instruction = row[input_instruction_key]
+            code = row[input_code_key]
+
             score, feedback = self._score_func(instruction, code)
             scores.append(score)
             feedbacks.append(feedback)
@@ -175,7 +151,8 @@ class CodeQualitySampleEvaluator(OperatorABC):
     def run(
         self, 
         storage: DataFlowStorage, 
-        input_key: str,
+        input_instruction_key: str,
+        input_code_key: str,
         output_score_key: str = "quality_score",
         output_feedback_key: str = "quality_feedback"
     ):
@@ -188,12 +165,13 @@ class CodeQualitySampleEvaluator(OperatorABC):
             output_score_key: Field name for quality scores
             output_feedback_key: Field name for quality feedback
         """
-        self.input_key = input_key
+        self.input_instruction_key = input_instruction_key
+        self.input_code_key = input_code_key
         self.output_score_key = output_score_key
         self.output_feedback_key = output_feedback_key
         
         dataframe = storage.read("dataframe")
-        scores, feedbacks = self.eval(dataframe, input_key)
+        scores, feedbacks = self.eval(dataframe, input_instruction_key, input_code_key)
         
         dataframe[self.output_score_key] = scores
         dataframe[self.output_feedback_key] = feedbacks

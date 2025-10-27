@@ -59,20 +59,6 @@ mineru = ["mineru[all]", "numpy>=1.24,<2.0.0", "sglang[all]>=0.4.8", "pypdf", "r
 myscale = ["clickhouse-driver"]
 sglang =["sglang[all]"]
 litellm = ["litellm>=1.70.0,<2.0.0"]
-agent = [
-    "cloudpickle",
-    "fastapi",
-    "httpx",
-    "minio",
-    "pandas",
-    "psutil",
-    "pyfiglet",
-    "pyyaml",
-    "requests",
-    "termcolor",
-    "uvicorn",
-    "sseclient-py",
-]
 audio = ['librosa', 'soundfile']
 vectorsql = ["sqlite-vec", "sqlite-lembed", "sentence_transformers"]
 llamafactory =[
@@ -81,3 +67,4 @@ llamafactory =[
     "numpy>=1.24,<2.0.0", 
     "llamafactory[torch,metrics]"
 ]
+rag = ["lightrag-hku", "asyncio"]

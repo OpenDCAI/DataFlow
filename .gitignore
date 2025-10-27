@@ -6,6 +6,7 @@
 /dataflow/example/ReasoningPipeline/pipeline_math_step*.jsonl
 !/dataflow/example/ReasoningPipeline/pipeline_math.json
 
+.DS_Store
 
 dataflow/example/KBCleaningPipeline/raw
 requirement_added.txt

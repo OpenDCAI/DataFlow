@@ -5,6 +5,7 @@
 #   dataflow -v                         查看版本并检查更新
 #   dataflow init [...]                初始化脚本/配置
 #   dataflow env                       查看环境
+#   WEBUI 已经暂时移除！！！！！
 #   dataflow webui operators [opts]    启动算子/管线 UI
 #   dataflow webui agent     [opts]    启动 DataFlow-Agent UI（已整合后端）
 #   dataflow pdf2model init/train      PDF to Model 训练流程
@@ -525,19 +526,19 @@ def main() -> None:
         # 默认使用 operators
         mode = args.ui_mode or "operators"
         if mode == "operators":
-            from dataflow.webui.operator_pipeline import demo
-            demo.launch(
-                server_name=args.host,
-                server_port=args.port,
-                show_error=args.show_error,
-            )
+            print("Currently webui is under maintenance. Please check back later.")
+            # from dataflow.webui.operator_pipeline import demo
+            # demo.launch(
+            #     server_name=args.host,
+            #     server_port=args.port,
+            #     show_error=args.show_error,
+            # )
         elif mode == "agent":
-            from dataflow.agent.webui import app
-            import uvicorn
-            uvicorn.run(app, host=args.host, port=args.port, log_level="info")
+            print("Agent UI is deprecated in Dataflow main repo, please use the dedicated https://github.com/OpenDCAI/DataFlow-Agent repo.")
         elif mode == "pdf":
-            from dataflow.webui import kbclean_webui
-            kbclean_webui.create_ui().launch()
+            print("Currently webui is under maintenance. Please check back later.")
+            # from dataflow.webui import kbclean_webui
+            # kbclean_webui.create_ui().launch()
         else:
             parser.error(f"Unknown ui_mode {mode!r}")
 

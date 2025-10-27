@@ -120,45 +120,50 @@ open-dataflow codebase version: 1.0.0
 You are using the latest version: 1.0.0.
 ```
 
-### 🚀 5.2 使用Gradio Web界面
+#### 🐳 5.1.1 Docker安装（可选方式）
 
-DataFlow提供了两个交互式Web界面，帮助你使用算子、流水线和智能体：
+我们还提供了 **Dockerfile** 以便于部署，同时也提供了**预构建的 Docker 镜像**供您直接使用。
 
-#### 5.2.1 DataFlow算子界面
+##### 方式一：使用预构建的 Docker 镜像
 
-启动DataFlow算子界面来测试和可视化所有算子和流水线：
+您可以直接拉取并使用我们预构建的 Docker 镜像：
 
-```bash
-dataflow webui
+```shell
+# 拉取预构建镜像
+docker pull molyheci/dataflow:cu124
+
+# 使用 GPU 支持运行容器
+docker run --gpus all -it molyheci/dataflow:cu124
+
+# 在容器内验证安装
+dataflow -v
 ```
 
-该命令将启动一个交互式 Web 界面，使你能够可视化并灵活使用所有算子和流水线。
+##### 方式二：从 Dockerfile 构建
 
-#### 5.2.2 DataFlow智能体界面
+或者，您也可以从项目提供的 Dockerfile 构建镜像：
 
-启动DataFlow智能体界面进行算子编写和流水线设计：
+```shell
+# 克隆代码仓库（HTTPS 方式）
+git clone https://github.com/OpenDCAI/DataFlow.git
+# 或使用 SSH 方式
+# git clone git@github.com:OpenDCAI/DataFlow.git
 
-```bash
-dataflow webui agent
+cd DataFlow
+
+# 构建 Docker 镜像
+docker build -t dataflow:custom .
+
+# 运行容器
+docker run --gpus all -it dataflow:custom
+
+# 在容器内验证安装
+dataflow -v
 ```
 
-该命令将启动 DataFlow-Agent 界面，提供自动化算子编写功能和流水线推荐服务。
+> **注意**：Docker 镜像包含 CUDA 12.4.1 支持，并预装了 vLLM 用于 GPU 加速。请确保您已安装 [NVIDIA Container Toolkit](https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/install-guide.html) 以使用 GPU 功能。
 
-https://github.com/user-attachments/assets/5c6aa003-9504-4e2a-9f4e-97bae739894a
-
-### 🌐 5.3 ADP智能数据平台
-
-除了本地Gradio界面，DataFlow还提供了基于Web的ADP智能数据平台：[https://adp.originhub.tech/login](https://adp.originhub.tech/login)
-
-ADP是OriginHub推出的智能数据平台，具备四大核心能力：DataFlow数据准备全流程自动化、融合大规模多模态知识库的知识系统、多Agent协同的智能协作，以及支撑数据全链路管理的AI数据库，旨在加速企业通过AI能力充分发挥独有数据的价值。
-
-<p align="center">
-  <a href="https://adp.originhub.tech/login">
-    <img src="https://github.com/user-attachments/assets/c63ac954-f0c8-4a1a-bfc8-5752c25a22cf" alt="ADP Platform Interface" width="75%">
-  </a>
-</p>
-
-### 📖 5.4 参考DataFlow项目文档
+### 📖 5.2 参考DataFlow项目文档
 
 详细**使用说明**和**入门指南**，请参考我们的 [项目文档](https://OpenDCAI.github.io/DataFlow-Doc/)。
 

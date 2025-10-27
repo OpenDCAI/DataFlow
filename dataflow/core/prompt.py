@@ -38,8 +38,8 @@ def prompt_restrict(*allowed_prompts: type[DIYPromptABC]):
         @wraps(orig_init)
         def new_init(self, *args, **kwargs):
             pt = kwargs.get("prompt_template", None)
-            if pt is None and len(args) > 1:
-                pt = args[1]
+            # if pt is None and len(args) > 1:
+            #     pt = args[1]
 
             if pt is not None and not isinstance(pt, cls.ALLOWED_PROMPTS):
                 if not isinstance(pt, DIYPromptABC):
