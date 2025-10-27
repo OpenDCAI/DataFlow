@@ -2,10 +2,9 @@
 """DataFlow Local Evaluation Configuration - Enhanced Version"""
 
 from pathlib import Path
-from dataflow.operators.core_text import BenchDatasetEvaluator
 from dataflow.serving import LocalModelLLMServing_vllm
 from dataflow.utils.storage import FileStorage
-
+from dataflow.operators.core_text import BenchDatasetEvaluatorQuestion
 
 # =============================================================================
 # Fair Evaluation Prompt Template
@@ -62,15 +61,15 @@ JUDGE_MODEL_CONFIG = {
 
 # Target Models Configuration (字典格式 - 必需)
 TARGET_MODELS = [
-    {
-        "name": "qwen_3b",  # 模型名称（可选，默认使用路径最后一部分）
-        "path": "./Qwen2.5-3B-Instruct",  # 模型路径（必需）
+    # {
+    #     "name": "qwen_3b",  # 模型名称（可选，默认使用路径最后一部分）
+    #     "path": "./Qwen2.5-3B-Instruct",  # 模型路径（必需）
 
-        # ===== 答案生成的模型加载参数（可选）=====
-        "tensor_parallel_size": 1,  # GPU并行数量
-        "max_tokens": 1024,  # 最大生成token数
-        "gpu_memory_utilization": 0.8,  # GPU显存利用率
-    },
+    #     # ===== 答案生成的模型加载参数（可选）=====
+    #     "tensor_parallel_size": 1,  # GPU并行数量
+    #     "max_tokens": 1024,  # 最大生成token数
+    #     "gpu_memory_utilization": 0.8,  # GPU显存利用率
+    # },
     {
         "name": "qwen_7b",
         "path": "./Qwen2.5-7B-Instruct",
@@ -95,7 +94,7 @@ TARGET_MODELS = [
 
 # Data Configuration
 DATA_CONFIG = {
-    "input_file": "./qa.json",  # 输入数据文件
+    "input_file": "/data1/fyl/workspace/.cache/data/qa.json",  # 输入数据文件
     "output_dir": "./eval_results",  # 输出目录
     "question_key": "input",  # 原始数据中的问题字段
     "reference_answer_key": "output"  # 原始数据中的参考答案字段
@@ -153,7 +152,7 @@ def create_judge_serving():
 
 def create_evaluator(judge_serving, eval_result_path):
     """创建评估算子"""
-    return BenchDatasetEvaluator(
+    return BenchDatasetEvaluatorQuestion(
         compare_method=EVAL_CONFIG["compare_method"],
         llm_serving=judge_serving,
         prompt_template=FairAnswerJudgePrompt(),
