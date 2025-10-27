@@ -43,8 +43,11 @@ class CodeQualityScoreFilter(OperatorABC):
                 "- 最佳实践：是否遵循编程最佳实践\n"
                 "- 效率：代码执行效率如何\n\n"
                 "输入参数：\n"
-                "- input_key: 输入字段名（需要包含指令和代码列）\n"
-                "- output_key: 输出标签字段名 (默认: 'quality_score')\n"
+                "- input_code_key: 输入代码字段名\n"
+                "- input_instruction_key: 输入指令字段名\n"
+                "- output_score_key: 输出打分字段名 (默认: 'quality_score')\n"
+                "- output_feedback_key: 输出反馈字段名 (默认: 'quality_feedback')\n"
+                "- output_key: 输出过滤标签字段名 (默认: 'quality_score_filter_label')\n"
                 "- min_score: 最小质量分数阈值 (默认: 7)\n"
                 "- max_score: 最大质量分数阈值 (默认: 10)\n\n"
                 "输出参数：\n"
@@ -61,8 +64,11 @@ class CodeQualityScoreFilter(OperatorABC):
                 "- Best Practices: adherence to programming standards\n"
                 "- Efficiency: execution performance\n\n"
                 "Input Parameters:\n"
-                "- input_key: Input field name (requires instruction and code columns)\n"
-                "- output_key: Output label field name (default: 'quality_score')\n"
+                "- input_code_key: Input code column name\n"
+                "- input_instruction_key: Input instruction column name\n"
+                "- output_score_key: Output score column name (default: 'quality_score')\n"
+                "- output_feedback_key: Output feedback column name (default: 'quality_feedback')\n"
+                "- output_key: Output filter label column name (default: 'quality_score_filter_label')\n"
                 "- min_score: Minimum quality score threshold (default: 7)\n"
                 "- max_score: Maximum quality score threshold (default: 10)\n\n"
                 "Output Parameters:\n"
@@ -74,7 +80,7 @@ class CodeQualityScoreFilter(OperatorABC):
         """
         Validates the DataFrame to ensure the required columns exist.
         """
-        required_keys = [self.input_key]
+        required_keys = [self.input_code_key, self.input_instruction_key]
 
         missing = [k for k in required_keys if k not in dataframe.columns]
 
@@ -92,31 +98,34 @@ class CodeQualityScoreFilter(OperatorABC):
             Filtered DataFrame
         """
         # Filter based on score range
-        score_filter = (dataframe["quality_score"] >= self.min_score) & (dataframe["quality_score"] <= self.max_score)
+        score_filter = (dataframe[self.output_score_key] >= self.min_score) & (dataframe[self.output_score_key] <= self.max_score)
         # Also keep samples with failed parsing (score = 0)
-        nan_filter = dataframe["quality_score"] == 0
+        nan_filter = dataframe[self.output_score_key] == 0
         final_filter = score_filter | nan_filter
         
         return dataframe[final_filter]
 
 
-    def run(self, storage: DataFlowStorage, input_key: str, output_key: str = 'quality_score_filter_label'):
-        self.input_key = input_key
+    def run(self, storage: DataFlowStorage, input_instruction_key: str, input_code_key: str, output_score_key = "quality_score", output_feedback_key = "quality_feedback",output_key: str = 'quality_score_filter_label'):
+        self.input_code_key = input_code_key
+        self.input_instruction_key = input_instruction_key
+        self.output_score_key = output_score_key
         self.output_key = output_key
-        self.logger.info(f"Running {self.__class__.__name__} with input_key: {self.input_key} and output_key: {self.output_key}...")
+        self.output_feedback_key = output_feedback_key
+        self.logger.info(f"Running {self.__class__.__name__} with input_key: {self.input_code_key} and output_key: {self.output_key}...")
         
         dataframe = storage.read("dataframe")
         
         # Use existing quality_score if available, otherwise evaluate
-        if "quality_score" not in dataframe.columns:
-            scores, feedbacks = self.scorer.eval(dataframe, self.input_key)
-            dataframe["quality_score"] = scores
-            dataframe["quality_feedback"] = feedbacks
+        if  self.output_score_key not in dataframe.columns:
+            scores, feedbacks = self.scorer.eval(dataframe, self.input_instruction_key, self.input_code_key)
+            dataframe[self.output_score_key] = scores
+            dataframe[self.output_feedback_key] = feedbacks
         
         # Apply filtering based on existing quality_score
         results = np.ones(len(dataframe), dtype=int)
-        score_filter = (dataframe["quality_score"] >= self.min_score) & (dataframe["quality_score"] <= self.max_score)
-        nan_filter = dataframe["quality_score"] == 0  # Keep failed parsing samples
+        score_filter = (dataframe[self.output_score_key] >= self.min_score) & (dataframe[self.output_score_key] <= self.max_score)
+        nan_filter = dataframe[self.output_score_key] == 0  # Keep failed parsing samples
         metric_filter = score_filter | nan_filter
         results = results & metric_filter.astype(int)
         

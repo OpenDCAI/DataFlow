@@ -15,8 +15,8 @@ class CodeGenDataset_APIPipeline():
     def __init__(self, llm_serving: LLMServingABC = None):
         
         self.storage = FileStorage(
-            first_entry_file_name="../example_data/CodePipeline/raw_data.jsonl",
-            cache_path="./cache_local",
+            first_entry_file_name="../example_data/CodePipeline/raw_code.jsonl",
+            cache_path="./cache",
             file_name_prefix="dataflow_cache_step",
             cache_type="jsonl",
         )
@@ -80,7 +80,10 @@ class CodeGenDataset_APIPipeline():
         # Step 4: Filter out low-quality samples
         self.score_filter_step4.run(
             storage=self.storage.step(),
-            input_key="messages",
+            input_instruction_key = "generated_instruction",
+            input_code_key = "generated_code",
+            output_score_key = "quality_score",
+            output_feedback_key = "quality_feedback",
             output_key="quality_score_filter_label"
         )
 

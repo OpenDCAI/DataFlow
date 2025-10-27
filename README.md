@@ -129,57 +129,50 @@ open-dataflow codebase version: 1.0.0
 You are using the latest version: 1.0.0.
 ```
 
-### 🚀 5.2 Using the Gradio Web Interface
+#### 🐳 5.1.1 Docker Installation (Alternative)
 
-DataFlow provides two interactive web interfaces to help you use operators, pipelines, and agents:
+We also provide a **Dockerfile** for easy deployment and a **pre-built Docker image** for immediate use.
 
-#### 5.2.1 DataFlow Operators Interface
+##### Option 1: Use Pre-built Docker Image
 
-Launch the DataFlow operator interface to test and visualize all operators and pipelines:
+You can directly pull and use our pre-built Docker image:
 
-```bash
-dataflow webui
+```shell
+# Pull the pre-built image
+docker pull molyheci/dataflow:cu124
+
+# Run the container with GPU support
+docker run --gpus all -it molyheci/dataflow:cu124
+
+# Inside the container, verify installation
+dataflow -v
 ```
 
-This command will start an interactive web interface, allowing you to visualize and flexibly use all operators and pipelines.
+##### Option 2: Build from Dockerfile
 
-#### 5.2.2 DataFlow Agent Interface
+Alternatively, you can build the Docker image from the provided Dockerfile:
 
-Launch the DataFlow agent interface for operator authoring and pipeline design:
+```shell
+# Clone the repository (HTTPS)
+git clone https://github.com/OpenDCAI/DataFlow.git
+# Or use SSH
+# git clone git@github.com:OpenDCAI/DataFlow.git
 
-```bash
-dataflow webui agent
+cd DataFlow
+
+# Build the Docker image
+docker build -t dataflow:custom .
+
+# Run the container
+docker run --gpus all -it dataflow:custom
+
+# Inside the container, verify installation
+dataflow -v
 ```
 
-This command will start the DataFlow-Agent interface, providing automated operator authoring and pipeline recommendation services.
+> **Note**: The Docker image includes CUDA 12.4.1 support and comes with vLLM pre-installed for GPU acceleration. Make sure you have [NVIDIA Container Toolkit](https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/install-guide.html) installed to use GPU features.
 
-https://github.com/user-attachments/assets/fda1ad47-a9f3-447a-b5c0-cf4c9ad64763
-
-### 🌐 5.3 ADP Intelligent Data Platform
-
-Beyond the local Gradio interface, **DataFlow** is also available as a fully-managed SaaS solution on the **ADP Intelligent Data Platform**.
-
-[**ADP**](https://adp.originhub.tech) is an end-to-end system by OriginHub, designed to help enterprises accelerate the development of custom Agents and Models by integrating Large Language Models (LLMs) with private data.
-
-#### Core Capabilities:
-
-* 🤖 **Automated Data Preparation**: Leverage DataFlow for full-process automation of your data workflows.
-* 📚 **Unified Knowledge System**: Integrate and manage large-scale, multimodal knowledge bases.
-* 🤝 **Intelligent Collaboration**: Build and orchestrate powerful multi-agent systems.
-* 🗄️ **AI-Native Database**: Manage the full lifecycle of your multimodal data with a purpose-built AI database.
-
-<p align="center">
-  <a href="https://adp.originhub.tech/login">
-    <img src="https://github.com/user-attachments/assets/c63ac954-f0c8-4a1a-bfc8-5752c25a22cf" alt="ADP Platform Interface" width="75%">
-  </a>
-</p>
-
-#### Get Started for Free
-
-
-👉 **[Sign up now to claim your free compute credits!](https://adp.originhub.tech)**
-
-### 📖 5.4 Reference Project Documentation
+### 📖 5.2 Reference Project Documentation
 
 For detailed **usage instructions** and **getting started guide**, please visit our [Documentation](https://OpenDCAI.github.io/DataFlow-Doc/).
 

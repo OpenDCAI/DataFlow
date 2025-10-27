@@ -1536,7 +1536,6 @@ class Text2SQLPromptGeneratorPrompt(PromptABC):
         prompt = template.format(db_details=db_details, question_and_evidence=question_and_evidence, db_engine=db_engine)
         return prompt
 
-
 @PROMPT_REGISTRY.register()
 class Text2VecSQLPromptGeneratorPrompt(PromptABC):
     def __init__(self):

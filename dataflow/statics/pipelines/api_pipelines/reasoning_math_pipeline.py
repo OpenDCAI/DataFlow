@@ -1,6 +1,6 @@
 from dataflow.operators.reasoning import (
-    ReasoningCategoryDatasetEvaluator,
-    ReasoningDifficultyDatasetEvaluator,
+    ReasoningQuestionCategorySampleEvaluator,
+    ReasoningQuestionDifficultySampleEvaluator,
     ReasoningQuestionGenerator,
     ReasoningAnswerGenerator,
 )
@@ -66,10 +66,10 @@ class ReasoningMath_APIPipeline():
             llm_serving=self.llm_serving,
             prompt_template=MathQuestionFilterPrompt()
         )
-        self.question_difficulty_classifier_step4 = ReasoningDifficultyDatasetEvaluator(
+        self.question_difficulty_classifier_step4 = ReasoningQuestionDifficultySampleEvaluator(
             llm_serving=self.llm_serving
         )
-        self.question_category_classifier_step5 = ReasoningCategoryDatasetEvaluator(
+        self.question_category_classifier_step5 = ReasoningQuestionCategorySampleEvaluator(
             llm_serving=self.llm_serving
         )
         ########################## branch ############################
