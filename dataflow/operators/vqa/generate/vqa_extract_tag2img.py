@@ -66,7 +66,7 @@ class VQAExtractTag2Img(OperatorABC):
             # 在detections中查找figure_id
             i = -1
             for detection in layout_data:
-                if detection.get("page_idx") == int(page_num) and detection.get("type") in ["text", "ref_text", "title", "equation", "list", "index", "image", "table", "code"]:
+                if detection.get("page_idx") == int(page_num) and detection.get("type") in ["title", "equation", "list", "index", "image", "table", "code"]:
                     i += 1
                 # class_name 也可以是 'figure'，id 可能是 'figure1', 'figure2' 等
                     if i == int(figure_id):
@@ -188,6 +188,8 @@ class VQAExtractTag2Img(OperatorABC):
                             qa_item['question'] = self.process_text(qa_item['question'])
                         if 'answer' in qa_item and isinstance(qa_item['answer'], str):
                             qa_item['answer'] = self.process_text(qa_item['answer'])
+                        if 'solution' in qa_item and isinstance(qa_item['solution'], str):
+                            qa_item['solution'] = self.process_text(qa_item['solution'])
                         processed_qas.append(qa_item)
                     except json.JSONDecodeError:
                         self.logger.error(f"跳过无效的JSON行: {line.strip()}")

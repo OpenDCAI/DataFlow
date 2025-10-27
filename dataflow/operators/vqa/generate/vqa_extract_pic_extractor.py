@@ -16,13 +16,15 @@ class VQAExtractPicExtractor(OperatorABC):
     def __init__(self,
                 llm_serving: LLMServingABC = None,
                 model: str = "o4-mini",
-                subject: str = "math"
+                subject: str = "math",
+                interleaved: bool = True
                 ):
         self.logger = get_logger()
         self.llm_serving = llm_serving
         self.prompt = VQAExtractPrompt()
         self.model = model
         self.subject = subject
+        self.interleaved = interleaved
 
     def _format_instructions(self, image_files: List[str]):
         list_of_image_paths = []
@@ -46,7 +48,7 @@ class VQAExtractPicExtractor(OperatorABC):
         image_files.sort(key=filename2idx)
 
         list_of_image_paths, list_of_image_labels = self._format_instructions(image_files)
-        system_prompt = self.prompt.build_prompt(self.subject)
+        system_prompt = self.prompt.build_prompt(self.subject, interleaved=self.interleaved)
 
         responses = self.llm_serving.generate_from_input_multi_images(list_of_image_paths, list_of_image_labels, system_prompt, self.model)
 

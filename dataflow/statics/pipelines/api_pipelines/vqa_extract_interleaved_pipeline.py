@@ -14,7 +14,7 @@ from dataflow.utils.storage import FileStorage
 from dataflow.operators.general_text.filter.minhash_deduplicate_filter import MinHashDeduplicateFilter
 
 
-class VQA_extract:
+class VQA_interleaved_extract:
     def __init__(self, input_pdf_paths_jsonl_file: str, output_prefix: str = "doclay"):
         # self.pdf_path = pdf_path
         # self.subject = subject
@@ -89,5 +89,5 @@ class VQA_deduplicate:
         self.deduplicate.run(self.storage.step(), input_keys=["question", "answer"])
 
 if __name__ == "__main__":
-    vqa_extract = VQA_extract("./dataflow/example/VQA/vqa_extract_test.jsonl") # jsonl中每一行包含pdf_path, subject (math, physics, chemistry, ...), output_dir
+    vqa_extract = VQA_interleaved_extract("./dataflow/example/VQA/vqa_extract_test.jsonl") # jsonl中每一行包含pdf_path, subject (math, physics, chemistry, ...), output_dir
     vqa_extract.run()
