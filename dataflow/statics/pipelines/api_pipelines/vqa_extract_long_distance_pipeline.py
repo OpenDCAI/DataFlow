@@ -7,6 +7,7 @@ from dataflow.serving import APIVLMServing_openai
 import os
 import json
 import re
+import regex
 
 def merge_qa_pair(question_jsonl, answer_jsonl, output_jsonl):
     with open(question_jsonl, 'r', encoding='utf-8') as q_file, open(answer_jsonl, 'r', encoding='utf-8') as a_file, open(output_jsonl, 'w', encoding='utf-8') as out_file:
@@ -21,15 +22,24 @@ def merge_qa_pair(question_jsonl, answer_jsonl, output_jsonl):
                 data["label"] = label_match.group()
             if data["chapter_title"] == "":
                 data["chapter_title"] = chapter_title
+            
+            try:
+                label_num = int(data["label"])
+            except:
+                continue
+            
             if data["chapter_title"] != "" and data["chapter_title"] != chapter_title:
-                if int(data["label"]) < label:
+                if label_num < label:
                     chapter_id += 1
                     chapter_title = data["chapter_title"]
                 else:
+                    # 如果题号增加，章节标题却发生变化，说明可能错误提取了子标题。因此继续使用之前的章节标题。
                     data["chapter_title"] = chapter_title
-            label = int(data["label"])
+            label = label_num
             data["chapter_id"] = chapter_id
-            questions[(data["chapter_id"], data['label'])] = data
+            # 删除title中的空格，标点符号（包括中文和英文）
+            data["chapter_title"] = regex.sub(r'[\p{P}\s]+', '', data["chapter_title"])
+            questions[(data["chapter_title"], data['label'])] = data
         
         chapter_id = 0
         chapter_title = ""
@@ -42,15 +52,24 @@ def merge_qa_pair(question_jsonl, answer_jsonl, output_jsonl):
                 data["label"] = label_match.group()
             if data["chapter_title"] == "":
                 data["chapter_title"] = chapter_title
+                
+            try:
+                label_num = int(data["label"])
+            except:
+                continue
+            
             if data["chapter_title"] != "" and data["chapter_title"] != chapter_title:
-                if int(data["label"]) < label:
+                if label_num < label:
                     chapter_id += 1
                     chapter_title = data["chapter_title"]
                 else:
+                    # 如果题号增加，章节标题却发生变化，说明可能错误提取了子标题。因此继续使用之前的章节标题。
                     data["chapter_title"] = chapter_title
-            label = int(data["label"])
+            label = label_num
             data["chapter_id"] = chapter_id
-            answers[(data["chapter_id"], data['label'])] = data
+            # 删除title中的空格，标点符号（包括中文和英文）
+            data["chapter_title"] = regex.sub(r'[\p{P}\s]+', '', data["chapter_title"])
+            answers[(data["chapter_title"], data['label'])] = data
         
         question_cnt = len(questions)
         answer_cnt = len(answers)
@@ -97,6 +116,14 @@ class VQA_long_distance_extract:
             output_dir = data.get("output_dir", "../vqa")
             os.makedirs(output_dir, exist_ok=True)
             
+            # 首先确保question_pdf_path和answer_pdf_path存在
+            if not os.path.exists(question_pdf_path):
+                print(f"Question PDF path does not exist: {question_pdf_path}")
+                continue
+            if not os.path.exists(answer_pdf_path):
+                print(f"Answer PDF path does not exist: {answer_pdf_path}")
+                continue
+            
             # 处理question pdf
             question_output_dir = os.path.join(output_dir, "question")
             os.makedirs(question_output_dir, exist_ok=True)
@@ -141,5 +168,6 @@ class VQA_long_distance_extract:
 
 
 if __name__ == "__main__":
-    vqa_extract = VQA_long_distance_extract("./dataflow/example/VQA/vqa_extract_long_distance_test.jsonl") # jsonl中每一行包含question_pdf_path, answer_pdf_path, subject (math, physics, chemistry, ...), output_dir
+    # 在 https://huggingface.co/datasets/OpenDCAI/dataflow-demo-VQA 中有完整示例数据
+    vqa_extract = VQA_long_distance_extract("../example_data/VQA/vqa_extract_long_distance_test.jsonl") # jsonl中每一行包含question_pdf_path, answer_pdf_path, subject (math, physics, chemistry, ...), output_dir
     vqa_extract.run()

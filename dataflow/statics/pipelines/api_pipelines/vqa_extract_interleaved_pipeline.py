@@ -83,5 +83,5 @@ class VQA_deduplicate:
         self.deduplicate.run(self.storage.step(), input_keys=["question", "answer"])
 
 if __name__ == "__main__":
-    vqa_extract = VQA_interleaved_extract("./dataflow/example/VQA/vqa_extract_interleaved_test.jsonl") # jsonl中每一行包含pdf_path, subject (math, physics, chemistry, ...), output_dir
+    vqa_extract = VQA_interleaved_extract("../example_data/VQA/vqa_extract_interleaved_test.jsonl") # jsonl中每一行包含pdf_path, subject (math, physics, chemistry, ...), output_dir
     vqa_extract.run()
