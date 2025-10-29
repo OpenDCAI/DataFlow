@@ -80,11 +80,41 @@ def test_all_operator_registry():
     #         init_signature = signature(obj.__init__)
     #         print(f"  __init__ signature: {init_signature}")
 
-    # =============== Operator run() check for input_/output_ prefix =======================
+# ================= Enhanced checks start here =================
     print("\n🔍 Checking Operator class __init__ and run signatures ...")
 
-    invalid_run_param_ops = []  # 收集 run 参数命名不合规的算子
-    operator_signatures = {}    # 存储签名信息
+    # 汇总问题以便一次性 fail
+    init_issues = []           # __init__ 问题（含 prompt_template 规则）
+    invalid_run_param_ops = [] # run() 形参命名或顺序问题
+    operator_signatures = {}   # 收集签名信息用于打印
+
+    # 依赖类型
+    from dataflow.core.prompt import DIYPromptABC, PromptABC
+    import inspect
+    from inspect import Signature
+    from typing import get_origin, get_args, Union
+    try:
+        from types import UnionType  # Py3.10+
+    except Exception:
+        UnionType = None
+
+    def _iter_annotation_types(ann):
+        """
+        解析注解为一组类型；支持 typing.Union 与 PEP 604 (A | B)。
+        返回：类型对象列表；如果注解缺失/不可用，返回 []。
+        """
+        if ann is inspect._empty:
+            return []
+        origin = get_origin(ann)
+        if origin is Union:
+            return [t for t in get_args(ann) if isinstance(t, type)]
+        if UnionType is not None and isinstance(ann, UnionType):
+            # 理论上 get_origin/get_args 也能处理 PEP 604，但做双保险
+            return [t for t in getattr(ann, "__args__", ()) if isinstance(t, type)]
+        if isinstance(ann, type):
+            return [ann]
+        # 其它复杂注解（如 ForwardRef、TypedDict 等）此处不做深解析
+        return []
 
     for name, cls in dataflow_obj_map.items():
         if not isclass(cls):
@@ -92,79 +122,149 @@ def test_all_operator_registry():
 
         cls_info = {"__init__": None, "run": None}
 
-        # 获取 __init__ 签名
-        if hasattr(cls, "__init__"):
-            try:
-                sig = signature(cls.__init__)
-                cls_info["__init__"] = list(sig.parameters.keys())
-            except Exception as e:
-                cls_info["__init__"] = f"Error: {e}"
+        # ---------- __init__ 检查 ----------
+        # 规则：
+        # 1) 若存在参数 prompt_template：
+        #    a) 必须有默认值（可选参数）
+        #    b) 注解必须包含 DIYPromptABC
+        #    c) 其它类型必须是 PromptABC 的子类
+        # 2) 任何 signature 获取失败都应计入 init_issues
+        try:
+            # 注意：很多类可能未定义 __init__，由 object.__init__ 继承，这里也能拿到签名
+            init_sig: Signature = signature(cls.__init__)
+            params = init_sig.parameters
+            cls_info["__init__"] = list(params.keys())
 
-        # 获取 run 签名
+            if "prompt_template" in params:
+                p = params["prompt_template"]
+
+                # 2.a 默认值必须存在
+                if p.default is inspect._empty:
+                    init_issues.append(
+                        (name, cls.__module__,
+                        "Parameter 'prompt_template' must have a default value (be optional).")
+                    )
+
+                # 2.b/2.c 注解类型要求
+                types_ = _iter_annotation_types(p.annotation)
+                if not types_:
+                    init_issues.append(
+                        (name, cls.__module__,
+                        "Parameter 'prompt_template' must be type-annotated and include DIYPromptABC "
+                        "(Union[DIYPromptABC, ...] or DIYPromptABC).")
+                    )
+                else:
+                    has_diy = any(issubclass(t, DIYPromptABC) if isinstance(t, type) else False
+                                for t in types_)
+                    if not has_diy:
+                        init_issues.append(
+                            (name, cls.__module__,
+                            "Annotation of 'prompt_template' must include DIYPromptABC.")
+                        )
+                    # 其它类型必须是 PromptABC 子类
+                    for t in types_:
+                        if t is DIYPromptABC:
+                            continue
+                        if not (isinstance(t, type) and issubclass(t, PromptABC)):
+                            init_issues.append(
+                                (name, cls.__module__,
+                                f"Invalid allowed type in 'prompt_template' annotation: {t}. "
+                                f"All non-DIY types must subclass PromptABC.")
+                            )
+
+        except Exception as e:
+            cls_info["__init__"] = f"Error: {e}"
+            init_issues.append(
+                (name, cls.__module__, f"Failed to inspect __init__: {e}")
+            )
+
+        # ---------- run() 检查 ----------
+        # 规则：
+        # - 除 self/cls 外，参数名必须以 input_* 或 output_*，或等于 'storage'
+        # - 'storage' 必须是第一个（除 self/cls）参数
         if hasattr(cls, "run"):
             try:
-                run_sig = signature(cls.run)
+                run_sig: Signature = signature(cls.run)
                 params = list(run_sig.parameters.keys())
                 cls_info["run"] = params
 
-                # 检查 run 参数命名
-                # check for input_*, output_*, storage 
+                # 过滤掉 self/cls
+                logical_params = [p for p in params if p not in ("self", "cls")]
+
                 invalid_params = [
-                    p for p in params if p not in ("self", "cls") and not (
-                        p.startswith("input_") or p.startswith("output_") or p == "storage"
-                    )
+                    p for p in logical_params
+                    if p != "storage" and not (p.startswith("input_") or p.startswith("output_"))
                 ]
-                # check for storage
-                if "storage" not in params:
+
+                # 'storage' 必须存在且为第一个逻辑参数
+                if "storage" not in logical_params:
                     invalid_params.append("'storage' parameter missing")
-                elif params.index("storage") != 1:
-                    invalid_params.append(f"'storage' should be the FIRST parameter (except self/cls), but found at position '{params[1]}'")
+                else:
+                    if logical_params[0] != "storage":
+                        invalid_params.append(
+                            f"'storage' should be the FIRST parameter after self/cls, "
+                            f"but found at position {logical_params.index('storage')} "
+                            f"with first logical param '{logical_params[0] if logical_params else None}'"
+                        )
 
                 if invalid_params:
                     invalid_run_param_ops.append((name, cls.__module__, invalid_params))
             except Exception as e:
                 cls_info["run"] = f"Error: {e}"
+                # 将获取 run 签名失败也视为不合规
+                invalid_run_param_ops.append((name, cls.__module__, [f"Failed to inspect run(): {e}"]))
 
         operator_signatures[name] = cls_info
 
-    # 打印每个算子的签名信息
+    # ---------- 打印签名汇总 ----------
     print("\n📘 Operator signatures summary:")
     for op_name, info in operator_signatures.items():
         print(f"\nOperator: {op_name}")
         print(f"  __init__ params: {info['__init__']}")
         print(f"  run params: {info['run']}")
 
-    # 命名规则错误报告
-    if invalid_run_param_ops:
-        print("\n❌ Run parameter naming rule violated:")
-        for name, module, invalids in invalid_run_param_ops:
-            print(f"- {name} ({module}) invalid params: {invalids}")
-
-        rule_explanation = (
-            "\nOperator run() parameter naming rule (English):\n"
-            "All parameters of the `run()` function must be explicitly named using one of these prefixes:\n"
-            "  - input_*\n"
-            "  - output_*\n"
-            "  - Special parameter 'storage' is also allowed. And should be the FIRST parameter.\n"
-            "Example:\n"
-            "  def run(self, storage, input_text, input_image, output_result):\n"
-            "Parameters other than 'self' or 'cls' that do not start with these prefixes "
-            "are considered invalid.\n"
-        )
-
+    # ---------- 先处理 __init__ 问题 ----------
+    if init_issues:
         details = "\n".join(
-            f"  • {name} ({module}) → invalid run parameters: {invalids}"
-            for name, module, invalids in invalid_run_param_ops
+            f"  • {name} ({module}) → {msg}"
+            for name, module, msg in init_issues
         )
-
+        rule_explanation = (
+            "\n__init__ / prompt_template rules:\n"
+            "  - If parameter 'prompt_template' exists:\n"
+            "    • It MUST have a default value (be optional).\n"
+            "    • Its type annotation MUST include DIYPromptABC.\n"
+            "    • All other allowed types MUST subclass PromptABC.\n"
+            "  - Any failure to inspect __init__ is considered an error.\n"
+            "  - See: dataflow.operators.reasoning.generate.ReasoningAnswerGenerator for a reference implementation.\n"
+        )
         pytest.fail(
-            f"❌ Found {len(invalid_run_param_ops)} operators violating run() parameter naming rule.\n"
+            f"❌ Found {len(init_issues)} operators violating __init__/prompt_template rules."
             f"{rule_explanation}\nDetails:\n{details}",
             pytrace=False,
         )
 
-    else:
-        print("✅ All Operator run() parameter names comply with the conventions (input_*/output_*)")
+    # ---------- 再处理 run() 形参问题 ----------
+    if invalid_run_param_ops:
+        details = "\n".join(
+            f"  • {name} ({module}) → invalid run parameters: {invalids}"
+            for name, module, invalids in invalid_run_param_ops
+        )
+        rule_explanation = (
+            "\nOperator run() parameter naming rule:\n"
+            "  - All parameters (excluding self/cls) must be explicitly named using:\n"
+            "      • input_*   • output_*   • 'storage'\n"
+            "  - 'storage' MUST be the first parameter after self/cls.\n"
+            "Example:\n"
+            "  def run(self, storage, input_text, input_image, output_result):\n"
+        )
+        pytest.fail(
+            f"❌ Found {len(invalid_run_param_ops)} operators violating run() parameter rules."
+            f"{rule_explanation}\nDetails:\n{details}",
+            pytrace=False,
+        )
+
+    print("✅ All checks passed: __init__/prompt_template rules and run() parameter conventions.")
 
 
     # ======= prompt registry test ==============

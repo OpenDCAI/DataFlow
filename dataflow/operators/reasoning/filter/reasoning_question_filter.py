@@ -10,7 +10,7 @@ from dataflow.prompts.reasoning.general import GeneralQuestionFilterPrompt
 from dataflow.prompts.reasoning.diy import DiyQuestionFilterPrompt
 
 from dataflow.core.prompt import prompt_restrict
-
+from typing import Union
 import re
 @prompt_restrict(
     MathQuestionFilterPrompt, 
@@ -22,7 +22,7 @@ class ReasoningQuestionFilter(OperatorABC):
     def __init__(self,
                  system_prompt: str = "You are a helpful assistant.",
                  llm_serving: LLMServingABC = None,
-                 prompt_template = MathQuestionFilterPrompt | GeneralQuestionFilterPrompt | DiyQuestionFilterPrompt | DIYPromptABC
+                 prompt_template: Union[MathQuestionFilterPrompt, GeneralQuestionFilterPrompt, DiyQuestionFilterPrompt, DIYPromptABC] = MathQuestionFilterPrompt
                  ):
         self.logger = get_logger()
         if prompt_template is None:

@@ -1,5 +1,5 @@
-
-class ExtractSmilesFromTextPrompt:
+from dataflow.core.prompt import PromptABC
+class ExtractSmilesFromTextPrompt(PromptABC):
     def __init__(self, prompt_template):
         self.prompt_template = prompt_template
     

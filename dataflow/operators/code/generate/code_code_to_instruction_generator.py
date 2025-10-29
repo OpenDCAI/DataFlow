@@ -9,6 +9,12 @@ from dataflow.core import OperatorABC # For type hinting if needed
 from dataflow.core import LLMServingABC
 from dataflow.prompts.code import CodeCodeToInstructionGeneratorPrompt, DiyCodePrompt
 
+from typing import Union
+from dataflow.core.prompt import prompt_restrict, DIYPromptABC
+@prompt_restrict(
+    CodeCodeToInstructionGeneratorPrompt,
+    DiyCodePrompt
+)
 @OPERATOR_REGISTRY.register()
 class CodeCodeToInstructionGenerator(OperatorABC):
     """
@@ -17,7 +23,7 @@ class CodeCodeToInstructionGenerator(OperatorABC):
     'self-instruct' style data synthesis pipeline for code.
     """
 
-    def __init__(self, llm_serving: LLMServingABC, prompt_template=None):
+    def __init__(self, llm_serving: LLMServingABC, prompt_template: Union[CodeCodeToInstructionGeneratorPrompt, DiyCodePrompt, DIYPromptABC] = None):
         """
         Initializes the operator with a language model serving endpoint.
         """

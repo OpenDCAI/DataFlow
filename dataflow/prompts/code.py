@@ -1,3 +1,4 @@
+from dataflow.core.prompt import PromptABC
 '''
 A collection of prompts for the code operators.
 '''
@@ -167,7 +168,7 @@ class CodeInstructionToCodeGeneratorPrompt:
         return prompt.format(instruction=instruction)
 
 
-class DiyCodePrompt:
+class DiyCodePrompt(PromptABC):
     '''
     The prompt for custom code operations.
     '''

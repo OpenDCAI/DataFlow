@@ -10,6 +10,7 @@ from dataflow.core.prompt import prompt_restrict, DIYPromptABC
 
 import pandas as pd
 import random
+from typing import Union
 
 @prompt_restrict(
     MathQuestionSynthesisPrompt,
@@ -22,7 +23,7 @@ class ReasoningQuestionGenerator(OperatorABC):
     def __init__(self,
                 num_prompts: int = 1,
                 llm_serving: LLMServingABC = None,
-                prompt_template = MathQuestionSynthesisPrompt | GeneralQuestionSynthesisPrompt | DiyQuestionSynthesisPrompt | DIYPromptABC
+                prompt_template: Union[MathQuestionSynthesisPrompt, GeneralQuestionSynthesisPrompt, DiyQuestionSynthesisPrompt, DIYPromptABC] = None
                 ):
         """
         Initialize the QuestionGenerator with the provided configuration.

@@ -8,8 +8,14 @@ from dataflow import get_logger
 from dataflow.utils.storage import DataFlowStorage
 from dataflow.core import OperatorABC
 from dataflow.core import LLMServingABC
+from dataflow.core.prompt import prompt_restrict, DIYPromptABC
 from dataflow.prompts.code import CodeQualityEvaluatorPrompt, DiyCodePrompt
 
+from typing import Union
+@prompt_restrict(
+    CodeQualityEvaluatorPrompt,
+    DiyCodePrompt
+)
 @OPERATOR_REGISTRY.register()
 class CodeQualitySampleEvaluator(OperatorABC):
     """
@@ -18,7 +24,7 @@ class CodeQualitySampleEvaluator(OperatorABC):
     and textual feedback, acting as an automated code reviewer.
     """
 
-    def __init__(self, llm_serving: LLMServingABC, prompt_template=None):
+    def __init__(self, llm_serving: LLMServingABC, prompt_template: Union[CodeQualityEvaluatorPrompt, DiyCodePrompt, DIYPromptABC] = None):
         """
         Initializes the operator with a language model serving endpoint.
         """
