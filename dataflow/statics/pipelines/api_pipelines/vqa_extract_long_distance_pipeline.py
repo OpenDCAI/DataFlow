@@ -69,7 +69,14 @@ def merge_qa_pair(question_jsonl, answer_jsonl, output_jsonl):
             data["chapter_id"] = chapter_id
             # 删除title中的空格，标点符号（包括中文和英文）
             data["chapter_title"] = regex.sub(r'[\p{P}\s]+', '', data["chapter_title"])
-            answers[(data["chapter_title"], data['label'])] = data
+            # 动态更新，防止错误的重复label覆盖掉之前的solution或answer
+            if not answers.get((data["chapter_title"], data['label'])):
+                answers[(data["chapter_title"], data['label'])] = data
+            else:
+                if not answers[(data["chapter_title"], data['label'])].get("solution") and data.get("solution"):
+                    answers[(data["chapter_title"], data['label'])]["solution"] = data["solution"]
+                if not answers[(data["chapter_title"], data['label'])].get("answer") and data.get("answer"):
+                    answers[(data["chapter_title"], data['label'])]["answer"] = data["answer"]
         
         question_cnt = len(questions)
         answer_cnt = len(answers)
@@ -97,8 +104,8 @@ class VQA_long_distance_extract:
         self.pdf2img = VQAExtractPdf2Img()
         self.doc_item_layout = VQAExtractDocLayoutMinerU()
         self.llm_serving = APIVLMServing_openai(
-            api_url = "http://api.openai.com/v1",
-            model_name = "o4-mini",
+            api_url = "https://generativelanguage.googleapis.com/v1beta/openai/",
+            model_name = "gemini-2.5-pro",
             max_workers = 100,
         )
         self.pic_extractor = VQAExtractPicExtractor(self.llm_serving, interleaved=False)

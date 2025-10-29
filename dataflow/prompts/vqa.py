@@ -25,6 +25,7 @@ class VQAExtractPrompt(PromptABC):
 4. The chapter information as it appears on page_n. YOU MUST INCLUDE ALL TITLES APPEARING ON THE PAGE, EVEN IF NO QUESTIONS OR ANSWERS ARE PRESENT UNDER THAT TITLE.
 """
         PROMPT +="""
+When provided two column pages, you should read from **left to right**, top to bottom. Also output the extracted content from **left to right**, top to bottom.
 Strict extraction rules:
 ** About questions and answers/solutions **
 - If you think the page is not the main text page, such as a cover page, catalog page, header/footer only, etc., output `<empty></empty>`.
