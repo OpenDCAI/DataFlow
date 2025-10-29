@@ -43,9 +43,9 @@ def modified_draw_bbox_with_number(i, bbox_list, page, c, rgb_config, fill_confi
             logger.warning(f"Invalid /Rotate value: {rotation_obj!r}, defaulting to 0")
             rotation = 0
 
-        if rotation == 0:
+        if rotation == 90:
             c.translate(rect[0] + rect[2] + 2, rect[1] + rect[3] - 10)
-        elif rotation == 90:
+        elif rotation == 0:
             c.translate(rect[0] + 10, rect[1] + rect[3] + 2)
         elif rotation == 180:
             c.translate(rect[0] - 2, rect[1] + 10)
@@ -53,8 +53,7 @@ def modified_draw_bbox_with_number(i, bbox_list, page, c, rgb_config, fill_confi
             c.translate(rect[0] + rect[2] - 10, rect[1] - 2)
             
         c.rotate(rotation)
-        c.drawString(0, 0, f"tag{i}:")
-        c.drawString(0, -10, f"box{j}")
+        c.drawString(0, 0, f"tag{i}:box{j}")
         c.restoreState()
 
     return c
@@ -147,8 +146,8 @@ def modified_draw_layout_bbox(pdf_info, pdf_bytes, out_path, filename):
         imgs_body_list.append(imgs_body)
         # imgs_caption_list.append(imgs_caption)
         # imgs_footnote_list.append(imgs_footnote)
-        titles_list.append(titles)
-        texts_list.append(texts)
+        # titles_list.append(titles)
+        # texts_list.append(texts)
         interequations_list.append(interequations)
         lists_list.append(lists)
         list_items_list.append(list_items)
@@ -162,9 +161,9 @@ def modified_draw_layout_bbox(pdf_info, pdf_bytes, out_path, filename):
         page_block_list = []
         for block in page["para_blocks"]:
             if block["type"] in [
-                BlockType.TEXT,
-                BlockType.REF_TEXT,
-                BlockType.TITLE,
+                # BlockType.TEXT,
+                # BlockType.REF_TEXT,
+                # BlockType.TITLE,
                 BlockType.INTERLINE_EQUATION,
                 BlockType.LIST,
                 BlockType.INDEX,
@@ -199,8 +198,8 @@ def modified_draw_layout_bbox(pdf_info, pdf_bytes, out_path, filename):
         c = modified_draw_bbox_without_number(i, imgs_body_list, page, c, [153, 255, 51], True)
         # c = modified_draw_bbox_without_number(i, imgs_caption_list, page, c, [102, 178, 255], True)
         # c = modified_draw_bbox_without_number(i, imgs_footnote_list, page, c, [255, 178, 102], True)
-        c = modified_draw_bbox_without_number(i, titles_list, page, c, [102, 102, 255], True)
-        c = modified_draw_bbox_without_number(i, texts_list, page, c, [153, 0, 76], True)
+        # c = modified_draw_bbox_without_number(i, titles_list, page, c, [102, 102, 255], True)
+        # c = modified_draw_bbox_without_number(i, texts_list, page, c, [153, 0, 76], True)
         c = modified_draw_bbox_without_number(i, interequations_list, page, c, [0, 255, 0], True)
         c = modified_draw_bbox_without_number(i, lists_list, page, c, [40, 169, 92], True)
         c = modified_draw_bbox_without_number(i, list_items_list, page, c, [40, 169, 92], False)
@@ -236,6 +235,7 @@ class VQAExtractDocLayoutMinerU(OperatorABC):
 
     def run(self, storage, input_pdf_file_path:str,
                         output_folder:str):
+        global cal_canvas_rect, BlockType, SplitFlag, PdfReader, PdfWriter, PageObject, canvas
         try:
             import mineru
             from mineru.utils.draw_bbox import cal_canvas_rect

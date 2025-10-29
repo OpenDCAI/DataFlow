@@ -2,7 +2,7 @@
 """DataFlow API Evaluation Configuration - Enhanced Version"""
 
 import os
-from dataflow.operators.core_text import BenchDatasetEvaluator
+from dataflow.operators.core_text import BenchDatasetEvaluatorQuestion
 from dataflow.serving import APILLMServing_request
 from dataflow.utils.storage import FileStorage
 
@@ -66,15 +66,15 @@ JUDGE_MODEL_CONFIG = {
 # Target Models Configuration (List format - required, each element is a dict)
 # 被评估模型设置 (列表格式 - 必需，每个元素是字典)
 TARGET_MODELS = [
-    {
-        "name": "qwen_3b",  # 模型名称（可选，默认使用路径最后一部分） / Model name (optional, uses the last part of the path by default)
-        "path": "./Qwen2.5-3B-Instruct",  # 模型路径（必需） / Model path (required)
+    # {
+    #     "name": "qwen_3b",  # 模型名称（可选，默认使用路径最后一部分） / Model name (optional, uses the last part of the path by default)
+    #     "path": "./Qwen2.5-3B-Instruct",  # 模型路径（必需） / Model path (required)
 
-        # ===== 答案生成的模型加载参数（可选）=====
-        "tensor_parallel_size": 1,  # GPU并行数量 / Number of GPU parallels
-        "max_tokens": 1024,  # 最大生成token数 / Maximum number of generated tokens
-        "gpu_memory_utilization": 0.8,  # GPU显存利用率 / GPU memory utilization
-    },
+    #     # ===== 答案生成的模型加载参数（可选）=====
+    #     "tensor_parallel_size": 1,  # GPU并行数量 / Number of GPU parallels
+    #     "max_tokens": 1024,  # 最大生成token数 / Maximum number of generated tokens
+    #     "gpu_memory_utilization": 0.8,  # GPU显存利用率 / GPU memory utilization
+    # },
     {
         "name": "qwen_7b",
         "path": "./Qwen2.5-7B-Instruct",
@@ -149,7 +149,7 @@ def create_judge_serving():
 
 def create_evaluator(judge_serving, eval_result_path):
     """创建评估算子"""
-    return BenchDatasetEvaluator(
+    return BenchDatasetEvaluatorQuestion(
         compare_method=EVAL_CONFIG["compare_method"],
         llm_serving=judge_serving,
         prompt_template=FairAnswerJudgePrompt(),

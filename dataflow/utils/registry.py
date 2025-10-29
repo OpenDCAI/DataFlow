@@ -127,7 +127,84 @@ class Registry():
         assert ret is not None, f"No object named '{name}' found in '{self._name}' registry!"
         
         return ret
+    
+    def apply_whitelist(self, names, *, verbose: bool = True):
+        """
+        在已调用 _get_all() 之后执行：
+        仅保留 `names`（白名单）中的对象，其他对象从 _obj_map 中移除。
+        同时返回一份详尽报告，并（可选）输出日志摘要。
 
+        :param names: Iterable[str]，白名单
+        :param verbose: 是否用 logger 输出摘要信息
+        :return: dict 报告，字段如下：
+            {
+                "requested_whitelist": [str, ...],        # 传入的白名单（去重、排序后）
+                "missing_in_registry": [str, ...],        # 在白名单里但不在 obj_map 的
+                "kept": [str, ...],                       # 实际保留
+                "removed": [str, ...],                    # 实际移除
+                "total_before": int,                      # 裁剪前数量
+                "total_after": int,                       # 裁剪后数量
+                "trimmed_by": int                         # 裁掉的数量（= before - after）
+            }
+        """
+        logger = get_logger()
+
+        # 1) 规范化输入
+        names = [] if names is None else list(names)
+        keep_set = set(map(str, names))
+
+        # 2) 快照当前注册表
+        before_keys = set(self._obj_map.keys())
+        total_before = len(before_keys)
+
+        # 3) 计算三类集合
+        missing_in_registry = sorted(keep_set - before_keys)       # 白名单中缺失的
+        to_keep = sorted(before_keys & keep_set)                    # 真正保留的
+        to_remove = sorted(before_keys - keep_set)                  # 将被移除的（不在白名单）
+
+        # 4) 执行就地裁剪
+        for k in to_remove:
+            self._obj_map.pop(k, None)
+
+        # 5) 统计结果
+        total_after = len(self._obj_map)
+        trimmed_by = total_before - total_after
+
+        # 6) 构造报告
+        report = {
+            "requested_whitelist": sorted(keep_set),
+            "missing_in_registry": missing_in_registry,
+            "kept": to_keep,
+            "removed": to_remove,
+            "total_before": total_before,
+            "total_after": total_after,
+            "trimmed_by": trimmed_by,
+        }
+
+        # 7) 可读日志摘要（尽可能合理且完整）
+        if verbose:
+            logger.info(
+                f"[Registry:{self._name}] whitelist applied: "
+                f"before={total_before}, after={total_after}, trimmed_by={trimmed_by}"
+            )
+            if to_keep:
+                logger.info(f"[Registry:{self._name}] kept ({len(to_keep)}): {to_keep}")
+            else:
+                logger.info(f"[Registry:{self._name}] kept (0): []")
+
+            if to_remove:
+                logger.info(f"[Registry:{self._name}] removed ({len(to_remove)}): {to_remove}")
+            else:
+                logger.info(f"[Registry:{self._name}] removed (0): []")
+
+            if missing_in_registry:
+                logger.warning(
+                    f"[Registry:{self._name}] in-whitelist-but-missing "
+                    f"({len(missing_in_registry)}): {missing_in_registry}"
+                )
+
+        return report
+    
     def __contains__(self, name):
         return name in self._obj_map
 
