@@ -1,8 +1,10 @@
+from dataflow.core.prompt import PromptABC
+from dataflow.utils.registry import PROMPT_REGISTRY
 '''
 A collection of prompts for the code operators.
 '''
-
-class CodeQualityEvaluatorPrompt:
+@PROMPT_REGISTRY.register()
+class CodeQualityEvaluatorPrompt(PromptABC):
     '''
     The prompt for the code quality evaluator.
     '''
@@ -33,8 +35,8 @@ class CodeQualityEvaluatorPrompt:
         )
         return prompt.format(instruction=instruction, code=code)
 
-
-class CodeCodeToInstructionGeneratorPrompt:
+@PROMPT_REGISTRY.register()
+class CodeCodeToInstructionGeneratorPrompt(PromptABC):
     '''
     The prompt for the code to instruction generator.
     '''
@@ -58,8 +60,8 @@ class CodeCodeToInstructionGeneratorPrompt:
             "Generated Instruction:"
         )
         return prompt.format(code=code)
-
-class CodeInstructionGenerate:
+@PROMPT_REGISTRY.register()
+class CodeInstructionGeneratePrompt(PromptABC):
     '''
     The prompt for generating new instructions based on few-shot examples.
     '''
@@ -100,8 +102,8 @@ class CodeInstructionGenerate:
             "NEW INSTRUCTION:"
         )
         return prompt
-
-class CodeInstructionEnhancement:
+@PROMPT_REGISTRY.register()
+class CodeInstructionEnhancement(PromptABC):
     '''
     The prompt for instruction standardization and enhancement.
     Converts original instructions into a standardized format with proper Python function templates.
@@ -145,8 +147,8 @@ class CodeInstructionEnhancement:
             "Produce ONLY the final standardized instruction + code block per the rules."
         )
         return prompt.format(instruction=instruction)
-
-class CodeInstructionToCodeGeneratorPrompt:
+@PROMPT_REGISTRY.register()
+class CodeInstructionToCodeGeneratorPrompt(PromptABC):
     '''
     The prompt for the instruction to code generator.
     '''
@@ -166,8 +168,8 @@ class CodeInstructionToCodeGeneratorPrompt:
         )
         return prompt.format(instruction=instruction)
 
-
-class DiyCodePrompt:
+@PROMPT_REGISTRY.register()
+class DiyCodePrompt(PromptABC):
     '''
     The prompt for custom code operations.
     '''

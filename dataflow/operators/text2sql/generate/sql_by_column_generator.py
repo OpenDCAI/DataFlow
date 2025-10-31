@@ -3,7 +3,7 @@ import pandas as pd
 import re
 from dataflow.prompts.text2sql import SelectSQLGeneratorPrompt
 from dataflow.prompts.text2sql import SelectVecSQLGeneratorPrompt
-from dataflow.core.prompt import prompt_restrict 
+from dataflow.core.prompt import prompt_restrict, DIYPromptABC
 from tqdm import tqdm
 from dataflow.utils.registry import OPERATOR_REGISTRY
 from dataflow import get_logger
@@ -11,6 +11,8 @@ from dataflow.core import OperatorABC
 from dataflow.core import LLMServingABC
 from dataflow.utils.storage import DataFlowStorage
 from dataflow.utils.text2sql.database_manager import DatabaseManager
+
+from typing import Union
 
 @prompt_restrict(SelectSQLGeneratorPrompt, SelectVecSQLGeneratorPrompt)
 
@@ -20,7 +22,7 @@ class SQLByColumnGenerator(OperatorABC):
                  llm_serving: LLMServingABC, 
                  database_manager: DatabaseManager,
                  generate_num: int = 5,
-                 prompt_template = SelectSQLGeneratorPrompt | SelectVecSQLGeneratorPrompt
+                 prompt_template: Union[SelectSQLGeneratorPrompt, SelectVecSQLGeneratorPrompt, DIYPromptABC] = None
         ):
         self.llm_serving = llm_serving
         self.logger = get_logger()

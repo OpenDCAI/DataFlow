@@ -1,8 +1,8 @@
-from typing import Dict
+from typing import Dict, Union
 from tqdm import tqdm
 import re
 from dataflow.prompts.text2sql import SQLConsistencyFilterPrompt
-from dataflow.core.prompt import prompt_restrict 
+from dataflow.core.prompt import prompt_restrict, DIYPromptABC
 from dataflow.utils.registry import OPERATOR_REGISTRY
 from dataflow import get_logger
 from dataflow.core import OperatorABC
@@ -17,7 +17,7 @@ class SQLConsistencyFilter(OperatorABC):
     def __init__(self, 
             llm_serving: LLMServingABC, 
             database_manager: DatabaseManager,
-            prompt_template = SQLConsistencyFilterPrompt
+            prompt_template: Union[SQLConsistencyFilterPrompt, DIYPromptABC] = None
         ):
         self.llm_serving = llm_serving
         if prompt_template is None:
