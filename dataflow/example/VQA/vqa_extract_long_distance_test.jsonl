@@ -1,1 +1,1 @@
-{"question_pdf_path": "../example_data/VQA/math_question.pdf", "answer_pdf_path": "../example_data/VQA/math_answer.pdf", "subject": "math", "output_dir": "../vqa_output_math"}
+{"question_pdf_path": "../example_data/VQA/math_question.pdf", "answer_pdf_path": "../example_data/VQA/math_answer.pdf", "subject": "math", "output_dir": "../vqa_output_math", "example_title": "2025ZZYZ入学数学真卷"}

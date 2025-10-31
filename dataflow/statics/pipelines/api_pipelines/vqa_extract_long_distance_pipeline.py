@@ -4,107 +4,21 @@ from dataflow.operators.vqa import VQAExtractPicExtractor
 from dataflow.operators.vqa import VQAExtractQAPairExtractor
 from dataflow.operators.vqa import VQAExtractTag2Img
 from dataflow.serving import APIVLMServing_openai
+from dataflow.utils.vqa.format_utils import merge_qa_pair, jsonl_to_md
 import os
 import json
 import re
 import regex
 
-def merge_qa_pair(question_jsonl, answer_jsonl, output_jsonl):
-    with open(question_jsonl, 'r', encoding='utf-8') as q_file, open(answer_jsonl, 'r', encoding='utf-8') as a_file, open(output_jsonl, 'w', encoding='utf-8') as out_file:
-        chapter_id = 0
-        chapter_title = ""
-        label = 1000000
-        questions = {}
-        for line in q_file:
-            data = json.loads(line)
-            label_match = re.search(r'\d+', data["label"])
-            if label_match:
-                data["label"] = label_match.group()
-            if data["chapter_title"] == "":
-                data["chapter_title"] = chapter_title
-            
-            try:
-                label_num = int(data["label"])
-            except:
-                continue
-            
-            if data["chapter_title"] != "" and data["chapter_title"] != chapter_title:
-                if label_num < label:
-                    chapter_id += 1
-                    chapter_title = data["chapter_title"]
-                else:
-                    # 如果题号增加，章节标题却发生变化，说明可能错误提取了子标题。因此继续使用之前的章节标题。
-                    data["chapter_title"] = chapter_title
-            label = label_num
-            data["chapter_id"] = chapter_id
-            # 删除title中的空格，标点符号（包括中文和英文）
-            data["chapter_title"] = regex.sub(r'[\p{P}\s]+', '', data["chapter_title"])
-            questions[(data["chapter_title"], data['label'])] = data
-        
-        chapter_id = 0
-        chapter_title = ""
-        label = 1000000
-        answers = {}
-        for line in a_file:
-            data = json.loads(line)
-            label_match = re.search(r'\d+', data["label"])
-            if label_match:
-                data["label"] = label_match.group()
-            if data["chapter_title"] == "":
-                data["chapter_title"] = chapter_title
-                
-            try:
-                label_num = int(data["label"])
-            except:
-                continue
-            
-            if data["chapter_title"] != "" and data["chapter_title"] != chapter_title:
-                if label_num < label:
-                    chapter_id += 1
-                    chapter_title = data["chapter_title"]
-                else:
-                    # 如果题号增加，章节标题却发生变化，说明可能错误提取了子标题。因此继续使用之前的章节标题。
-                    data["chapter_title"] = chapter_title
-            label = label_num
-            data["chapter_id"] = chapter_id
-            # 删除title中的空格，标点符号（包括中文和英文）
-            data["chapter_title"] = regex.sub(r'[\p{P}\s]+', '', data["chapter_title"])
-            # 动态更新，防止错误的重复label覆盖掉之前的solution或answer
-            if not answers.get((data["chapter_title"], data['label'])):
-                answers[(data["chapter_title"], data['label'])] = data
-            else:
-                if not answers[(data["chapter_title"], data['label'])].get("solution") and data.get("solution"):
-                    answers[(data["chapter_title"], data['label'])]["solution"] = data["solution"]
-                if not answers[(data["chapter_title"], data['label'])].get("answer") and data.get("answer"):
-                    answers[(data["chapter_title"], data['label'])]["answer"] = data["answer"]
-        
-        question_cnt = len(questions)
-        answer_cnt = len(answers)
-        print(f"Total questions: {question_cnt}")
-        
-        for label in questions:
-            if label in answers:
-                qa_pair = {
-                    "question_chapter_title": questions[label]["chapter_title"],
-                    "answer_chapter_title": answers[label]["chapter_title"],
-                    "label": label[1],
-                    "question": questions[label]["question"],
-                    "answer": answers[label]["answer"],
-                    "solution": answers[label].get("solution", "")
-                }
-                out_file.write(json.dumps(qa_pair, ensure_ascii=False) + '\n')
-        
-        print(f"Merged QA pairs: {len(questions.keys() & answers.keys())}")
-
 
 class VQA_long_distance_extract:
-    def __init__(self, input_pdf_paths_jsonl_file: str, output_prefix: str = "doclay"):
+    def __init__(self, input_pdf_paths_jsonl_file: str):
         self.input_pdf_paths_jsonl_file = input_pdf_paths_jsonl_file
-        self.output_prefix = output_prefix
         self.pdf2img = VQAExtractPdf2Img()
         self.doc_item_layout = VQAExtractDocLayoutMinerU()
         self.llm_serving = APIVLMServing_openai(
             api_url = "https://generativelanguage.googleapis.com/v1beta/openai/",
+            key_name_of_api_key="DF_API_KEY",
             model_name = "gemini-2.5-pro",
             max_workers = 100,
         )
@@ -121,6 +35,7 @@ class VQA_long_distance_extract:
             answer_pdf_path = data["answer_pdf_path"]
             subject = data.get("subject", "")
             output_dir = data.get("output_dir", "../vqa")
+            example_title = data.get("example_title", "")
             os.makedirs(output_dir, exist_ok=True)
             
             # 首先确保question_pdf_path和answer_pdf_path存在
@@ -137,7 +52,7 @@ class VQA_long_distance_extract:
             output_json_path, output_layout_path = self.doc_item_layout.run(None, question_pdf_path, question_output_dir)
             self.pdf2img.run(None, output_layout_path, os.path.join(question_output_dir, "pdf_images"))
             
-            self.pic_extractor.run(None, os.path.join(question_output_dir, "pdf_images"), subject, os.path.join(question_output_dir, "vqa_extract"))
+            self.pic_extractor.run(None, os.path.join(question_output_dir, "pdf_images"), subject, example_title, os.path.join(question_output_dir, "vqa_extract"))
             self.qapair_extractor.run(None, os.path.join(question_output_dir, "vqa_extract/vqa_extract.jsonl"), os.path.join(question_output_dir, "vqa_extract/qapair_extract.jsonl"))
             
             self.piclabeltranslator.run(None, output_json_path, os.path.join(question_output_dir, "pdf_images"), os.path.join(output_dir, "vqa_extract_question_cut_images"), 
@@ -148,7 +63,7 @@ class VQA_long_distance_extract:
             os.makedirs(answer_output_dir, exist_ok=True)
             output_json_path, output_layout_path = self.doc_item_layout.run(None, answer_pdf_path, answer_output_dir)
             self.pdf2img.run(None, output_layout_path, os.path.join(answer_output_dir, "pdf_images"))
-            self.pic_extractor.run(None, os.path.join(answer_output_dir, "pdf_images"), subject, os.path.join(answer_output_dir, "vqa_extract"))
+            self.pic_extractor.run(None, os.path.join(answer_output_dir, "pdf_images"), subject, example_title, os.path.join(answer_output_dir, "vqa_extract"))
             self.qapair_extractor.run(None, os.path.join(answer_output_dir, "vqa_extract/vqa_extract.jsonl"), os.path.join(answer_output_dir, "vqa_extract/qapair_extract.jsonl"))
             self.piclabeltranslator.run(None, output_json_path, os.path.join(answer_output_dir, "pdf_images"), os.path.join(output_dir, "vqa_extract_answer_cut_images"), 
                                    os.path.join(answer_output_dir, "vqa_extract/qapair_extract.jsonl"), os.path.join(answer_output_dir, "vqa_extract/qapair_extract_cut.jsonl"), os.path.join(answer_output_dir, "vqa_extract/qapair_extract_cut.md"))
@@ -161,17 +76,10 @@ class VQA_long_distance_extract:
             )
             
             # dump 成 markdown
-            with open(os.path.join(output_dir, "vqa_extract_qa_pair.jsonl"), "r", encoding="utf-8") as qa_file, open(os.path.join(output_dir, "vqa_extract_qa_pair.md"), "w", encoding="utf-8") as md_file:
-                chapter_title = ""
-                for line in qa_file:
-                    data = json.loads(line)
-                    if data['question_chapter_title'] != chapter_title:
-                        md_file.write(f"### Chapter: {data['question_chapter_title']}\n\n")
-                        chapter_title = data['question_chapter_title']
-                    md_file.write(f"**Q{data['label']}**: {data['question']}\n\n")
-                    md_file.write(f"**A{data['label']}**: {data['answer']}\n\n")
-                    md_file.write(f"**Solution{data['label']}**: {data.get('solution', '')}\n\n")
-                    md_file.write("---\n\n")
+            jsonl_to_md(
+                os.path.join(output_dir, "vqa_extract_qa_pair.jsonl"),
+                os.path.join(output_dir, "vqa_extract_qa_pair.md")
+            )
 
 
 if __name__ == "__main__":
