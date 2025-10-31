@@ -14,10 +14,8 @@ from dataflow.utils.storage import FileStorage
 from dataflow.operators.general_text.filter.minhash_deduplicate_filter import MinHashDeduplicateFilter
 
 
-class VQA_extract:
+class VQA_interleaved_extract:
     def __init__(self, input_pdf_paths_jsonl_file: str, output_prefix: str = "doclay"):
-        # self.pdf_path = pdf_path
-        # self.subject = subject
         self.input_pdf_paths_jsonl_file = input_pdf_paths_jsonl_file
         self.output_prefix = output_prefix
         self.pdf2img = VQAExtractPdf2Img()
@@ -25,16 +23,13 @@ class VQA_extract:
         self.clip_header = VQAClipHeader()
         self.concatenate_images = VQAConcatenateImages()
         self.llm_serving = APIVLMServing_openai(
-            api_url = "http://123.129.219.111:3000/v1",
-            model_name = "gpt-4o-mini",
+            api_url = "http://api.openai.com/v1",
+            model_name = "o4-mini",
             max_workers = 100,
         )
-        # self.text_serving = APILLMServing_request(
-        #     api_url = "http://123.129.219.111:3000/v1/chat/completions",
-        #     model_name = "gpt-4o-mini",
-        #     max_workers = 10,
-        # )
         self.qapair_extractor = VQAExtractQAPairExtractor()
+        self.pic_extractor = VQAExtractPicExtractor(self.llm_serving, interleaved=True)
+        self.piclabeltranslator = VQAExtractTag2Img(layout_prefix="doclay_concatenated_", image_prefix='page_')
         
     def run(self):
         with open(self.input_pdf_paths_jsonl_file, "r") as f:
@@ -51,12 +46,11 @@ class VQA_extract:
             self.clip_header.run(None, os.path.join(output_dir, "pdf_images"), output_json_path, os.path.join(output_dir, "cropped_images"))
             self.concatenate_images.run(None, os.path.join(output_dir, "cropped_images"), os.path.join(output_dir, "concatenated_images"))
             
-            pic_extractor = VQAExtractPicExtractor(self.llm_serving, subject=subject)
-            pic_extractor.run(None, os.path.join(output_dir, "concatenated_images"), os.path.join(output_dir, "vqa_extract"))
+            self.pic_extractor.run(None, os.path.join(output_dir, "concatenated_images"), subject, os.path.join(output_dir, "vqa_extract"))
             self.qapair_extractor.run(None, os.path.join(output_dir, "vqa_extract/vqa_extract.jsonl"), os.path.join(output_dir, "vqa_extract/qapair_extract.jsonl"))
             
-            piclabeltranslator = VQAExtractTag2Img(output_json_path, os.path.join(output_dir, "pdf_images"), os.path.join(output_dir, "vqa_extract_cut_images"), layout_prefix="doclay_concatenated_", image_prefix='page_')
-            piclabeltranslator.run(None, os.path.join(output_dir, "vqa_extract/qapair_extract.jsonl"), os.path.join(output_dir, "vqa_extract/qapair_extract_cut.jsonl"), os.path.join(output_dir, "vqa_extract/qapair_extract_cut.md"))
+            self.piclabeltranslator.run(None, output_json_path, os.path.join(output_dir, "pdf_images"), os.path.join(output_dir, "vqa_extract_cut_images"), 
+                                        os.path.join(output_dir, "vqa_extract/qapair_extract.jsonl"), os.path.join(output_dir, "vqa_extract/qapair_extract_cut.jsonl"), os.path.join(output_dir, "vqa_extract/qapair_extract_cut.md"))
 
             # 将jsonl文件先倒转过来 (因为有时候最后的答案是完整的，而前面的不完整)
             with open(os.path.join(output_dir, "vqa_extract/qapair_extract_cut.jsonl"), "r") as f:
@@ -89,5 +83,5 @@ class VQA_deduplicate:
         self.deduplicate.run(self.storage.step(), input_keys=["question", "answer"])
 
 if __name__ == "__main__":
-    vqa_extract = VQA_extract("./dataflow/example/VQA/vqa_extract_test.jsonl") # jsonl中每一行包含pdf_path, subject (math, physics, chemistry, ...), output_dir
+    vqa_extract = VQA_interleaved_extract("../example_data/VQA/vqa_extract_interleaved_test.jsonl") # jsonl中每一行包含pdf_path, subject (math, physics, chemistry, ...), output_dir
     vqa_extract.run()

@@ -8,6 +8,12 @@ from dataflow.core import OperatorABC
 from dataflow.core import LLMServingABC
 from dataflow.prompts.code import CodeInstructionEnhancement, DiyCodePrompt
 
+from typing import Union
+from dataflow.core.prompt import prompt_restrict, DIYPromptABC
+@prompt_restrict(
+    CodeInstructionEnhancement,
+    DiyCodePrompt
+)
 @OPERATOR_REGISTRY.register()
 class CodeEnhancementInstructionGenerator(OperatorABC):
     """
@@ -16,7 +22,7 @@ class CodeEnhancementInstructionGenerator(OperatorABC):
     It rewrites original instructions into standardized English instruction + code block format.
     """
 
-    def __init__(self, llm_serving: LLMServingABC, prompt_template=None):
+    def __init__(self, llm_serving: LLMServingABC, prompt_template: Union[CodeInstructionEnhancement, DiyCodePrompt, DIYPromptABC] = None):
         """
         Initializes the operator with a language model serving endpoint.
         """

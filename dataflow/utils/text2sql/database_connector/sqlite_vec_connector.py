@@ -3,6 +3,7 @@ from ..base import DatabaseConnectorABC, DatabaseInfo, QueryResult
 import sqlite3
 import glob
 import os
+import re
 import threading
 from filelock import FileLock
 from dataflow import get_logger
@@ -92,8 +93,13 @@ class SQLiteVecConnector(DatabaseConnectorABC):
                     conn.execute(register_sql, (model_name, model_path))
                     conn.commit()
                 except Exception as e:
-                    self.logger.error(f"Failed to activate model '{model_name}' on new connection: {e}", exc_info=True)
-                    raise
+                    # 模型可能已经被另一个连接加载了，这是正常的
+                    self.logger.debug(f"Model '{model_name}' may already be loaded: {e}")
+                    # 不抛出异常，继续使用连接
+                    try:
+                        conn.rollback()  # 回滚失败的事务
+                    except:
+                        pass
 
         self._thread_local.connections[db_path] = conn
         self.logger.debug(f"Connection for thread {threading.get_ident()} created and configured successfully.")
@@ -159,7 +165,6 @@ class SQLiteVecConnector(DatabaseConnectorABC):
         cursor = None
         try:
             cursor = connection.cursor()
-            self.logger.debug(f"Executing SQL: {sql} with params: {params}")
             if params:
                 cursor.execute(sql, params)
             else:
@@ -176,17 +181,17 @@ class SQLiteVecConnector(DatabaseConnectorABC):
                 row_count=len(data)
             )
         except Exception as e:
-            self.logger.error(f"Query execution error: {e}")
-            self.logger.error(f"Failed SQL: {sql}")
-            if params:
-                self.logger.error(f"Failed Params: {params}")
+            self.logger.debug(f"Query execution error: {e}")
             return QueryResult(
                 success=False,
                 error=str(e)
             )
         finally:
             if cursor:
-                cursor.close()
+                try:
+                    cursor.close()
+                except:
+                    pass
 
     def _get_db_details(self, schema: Dict[str, Any]) -> str:
         db_details = []

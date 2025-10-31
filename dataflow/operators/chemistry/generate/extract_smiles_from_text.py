@@ -10,13 +10,20 @@ import json
 import json
 import re
 
+from typing import Union
+from dataflow.core.prompt import prompt_restrict, DIYPromptABC
+from dataflow.prompts.chemistry import ExtractSmilesFromTextPrompt
 
+
+@prompt_restrict(
+    ExtractSmilesFromTextPrompt
+)
 @OPERATOR_REGISTRY.register()
 class ExtractSmilesFromText(OperatorABC):
     '''
     Answer Generator is a class that generates answers for given questions.
     '''
-    def __init__(self, llm_serving: LLMServingABC, prompt_template = None):
+    def __init__(self, llm_serving: LLMServingABC, prompt_template: Union[ExtractSmilesFromTextPrompt, DIYPromptABC] = ExtractSmilesFromTextPrompt):
         self.logger = get_logger()
         self.llm_serving = llm_serving
         self.prompt_template = prompt_template

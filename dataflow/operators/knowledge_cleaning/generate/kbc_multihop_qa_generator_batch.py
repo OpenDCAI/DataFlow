@@ -12,7 +12,8 @@ import json
 from tqdm import tqdm
 import re
 
-from dataflow.core.prompt import prompt_restrict 
+from dataflow.core.prompt import prompt_restrict, DIYPromptABC
+from typing import Union 
 
 @prompt_restrict(
     Text2MultiHopQAGeneratorPrompt           
@@ -31,7 +32,7 @@ class KBCMultiHopQAGeneratorBatch(OperatorABC):
                  llm_serving: LLMServingABC,
                  seed: int = 0,
                  lang="en",
-                 prompt_template = None
+                 prompt_template: Union[Text2MultiHopQAGeneratorPrompt, DIYPromptABC] = None
                  ):
         r"""Initialize the UserDataProcessor.
 
