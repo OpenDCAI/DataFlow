@@ -7,8 +7,14 @@ from dataflow import get_logger
 from dataflow.utils.storage import DataFlowStorage
 from dataflow.core import OperatorABC 
 from dataflow.core import LLMServingABC
-from dataflow.prompts.code import CodeInstructionGenerate, DiyCodePrompt
+from dataflow.prompts.code import CodeInstructionGeneratePrompt, DiyCodePrompt
 
+from typing import Union
+from dataflow.core.prompt import prompt_restrict, DIYPromptABC 
+
+@prompt_restrict(
+    CodeInstructionGeneratePrompt,
+)
 @OPERATOR_REGISTRY.register()
 class CodeInstructionGenerator(OperatorABC):
     """
@@ -19,7 +25,7 @@ class CodeInstructionGenerator(OperatorABC):
     and enhance instruction datasets for programming tasks.
     """
 
-    def __init__(self, llm_serving: LLMServingABC, prompt_template=None, num_few_shot: int = 3, num_generate: int = 10):
+    def __init__(self, llm_serving: LLMServingABC, prompt_template: Union[CodeInstructionGeneratePrompt, DIYPromptABC]=None, num_few_shot: int = 3, num_generate: int = 10):
         """
         Initializes the operator with a language model serving endpoint.
         
@@ -32,7 +38,7 @@ class CodeInstructionGenerator(OperatorABC):
         self.num_generate = num_generate
         self.llm_serving = llm_serving
         self.num_few_shot = num_few_shot
-        self.prompt_template = CodeInstructionGenerate()
+        self.prompt_template = CodeInstructionGeneratePrompt()
     
     @staticmethod
     def get_desc(lang: str = "en"):

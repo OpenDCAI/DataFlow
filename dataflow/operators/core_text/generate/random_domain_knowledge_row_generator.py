@@ -5,9 +5,9 @@ from dataflow import get_logger
 from dataflow.utils.storage import DataFlowStorage
 from dataflow.core import OperatorABC
 from dataflow.core import LLMServingABC
-from dataflow.core.prompt import prompt_restrict
+from dataflow.core.prompt import prompt_restrict, DIYPromptABC
 from dataflow.prompts.general_text import SFTFromScratchGeneratorPrompt
-
+from typing import Union
 @prompt_restrict(
     SFTFromScratchGeneratorPrompt
 )
@@ -18,9 +18,9 @@ class RandomDomainKnowledgeRowGenerator(OperatorABC):
     def __init__(
     self, 
     llm_serving: LLMServingABC,  
-    prompt_template : SFTFromScratchGeneratorPrompt,
     generation_num : int,
-    domain_keys : str
+    domain_keys : str,
+    prompt_template : Union[SFTFromScratchGeneratorPrompt, DIYPromptABC]= None,
     ):
         self.logger = get_logger()
         self.llm_serving = llm_serving
