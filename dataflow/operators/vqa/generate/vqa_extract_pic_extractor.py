@@ -32,7 +32,7 @@ class VQAExtractPicExtractor(OperatorABC):
         return list_of_image_paths, list_of_image_labels
 
 
-    def run(self, storage, input_layout_path: str, input_subject: str, output_folder: str):
+    def run(self, storage, input_layout_path: str, input_subject: str, input_example_title: str, output_folder: str):
         # 从layout_path/images中读取所有图片的文件名,确保为绝对路径
         image_files = [os.path.join(input_layout_path, image_file) for image_file in os.listdir(input_layout_path)]
         # 确保end with jpg & png
@@ -44,7 +44,7 @@ class VQAExtractPicExtractor(OperatorABC):
         image_files.sort(key=filename2idx)
 
         list_of_image_paths, list_of_image_labels = self._format_instructions(image_files)
-        system_prompt = self.prompt.build_prompt(input_subject, interleaved=self.interleaved)
+        system_prompt = self.prompt.build_prompt(input_example_title, input_subject, interleaved=self.interleaved)
 
         responses = self.llm_serving.generate_from_input_multi_images(list_of_image_paths, list_of_image_labels, system_prompt)
 

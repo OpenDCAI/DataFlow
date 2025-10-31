@@ -38,15 +38,13 @@ class VQAExtractQAPairExtractor(OperatorABC):
                 s_match = re.search(r'<solution>(.*?)</solution>', pair, flags=re.DOTALL)
                 # 提取label
                 label_match = re.search(r'<label>(.*?)</label>', pair, flags=re.DOTALL)
-                if not (q_match and a_match and label_match):
+                if not ((q_match and label_match) or (a_match and label_match) or (s_match and label_match)):
                     continue
-                question = q_match.group(1).strip()
-                answer = a_match.group(1).strip()
                 label = label_match.group(1).strip()
                 qa_list.append({
                     'page': page,
-                    'question': question,
-                    'answer': answer,
+                    'question': q_match.group(1).strip() if q_match else "",
+                    'answer': a_match.group(1).strip() if a_match else "",
                     'solution': s_match.group(1).strip() if s_match else "",
                     'label': label,
                     'chapter_title': chapter_title

@@ -7,6 +7,7 @@ if TYPE_CHECKING:
     from .generate.vqa_extract_qapair_extractor import VQAExtractQAPairExtractor
     from .generate.vqa_extract_tag2img import VQAExtractTag2Img
     from .generate.vqa_img_helper import VQAClipHeader, VQAConcatenateImages
+    from .generate.qa_extract import QAExtractor
 
 
 else:
