@@ -54,9 +54,16 @@ class FairAnswerJudgePrompt:
 # Judge Model Configuration (local strong model as judge)
 JUDGE_MODEL_CONFIG = {
     "model_path": "./Qwen2.5-7B-Instruct",  # 用更强的模型做裁判
-    "tensor_parallel_size": 1,
-    "max_tokens": 512,
-    "gpu_memory_utilization": 0.8,
+    "hf_cache_dir" : "",
+    "hf_local_dir" : "",
+    "vllm_tensor_parallel_size": 1,
+    "vllm_temperature" : 0.9,
+    "vllm_top_p" : 0.9,
+    "vllm_max_tokens": 512,
+    "vllm_repetition_penalty" : 1.0,
+    "vllm_seed" : None,
+    "vllm_max_model_len" : None,
+    "vllm_gpu_memory_utilization" : 0.9
 }
 
 # Target Models Configuration (字典格式 - 必需)
@@ -73,11 +80,14 @@ TARGET_MODELS = [
     {
         "name": "qwen_7b",
         "path": "./Qwen2.5-7B-Instruct",
-
         # 大模型可以用不同的参数
-        "tensor_parallel_size": 2,
-        "max_tokens": 2048,
-        "gpu_memory_utilization": 0.9,
+        "vllm_tensor_parallel_size": 2,
+        "vllm_temperature" : 0.1,
+        "vllm_top_p" :0.9,
+        "vllm_max_tokens": 2048,
+        "vllm_repetition_penalty":1.0,
+        "vllm_seed":None,
+        "vllm_gpu_memory_utilization": 0.9,
 
         # 可以为每个模型自定义提示词
         "answer_prompt": """please answer the following question:"""
@@ -136,9 +146,14 @@ def create_judge_serving():
     # Enhanced VLLM configuration
     vllm_config = {
         "hf_model_name_or_path": model_path,
-        "vllm_tensor_parallel_size": JUDGE_MODEL_CONFIG.get("tensor_parallel_size", 1),
+        "vllm_tensor_parallel_size": JUDGE_MODEL_CONFIG.get("vllm_tensor_parallel_size", 1),
+        "vllm_temperature" : JUDGE_MODEL_CONFIG.get("vllm_temperature",0.9),
+        "vllm_top_p" : JUDGE_MODEL_CONFIG.get("vllm_top_p",0.9),
         "vllm_max_tokens": JUDGE_MODEL_CONFIG.get("max_tokens", 512),
-        "vllm_gpu_memory_utilization": JUDGE_MODEL_CONFIG.get("gpu_memory_utilization", 0.8)
+        "vllm_repetition_penalty" : JUDGE_MODEL_CONFIG.get("vllm_repetition_penalty", 1.0),
+        "vllm_seed" : JUDGE_MODEL_CONFIG.get("vllm_seed",None),
+        "vllm_max_model_len" : JUDGE_MODEL_CONFIG.get("vllm_max_model_len",None),
+        "vllm_gpu_memory_utilization": JUDGE_MODEL_CONFIG.get("gpu_memory_utilization", 0.9)
     }
 
     # Add optional VLLM parameters if they exist

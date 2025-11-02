@@ -135,6 +135,7 @@ class EvaluationPipeline:
         generated_files = []
         data_config = self.config.get("DATA_CONFIG", {})
         input_file = data_config.get("input_file", "./.cache/data/qa.json")
+        
 
         if not Path(input_file).exists():
             logger.error(f"Input file not found: {input_file}")
@@ -151,14 +152,20 @@ class EvaluationPipeline:
                 logger.info(f"[{idx}/{len(self.prepared_models)}] Processing: {model_info['name']}")
 
                 cache_dir = model_info.get('cache_dir', './.cache/eval')
+                output_dir = model_info.get('output_dir', cache_dir)
                 Path(cache_dir).mkdir(parents=True, exist_ok=True)
-                output_file = f"{cache_dir}/answers_{model_info['name']}.json"
+                Path(output_dir).mkdir(parents=True, exist_ok=True)
+                output_file = f"{output_dir}/answers_{model_info['name']}.json"
 
                 # 加载模型
                 llm_serving = LocalModelLLMServing_vllm(
                     hf_model_name_or_path=model_info['path'],
-                    vllm_tensor_parallel_size=model_info.get('tensor_parallel_size', 2),
+                    vllm_tensor_parallel_size=model_info.get('vllm_tensor_parallel_size', 2),
+                    vllm_temperature = model_info.get('vllm_temperature',0.7),
+                    vllm_top_p = model_info.get('vllm_top_p',0.9),
                     vllm_max_tokens=model_info.get('max_tokens', 1024),
+                    vllm_repetition_penalty = model_info.get('vllm_repetition_penalty', 1.0),
+                    vllm_seed = model_info.get('vllm_seed', None),
                     vllm_gpu_memory_utilization=model_info.get('gpu_memory_utilization', 0.8)
                 )
 
@@ -234,11 +241,13 @@ class EvaluationPipeline:
 
         results = []
         eval_config = self.config.get("EVALUATOR_RUN_CONFIG", {})
+        data_config = self.config.get("DATA_CONFIG", {})
+        eval_output_dir = data_config.get("eval_output_dir", "./eval_results")
 
         for file_info in self.generated_files:
             try:
                 timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-                result_file = f"./eval_results/{timestamp}_{file_info['model_name']}/result.json"
+                result_file = f"{eval_output_dir}/{timestamp}_{file_info['model_name']}/result.json"
                 Path(result_file).parent.mkdir(parents=True, exist_ok=True)
 
                 storage = self.config["create_storage"](
@@ -274,6 +283,8 @@ class EvaluationPipeline:
             return
 
         sorted_results = sorted(results, key=lambda x: x.get("accuracy", 0), reverse=True)
+        data_config = self.config.get("DATA_CONFIG", {})
+        eval_output_dir = data_config.get("eval_output_dir", "./eval_results")
 
         print("\n" + "=" * 60)
         print("Model Evaluation Results")
@@ -287,7 +298,7 @@ class EvaluationPipeline:
         print("=" * 60)
 
         # 保存详细报告
-        report_file = "./eval_results/report.json"
+        report_file = "{eval_output_dir}/report.json"
         Path(report_file).parent.mkdir(parents=True, exist_ok=True)
         with open(report_file, 'w') as f:
             json.dump({"results": sorted_results}, f, indent=2)

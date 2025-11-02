@@ -199,6 +199,7 @@ def check_required_files():
     # 检查所有需要的内置脚本
     required_scripts = [
         "path_to_jsonl_script.py",
+        "merge_filter_qa_pairs.py",
         "llama_factory_trainer.py"
     ]
 
@@ -320,82 +321,31 @@ def cli_pdf2model_train(lf_yaml: str = ".cache/train_config.yaml", cache_path: s
     print("-" * 60)
 
     try:
-        # Step 1: PDF Detection
+        # Step 1: PDF Detection - 使用内置脚本
         script1_path = get_dataflow_script_path("path_to_jsonl_script.py")
         args1 = ["./", "--output", str(cache_path_obj / ".cache" / "gpu" / "pdf_list.jsonl")]
         if not run_script_with_args(script1_path, "Step 1: PDF Detection", args1, cwd=str(current_dir)):
             return False
 
-        # Step 2: Data Processing
+        # Step 2: Data Processing - 使用用户目录下的脚本
         script2 = current_dir / "pdf_to_qa_pipeline.py"
         args2 = ["--cache", cache_path]
         if not run_script_with_args(script2, "Step 2: Data Processing", args2, cwd=str(current_dir)):
             return False
 
-        # Step 2.5: Create dataset_info.json (dynamically)
-        print(f"\n{Fore.BLUE}Step 2.5: Creating dataset_info.json{Style.RESET_ALL}")
-
-        # 读取训练配置，获取数据集名称
-        try:
-            with open(config_path_obj, 'r', encoding='utf-8') as f:
-                train_config = yaml.safe_load(f)
-            
-            # 获取数据集名称
-            dataset_name = train_config.get('dataset')
-            if isinstance(dataset_name, list):
-                dataset_name = dataset_name[0]  # 如果是列表，取第一个
-            
-            if not dataset_name:
-                print("Warning: No dataset name found in train_config.yaml, using default 'kb_qa'")
-                dataset_name = 'kb_qa'
-            
-            print(f"Dataset name from config: {dataset_name}")
-            
-        except Exception as e:
-            print(f"Warning: Could not read train_config.yaml: {e}")
-            print("Using default dataset name: kb_qa")
-            dataset_name = 'kb_qa'
-
-        # 创建 dataset_info.json
-        dataset_info_path = cache_path_obj / ".cache" / "data" / "dataset_info.json"
-        dataset_info_path.parent.mkdir(parents=True, exist_ok=True)
-
-        dataset_info = {
-            dataset_name: {  # ← 使用从配置读取的名称
-                "file_name": "qa.json",
-                "formatting": "alpaca",
-                "columns": {
-                    "prompt": "instruction",
-                    "query": "input",
-                    "response": "output"
-                }
-            }
-        }
-
-        with open(dataset_info_path, 'w', encoding='utf-8') as f:
-            json.dump(dataset_info, f, indent=2, ensure_ascii=False)
-
-        print(f"Created: {dataset_info_path}")
-        print(f"Dataset registered as: {dataset_name}")
-        print(f"{Fore.GREEN}✅ Step 2.5: Creating dataset_info.json completed{Style.RESET_ALL}")
-
-        # Step 3: Data Conversion - skip
-        print(f"\n{Fore.BLUE}Step 3: Data Conversion{Style.RESET_ALL}")
-        qa_json_path = cache_path_obj / ".cache" / "data" / "qa.json"
-        if qa_json_path.exists():
-            print(f"✅ qa.json already in correct format, skipping conversion")
-            print(f"{Fore.GREEN}✅ Step 3: Data Conversion completed{Style.RESET_ALL}")
-        else:
-            print(f"❌ qa.json not found at {qa_json_path}")
+        # Step 3: Data Conversion - 使用内置脚本
+        script3_path = get_dataflow_script_path("merge_filter_qa_pairs.py")
+        args3 = ["--cache", cache_path]
+        if not run_script_with_args(script3_path, "Step 3: Data Conversion", args3, cwd=str(current_dir)):
             return False
 
-        # Step 4: Training
+        # Step 4: Training - 使用内置脚本
         script4_path = get_dataflow_script_path("llama_factory_trainer.py")
         args4 = ["--config", str(config_path_obj), "--cache", cache_path]
         if not run_script_with_args(script4_path, "Step 4: Training", args4, cwd=str(current_dir)):
             return False
 
-        # Show completion info
+        # 显示训练完成信息，从配置文件中读取实际的输出目录
         try:
             with open(config_path_obj, 'r', encoding='utf-8') as f:
                 config = yaml.safe_load(f)
@@ -417,6 +367,8 @@ def cli_pdf2model_train(lf_yaml: str = ".cache/train_config.yaml", cache_path: s
 
 def cli_pdf2model_chat(model_path=None, cache_path="./", base_model=None):
     """Start LlamaFactory chat interface"""
+    print("Starting chat interface...")
+
     current_dir = Path(os.getcwd())
 
     # 处理cache路径
