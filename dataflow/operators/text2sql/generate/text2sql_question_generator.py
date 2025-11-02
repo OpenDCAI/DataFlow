@@ -149,9 +149,7 @@ class Text2SQLQuestionGenerator(OperatorABC):
                 data[self.input_sql_key],
                 data[self.input_db_id_key],
                 db_id2column_info,
-                self.database_manager.db_type,
-                using_sqlite_vec = True,
-                extension="sqlite_vec and sqlite_lembed"
+                self.database_manager.db_type
             )
             
             for _ in range(self.question_candidates_num):

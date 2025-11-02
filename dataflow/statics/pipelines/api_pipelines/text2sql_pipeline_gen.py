@@ -5,6 +5,7 @@ from huggingface_hub import snapshot_download
 
 from dataflow.operators.text2sql import (
     SQLGenerator,
+    SQLByColumnGenerator,
     Text2SQLQuestionGenerator,
     Text2SQLPromptGenerator,
     Text2SQLCoTGenerator
@@ -81,7 +82,7 @@ class Text2SQLGeneration_APIPipeline():
 
         self.storage = FileStorage(
             first_entry_file_name="",
-            cache_path="./cache_local",
+            cache_path="./cache",
             file_name_prefix="dataflow_cache_step",
             cache_type="jsonl",
         )

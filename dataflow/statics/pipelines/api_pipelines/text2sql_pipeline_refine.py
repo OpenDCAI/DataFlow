@@ -84,7 +84,7 @@ class Text2SQLRefine_APIPipeline():
 
         self.storage = FileStorage(
             first_entry_file_name="../example_data/Text2SQLPipeline/pipeline_refine.jsonl",
-            cache_path="./cache_local",
+            cache_path="./cache",
             file_name_prefix="dataflow_cache_step",
             cache_type="jsonl"
         )
