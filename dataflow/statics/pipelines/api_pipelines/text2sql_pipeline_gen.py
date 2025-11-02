@@ -81,7 +81,7 @@ class Text2SQLGeneration_APIPipeline():
 
         self.storage = FileStorage(
             first_entry_file_name="",
-            cache_path="./cache",
+            cache_path="./cache_local",
             file_name_prefix="dataflow_cache_step",
             cache_type="jsonl",
         )
