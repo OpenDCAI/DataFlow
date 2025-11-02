@@ -11,28 +11,16 @@ from dataflow.core import OperatorABC
 
 @OPERATOR_REGISTRY.register()
 class VQAExtractTag2Img(OperatorABC):
-    def __init__(self, layout_json, pdf_image_dir, output_image_dir, layout_prefix='doclay_page_', image_prefix='page_'):
+    def __init__(self, layout_prefix='doclay_page_', image_prefix='page_'):
         """
         初始化处理器。
-
-        Args:
-            layout_json_dir (str): 存储布局检测结果的JSON文件的目录。
-            pdf_image_dir (str): 存储从PDF转换的原始页面图片的目录。
-            output_image_dir (str): 用于保存裁剪出的图片的目录。
         """
-        self.layout_json = layout_json
-        self.pdf_image_dir = pdf_image_dir
-        self.output_image_dir = output_image_dir
         self.layout_prefix = layout_prefix  # 用于处理布局JSON文件的前缀
         self.image_prefix = image_prefix    # 用于处理PDF图片文件的前缀
         
         self.image_counter = 0  # 用于生成唯一的图片文件名
         self.bbox_cache = {}    # 缓存已加载的JSON数据，避免重复读取文件
         self.logger = get_logger()
-
-        # 确保输出目录存在
-        os.makedirs(self.output_image_dir, exist_ok=True)
-        self.logger.info(f"输出图片目录 '{self.output_image_dir}' 已准备就绪。")
 
     def _get_bbox(self, page_num, figure_id):
         """
@@ -66,7 +54,7 @@ class VQAExtractTag2Img(OperatorABC):
             # 在detections中查找figure_id
             i = -1
             for detection in layout_data:
-                if detection.get("page_idx") == int(page_num) and detection.get("type") in ["text", "ref_text", "title", "equation", "list", "index", "image", "table", "code"]:
+                if detection.get("page_idx") == int(page_num) and detection.get("type") in ["title", "equation", "list", "index", "image", "table", "code"]:
                     i += 1
                 # class_name 也可以是 'figure'，id 可能是 'figure1', 'figure2' 等
                     if i == int(figure_id):
@@ -163,20 +151,34 @@ class VQAExtractTag2Img(OperatorABC):
                 for idx, qa in enumerate(processed_qas, 1):
                     question = qa.get('question', '').strip()
                     answer = qa.get('answer', '').strip()
+                    solution = qa.get('solution', '').strip()
                     f_md.write(f"## question {idx}\n")
                     f_md.write(question + "\n\n")
                     f_md.write(f"## answer {idx}\n")
                     f_md.write(answer + "\n\n")
+                    f_md.write(f"## solution {idx}\n")
+                    f_md.write(solution + "\n\n")
             self.logger.info(f"Markdown 文件已保存到: {output_md_file}")
         except Exception as e:
             self.logger.error(f"写入 Markdown 文件失败: {output_md_file}, 错误: {e}")
 
-    def run(self, storage, input_qa_file, output_qa_file, output_md_file=None):
+    def run(self, storage, input_layout_json, input_pdf_image_dir, output_image_dir, input_qa_file, output_qa_file, output_md_file=None):
         """
+        Args:
+            layout_json_dir (str): 存储布局检测结果的JSON文件的目录。
+            pdf_image_dir (str): 存储从PDF转换的原始页面图片的目录。
+            output_image_dir (str): 用于保存裁剪出的图片的目录。
         处理包含 QA 对的 JSON Lines 文件，并输出：
         1) 处理后的 JSON Lines 文件 (output_qa_file)
         2) 可选的 Markdown 文件 (output_md_file)，按 ## question i ... ## answer i ... 格式
         """
+        self.layout_json = input_layout_json
+        self.pdf_image_dir = input_pdf_image_dir
+        self.output_image_dir = output_image_dir
+        # 确保输出目录存在
+        os.makedirs(self.output_image_dir, exist_ok=True)
+        self.logger.info(f"输出图片目录 '{self.output_image_dir}' 已准备就绪。")
+        
         processed_qas = []
         # —— 读取 & 处理 JSON Lines —— #
         try:
@@ -188,6 +190,8 @@ class VQAExtractTag2Img(OperatorABC):
                             qa_item['question'] = self.process_text(qa_item['question'])
                         if 'answer' in qa_item and isinstance(qa_item['answer'], str):
                             qa_item['answer'] = self.process_text(qa_item['answer'])
+                        if 'solution' in qa_item and isinstance(qa_item['solution'], str):
+                            qa_item['solution'] = self.process_text(qa_item['solution'])
                         processed_qas.append(qa_item)
                     except json.JSONDecodeError:
                         self.logger.error(f"跳过无效的JSON行: {line.strip()}")

@@ -5,6 +5,7 @@ from dataflow.core import OperatorABC
 from dataflow.core import LLMServingABC
 from dataflow.prompts.reasoning.math import MathQuestionParallelFusionGeneratorPrompt,MathQuestionSequentialFusionGeneratorPrompt,MathQuestionConditionFusionGeneratorPrompt
 from dataflow.core.prompt import prompt_restrict, DIYPromptABC
+from typing import Union
 
 import pandas as pd
 import random
@@ -20,7 +21,7 @@ class ReasoningQuestionFusionGenerator(OperatorABC):
     def __init__(self,
                 num_prompts: int = 1,
                 llm_serving: LLMServingABC = None,
-                prompt_template = MathQuestionParallelFusionGeneratorPrompt | MathQuestionSequentialFusionGeneratorPrompt | MathQuestionConditionFusionGeneratorPrompt | DIYPromptABC
+                prompt_template: Union[MathQuestionParallelFusionGeneratorPrompt, MathQuestionSequentialFusionGeneratorPrompt, MathQuestionConditionFusionGeneratorPrompt, DIYPromptABC] = None
                 ):
         """
         Initialize the QuestionGenerator with the provided configuration.

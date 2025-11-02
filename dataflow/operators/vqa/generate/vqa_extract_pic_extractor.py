@@ -15,14 +15,12 @@ from dataflow.core.prompt import prompt_restrict
 class VQAExtractPicExtractor(OperatorABC):
     def __init__(self,
                 llm_serving: LLMServingABC = None,
-                model: str = "o4-mini",
-                subject: str = "math"
+                interleaved: bool = True
                 ):
         self.logger = get_logger()
         self.llm_serving = llm_serving
         self.prompt = VQAExtractPrompt()
-        self.model = model
-        self.subject = subject
+        self.interleaved = interleaved
 
     def _format_instructions(self, image_files: List[str]):
         list_of_image_paths = []
@@ -34,7 +32,7 @@ class VQAExtractPicExtractor(OperatorABC):
         return list_of_image_paths, list_of_image_labels
 
 
-    def run(self, storage, input_layout_path: str, output_folder: str):
+    def run(self, storage, input_layout_path: str, input_subject: str, output_folder: str):
         # 从layout_path/images中读取所有图片的文件名,确保为绝对路径
         image_files = [os.path.join(input_layout_path, image_file) for image_file in os.listdir(input_layout_path)]
         # 确保end with jpg & png
@@ -46,9 +44,9 @@ class VQAExtractPicExtractor(OperatorABC):
         image_files.sort(key=filename2idx)
 
         list_of_image_paths, list_of_image_labels = self._format_instructions(image_files)
-        system_prompt = self.prompt.build_prompt(self.subject)
+        system_prompt = self.prompt.build_prompt(input_subject, interleaved=self.interleaved)
 
-        responses = self.llm_serving.generate_from_input_multi_images(list_of_image_paths, list_of_image_labels, system_prompt, self.model)
+        responses = self.llm_serving.generate_from_input_multi_images(list_of_image_paths, list_of_image_labels, system_prompt)
 
         # 将list of image paths和list of image labels和repsonses作为三列组织为jsonl
         list_of_dict = []

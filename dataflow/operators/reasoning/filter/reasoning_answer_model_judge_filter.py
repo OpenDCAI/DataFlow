@@ -9,6 +9,7 @@ from dataflow.core.prompt import prompt_restrict, DIYPromptABC
 import re
 import pandas as pd
 import numpy as np
+from typing import Union
 
 @prompt_restrict(
     AnswerJudgePrompt
@@ -19,7 +20,7 @@ class ReasoningAnswerModelJudgeFilter(OperatorABC):
     def __init__(self,
                  system_prompt: str = "You are a helpful assistant specialized in evaluating answer correctness.",
                  llm_serving: LLMServingABC = None,
-                 prompt_template = AnswerJudgePrompt | DIYPromptABC,
+                 prompt_template: Union[AnswerJudgePrompt, DIYPromptABC] = AnswerJudgePrompt,
                  keep_all_samples: bool = False,  # 新增参数，控制是否保留所有样本
                  ):
 

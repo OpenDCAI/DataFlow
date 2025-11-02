@@ -7,7 +7,8 @@ from dataflow.utils.storage import DataFlowStorage
 from dataflow.core import OperatorABC
 from dataflow.core import LLMServingABC
 
-from dataflow.core.prompt import prompt_restrict 
+from dataflow.core.prompt import prompt_restrict, DIYPromptABC
+from typing import Union
 
 import re
 @prompt_restrict(
@@ -20,7 +21,7 @@ class KBCTextCleanerBatch(OperatorABC):
         KnowledgeCleaner is a class that cleans knowledge for RAG to make them more accurate, reliable and readable.
     '''
 
-    def __init__(self, llm_serving: LLMServingABC, lang="en", prompt_template = None):
+    def __init__(self, llm_serving: LLMServingABC, lang="en", prompt_template: Union[KnowledgeCleanerPrompt, DIYPromptABC] = None):
         self.logger = get_logger()
         self.prompts = KnowledgeCleanerPrompt(lang=lang)    
         self.llm_serving = llm_serving

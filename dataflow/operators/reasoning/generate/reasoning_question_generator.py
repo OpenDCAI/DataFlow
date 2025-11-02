@@ -10,6 +10,7 @@ from dataflow.core.prompt import prompt_restrict, DIYPromptABC
 
 import pandas as pd
 import random
+from typing import Union
 
 @prompt_restrict(
     MathQuestionSynthesisPrompt,
@@ -22,7 +23,7 @@ class ReasoningQuestionGenerator(OperatorABC):
     def __init__(self,
                 num_prompts: int = 1,
                 llm_serving: LLMServingABC = None,
-                prompt_template = MathQuestionSynthesisPrompt | GeneralQuestionSynthesisPrompt | DiyQuestionSynthesisPrompt | DIYPromptABC
+                prompt_template: Union[MathQuestionSynthesisPrompt, GeneralQuestionSynthesisPrompt, DiyQuestionSynthesisPrompt, DIYPromptABC] = None
                 ):
         """
         Initialize the QuestionGenerator with the provided configuration.
@@ -120,6 +121,15 @@ class ReasoningQuestionGenerator(OperatorABC):
 
         return formatted_prompts
 
+    def _parse_response(self, response: str):
+        # useful for reasoning llms. If response is in format of Deepseek thinking: <think>...</think><answer>...</answer>, keep only the answer part.
+        pattern = r"<think>(.*?)</think><answer>(.*?)</answer>"
+        matches = re.findall(pattern, response)
+        if matches:
+            return matches[0][1]
+        else:
+            return response
+    
     def run(
             self, 
             storage: DataFlowStorage, 
@@ -134,6 +144,7 @@ class ReasoningQuestionGenerator(OperatorABC):
         self._validate_dataframe(dataframe)
         formatted_prompts = self._reformat_prompt(dataframe)
         responses = self.llm_serving.generate_from_input(formatted_prompts)
+        responses = [self._parse_response(response) for response in responses]
 
         new_rows = pd.DataFrame({
             input_key: responses,
