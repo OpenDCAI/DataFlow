@@ -82,7 +82,7 @@ class SQLGenerator(OperatorABC):
             create_statements, insert_statements = self.database_manager.get_create_statements_and_insert_statements(db_name)
 
             for _ in range(sum_generate_num):
-                prompt, _ = self.prompt_template.build_prompt(
+                prompt = self.prompt_template.build_prompt(
                     insert_statements=insert_statements,
                     create_statements=create_statements,
                     db_engine=self.database_manager.db_type

@@ -859,7 +859,7 @@ class SelectVecSQLGeneratorPrompt(PromptABC):
             column_count=column_count,
             embedding_model="\'all-MiniLM-L6-v2\'"
         )
-        return prompt, complexity
+        return prompt
 
 
 @PROMPT_REGISTRY.register()
