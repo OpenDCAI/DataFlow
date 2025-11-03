@@ -1,8 +1,8 @@
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from generate.extract_smiles_from_text import ExtractSmilesFromText
-    from eval.eval_smiles_equivalence import EvaluateSmilesEquivalence
+    from generate.extract_smiles_from_text_generator import ExtractSmilesFromTextGenerator
+    from eval.smiles_equivalence_dataset_evaluator import SmilesEquivalenceDatasetEvaluator
 else:
     import sys
     from dataflow.utils.registry import LazyLoader, generate_import_structure_from_type_checking

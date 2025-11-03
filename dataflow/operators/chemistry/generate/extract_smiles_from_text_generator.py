@@ -19,7 +19,7 @@ from dataflow.prompts.chemistry import ExtractSmilesFromTextPrompt
     ExtractSmilesFromTextPrompt
 )
 @OPERATOR_REGISTRY.register()
-class ExtractSmilesFromText(OperatorABC):
+class ExtractSmilesFromTextGenerator(OperatorABC):
     '''
     Answer Generator is a class that generates answers for given questions.
     '''
