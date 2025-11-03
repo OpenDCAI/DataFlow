@@ -273,7 +273,7 @@ class VQAExtractDocLayoutMinerU(OperatorABC):
 
         os.environ['MINERU_MODEL_SOURCE'] = "local"  # 可选：从本地加载模型
 
-        MinerU_Version = {"pipeline": "auto", "vlm-transformers": "vlm", "vlm-vllm-engine": "vllm"}
+        MinerU_Version = {"pipeline": "auto", "vlm-transformers": "vlm", "vlm-vllm-engine": "vlm"}
         
         if self.mineru_backend == "pipeline":
             raise ValueError("The 'pipeline' backend is not supported due to its incompatible output format. Please use 'vlm-transformers' or 'vlm-vllm-engine' instead.")
@@ -287,6 +287,9 @@ class VQAExtractDocLayoutMinerU(OperatorABC):
             "-b", self.mineru_backend,
             "--source", "local"
         ]
+        if self.mineru_backend == "vlm-vllm-engine":
+            assert torch.cuda.is_available(), "MinerU vlm-vllm-engine backend requires GPU support."
+            args += ["--tensor-parallel-size", "2" if torch.cuda.device_count() >=2 else "1"] # head是14，所以多卡只能2卡或7卡，这里简单设置为2卡
 
         try:
             mineru_main(args)

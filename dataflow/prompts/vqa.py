@@ -94,12 +94,12 @@ class QAExtractPrompt(PromptABC):
 
     def build_prompt(self, subject: str = "math") -> str:
         PROMPT = f"""
-        You are an expert in {subject} competition. You are given a json file. Your task is to segment the content, insert images tags, and extract labels:
+        You are an expert in {subject}. You are given a json file. Your task is to segment the content, insert images tags, and extract labels:
 1. Every json item has an "id" field. Your main task is to output this field.
 2. You need to segment the content into multiple `<qa_pair>`…`</qa_pair>` blocks, each containing a question and its corresponding answer with solution.
 3. If the problem or answer is not complete, omit them.
 4. You need to put the images id into proper positions. You could look at the caption or context to decide where to put the image tags.
-5. You will also need to extract the chapter information and each problem's label/number from the text.
+5. You will also need to extract the chapter title and each problem's label/number from the text.
 6. You only need to output "id" field for chapters, questions and solutions. DO NOT OUTPUT ORIGINAL TEXT. Use ',' to separate different ids.
 7. However, use original labels/numbers for labels, and use original numbers for answers. 
 """
@@ -113,14 +113,18 @@ Strict extraction rules:
 - If only questions or only answers with solutions appear, wrap each question or answer with solution in a `<qa_pair>`…`</qa_pair>` block with the missing part left empty. For example, if only questions appear:
   `<qa_pair><label>例1</label><question>…</question><answer></answer><solution></solution></qa_pair>`
 - If multiple questions and solutions appear, wrap each question/solution pair in its own `<qa_pair>`…`</qa_pair>` block.
-- If you do not see the full solution, only extract the short answer and leave the solution empty.
+- If you do not see the full solution, only extract the short answer and leave the solution empty. YOU MUST KEEP QUESTIONS WITH ONLY SHORT ANSWERS !!!
 ** About chapter/section titles **
 - Always enclose qa pairs in a `<chapter>`…`</chapter>` block, where <title>MAIN_TITLE</title> is the chapter title or section title.
+- Normally, chapter/section titles appear before the questions/answers in an independent json item.
 - There could be multiple `<chapter>`…`</chapter>` blocks if multiple chapters/sections exist.
 - Extract chapter titles only. If you see multiple titles piled together, use the one at the bottom only.  
-- **Do not keep subtitles. Any titles followed by a question/answer whose label/number is not 1 should be considered a subtitle. DO NOT EXTRACT THEM.**
+- **Do not keep subtitles. Any titles followed by a question/answer whose label/number is not 1, or with a score, should be considered a subtitle. DO NOT EXTRACT THEM.**
 - Do not use nested titles.
 - Leave the title blank if there is no chapter title. 
+** About figures/diagrams **
+- Whenever the question or answer/solution refers to a figure or diagram, record its "id" in question/answer/solution just like other text content.
+- You MUST include all images referenced in the question/answer/solution.
 
 
 If no qualifying content is found, output:
