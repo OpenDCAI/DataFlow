@@ -8,6 +8,7 @@ def merge_qa_pair(question_jsonl, answer_jsonl, output_jsonl):
         chapter_title = ""
         label = 1000000
         questions = {}
+        answers = {}
         for line in q_file:
             data = json.loads(line)
             label_match = re.search(r'\d+', data["label"])
@@ -32,13 +33,25 @@ def merge_qa_pair(question_jsonl, answer_jsonl, output_jsonl):
             data["chapter_id"] = chapter_id
             # 删除title中的空格，标点符号（包括中文和英文）
             data["chapter_title"] = regex.sub(r'[\p{P}\s]+', '', data["chapter_title"])
-            if data['label'] > 0:
-                questions[(data["chapter_title"], data['label'])] = data
+            if data['label'] > 0 and data["chapter_title"]:
+                # 已经完整的题目直接写入out_file
+                if data["answer"] or data["solution"]:
+                    qa_pair = {
+                        "question_chapter_title": data["chapter_title"],
+                        "answer_chapter_title": data["chapter_title"],
+                        "label": data['label'],
+                        "question": data["question"],
+                        "answer": data["answer"],
+                        "solution": data.get("solution", "")
+                    }
+                    out_file.write(json.dumps(qa_pair, ensure_ascii=False) + '\n')
+                    
+                else:
+                    questions[(data["chapter_title"], data['label'])] = data
         
         chapter_id = 0
         chapter_title = ""
         label = 1000000
-        answers = {}
         for line in a_file:
             data = json.loads(line)
             label_match = re.search(r'\d+', data["label"])
