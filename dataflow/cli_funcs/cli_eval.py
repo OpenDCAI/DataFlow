@@ -8,7 +8,6 @@ import importlib.util
 from pathlib import Path
 from typing import List, Dict, Any
 from datetime import datetime
-
 from dataflow import get_logger
 from dataflow.serving import LocalModelLLMServing_vllm
 from dataflow.operators.reasoning import ReasoningAnswerGenerator
@@ -298,7 +297,7 @@ class EvaluationPipeline:
         print("=" * 60)
 
         # 保存详细报告
-        report_file = "{eval_output_dir}/report.json"
+        report_file = f"{eval_output_dir}/report.json"
         Path(report_file).parent.mkdir(parents=True, exist_ok=True)
         with open(report_file, 'w') as f:
             json.dump({"results": sorted_results}, f, indent=2)
