@@ -21,7 +21,7 @@ class ReasoningAnswerModelJudgeFilter(OperatorABC):
     def __init__(self,
                  system_prompt: str = "You are a helpful assistant specialized in evaluating answer correctness.",
                  llm_serving: LLMServingABC = None,
-                 prompt_template: Union[AnswerJudgePrompt, DIYPromptABC] = AnswerJudgePromptQuestion,
+                 prompt_template: Union[AnswerJudgePromptQuestion,AnswerJudgePrompt, DIYPromptABC] = AnswerJudgePromptQuestion,
                  keep_all_samples: bool = False,  # 新增参数，控制是否保留所有样本
                  ):
 
