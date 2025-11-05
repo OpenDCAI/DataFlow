@@ -325,7 +325,8 @@ class AgenticRAGAtomicTaskGenerator(OperatorABC):
 
         # === Expand each conclusion into multiple candidate tasks (rows)
         expanded_rows = []
-        for idx, (row, output_str, identifier) in enumerate(zip(dataframe.itertuples(index=False), conclusions, identifiers)):
+        # Use to_dict('records') instead of itertuples() to preserve column names with special characters (e.g., "user:contents")
+        for idx, (row, output_str, identifier) in enumerate(zip(dataframe.to_dict('records'), conclusions, identifiers)):
             try:
                 parsed = json.loads(self._clean_json_block(output_str))
                 parsed = parsed[:self.max_per_task] if isinstance(parsed, list) else parsed
@@ -339,7 +340,7 @@ class AgenticRAGAtomicTaskGenerator(OperatorABC):
             for item in parsed:
                 if isinstance(item, dict) and "conclusion" in item and "R" in item:
                     expanded_rows.append({
-                        **row._asdict(),
+                        **row,  # row is already a dict now
                         "identifier": str(identifier),
                         "candidate_tasks_str": json.dumps(item, ensure_ascii=False)
                     })
@@ -359,7 +360,8 @@ class AgenticRAGAtomicTaskGenerator(OperatorABC):
         answers = []
         valid_rows = []
 
-        for idx, (res, row) in enumerate(zip(question_outputs, dataframe.itertuples(index=False))):
+        # Use to_dict('records') instead of itertuples() to preserve column names with special characters
+        for idx, (res, row) in enumerate(zip(question_outputs, dataframe.to_dict('records'))):
             try:
                 parsed = json.loads(self._clean_json_block(res))
             except Exception as e:
@@ -369,11 +371,11 @@ class AgenticRAGAtomicTaskGenerator(OperatorABC):
             if isinstance(parsed, dict) and "Q" in parsed:
                 question = parsed["Q"]
                 try:
-                    task = json.loads(self._clean_json_block(row.candidate_tasks_str))
+                    task = json.loads(self._clean_json_block(row['candidate_tasks_str']))
                     answer = task.get("conclusion", "")
                 except Exception:
                     answer = ""
-                valid_rows.append(row._asdict())
+                valid_rows.append(row)  # row is already a dict
                 questions.append(str(question))
                 answers.append(str(answer))
 
@@ -411,6 +413,10 @@ class AgenticRAGAtomicTaskGenerator(OperatorABC):
         llm_score = self.recall_score(dataframe)
         dataframe["llm_score"] = llm_score
         dataframe = dataframe[dataframe["llm_score"] < 1].reset_index(drop=True)
+
+        if dataframe.empty:
+            self.logger.warning("No data left after LLM score filtering. All questions were answered correctly by LLM.")
+            return
 
         self.logger.info("Get golden doc answer...")
         sys_prompts, user_prompts = self._reformat_prompt(dataframe, "golden_doc_answer")

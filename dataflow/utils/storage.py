@@ -461,7 +461,7 @@ class MyScaleDBStorage(DataFlowStorage):
                 if col not in system_cols:
                     df['data'] = df.apply(lambda row: safe_merge(row, col), axis=1)
                     df = df.drop(columns=[col])
-            # 自动填充 pipeline_id, task_id, raw_data_id, min_hashes, file_id
+            # 自动填充 pipeline_id, task_id, raw_data_id, min_hashes, file_id, filename, parent_pipeline_id
             df['pipeline_id'] = self.pipeline_id
             df['task_id'] = self.output_task_id
             df['raw_data_id'] = df['data'].apply(lambda d: d.get(SYS_FIELD_PREFIX + 'raw_data_id', 0) if isinstance(d, dict) else 0)
