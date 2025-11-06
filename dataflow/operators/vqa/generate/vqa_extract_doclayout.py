@@ -289,7 +289,7 @@ class VQAExtractDocLayoutMinerU(OperatorABC):
         ]
         if self.mineru_backend == "vlm-vllm-engine":
             assert torch.cuda.is_available(), "MinerU vlm-vllm-engine backend requires GPU support."
-            args += ["--tensor-parallel-size", "2" if torch.cuda.device_count() >=2 else "1"] # head是14，所以多卡只能2卡或7卡，这里简单设置为2卡
+            args += ["--tensor-parallel-size", "2" if torch.cuda.device_count() >=2 else "1"] # head是14和16，所以多卡只能2卡
 
         try:
             mineru_main(args)

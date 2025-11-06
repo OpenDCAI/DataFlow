@@ -1,6 +1,5 @@
 import json
 import re
-import regex
 
 def merge_qa_pair(question_jsonl, answer_jsonl, output_jsonl):
     with open(question_jsonl, 'r', encoding='utf-8') as q_file, open(answer_jsonl, 'r', encoding='utf-8') as a_file, open(output_jsonl, 'w', encoding='utf-8') as out_file:
@@ -31,8 +30,8 @@ def merge_qa_pair(question_jsonl, answer_jsonl, output_jsonl):
                     data["chapter_title"] = chapter_title
             label = data["label"]
             data["chapter_id"] = chapter_id
-            # 删除title中的空格，标点符号（包括中文和英文）
-            data["chapter_title"] = regex.sub(r'[\p{P}\s]+', '', data["chapter_title"])
+            # 删除title中的空格
+            data["chapter_title"] = data["chapter_title"].replace(" ", "")
             if data['label'] > 0 and data["chapter_title"]:
                 # 已经完整的题目直接写入out_file
                 if data["answer"] or data["solution"]:
@@ -74,8 +73,8 @@ def merge_qa_pair(question_jsonl, answer_jsonl, output_jsonl):
                     data["chapter_title"] = chapter_title
             label = data["label"]
             data["chapter_id"] = chapter_id
-            # 删除title中的空格，标点符号（包括中文和英文）
-            data["chapter_title"] = regex.sub(r'[\p{P}\s]+', '', data["chapter_title"])
+            # 删除title中的空格
+            data["chapter_title"] = data["chapter_title"].replace(" ", "")
             # 动态更新，防止错误的重复label覆盖掉之前的solution或answer
             if data['label'] > 0:
                 if not answers.get((data["chapter_title"], data['label'])):
