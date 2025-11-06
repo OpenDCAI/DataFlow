@@ -93,8 +93,13 @@ class AnswerJudgeMultipleQuestionsPrompt(PromptABC):
         Your output should be a JSON array, where each element is "true" or "false" (use string instead of boolean), indicating whether the answer to each sub-question is correct.
         If there is only one question, also return a single-element array.
         
-        Please return your judgment result in JSON format such as:
-        {{"judgement_result": ["true", "false", "true"]}} 
+        If the reference answer is incomplete so that you are not able to judge some subquestions, mark the corresponding sub-questions as "empty".
+        
+        Example:
+        Question: ① 1+2=? ② What is 2+2? ③ What is 3+3?
+        Reference Answer: ① 3 ③ 6
+        Current Answer: ① Three ② Four ③ Seven
+        Output: ["true", "empty", "false"]
         
         
         Your judgment:

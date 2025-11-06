@@ -14,6 +14,7 @@ import numpy as np
 import time
 import os  # 添加os模块导入
 import re
+import json
 
 @OPERATOR_REGISTRY.register()
 class BenchDatasetEvaluatorQuestion(OperatorABC):
@@ -60,29 +61,59 @@ class BenchDatasetEvaluatorQuestion(OperatorABC):
 
     def ResolveResponse(self, response):
         # 检查空响应
-        if response is None or (isinstance(response, str) and response.strip() == ''):
-            self.empty_responses_count += 1
-            return False
-        try:
-            pattern = re.compile(r'"judgement_result"\s*:\s*(true|false)', re.IGNORECASE)
-            match = pattern.search(response)
-            result_value = None
-            if match:
-                result_value = match.group(1).lower()
-            else:
-                # 备用解析逻辑，检查响应中是否包含true或false
-                if "true" in response.lower():
-                    result_value = "true"
-                else:
-                    result_value = "false"
-            if result_value == "true":
-                return True
-            else:
+        if not self.support_subquestions:
+            if response is None or (isinstance(response, str) and response.strip() == ''):
+                self.empty_responses_count += 1
                 return False
-        except Exception as e:
-            self.logger.error(f"Response format error: {response}. Error: {e}")
-            return False
+            try:
+                pattern = re.compile(r'"judgement_result"\s*:\s*(true|false)', re.IGNORECASE)
+                match = pattern.search(response)
+                result_value = None
+                if match:
+                    result_value = match.group(1).lower()
+                else:
+                    # 备用解析逻辑，检查响应中是否包含true或false
+                    if "true" in response.lower():
+                        result_value = "true"
+                    else:
+                        result_value = "false"
+                if result_value == "true":
+                    return True
+                else:
+                    return False
+            except Exception as e:
+                self.logger.error(f"Response format error: {response}. Error: {e}")
+                return False
         
+        if self.support_subquestions:
+            # 如果支持子问题，假设response是一个列表, 返回正确的数量/总数
+            correct_num = 0
+            total_num = 0
+            try:
+                response = json.loads(response)
+            except Exception as e:
+                self.logger.error(f"Response JSON parse error: {response}. Error: {e}")
+                return "0/0"
+            for resp in response:
+                if isinstance(resp, bool): 
+                    if resp is True:
+                        correct_num += 1
+                        total_num += 1
+                    elif resp is False:
+                        total_num += 1
+                    elif resp.lower() == "empty":
+                        continue  # 不计入总数
+                elif isinstance(resp, str):
+                    if resp.lower() == "true":
+                        correct_num += 1
+                        total_num += 1
+                    elif resp.lower() == "false":
+                        total_num += 1
+                    elif resp.lower() == "empty":
+                        continue  # 不计入总数
+                    
+            return f"{correct_num}/{total_num}"
+            
     @staticmethod
     def get_desc(lang: str = "zh"):
         if lang == "zh":
@@ -139,6 +170,16 @@ class BenchDatasetEvaluatorQuestion(OperatorABC):
             "empty_responses_count": self.empty_responses_count,
             "compare_method": compare_method
         }
+        
+        if self.support_subquestions:
+            total_subquestions = dataframe['total_subquestions'].sum()
+            correct_subquestions = dataframe['correct_answer_num'].sum()
+            subquestion_accuracy = correct_subquestions / total_subquestions if total_subquestions > 0 else 0
+            stats.update({
+                "total_subquestions": int(total_subquestions),
+                "correct_subquestions": int(correct_subquestions),
+                "subquestion_accuracy": float(subquestion_accuracy)
+            })
         
         # 将字典转换为DataFrame
         stats_df = pd.DataFrame([stats])
@@ -217,9 +258,9 @@ class BenchDatasetEvaluatorQuestion(OperatorABC):
             
             responses = self.llm_serving.generate_from_input(user_inputs=inputs, system_prompt=self.system_prompt)
             
-            if self.support_subquestions:
-                # 每个response是一个列表，连接一个长列表，比如[["true", "false"], ["true"]] -> ["true", "false", "true"]
-                responses = [item for sublist in responses for item in sublist]
+            # if self.support_subquestions:
+            #     # 每个response是一个列表，连接一个长列表，比如[["true", "false"], ["true"]] -> ["true", "false", "true"]
+            #     responses = [item for sublist in responses for item in sublist]
             
             results = [self.ResolveResponse(response) for response in responses]
             
@@ -228,8 +269,15 @@ class BenchDatasetEvaluatorQuestion(OperatorABC):
             
             # 更新有效行的answer_match_result
             valid_indices = valid_rows.index
-            for i, idx in enumerate(valid_indices):
-                dataframe.at[idx, 'answer_match_result'] = results[i]
+            if not self.support_subquestions:
+                for i, idx in enumerate(valid_indices):
+                    dataframe.at[idx, 'answer_match_result'] = results[i]
+            else:
+                for i, idx in enumerate(valid_indices):
+                    dataframe.at[idx, 'correct_answer_num'] = int(results[i].split('/')[0])
+                    dataframe.at[idx, 'total_subquestions'] = int(results[i].split('/')[1])
+                    dataframe.at[idx, 'answer_match_result'] = int(results[i].split('/')[0]) == int(results[i].split('/')[1])  # 全对为True，否则为False
+                    dataframe.at[idx, 'response_evaluation'] = responses[i]  # 保存LLM的原始响应内容
                 
             output_file = storage.write(dataframe)
             
