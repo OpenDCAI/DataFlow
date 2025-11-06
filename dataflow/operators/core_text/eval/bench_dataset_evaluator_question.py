@@ -1,5 +1,5 @@
 from dataflow.utils.reasoning.AnswerExtraction import StringCleaner, UnitTextManager, AnswerExtractor
-from dataflow.prompts.model_evaluation.general import AnswerJudgePromptQuestion
+from dataflow.prompts.model_evaluation.general import AnswerJudgePromptQuestion, AnswerJudgeMultipleQuestionsPrompt
 from dataflow.core.prompt import DIYPromptABC
 from dataflow.utils.registry import OPERATOR_REGISTRY
 from dataflow.utils.storage import DataFlowStorage
@@ -22,7 +22,8 @@ class BenchDatasetEvaluatorQuestion(OperatorABC):
                 compare_method: Literal["match", "semantic"] = "match",
                 system_prompt: str = "You are a helpful assistant specialized in evaluating answer correctness.",
                 llm_serving: LLMServingABC = None,
-                prompt_template: DIYPromptABC = None
+                prompt_template: DIYPromptABC = None,
+                support_subquestions: bool = False
                 ):
         
         if eval_result_path is None:
@@ -40,10 +41,11 @@ class BenchDatasetEvaluatorQuestion(OperatorABC):
             self.answer_extractor = AnswerExtractor(string_cleaner)
         else:
             if prompt_template is None:
-                prompt_template = AnswerJudgePromptQuestion()
+                prompt_template = AnswerJudgePromptQuestion() if not support_subquestions else AnswerJudgeMultipleQuestionsPrompt()
             self.prompt_template = prompt_template
             self.system_prompt = system_prompt
             self.llm_serving = llm_serving
+            self.support_subquestions = support_subquestions
             
         self.logger = get_logger()
     
@@ -214,6 +216,11 @@ class BenchDatasetEvaluatorQuestion(OperatorABC):
             ) for _, row in valid_rows.iterrows()]
             
             responses = self.llm_serving.generate_from_input(user_inputs=inputs, system_prompt=self.system_prompt)
+            
+            if self.support_subquestions:
+                # 每个response是一个列表，连接一个长列表，比如[["true", "false"], ["true"]] -> ["true", "false", "true"]
+                responses = [item for sublist in responses for item in sublist]
+            
             results = [self.ResolveResponse(response) for response in responses]
             
             # 创建结果掩码，与valid_rows长度相同
