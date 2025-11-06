@@ -8,7 +8,7 @@ from dataflow.core import LLMServingABC
 import json
 
 @OPERATOR_REGISTRY.register()
-class EvaluateSmilesEquivalence(OperatorABC):
+class SmilesEquivalenceDatasetEvaluator(OperatorABC):
     """
     对每个块（row）里的 golden_label 与 synth_smiles 进行 SMILES 等价性评估：
     - 以 abbreviation 对齐

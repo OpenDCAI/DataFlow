@@ -81,7 +81,7 @@ class CondorGenerator(OperatorABC):
 
         return questions_data
 
-    def run(self, storage: DataFlowStorage):
+    def run(self, storage: DataFlowStorage, output_instruction_key: str = "instruction", output_output_key: str = "output", output_difficulty_key: str = "difficulty"):
         # 生成所有的prompt
         prompts = []
         prompt_metadata = []  # 记录每个prompt的元信息（用于后续追踪）
@@ -148,9 +148,9 @@ Remember to frame the questions within the context of "{task_type}" scenario."""
                     # 获取对应的答案
                     answer_text = answer_responses[answer_idx].strip()  # 获取答案
                     answers_data.append({
-                        "difficulty": difficulty_level,
-                        "instruction": question_text,
-                        "output": answer_text
+                        output_difficulty_key: difficulty_level,
+                        output_instruction_key: question_text,
+                        output_output_key: answer_text
                     })
                     answer_idx += 1  # 更新索引
 
@@ -158,4 +158,5 @@ Remember to frame the questions within the context of "{task_type}" scenario."""
         df = pd.DataFrame(answers_data)
         storage.write(df)
         self.logger.info(f'SFT data generated')
-        return df
+        
+        return [output_instruction_key, output_output_key, output_difficulty_key]

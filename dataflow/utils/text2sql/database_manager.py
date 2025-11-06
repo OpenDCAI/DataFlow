@@ -319,7 +319,7 @@ class DatabaseManager:
         for table_info in schema['tables'].values():
             insert_statements_for_table = table_info.get('insert_statement')
             if insert_statements_for_table:
-                insert_statement_list.append(insert_statements_for_table)
+                insert_statement_list.extend(insert_statements_for_table)
                 
         return insert_statement_list
 
