@@ -51,7 +51,7 @@ class Text2MultiHopQAGenerator(OperatorABC):
         if prompt_template:
             self.prompt_template = prompt_template
         else:
-            self.prompt_template = Text2MultiHopQAGeneratorPrompt()
+            self.prompt_template = Text2MultiHopQAGeneratorPrompt(lang=self.lang)
 
     @staticmethod
     def get_desc(lang: str = "zh") -> tuple:
@@ -269,7 +269,7 @@ class ExampleConstructor:
         if prompt_template:
             self.prompt_template = prompt_template
         else:
-            self.prompt_template = Text2MultiHopQAGeneratorPrompt()
+            self.prompt_template = Text2MultiHopQAGeneratorPrompt(lang=self.lang)
 
     def construct_examples(
         self, raw_data: List[Dict[str, Any]]
@@ -389,9 +389,7 @@ class ExampleConstructor:
             bool: True if text passes quality checks, False otherwise.
         """
         # 1. Basic quality check
-        if (self.lang=="en" and text.count('.') < 2):  # Must have at least 2 sentences
-            return False
-        elif(self.lang in ["zh","ch"] and text.count("。") < 2):
+        if (text.count('。') < 2 and text.count('.') < 2):  # Must have at least 2 sentences
             return False
         
         # 2. Special character ratio check
