@@ -1,3 +1,4 @@
+from email.policy import strict
 from dataflow.utils.reasoning.AnswerExtraction import StringCleaner, UnitTextManager, AnswerExtractor
 from dataflow.prompts.model_evaluation.general import AnswerJudgePromptQuestion, AnswerJudgeMultipleQuestionsPrompt
 from dataflow.core.prompt import DIYPromptABC
@@ -15,6 +16,7 @@ import time
 import os  # 添加os模块导入
 import re
 import json
+import json5
 
 @OPERATOR_REGISTRY.register()
 class BenchDatasetEvaluatorQuestion(OperatorABC):
@@ -90,11 +92,13 @@ class BenchDatasetEvaluatorQuestion(OperatorABC):
             correct_num = 0
             total_num = 0
             try:
-                response = json.loads(response)
+                response = json5.loads(response, strict=False)  # 使用json5解析，允许更宽松的格式
+                judgement = response.get("judgement", [])
             except Exception as e:
                 self.logger.error(f"Response JSON parse error: {response}. Error: {e}")
+                self.empty_responses_count += 1
                 return "0/0"
-            for resp in response:
+            for resp in judgement:
                 if isinstance(resp, bool): 
                     if resp is True:
                         correct_num += 1
@@ -274,9 +278,11 @@ class BenchDatasetEvaluatorQuestion(OperatorABC):
                     dataframe.at[idx, 'answer_match_result'] = results[i]
             else:
                 for i, idx in enumerate(valid_indices):
-                    dataframe.at[idx, 'correct_answer_num'] = int(results[i].split('/')[0])
-                    dataframe.at[idx, 'total_subquestions'] = int(results[i].split('/')[1])
-                    dataframe.at[idx, 'answer_match_result'] = int(results[i].split('/')[0]) == int(results[i].split('/')[1])  # 全对为True，否则为False
+                    correct_answer_num = int(results[i].split('/')[0])
+                    total_subquestions = int(results[i].split('/')[1])
+                    dataframe.at[idx, 'correct_answer_num'] = correct_answer_num
+                    dataframe.at[idx, 'total_subquestions'] = total_subquestions
+                    dataframe.at[idx, 'answer_match_result'] = (correct_answer_num == total_subquestions) and (total_subquestions > 0)   # 全对为True，否则为False
                     dataframe.at[idx, 'response_evaluation'] = responses[i]  # 保存LLM的原始响应内容
                 
             output_file = storage.write(dataframe)
