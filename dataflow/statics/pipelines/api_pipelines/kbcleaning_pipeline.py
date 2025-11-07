@@ -20,7 +20,7 @@ class KBCleaningPDF_APIPipeline():
 
         self.llm_serving = APILLMServing_request(
                 api_url="https://api.openai.com/v1/chat/completions",
-                model_name="deepseek-v3",
+                model_name="gpt-4o",
                 max_workers=100
         )
 
