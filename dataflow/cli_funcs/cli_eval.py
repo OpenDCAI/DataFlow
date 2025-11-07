@@ -34,7 +34,6 @@ class EvaluationPipeline:
 
     def __init__(self, config: Dict[str, Any]):
         self.config = config
-        # self.cli_args = cli_args
         self.prepared_models = []
         self.generated_files = []
 
@@ -102,10 +101,10 @@ class EvaluationPipeline:
                     continue
 
                 model_info = {
-                    **default_config,  # 1. 先设置默认值
-                    **item,  # 2. 用户配置覆盖默认值
-                    "name": item.get("name", Path(item["path"]).name),  # 3. 确保name字段正确
-                    "type": "local"  # 4. 强制设置type
+                    **default_config,
+                    **item,
+                    "name": item.get("name", Path(item["path"]).name),
+                    "type": "local"
                 }
             else:
                 logger.error(f"Invalid model format at index {idx}")
@@ -130,98 +129,127 @@ class EvaluationPipeline:
                     logger.warning(f"Failed to clear cache: {e}")
 
     def _generate_answers(self) -> List[Dict]:
-        """生成模型答案"""
+        """生成模型答案 - 每个模型只加载一次"""
         generated_files = []
-        data_config = self.config.get("DATA_CONFIG", {})
-        input_file = data_config.get("input_file", "./.cache/data/qa.json")
-        
+        bench_config_list = self.config.get("BENCH_CONFIG", [])
 
-        if not Path(input_file).exists():
-            logger.error(f"Input file not found: {input_file}")
+        if not bench_config_list:
+            logger.error("No BENCH_CONFIG found")
             return []
 
-        self._clear_vllm_cache()
-
+        # 外层循环：遍历模型
         for idx, model_info in enumerate(self.prepared_models, 1):
             llm_serving = None
-            answer_generator = None
-            storage = None
 
             try:
-                logger.info(f"[{idx}/{len(self.prepared_models)}] Processing: {model_info['name']}")
+                logger.info(f"[{idx}/{len(self.prepared_models)}] Loading model: {model_info['name']}")
 
-                cache_dir = model_info.get('cache_dir', './.cache/eval')
-                output_dir = model_info.get('output_dir', cache_dir)
-                Path(cache_dir).mkdir(parents=True, exist_ok=True)
-                Path(output_dir).mkdir(parents=True, exist_ok=True)
-                output_file = f"{output_dir}/answers_{model_info['name']}.json"
+                # 清理缓存（每个模型加载前清理一次）
+                self._clear_vllm_cache()
 
                 # 加载模型
                 llm_serving = LocalModelLLMServing_vllm(
                     hf_model_name_or_path=model_info['path'],
                     vllm_tensor_parallel_size=model_info.get('vllm_tensor_parallel_size', 2),
-                    vllm_temperature = model_info.get('vllm_temperature',0.7),
-                    vllm_top_p = model_info.get('vllm_top_p',0.9),
-                    vllm_max_tokens=model_info.get('max_tokens', 1024),
-                    vllm_repetition_penalty = model_info.get('vllm_repetition_penalty', 1.0),
-                    vllm_seed = model_info.get('vllm_seed', None),
-                    vllm_gpu_memory_utilization=model_info.get('gpu_memory_utilization', 0.8)
+                    vllm_temperature=model_info.get('vllm_temperature', 0.7),
+                    vllm_top_p=model_info.get('vllm_top_p', 0.9),
+                    vllm_max_tokens=model_info.get('vllm_max_tokens', 1024),
+                    vllm_repetition_penalty=model_info.get('vllm_repetition_penalty', 1.0),
+                    vllm_seed=model_info.get('vllm_seed', None),
+                    vllm_gpu_memory_utilization=model_info.get('vllm_gpu_memory_utilization', 0.8)
                 )
 
-                # 答案生成器
-                custom_prompt = model_info.get('answer_prompt', DEFAULT_ANSWER_PROMPT)
-                answer_generator = ReasoningAnswerGenerator(
-                    llm_serving=llm_serving,
-                    prompt_template=DiyAnswerGeneratorPrompt(custom_prompt)
-                )
+                # 内层循环：遍历bench（复用模型）
+                for bench_idx, bench_config in enumerate(bench_config_list, 1):
+                    answer_generator = None
+                    storage = None
 
-                # 存储
-                cache_path = f"{cache_dir}/{model_info['name']}_generation"
-                storage = FileStorage(
-                    first_entry_file_name=input_file,
-                    cache_path=cache_path,
-                    file_name_prefix=model_info.get('file_prefix', 'answer_gen'),
-                    cache_type=model_info.get('cache_type', 'json')
-                )
+                    try:
+                        bench_name = bench_config.get("name", "default")
+                        logger.info(f"  [{bench_idx}/{len(bench_config_list)}] Processing bench: {bench_name}")
 
-                # 运行生成
-                answer_generator.run(
-                    storage=storage.step(),
-                    input_key=data_config.get("question_key", "input"),
-                    output_key=model_info.get('output_key', 'model_generated_answer')
-                )
+                        input_file = bench_config["input_file"]
+                        if not Path(input_file).exists():
+                            logger.error(f"Input file not found: {input_file}")
+                            continue
 
-                # 保存结果
-                file_prefix = model_info.get('file_prefix', 'answer_gen')
-                cache_type = model_info.get('cache_type', 'json')
+                        question_key = bench_config.get("question_key", "input")
+                        bench_output_dir = bench_config.get("output_dir", "./eval_results")
 
-                # 查找所有匹配的文件
-                pattern = f"{file_prefix}_step*.{cache_type}"
-                matching_files = sorted(Path(cache_path).glob(pattern))
+                        # 设置缓存和输出目录
+                        cache_dir = model_info.get('cache_dir', './.cache/eval')
+                        Path(cache_dir).mkdir(parents=True, exist_ok=True)
+                        Path(bench_output_dir).mkdir(parents=True, exist_ok=True)
 
-                if matching_files:
-                    # 使用最新的文件（最后一个step）
-                    gen_file = matching_files[-1]
-                    shutil.copy2(gen_file, output_file)
-                    generated_files.append({
-                        "model_name": model_info['name'],
-                        "model_path": model_info['path'],
-                        "file_path": output_file
-                    })
-                else:
-                    logger.error(f"No generated file found for {model_info['name']} in {cache_path}")
-                    continue
+                        output_file = f"{bench_output_dir}/{bench_name}_answers_{model_info['name']}.json"
+
+                        # 答案生成器（复用llm_serving）
+                        custom_prompt = model_info.get('answer_prompt', DEFAULT_ANSWER_PROMPT)
+                        answer_generator = ReasoningAnswerGenerator(
+                            llm_serving=llm_serving,
+                            prompt_template=DiyAnswerGeneratorPrompt(custom_prompt)
+                        )
+
+                        # 存储
+                        cache_path = f"{cache_dir}/{bench_name}_{model_info['name']}_generation"
+                        storage = FileStorage(
+                            first_entry_file_name=input_file,
+                            cache_path=cache_path,
+                            file_name_prefix=model_info.get('file_prefix', 'answer_gen'),
+                            cache_type=model_info.get('cache_type', 'json')
+                        )
+
+                        # 运行生成
+                        answer_generator.run(
+                            storage=storage.step(),
+                            input_key=question_key,
+                            output_key=model_info.get('output_key', 'model_generated_answer')
+                        )
+
+                        # 保存结果
+                        file_prefix = model_info.get('file_prefix', 'answer_gen')
+                        cache_type = model_info.get('cache_type', 'json')
+                        pattern = f"{file_prefix}_step*.{cache_type}"
+                        matching_files = sorted(Path(cache_path).glob(pattern))
+
+                        if matching_files:
+                            gen_file = matching_files[-1]
+                            shutil.copy2(gen_file, output_file)
+                            generated_files.append({
+                                "model_name": model_info['name'],
+                                "model_path": model_info['path'],
+                                "file_path": output_file,
+                                "bench_name": bench_name
+                            })
+                            logger.success(f"  ✓ Generated answers for {bench_name}")
+                        else:
+                            logger.error(f"No generated file found in {cache_path}")
+                            continue
+
+                    except Exception as e:
+                        logger.error(f"Failed to process bench {bench_name}: {e}")
+                        import traceback
+                        traceback.print_exc()
+                        continue
+
+                    finally:
+                        # 清理bench级别的资源
+                        if answer_generator is not None:
+                            del answer_generator
+                        if storage is not None:
+                            del storage
+                        gc.collect()
 
             except Exception as e:
-                logger.error(f"Failed to process {model_info['name']}: {e}")
+                logger.error(f"Failed to load model {model_info['name']}: {e}")
+                import traceback
+                traceback.print_exc()
                 continue
 
             finally:
-                if answer_generator is not None:
-                    del answer_generator
-                if storage is not None:
-                    del storage
+                # 清理模型级别的资源
                 if llm_serving is not None:
+                    logger.info(f"Unloading model: {model_info['name']}")
                     del llm_serving
                 gc.collect()
                 if torch.cuda.is_available():
@@ -233,25 +261,48 @@ class EvaluationPipeline:
     def _run_evaluation(self) -> List[Dict]:
         """运行评估"""
         try:
+            logger.info("Loading judge model...")
             judge_serving = self.config["create_judge_serving"]()
+            logger.info("✓ Judge model loaded")
         except Exception as e:
             logger.error(f"Failed to create judge: {e}")
             return []
 
         results = []
         eval_config = self.config.get("EVALUATOR_RUN_CONFIG", {})
-        data_config = self.config.get("DATA_CONFIG", {})
-        eval_output_dir = data_config.get("eval_output_dir", "./eval_results")
 
-        for file_info in self.generated_files:
+        total_evals = len(self.generated_files)
+
+        for eval_idx, file_info in enumerate(self.generated_files, 1):
             try:
+                bench_name = file_info.get('bench_name', 'unknown')
+                model_name = file_info['model_name']
+
+                logger.info(f"\n[Eval {eval_idx}/{total_evals}] {model_name} × {bench_name}")
+
+                # 找到对应的bench配置
+                bench_config = None
+                for bc in self.config.get("BENCH_CONFIG", []):
+                    if bc.get("name") == bench_name:
+                        bench_config = bc
+                        break
+
+                if not bench_config:
+                    logger.warning(f"  ⚠️  No bench config found")
+                    continue
+
+                eval_output_dir = bench_config.get("eval_output_dir", "./eval_results")
+
+                # 执行评估
+                logger.info(f"  📊 Evaluating...")
                 timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-                result_file = f"{eval_output_dir}/{timestamp}_{file_info['model_name']}/result.json"
+                result_file = f"{eval_output_dir}/{timestamp}_{model_name}/result.json"
                 Path(result_file).parent.mkdir(parents=True, exist_ok=True)
 
                 storage = self.config["create_storage"](
                     file_info["file_path"],
-                    f"./.cache/eval/{file_info['model_name']}"
+                    f"./.cache/eval/{model_name}",
+                    bench_name
                 )
                 evaluator = self.config["create_evaluator"](judge_serving, result_file)
 
@@ -266,42 +317,95 @@ class EvaluationPipeline:
                     with open(result_file, 'r') as f:
                         data = json.load(f)
                         if data:
-                            data[0]["model_name"] = file_info['model_name']
-                            results.append(data[0])
+                            result_data = data[0].copy()
+                            result_data["model_name"] = model_name
+                            result_data["bench_name"] = bench_name
+                            results.append(result_data)
+                            logger.info(f"  ✓ Accuracy: {result_data.get('accuracy', 0):.3f}")
 
             except Exception as e:
-                logger.error(f"Eval failed for {file_info['model_name']}: {e}")
+                logger.error(f"  ✗ Evaluation failed: {e}")
+                import traceback
+                traceback.print_exc()
                 continue
 
+        logger.info(f"\n✓ Evaluation complete: {len(results)} results")
         return results
 
     def _generate_report(self, results: List[Dict]):
-        """生成报告"""
+        """生成报告 - 支持批量bench独立输出"""
         if not results:
             logger.warning("No results")
             return
 
-        sorted_results = sorted(results, key=lambda x: x.get("accuracy", 0), reverse=True)
-        data_config = self.config.get("DATA_CONFIG", {})
-        eval_output_dir = data_config.get("eval_output_dir", "./eval_results")
+        # 打印报告
+        print("\n" + "=" * 80)
+        print("EVALUATION RESULTS - ALL BENCHES & MODELS")
+        print("=" * 80)
 
-        print("\n" + "=" * 60)
-        print("Model Evaluation Results")
-        print("=" * 60)
+        # 按准确率排序
+        sorted_results = sorted(results, key=lambda x: x.get("accuracy", 0), reverse=True)
+
         for i, r in enumerate(sorted_results, 1):
-            print(f"{i}. {r['model_name']}")
+            print(f"{i}. [{r.get('bench_name', 'unknown')}] {r['model_name']}")
             print(f"   Accuracy: {r.get('accuracy', 0):.3f}")
             print(f"   Total: {r.get('total_samples', 0)}")
             print(f"   Matched: {r.get('matched_samples', 0)}")
             print()
-        print("=" * 60)
 
-        # 保存详细报告
-        report_file = f"{eval_output_dir}/report.json"
-        Path(report_file).parent.mkdir(parents=True, exist_ok=True)
-        with open(report_file, 'w') as f:
-            json.dump({"results": sorted_results}, f, indent=2)
-        print(f"Detailed report: {report_file}")
+        # 按bench分组保存结果
+        bench_config_list = self.config.get("BENCH_CONFIG", [])
+
+        # 为每个bench单独保存结果
+        bench_groups = {}
+        for result in sorted_results:
+            bench_name = result.get('bench_name', 'unknown')
+            if bench_name not in bench_groups:
+                bench_groups[bench_name] = []
+            bench_groups[bench_name].append(result)
+
+        # 保存每个bench的结果到各自的output_dir
+        for bench_name, bench_results in bench_groups.items():
+            # 找到对应bench的配置
+            bench_output_dir = "./eval_results"  # 默认值
+            for bench_config in bench_config_list:
+                if bench_config.get("name") == bench_name:
+                    bench_output_dir = bench_config.get("output_dir", "./eval_results")
+                    break
+
+            # 保存该bench的结果
+            report_file = f"{bench_output_dir}/results.json"
+            Path(report_file).parent.mkdir(parents=True, exist_ok=True)
+
+            report_data = {
+                "bench_name": bench_name,
+                "timestamp": datetime.now().isoformat(),
+                "total_evaluations": len(bench_results),
+                "results": bench_results
+            }
+
+            with open(report_file, 'w', encoding='utf-8') as f:
+                json.dump(report_data, f, ensure_ascii=False, indent=2)
+
+            print(f"Bench '{bench_name}' results saved to: {report_file}")
+
+        # 另外保存一个汇总文件（包含所有bench）
+        all_results_file = "./eval_results/all_results.json"
+        Path(all_results_file).parent.mkdir(parents=True, exist_ok=True)
+
+        all_report_data = {
+            "timestamp": datetime.now().isoformat(),
+            "total_evaluations": len(sorted_results),
+            "total_benches": len(bench_groups),
+            "results": sorted_results
+        }
+
+        with open(all_results_file, 'w', encoding='utf-8') as f:
+            json.dump(all_report_data, f, ensure_ascii=False, indent=2)
+
+        print("=" * 80)
+        print(f"All results summary saved to: {all_results_file}")
+        print("=" * 80)
 
 
 class DataFlowEvalCLI:
