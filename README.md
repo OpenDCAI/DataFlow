@@ -31,7 +31,7 @@ https://github.com/user-attachments/assets/19742159-cfe0-42a6-9d3d-152466d2d588
 ## 🔍 2. Overview
 
 <!--  <img src="./static/images/dataflow_framework.jpg"> -->
-  ![dataflow_framework](https://github.com/user-attachments/assets/8a7c5259-dac7-4a44-b0e2-d099e75639c8)
+  ![dataflow_framework](https://github.com/user-attachments/assets/b44db630-754a-44a8-bec7-6d350bf5ed61)
 
 
 DataFlow is a data preparation and training system designed to **parse, generate, process, and evaluate** high-quality data from noisy sources (PDF, plain-text, low-quality QA), thereby improving the performance of large language models (LLMs) in specific domains through targeted training (Pre-training, Supervised Fine-tuning, RL training) or RAG using knowledge base cleaning. **DataFlow has been empirically validated to improve domain-oriented LLMs' performance in fields such as healthcare, finance, and law.**

@@ -13,7 +13,7 @@ class AnswerJudgePrompt(PromptABC):
     def __init__(self):
         pass
     
-    def build_prompt(self, answer, reference_answer):
+    def build_prompt(self, answer, reference_answer, question=None):
         prompt = f"""
         As an answer evaluation expert, please assess whether the following answer is correct.
         

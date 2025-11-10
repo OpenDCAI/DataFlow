@@ -1,5 +1,5 @@
-from dataflow.operators.chemistry import ExtractSmilesFromText
-from dataflow.operators.chemistry import EvaluateSmilesEquivalence
+from dataflow.operators.chemistry import ExtractSmilesFromTextGenerator
+from dataflow.operators.chemistry import SmilesEquivalenceDatasetEvaluator
 
 from dataflow.serving import APILLMServing_request
 from dataflow.utils.storage import FileStorage
@@ -80,15 +80,15 @@ class ExtractSmiles():
         )
         self.model_cache_dir = './dataflow_cache'
         self.llm_serving = APILLMServing_request(
-                api_url="http://123.129.219.111:3000/v1/chat/completions",
+                api_url="https://api.openai.com/v1/chat/completions",
                 model_name="gemini-2.5-flash",
                 max_workers=200,
         )
-        self.prompt_smile_extractor = ExtractSmilesFromText(
+        self.prompt_smile_extractor = ExtractSmilesFromTextGenerator(
             llm_serving = self.llm_serving, 
             prompt_template=ExtractSmilesFromTextPrompt(smiles_prompt),
         )
-        self.smile_eval = EvaluateSmilesEquivalence()
+        self.smile_eval = SmilesEquivalenceDatasetEvaluator()
 
     def forward(self):
         # Initial filters

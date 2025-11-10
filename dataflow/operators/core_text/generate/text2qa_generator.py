@@ -107,8 +107,18 @@ class Text2QAGenerator:
         dataframe = storage.read("dataframe")
         self._validate_dataframe(dataframe)
         formatted_prompts = self._build_prompt(dataframe, "prompt")
-        prompts = self.llm_serving.generate_from_input(user_inputs=formatted_prompts, system_prompt="")
-        prompts = [json.loads(p) for p in prompts]
+        raw_prompts = self.llm_serving.generate_from_input(
+            user_inputs=formatted_prompts,
+            system_prompt=""
+        )
+
+        prompts = []
+        for i, p in enumerate(raw_prompts):
+            try:
+                prompts.append(json.loads(p))
+            except json.JSONDecodeError:
+                self.logger.warning(f"Failed to parse prompt at index {i}: {p}")
+                continue
 
         expanded_rows = []
         expanded_prompts = []
