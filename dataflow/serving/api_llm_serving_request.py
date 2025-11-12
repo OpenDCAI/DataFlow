@@ -37,24 +37,29 @@ class APILLMServing_request(LLMServingABC):
             self.logger.error(error_msg)
             raise ValueError(error_msg)
   
-    def format_response(self, response: dict, is_embedding: bool = False) -> str:    
-        # check if content is formatted like <think>...</think>...<answer>...</answer>
+    def format_response(self, response: dict, is_embedding: bool = False) -> str:
+        """Format API response, supporting both embedding and chat completion modes"""
+        
+        # Handle embedding requests
         if is_embedding:
-            embedding = response['data'][0]['embedding']
-            return embedding
-        content = response['choices'][0]['message']['content']
-        if re.search(r'<think>.*</think>.*<answer>.*</answer>', content):
+            return response.get('data', [{}])[0].get('embedding', [])
+        
+        # Extract message content
+        message = response.get('choices', [{}])[0].get('message', {})
+        content = message.get('content', '')
+        
+        # Return directly if content is already in think/answer format
+        if re.search(r'<think>.*?</think>.*?<answer>.*?</answer>', content, re.DOTALL):
             return content
         
-        try:
-            reasoning_content = response['choices'][0]["message"]["reasoning_content"]
-        except:
-            reasoning_content = ""
+        # Check for reasoning_content
+        reasoning_content = message.get('reasoning_content')
         
-        if reasoning_content != "":
+        # Wrap with think/answer tags if reasoning_content exists and is not empty
+        if reasoning_content:
             return f"<think>{reasoning_content}</think>\n<answer>{content}</answer>"
-        else:
-            return content
+        
+        return content
 
 
     def api_chat(self, system_info: str, messages: str, model: str):
