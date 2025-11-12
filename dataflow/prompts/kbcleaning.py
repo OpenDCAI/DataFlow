@@ -216,7 +216,10 @@ Processing Steps:
                               lambda m: f"【引用图片：{m.group(1)[2:-1]}" if "图片" in m.group(1) else m.group(0), 
                               cleaned_text)
       return cleaned_text
-   
+
+
+
+@PROMPT_REGISTRY.register()
 class MathbookQuestionExtractPrompt:
    def __init__(self):
       pass

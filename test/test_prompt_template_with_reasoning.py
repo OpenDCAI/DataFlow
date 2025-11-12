@@ -10,9 +10,8 @@ from dataflow.prompts.reasoning.general import (
     GeneralQuestionFilterPrompt,
     GeneralAnswerGeneratorPrompt,
     GeneralQuestionSynthesisPrompt,
-    AnswerJudgePrompt,
 )
-
+from dataflow.prompts.model_evaluation.general import AnswerJudgePrompt
 class GeneralReasoning_APIPipeline():
     def __init__(self, llm_serving: LLMServingABC = None):
         

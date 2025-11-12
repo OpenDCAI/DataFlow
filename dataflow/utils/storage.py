@@ -360,6 +360,7 @@ class MyScaleDBStorage(DataFlowStorage):
         pipeline_id: str = None,
         input_task_id: str = None,
         output_task_id: str = None,
+        parent_pipeline_id: str = None,
         page_size: int = 10000,
         page_num: int = 0
     ):
@@ -375,6 +376,7 @@ class MyScaleDBStorage(DataFlowStorage):
         pipeline_id: str, 当前 pipeline 的标识（可选，默认 None）
         input_task_id: str, 输入任务的标识（可选，默认 None）
         output_task_id: str, 输出任务的标识（可选，默认 None）
+        parent_pipeline_id: str, 父 pipeline 的标识（可选，默认 None）
         page_size: int, 分页时每页的记录数（默认 10000）
         page_num: int, 当前页码（默认 0）
         """
@@ -384,6 +386,7 @@ class MyScaleDBStorage(DataFlowStorage):
         self.pipeline_id: str = pipeline_id
         self.input_task_id: str = input_task_id
         self.output_task_id: str = output_task_id
+        self.parent_pipeline_id: str = parent_pipeline_id
         self.page_size: int = page_size
         self.page_num: int = page_num
         self.validate_required_params()
@@ -402,6 +405,9 @@ class MyScaleDBStorage(DataFlowStorage):
             if self.input_task_id:
                 where_clauses.append("task_id = %(task_id)s")
                 params['task_id'] = self.input_task_id
+            if hasattr(self, 'parent_pipeline_id') and self.parent_pipeline_id:
+                where_clauses.append("parent_pipeline_id = %(parent_pipeline_id)s")
+                params['parent_pipeline_id'] = self.parent_pipeline_id
             where_sql = f"WHERE {' AND '.join(where_clauses)}" if where_clauses else ""
             limit_offset = f"LIMIT {self.page_size} OFFSET {(self.page_num-1)*self.page_size}" if self.page_size else ""
             sql = f"SELECT * FROM {self.table} {where_sql} {limit_offset}"
@@ -450,20 +456,27 @@ class MyScaleDBStorage(DataFlowStorage):
             # 统一处理 data 列
             df['data'] = df['data'].apply(lambda x: x if isinstance(x, dict) else (json.loads(x) if isinstance(x, str) else {}))
             # 合并所有非系统字段到 data 字段并删除原列
-            system_cols = {'pipeline_id', 'task_id', 'raw_data_id', 'min_hashes', 'data'}
+            system_cols = {'pipeline_id', 'task_id', 'raw_data_id', 'min_hashes', 'file_id', 'filename', 'parent_pipeline_id', 'data'}
             for col in df.columns:
                 if col not in system_cols:
                     df['data'] = df.apply(lambda row: safe_merge(row, col), axis=1)
                     df = df.drop(columns=[col])
-            # 自动填充 pipeline_id, task_id, raw_data_id, min_hashes
+            # 自动填充 pipeline_id, task_id, raw_data_id, min_hashes, file_id, filename, parent_pipeline_id
             df['pipeline_id'] = self.pipeline_id
             df['task_id'] = self.output_task_id
             df['raw_data_id'] = df['data'].apply(lambda d: d.get(SYS_FIELD_PREFIX + 'raw_data_id', 0) if isinstance(d, dict) else 0)
             df['min_hashes'] = df['data'].apply(lambda d: _default_min_hashes(d) if isinstance(d, dict) else [0])
+            # 从 data 中提取 file_id、filename、parent_pipeline_id 字段
+            df['file_id'] = df['data'].apply(lambda d: d.get(SYS_FIELD_PREFIX + 'file_id', '') if isinstance(d, dict) else '')
+            df['filename'] = df['data'].apply(lambda d: d.get(SYS_FIELD_PREFIX + 'filename', '') if isinstance(d, dict) else '')
+            df['parent_pipeline_id'] = df['data'].apply(lambda d: d.get(SYS_FIELD_PREFIX + 'parent_pipeline_id', '') if isinstance(d, dict) else '')
+            # 若 data 中未提供 parent_pipeline_id，使用实例属性回填
+            if hasattr(self, 'parent_pipeline_id') and self.parent_pipeline_id:
+                df['parent_pipeline_id'] = df['parent_pipeline_id'].apply(lambda v: v if v else self.parent_pipeline_id)
             # data 字段转为 JSON 字符串
             df['data'] = df['data'].apply(lambda x: json.dumps(x, ensure_ascii=False) if not isinstance(x, str) else x)
             # 只保留必需字段
-            required_cols = ['pipeline_id', 'task_id', 'raw_data_id', 'min_hashes', 'data']
+            required_cols = ['pipeline_id', 'task_id', 'raw_data_id', 'min_hashes', 'file_id', 'filename', 'parent_pipeline_id', 'data']
             df = df[required_cols]
             records = df.to_dict(orient="records")
             values = [
@@ -472,11 +485,14 @@ class MyScaleDBStorage(DataFlowStorage):
                     rec['task_id'],
                     int(rec['raw_data_id']),
                     rec['min_hashes'],
+                    rec['file_id'],
+                    rec['filename'],
+                    rec['parent_pipeline_id'],
                     rec['data']
                 ) for rec in records
             ]
             insert_sql = f"""
-            INSERT INTO {self.table} (pipeline_id, task_id, raw_data_id, min_hashes, data)
+            INSERT INTO {self.table} (pipeline_id, task_id, raw_data_id, min_hashes, file_id, filename, parent_pipeline_id, data)
             VALUES
             """
             self.logger.info(f"Inserting {len(values)} rows into {self.table}")

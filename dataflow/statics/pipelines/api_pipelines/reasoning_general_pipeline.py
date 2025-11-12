@@ -10,8 +10,8 @@ from dataflow.prompts.reasoning.general import (
     GeneralQuestionFilterPrompt,
     GeneralAnswerGeneratorPrompt,
     GeneralQuestionSynthesisPrompt,
-    AnswerJudgePrompt,
 )
+from dataflow.prompts.model_evaluation.general import AnswerJudgePrompt
 
 class GeneralReasoning_APIPipeline():
     def __init__(self, llm_serving: LLMServingABC = None):
@@ -31,7 +31,7 @@ class GeneralReasoning_APIPipeline():
         )
 
         self.question_filter_step1 = ReasoningQuestionFilter(
-            system_prompt="You are an expert in evaluating mathematical problems. Follow the user's instructions strictly and output your final judgment in the required JSON format.",
+            system_prompt="You are an expert in evaluating problems. Follow the user's instructions strictly and output your final judgment in the required JSON format.",
             llm_serving=self.llm_serving,
             prompt_template=GeneralQuestionFilterPrompt()
         )

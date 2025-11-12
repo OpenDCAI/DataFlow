@@ -1,5 +1,5 @@
-from dataflow.operators.chemistry import ExtractSmilesFromText
-from dataflow.operators.chemistry import EvaluateSmilesEquivalence
+from dataflow.operators.chemistry import ExtractSmilesFromTextGenerator
+from dataflow.operators.chemistry import SmilesEquivalenceDatasetEvaluator
 
 from dataflow.serving import APILLMServing_request
 from dataflow.utils.storage import FileStorage
@@ -84,18 +84,18 @@ class ExtractSmiles():
                 model_name="gemini-2.5-flash",
                 max_workers=200,
         )
-        self.prompt_smile_extractor = ExtractSmilesFromText(
+        self.prompt_smile_extractor = ExtractSmilesFromTextGenerator(
             llm_serving = self.llm_serving, 
             prompt_template=ExtractSmilesFromTextPrompt(smiles_prompt),
         )
-        self.smile_eval = EvaluateSmilesEquivalence()
+        self.smile_eval = SmilesEquivalenceDatasetEvaluator()
 
     def forward(self):
         # Initial filters
         self.prompt_smile_extractor.run(
             storage = self.storage.step(),
-            content_key = "text",
-            abbreviation_key = "abbreviations",
+            input_content_key = "text",
+            input_abbreviation_key = "abbreviations",
             output_key = "synth_smiles"
         )
         self.smile_eval.run(

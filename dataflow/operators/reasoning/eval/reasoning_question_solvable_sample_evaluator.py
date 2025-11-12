@@ -3,6 +3,7 @@ from dataflow.core import OperatorABC
 from dataflow.core.prompt import prompt_restrict, DIYPromptABC
 from dataflow.core import LLMServingABC
 from dataflow.prompts.reasoning.math import MathQuestionEvaluatorPrompt
+from typing import Union
 
 import pandas as pd
 import json
@@ -16,7 +17,7 @@ from dataflow import get_logger
 
 @OPERATOR_REGISTRY.register()
 class ReasoningQuestionSolvableSampleEvaluator(OperatorABC):
-    def __init__(self, llm_serving: LLMServingABC = None, prompt_template = MathQuestionEvaluatorPrompt | DIYPromptABC):
+    def __init__(self, llm_serving: LLMServingABC = None, prompt_template: Union[MathQuestionEvaluatorPrompt, DIYPromptABC] = None):
         """
         Initialize the ReasoningCategoryDatasetEvaluator with the provided configuration.
         """

@@ -368,7 +368,6 @@ class SelectSQLGeneratorPrompt(PromptABC):
     def build_prompt(self, insert_statements: List[str], create_statements: List[str], db_engine: str) -> str:
         random.seed(42)
         complexity = random.sample(["Simple", "Moderate", "Complex", "Highly Complex"], 1)[0]
-
         if len(insert_statements) == 0:
             db_value_prompt = ""
         else:
@@ -859,7 +858,7 @@ class SelectVecSQLGeneratorPrompt(PromptABC):
             column_count=column_count,
             embedding_model="\'all-MiniLM-L6-v2\'"
         )
-        return prompt, complexity
+        return prompt
 
 
 @PROMPT_REGISTRY.register()
@@ -1331,7 +1330,7 @@ class Text2VecSQLQuestionGeneratorPrompt(PromptABC):
             instruction = instruction
         )  
 
-    def build_prompt(self, input_sql, input_db_id, db_id2column_info, db_type, using_sqlite_vec, extension) -> str:
+    def build_prompt(self, input_sql, input_db_id, db_id2column_info, db_type) -> str:
         random.seed(42)
         styles = ["Formal", "Colloquial", "Imperative", "Interrogative", "Descriptive", "Concise", "Vague", "Metaphorical"]
         style_name = random.sample(styles, 1)[0]
@@ -1353,11 +1352,8 @@ class Text2VecSQLQuestionGeneratorPrompt(PromptABC):
             instruction = self._get_instruction_wo_ek()
             output_format = self._get_output_format_wo_ek()
 
-        if using_sqlite_vec:
-            using_knn = "Extension includes sqlite-vec, you have to use KNN queries of it."
-        else:
-            using_knn = ""
-            
+        using_knn = "Extension includes sqlite-vec, you have to use KNN queries of it."  
+        extension="sqlite_vec and sqlite_lembed"
         prompt = self._question_synthesis_prompt(
             using_knn=using_knn,
             style_desc=self._get_style2desc()[style_name].strip(),
@@ -1535,7 +1531,6 @@ class Text2SQLPromptGeneratorPrompt(PromptABC):
 
         prompt = template.format(db_details=db_details, question_and_evidence=question_and_evidence, db_engine=db_engine)
         return prompt
-
 
 @PROMPT_REGISTRY.register()
 class Text2VecSQLPromptGeneratorPrompt(PromptABC):

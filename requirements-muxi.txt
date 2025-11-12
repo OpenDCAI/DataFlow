@@ -5,7 +5,6 @@ torch
 tqdm
 transformers
 # vllm==0.6.3
-aisuite
 math_verify
 word2number
 accelerate

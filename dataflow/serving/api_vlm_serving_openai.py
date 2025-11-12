@@ -51,7 +51,6 @@ class APIVLMServing_openai(LLMServingABC):
             api_key=api_key,
             base_url=api_url
         )
-
     def _encode_image_to_base64(self, image_path: str) -> Tuple[str, str]:
         """
         Read an image file and convert it to a base64-encoded string, returning the image data and MIME format.
@@ -89,7 +88,8 @@ class APIVLMServing_openai(LLMServingABC):
         self,
         model: str,
         messages: List[Dict[str, Any]],
-        timeout: int
+        timeout: int,
+        json_schema: dict = None
     ) -> str:
         """
         Send a chat completion request to the OpenAI API and return the generated content.
@@ -97,13 +97,28 @@ class APIVLMServing_openai(LLMServingABC):
         :param model: Model name for the request.
         :param messages: Messages payload constructed by `_create_messages`.
         :param timeout: Timeout in seconds for the API call.
+        :param json_schema: Optional JSON schema for structured output.
         :return: Generated text response from the model.
         """
-        resp = self.client.chat.completions.create(
-            model=model,
-            messages=messages,
-            timeout=timeout
-        )
+        # 准备请求参数
+        request_params = {
+            "model": model,
+            "messages": messages,
+            "timeout": timeout
+        }
+        
+        # 如果提供了 JSON schema，添加 response_format
+        if json_schema is not None:
+            request_params["response_format"] = {
+                "type": "json_schema",
+                "json_schema": {
+                    "name": "chart_info_response",
+                    "strict": True,
+                    "schema": json_schema
+                }
+            }
+        
+        resp = self.client.chat.completions.create(**request_params)
         return resp.choices[0].message.content
 
     def chat_with_one_image(
@@ -111,7 +126,8 @@ class APIVLMServing_openai(LLMServingABC):
         image_path: str,
         text_prompt: str,
         model: str = None,
-        timeout: int = 1800
+        timeout: int = 1800,
+        json_schema: dict = None
     ) -> str:
         """
         Perform a chat completion using a single image and a text prompt.
@@ -120,6 +136,7 @@ class APIVLMServing_openai(LLMServingABC):
         :param text_prompt: Text prompt to accompany the image.
         :param model: (Optional) Model override; defaults to instance `model_name`.
         :param timeout: Timeout in seconds for the API call.
+        :param json_schema: (Optional) JSON schema for structured output.
         :return: Model's response as a string.
         """
         model = model or self.model_name
@@ -129,7 +146,7 @@ class APIVLMServing_openai(LLMServingABC):
             {"type": "image_url", "image_url": {"url": f"data:image/{fmt};base64,{b64}"}}
         ]
         messages = self._create_messages(content)
-        return self._send_chat_request(model, messages, timeout)
+        return self._send_chat_request(model, messages, timeout, json_schema)
 
     def chat_with_one_image_with_id(
         self,
@@ -137,7 +154,8 @@ class APIVLMServing_openai(LLMServingABC):
         image_path: str,
         text_prompt: str,
         model: str = None,
-        timeout: int = 1800
+        timeout: int = 1800,
+        json_schema: dict = None,
     ) -> Tuple[Any, str]:
         """
         Same as `chat_with_one_image` but returns a tuple of (request_id, response).
@@ -149,7 +167,7 @@ class APIVLMServing_openai(LLMServingABC):
         :param timeout: Timeout in seconds for the API call.
         :return: Tuple of (request_id, model response).
         """
-        response = self.chat_with_one_image(image_path, text_prompt, model, timeout)
+        response = self.chat_with_one_image(image_path, text_prompt, model, timeout, json_schema)
         return request_id, response
 
     def generate_from_input_one_image(
@@ -158,7 +176,8 @@ class APIVLMServing_openai(LLMServingABC):
         text_prompts: List[str],
         system_prompt: str = "",
         model: str = None,
-        timeout: int = 1800
+        timeout: int = 1800,
+        json_schema: dict = None
     ) -> List[str]:
         """
         Batch process single-image chat requests concurrently.
@@ -168,6 +187,7 @@ class APIVLMServing_openai(LLMServingABC):
         :param system_prompt: Optional system-level prompt prefixed to each user prompt.
         :param model: (Optional) Model override; defaults to instance `model_name`.
         :param timeout: Timeout in seconds for each API call.
+        :param json_schema: (Optional) JSON schema for structured output.
         :return: List of model responses preserving input order.
         :raises ValueError: If lengths of image_paths and text_prompts differ.
         """
@@ -186,7 +206,8 @@ class APIVLMServing_openai(LLMServingABC):
                     path,
                     prompt,
                     model,
-                    timeout
+                    timeout,
+                    json_schema
                 ): idx
                 for idx, (path, prompt) in enumerate(zip(image_paths, prompts))
             }
@@ -203,7 +224,8 @@ class APIVLMServing_openai(LLMServingABC):
         image_labels: List[str],
         system_prompt: str = "",
         model: str = None,
-        timeout: int = 1800
+        timeout: int = 1800,
+        json_schema: dict = None
     ) -> str:
         """
         Analyze multiple images in a single request with labels.
@@ -232,7 +254,7 @@ class APIVLMServing_openai(LLMServingABC):
             })
 
         messages = self._create_messages(content)
-        return self._send_chat_request(model, messages, timeout)
+        return self._send_chat_request(model, messages, timeout, json_schema)
 
     def analyze_images_with_gpt_with_id(
         self,
@@ -241,7 +263,8 @@ class APIVLMServing_openai(LLMServingABC):
         request_id: Any,
         system_prompt: str = "",
         model: str = None,
-        timeout: int = 1800
+        timeout: int = 1800,
+        json_schema: dict = None
     ) -> Tuple[Any, str]:
         """
         Batch-tracked version of `analyze_images_with_gpt`, returning (request_id, analysis).
@@ -259,7 +282,8 @@ class APIVLMServing_openai(LLMServingABC):
             image_labels,
             system_prompt,
             model,
-            timeout
+            timeout,
+            json_schema
         )
         self.logger.info(f"Request {request_id} completed")
         return request_id, result
@@ -270,7 +294,8 @@ class APIVLMServing_openai(LLMServingABC):
         list_of_image_labels: List[List[str]],
         system_prompt: str = "",
         model: str = None,
-        timeout: int = 1800
+        timeout: int = 1800,
+        json_schema: dict = None
     ) -> List[str]:
         """
         Concurrently analyze multiple sets of images with labels.
@@ -300,7 +325,8 @@ class APIVLMServing_openai(LLMServingABC):
                     idx,
                     system_prompt,
                     model,
-                    timeout
+                    timeout,
+                    json_schema
                 ): idx
                 for idx, (paths, labels) in enumerate(
                     zip(list_of_image_paths, list_of_image_labels)
@@ -319,7 +345,7 @@ class APIVLMServing_openai(LLMServingABC):
         """
         self.client.close()
     
-    def generate_from_input(self, user_inputs: List[str], system_prompt: str = "Describe the image in detail."):
+    def generate_from_input(self, user_inputs: List[str], system_prompt: str = "Describe the image in detail.", json_schema: dict = None):
         """
         user_inputs: List[str], list of picture paths
         system_prompt: str, system prompt
@@ -334,9 +360,10 @@ class APIVLMServing_openai(LLMServingABC):
                                                user_input,
                                                system_prompt,
                                                self.model_name,
-                                               self.timeout))
-        for future in as_completed(futures):
-            idx,res = future.result()
-            result_text_list[idx] = res
+                                               self.timeout,
+                                               json_schema = json_schema,))
+            for future in tqdm(as_completed(futures), total=len(futures), desc="Generating"):
+                idx,res = future.result()
+                result_text_list[idx] = res
         return result_text_list
     

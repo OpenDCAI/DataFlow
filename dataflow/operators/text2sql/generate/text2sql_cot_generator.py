@@ -1,8 +1,8 @@
-from typing import Dict, Optional, Tuple, List
+from typing import Dict, Optional, Tuple, List, Union
 import pandas as pd
 import re
 from dataflow.prompts.text2sql import Text2SQLCotGeneratorPrompt
-from dataflow.core.prompt import prompt_restrict 
+from dataflow.core.prompt import DIYPromptABC, prompt_restrict 
 from dataflow.utils.registry import OPERATOR_REGISTRY
 from dataflow import get_logger
 from dataflow.core import OperatorABC
@@ -16,7 +16,7 @@ from dataflow.utils.text2sql.database_manager import DatabaseManager
 class Text2SQLCoTGenerator(OperatorABC):
     def __init__(self, llm_serving: LLMServingABC, 
                 database_manager: DatabaseManager,
-                prompt_template = Text2SQLCotGeneratorPrompt
+                prompt_template: Union[Text2SQLCotGeneratorPrompt, DIYPromptABC] = None
                 ):
         self.llm_serving = llm_serving
         self.database_manager = database_manager

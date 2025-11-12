@@ -26,12 +26,6 @@ def _copy_playground():
         os.makedirs(target_dir)
     copy_files_recursively(DataFlowPath.get_dataflow_playground_dir(), target_dir)
 
-def _copy_agentscript():
-    target_dir = os.getcwd()
-    if not os.path.exists(target_dir):
-        os.makedirs(target_dir)
-    copy_files_recursively(DataFlowPath.get_dataflow_agentscript_dir(), target_dir)
-
 def _copy_examples():
     target_dir = os.path.join(os.getcwd(), "example_data")
     if not os.path.exists(target_dir):
@@ -46,7 +40,6 @@ def cli_init(subcommand):
         _copy_pipelines()
         _copy_examples()
         _copy_playground()
-        _copy_agentscript()
     # if subcommand == "model_zoo":
     #     _copy_train_scripts()
     #     _copy_demo_runs() 

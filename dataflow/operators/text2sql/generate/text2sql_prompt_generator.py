@@ -1,22 +1,22 @@
 import pandas as pd
 import re
 from tqdm import tqdm
-from typing import Dict, Optional
+from typing import Dict, Optional, Union
 from dataflow.utils.registry import OPERATOR_REGISTRY
 from dataflow import get_logger
-from dataflow.prompts.text2sql import Text2SQLPromptGeneratorPrompt
-from dataflow.core.prompt import prompt_restrict 
+from dataflow.prompts.text2sql import Text2SQLPromptGeneratorPrompt, Text2VecSQLPromptGeneratorPrompt
+from dataflow.core.prompt import prompt_restrict, DIYPromptABC
 from dataflow.core import OperatorABC
 from dataflow.utils.storage import DataFlowStorage
 from dataflow.utils.text2sql.database_manager import DatabaseManager
 
-@prompt_restrict(Text2SQLPromptGeneratorPrompt)
+@prompt_restrict(Text2SQLPromptGeneratorPrompt, Text2VecSQLPromptGeneratorPrompt)
 
 @OPERATOR_REGISTRY.register()
 class Text2SQLPromptGenerator(OperatorABC):
     def __init__(self, 
                 database_manager: DatabaseManager,
-                prompt_template = Text2SQLPromptGeneratorPrompt
+                prompt_template: Union[Text2SQLPromptGeneratorPrompt, Text2VecSQLPromptGeneratorPrompt, DIYPromptABC] = None
             ):
 
         if prompt_template is None:

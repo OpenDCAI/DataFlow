@@ -231,9 +231,9 @@ class SQLiteConnector(DatabaseConnectorABC):
             # Traverse each table
             for table_name, table_info in tables.items():
                 # Get all the column names from the table information
-                columns = table_info.get('columns', [])
+                columns = table_info.get('columns', {})
                 
-                # Directly traverse the list of column names
+                # Traverse the dictionary of columns (key is column name)
                 for column_name in columns:
                     # Check if the variable is a string
                     if isinstance(column_name, str):
