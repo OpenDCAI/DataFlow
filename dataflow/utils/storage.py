@@ -244,7 +244,7 @@ class FileStorage(DataFlowStorage):
                 raise ValueError(f"Unsupported data type: {type(data[0])}")
         elif isinstance(data, pd.DataFrame):
             # 对DataFrame的每个元素进行清洗
-            dataframe = data.applymap(clean_surrogates)
+            dataframe = data.map(clean_surrogates)
         else:
             raise ValueError(f"Unsupported data type: {type(data)}")
 
