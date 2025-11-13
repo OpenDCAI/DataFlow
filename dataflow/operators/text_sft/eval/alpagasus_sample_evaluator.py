@@ -13,7 +13,6 @@ from dataflow.prompts.general_text import AlpagasusPrompt
 @OPERATOR_REGISTRY.register()
 class AlpagasusSampleEvaluator(OperatorABC):
     def __init__(self, llm_serving: LLMServingABC = None, dimension: str = 'quality'):
-        print("fuckyou!")
         self.logger = get_logger()
         self.logger.info(f'Initializing {self.__class__.__name__}...')
         self.llm_serving = llm_serving
