@@ -1,8 +1,12 @@
 from abc import ABC, abstractmethod
+import atexit
+import signal
+import tempfile
+import weakref
 from dataflow import get_logger
 import pandas as pd
 import json
-from typing import Any, Literal
+from typing import Any, Dict, Literal
 import os
 import copy
 
@@ -28,6 +32,274 @@ class DataFlowStorage(ABC):
     @abstractmethod
     def write(self, data: Any) -> Any:
         pass
+class LazyFileStorage(DataFlowStorage):
+    """
+    LazyFileStorage
+    ----------------
+    - 平时仅在内存中读写；只在进程正常结束/被中断或显式 flush 时落盘
+    - 与传统 FileStorage 的接口保持一致（step/reset/read/write/…）
+    - 支持首步数据源: 本地文件 / 'hf:' / 'ms:'
+    - 原子落盘(os.replace)，多线程安全(RLock)
+    """
+
+    def __init__(
+        self, 
+        first_entry_file_name: str,
+        cache_path:str="./cache",
+        file_name_prefix:str="dataflow_cache_step",
+        cache_type:Literal["json", "jsonl", "csv", "parquet", "pickle"] = "jsonl",
+        save_on_exit: bool = True,        # 进程退出时自动 flush
+        flush_all_steps: bool = False      # True: 所有缓冲步落盘；False: 仅最新一步
+    ):
+        self.first_entry_file_name = first_entry_file_name
+        self.cache_path = cache_path
+        self.file_name_prefix = file_name_prefix
+        self.cache_type = cache_type
+        self.operator_step = -1
+        self.logger = get_logger()
+
+        # 内存缓冲：step -> DataFrame
+        self._buffers: Dict[int, pd.DataFrame] = {}
+        self._dirty_steps: set[int] = set()
+        self._lock = RLock()
+
+        self._save_on_exit = save_on_exit
+        self._flush_all_steps = flush_all_steps
+
+        if self._save_on_exit:
+            self._register_exit_hooks()
+
+    # ---------- 生命周期 & 信号 ----------
+    def _register_exit_hooks(self):
+        _self_ref = weakref.ref(self)
+        atexit.register(lambda: _self_ref() and _self_ref()._flush_if_dirty(reason="atexit"))
+        for sig in (signal.SIGINT, signal.SIGTERM):
+            try:
+                signal.signal(sig, self._make_signal_handler(sig))
+            except Exception:
+                # 某些环境（子线程/受限容器）可能设置失败
+                pass
+
+    def _make_signal_handler(self, sig):
+        def handler(signum, frame):
+            try:
+                self._flush_if_dirty(reason=f"signal:{signum}")
+            finally:
+                try:
+                    signal.signal(signum, signal.SIG_DFL)
+                except Exception:
+                    pass
+                try:
+                    os.kill(os.getpid(), signum)
+                except Exception:
+                    # 某些解释器环境不允许再次发送信号，忽略
+                    pass
+        return handler
+
+    def _flush_if_dirty(self, reason: str):
+        with self._lock:
+            dirty = bool(self._dirty_steps)
+        if dirty:
+            self.logger.info(f"[flush] Triggered by {reason}, flushing...")
+            self.flush_all()
+        else:
+            self.logger.info(f"[flush] Triggered by {reason}, but no dirty buffers.")
+
+    # ---------- step & 路径 ----------
+    def _get_cache_file_path(self, step) -> str:
+        if step == -1:
+            self.logger.error("You must call storage.step() before reading or writing data. Please call storage.step() first for each operator step.")  
+            raise ValueError("You must call storage.step() before reading or writing data. Please call storage.step() first for each operator step.")
+        if step == 0:
+            # 首步来源可能是远端或本地
+            return os.path.join(self.first_entry_file_name)
+        else:
+            return os.path.join(self.cache_path, f"{self.file_name_prefix}_step{step}.{self.cache_type}")
+
+    def step(self):
+        self.operator_step += 1
+        return copy.copy(self)  # 保持与原 FileStorage 兼容的使用方式
+    
+    def reset(self):
+        self.operator_step = -1
+        return self
+
+    # ---------- 工具方法 ----------
+    def get_keys_from_dataframe(self) -> list[str]:
+        dataframe = self.read(output_type="dataframe")
+        return dataframe.columns.tolist() if isinstance(dataframe, pd.DataFrame) else []
+
+    def _load_local_file(self, file_path: str, file_type: str) -> pd.DataFrame:
+        if not os.path.exists(file_path):
+            raise FileNotFoundError(f"File {file_path} does not exist. Please check the path.")
+        try:
+            if file_type == "json":
+                return pd.read_json(file_path)
+            elif file_type == "jsonl":
+                return pd.read_json(file_path, lines=True)
+            elif file_type == "csv":
+                return pd.read_csv(file_path)
+            elif file_type == "parquet":
+                return pd.read_parquet(file_path)
+            elif file_type == "pickle":
+                return pd.read_pickle(file_path)
+            else:
+                raise ValueError(f"Unsupported file type: {file_type}")
+        except Exception as e:
+            raise ValueError(f"Failed to load {file_type} file: {str(e)}")
+    
+    def _convert_output(self, dataframe: pd.DataFrame, output_type: str) -> Any:
+        if output_type == "dataframe":
+            return dataframe
+        elif output_type == "dict":
+            return dataframe.to_dict(orient="records")
+        raise ValueError(f"Unsupported output type: {output_type}")
+
+    def _read_first_entry_source(self) -> pd.DataFrame:
+        source = self.first_entry_file_name
+        if source.startswith("hf:"):
+            from datasets import load_dataset
+            _, dataset_name, *parts = source.split(":")
+            if len(parts) == 1:
+                config, split = None, parts[0]
+            elif len(parts) == 2:
+                config, split = parts
+            else:
+                config, split = None, "train"
+            dataset = (
+                load_dataset(dataset_name, config, split=split) 
+                if config 
+                else load_dataset(dataset_name, split=split)
+            )
+            return dataset.to_pandas()
+        elif source.startswith("ms:"):
+            from modelscope import MsDataset
+            _, dataset_name, *split_parts = source.split(":")
+            split = split_parts[0] if split_parts else "train"
+            dataset = MsDataset.load(dataset_name, split=split)
+            return pd.DataFrame(dataset)
+        else:
+            # 本地首文件
+            local_cache = source.split(".")[-1]
+            return self._load_local_file(source, local_cache)
+
+    # ---------- 读 ----------
+    def read(self, output_type: Literal["dataframe", "dict"]="dataframe") -> Any:
+        if self.operator_step == 0 and self.first_entry_file_name == "":
+            self.logger.info("first_entry_file_name is empty, returning empty dataframe")
+            empty_dataframe = pd.DataFrame()
+            return self._convert_output(empty_dataframe, output_type)
+
+        step = self.operator_step
+        with self._lock:
+            if step in self._buffers:
+                self.logger.info(f"[buffer] Reading step {step} from in-memory buffer.")
+                return self._convert_output(self._buffers[step], output_type)
+
+        file_path = self._get_cache_file_path(step)
+        self.logger.info(f"[read] step={step}, path={file_path}, type={output_type}")
+
+        if step == 0:
+            df = self._read_first_entry_source()
+            with self._lock:
+                self._buffers[step] = df
+            return self._convert_output(df, output_type)
+
+        # 兜底：磁盘已有则载入（例如复跑时）
+        local_cache = self.cache_type
+        df = self._load_local_file(file_path, local_cache)
+        with self._lock:
+            self._buffers[step] = df
+        return self._convert_output(df, output_type)
+
+    # ---------- 写（仅缓冲，不落盘） ----------
+    def write(self, data: Any) -> Any:
+        """
+        将数据写入内存缓冲（目标 step = operator_step + 1），不触盘。
+        返回该 step 对应未来落盘的文件路径，便于日志对齐。
+        """
+        def clean_surrogates(obj):
+            if isinstance(obj, str):
+                return obj.encode('utf-8', 'replace').decode('utf-8')
+            elif isinstance(obj, dict):
+                return {k: clean_surrogates(v) for k, v in obj.items()}
+            elif isinstance(obj, list):
+                return [clean_surrogates(item) for item in obj]
+            elif isinstance(obj, (int, float, bool)) or obj is None:
+                return obj
+            else:
+                try:
+                    return clean_surrogates(str(obj))
+                except:
+                    return obj
+
+        if isinstance(data, list):
+            if len(data) > 0 and isinstance(data[0], dict):
+                cleaned_data = [clean_surrogates(item) for item in data]
+                dataframe = pd.DataFrame(cleaned_data)
+            else:
+                raise ValueError(f"Unsupported data type: {type(data[0]) if data else 'empty list'}")
+        elif isinstance(data, pd.DataFrame):
+            dataframe = data.applymap(clean_surrogates)
+        else:
+            raise ValueError(f"Unsupported data type: {type(data)}")
+
+        target_step = self.operator_step + 1
+        with self._lock:
+            self._buffers[target_step] = dataframe.reset_index(drop=True)
+            self._dirty_steps.add(target_step)
+
+        self.logger.success(f"[buffer] Buffered data for step {target_step} (type={self.cache_type}); not persisted yet.")
+        return self._get_cache_file_path(target_step)
+
+    # ---------- 落盘 ----------
+    def flush_step(self, step: int):
+        with self._lock:
+            if step not in self._buffers:
+                self.logger.info(f"No buffer for step {step}; nothing to flush.")
+                return
+            df = self._buffers[step]
+
+        file_path = self._get_cache_file_path(step)
+        os.makedirs(os.path.dirname(file_path) or ".", exist_ok=True)
+
+        # 原子写：先写临时文件，再替换
+        dir_name = os.path.dirname(file_path) or "."
+        fd, tmp_path = tempfile.mkstemp(prefix=".tmp_", dir=dir_name)
+        os.close(fd)
+        try:
+            if self.cache_type == "json":
+                df.to_json(tmp_path, orient="records", force_ascii=False, indent=2)
+            elif self.cache_type == "jsonl":
+                df.to_json(tmp_path, orient="records", lines=True, force_ascii=False)
+            elif self.cache_type == "csv":
+                df.to_csv(tmp_path, index=False)
+            elif self.cache_type == "parquet":
+                df.to_parquet(tmp_path)
+            elif self.cache_type == "pickle":
+                df.to_pickle(tmp_path)
+            else:
+                raise ValueError(f"Unsupported file type: {self.cache_type}, output file should end with json, jsonl, csv, parquet, pickle")
+
+            os.replace(tmp_path, file_path)
+            with self._lock:
+                self._dirty_steps.discard(step)
+            self.logger.success(f"[flush] Persisted step {step} -> {file_path}")
+        finally:
+            try:
+                if os.path.exists(tmp_path):
+                    os.remove(tmp_path)
+            except Exception:
+                pass
+
+    def flush_all(self):
+        with self._lock:
+            if not self._buffers:
+                self.logger.info("No buffers to flush.")
+                return
+            steps = sorted(self._buffers.keys()) if self._flush_all_steps else [max(self._buffers.keys())]
+        for s in steps:
+            self.flush_step(s)
 
 class DummyStorage(DataFlowStorage):
     def __init__(
@@ -276,7 +548,7 @@ class FileStorage(DataFlowStorage):
         
         return file_path    
     
-from threading import Lock
+from threading import Lock, RLock
 import math
 from dataflow.utils.db_pool.myscale_pool import ClickHouseConnectionPool
 
