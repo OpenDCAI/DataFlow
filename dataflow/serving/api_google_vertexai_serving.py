@@ -65,7 +65,7 @@ class GeminiVertexAIClient:
         model: Optional[str] = None,
         temperature: float = 0.0,
         max_tokens: int = 4096,
-        response_schema: Optional[type[BaseModel]] = None,
+        response_schema: Optional[Union[type[BaseModel], dict]] = None,
     ) -> GenerationResponse:
         """Generate response from a Gemini model on Vertex AI."""
         model_name = model or self.default_model_name
@@ -84,11 +84,17 @@ class GeminiVertexAIClient:
         )
         
         tools = None
-        if response_schema:
-            schema_dict = response_schema.model_json_schema()
+        if response_schema is not None:
+            if isinstance(response_schema, dict):
+                # 已经是 JSON Schema
+                schema_dict = response_schema
+            else:
+                # 是 BaseModel，转换成 JSON Schema
+                schema_dict = response_schema.model_json_schema()
+
             function_declaration = FunctionDeclaration(
                 name="extract_data",
-                description=f"Extracts data matching the '{schema_dict.get('title', 'schema')}'.",
+                description=f"Extracts structured data according to the provided schema.",
                 parameters=schema_dict,
             )
             tools = [Tool(function_declarations=[function_declaration])]
@@ -118,7 +124,7 @@ class APIGoogleVertexAIServing(LLMServingABC):
                  max_retries: int = 5,
                  temperature: float = 0.0,
                  max_tokens: int = 4096,
-                 response_schema: Optional[type[BaseModel]] = None, # NEW: Allow schema at server level
+                 response_schema: Optional[Union[type[BaseModel], dict]] = None, # NEW: Allow schema at server level
                  ):
         self.logger = logging.getLogger(__name__)
         logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
@@ -271,7 +277,7 @@ if __name__ == "__main__":
             print(f"\n[Prompt {i+1}]: {prompt}")
             print(f"[Gemini]: {result}")
 
-        # --- Test Case 2: Structured Data Extraction ---
+        # --- Test Case 2: Structured Data Extraction (PyDantic) ---
         print("\n--- Starting Test 2: Structured Data Extraction (JSON Output) ---")
         class UserDetails(BaseModel):
             name: str
@@ -294,6 +300,35 @@ if __name__ == "__main__":
         for i, (prompt, result) in enumerate(zip(user_prompts_json, results_json)):
             print(f"\n[Prompt {i+1}]: {prompt}")
             print(f"[Gemini JSON]: {result}")
+            
+        # --- Test Case 3: Structured Data Extraction (Raw JSON Schema) ---
+        print("\n--- Starting Test 3: Structured Data Extraction (Raw JSON Schema) ---")
+        json_schema = {
+            "title": "UserDetails",
+            "type": "object",
+            "properties": {
+                "name": {"type": "string"},
+                "age": {"type": "integer"},
+                "city": {"type": "string"}
+            },
+            "required": ["name", "age", "city"]
+        }
+        gemini_server_json_schema = APIGoogleVertexAIServing(
+            project=gcp_project_id, # Pass the project_id (can be None)
+            location='us-central1',
+            model_name="gemini-2.5-flash",
+            response_schema=json_schema # Pass the raw JSON schema here
+        )
+        system_prompt_json_schema = "Extract the user's information from the text and format it as JSON."
+        user_prompts_json_schema = [
+            "Alice Johnson is 28 years old and lives in San Francisco.",
+            "Bob Brown, aged 35, resides in Toronto."
+        ]
+        results_json_schema = gemini_server_json_schema.generate_from_input(user_prompts_json_schema, system_prompt_json_schema)
+        print("--- Generation Complete ---")
+        for i, (prompt, result) in enumerate(zip(user_prompts_json_schema, results_json_schema)):
+            print(f"\n[Prompt {i+1}]: {prompt}")
+            print(f"[Gemini JSON Schema]: {result}")
 
     except google_exceptions.PermissionDenied as e:
         print(f"\nERROR: Permission Denied. Details: {e}")
