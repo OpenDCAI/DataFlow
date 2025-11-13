@@ -1,19 +1,30 @@
+import json
 import re
-import os
+from typing import Dict, List, Tuple, Optional
+
 import pandas as pd
 from tqdm import tqdm
+
 from dataflow.utils.registry import OPERATOR_REGISTRY
 from dataflow import get_logger
-from dataflow.core import OperatorABC
+from dataflow.core import OperatorABC, LLMServingABC
 from dataflow.utils.storage import DataFlowStorage
 from dataflow.utils.text2sql.database_manager import DatabaseManager
+from dataflow.utils.text2sql.base import QueryResult
 
 
 @OPERATOR_REGISTRY.register()
 class SQLExecutionFilter(OperatorABC):
-    def __init__(self, database_manager: DatabaseManager):
+    LEMBED_PATTERN = re.compile(
+        r"lembed\s*\(\s*(['\"]?)[^,]*?\1\s*,\s*(['\"])(.*?)\2\s*\)",
+        re.IGNORECASE | re.DOTALL,
+    )
+
+    def __init__(self, database_manager: DatabaseManager, embedding_serving: Optional[LLMServingABC] = None):
         self.database_manager = database_manager
         self.logger = get_logger()
+        self.embedding_serving = embedding_serving
+        self._embedding_cache: Dict[str, List[float]] = {}
 
     @staticmethod
     def get_desc(lang):
@@ -53,6 +64,26 @@ class SQLExecutionFilter(OperatorABC):
         if missing_columns:
             raise ValueError(f"Missing required columns: {missing_columns}")
 
+    def _get_embedding_from_local_serving(self, text: str) -> List[float]:
+        if text in self._embedding_cache:
+            return self._embedding_cache[text]
+
+        if self.embedding_serving is None:
+            raise RuntimeError("Embedding serving is not configured.")
+
+        vectors = self.embedding_serving.generate_embedding_from_input([text])
+        embedding = vectors[0]
+        self._embedding_cache[text] = embedding
+        return embedding
+
+    def _preprocess_with_local_embedding(self, sql: str) -> str:
+        def replacer(match: re.Match) -> str:
+            text_to_embed = match.group(3)
+            embedding = self._get_embedding_from_local_serving(text_to_embed)
+            return "'" + json.dumps(embedding, ensure_ascii=False) + "'"
+
+        return self.LEMBED_PATTERN.sub(replacer, sql)
+
     def run(self, storage: DataFlowStorage,
             input_sql_key: str = "sql",
             input_db_id_key: str = "db_id"
@@ -82,7 +113,48 @@ class SQLExecutionFilter(OperatorABC):
         db_ids = dataframe[input_db_id_key]
         sql_list = dataframe[input_sql_key]
         sql_triples = [(db_id, sql) for db_id, sql in zip(db_ids, sql_list)]
-        execution_results = self.database_manager.batch_execute_queries(sql_triples)
+
+        processed_queries: List[Tuple[str, str]] = []
+        index_mapping: List[int] = []
+        preprocess_failures: Dict[int, QueryResult] = {}
+
+        embedding_enabled = self.embedding_serving is not None
+
+        if embedding_enabled:
+            self.logger.info("Local embedding preprocessing enabled for lembed() SQLs.")
+
+        for idx, (db_id, sql) in enumerate(sql_triples):
+            processed_sql = sql
+            if embedding_enabled and self.LEMBED_PATTERN.search(sql):
+                try:
+                    processed_sql = self._preprocess_with_local_embedding(sql)
+                except Exception as exc:
+                    self.logger.error(
+                        "Failed to preprocess SQL for db '%s': %s",
+                        db_id,
+                        exc,
+                        exc_info=True,
+                    )
+                    preprocess_failures[idx] = QueryResult(
+                        success=False, error=f"Embedding preprocess failed: {exc}"
+                    )
+                    continue
+
+            processed_queries.append((db_id, processed_sql))
+            index_mapping.append(idx)
+
+        execution_results: List[QueryResult] = [
+            preprocess_failures.get(
+                idx, QueryResult(success=False, error="Not executed")
+            )
+            for idx in range(len(sql_triples))
+        ]
+
+        if processed_queries:
+            raw_results = self.database_manager.batch_execute_queries(processed_queries)
+            for exec_idx, result in enumerate(raw_results):
+                orig_idx = index_mapping[exec_idx]
+                execution_results[orig_idx] = result
 
         final_indices = []
         for idx, exec_result in enumerate(execution_results):

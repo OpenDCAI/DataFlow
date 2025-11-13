@@ -5,6 +5,7 @@ import glob
 import os
 import re
 import threading
+import time
 from filelock import FileLock
 from dataflow import get_logger
 
@@ -20,18 +21,27 @@ class SQLiteVecConnector(DatabaseConnectorABC):
         self._thread_local = threading.local()
         self._extensions_loaded = False
 
-    def _ensure_extensions_available(self):
-        if hasattr(self, '_sqlite_vec') and hasattr(self, '_sqlite_lembed'):
+    def _ensure_vec_available(self):
+        if hasattr(self, '_sqlite_vec'):
             return
-            
         try:
             import sqlite_vec
-            import sqlite_lembed
             self._sqlite_vec = sqlite_vec
-            self._sqlite_lembed = sqlite_lembed
         except ImportError:
             raise ImportError(
                 "The 'vectorsql' optional dependencies are required but not installed.\n"
+                "Please run: pip install 'open-dataflow[vectorsql]'"
+            )
+
+    def _ensure_lembed_available(self):
+        if hasattr(self, '_sqlite_lembed'):
+            return
+        try:
+            import sqlite_lembed
+            self._sqlite_lembed = sqlite_lembed
+        except ImportError:
+            raise ImportError(
+                "sqlite_lembed is required for vector SQL execution. "
                 "Please run: pip install 'open-dataflow[vectorsql]'"
             )
 
@@ -41,7 +51,7 @@ class SQLiteVecConnector(DatabaseConnectorABC):
         ensuring that dangerous initialization is performed only once, while safely loading
         the model into memory for each connection.
         """
-        self._ensure_extensions_available()
+        self._ensure_vec_available()
         
         db_path = connection_info.get('path')
         if not db_path:
@@ -73,6 +83,9 @@ class SQLiteVecConnector(DatabaseConnectorABC):
         # Step 3: Load extensions and activate model for each new connection
         model_name = connection_info.get('model_name')
         model_path = connection_info.get('model_path')
+        enable_lembed = connection_info.get('enable_lembed', True)
+        if model_path:
+            model_path = os.path.abspath(model_path)
 
         lock_path = db_path + ".lock"
         file_lock = FileLock(lock_path, timeout=120)
@@ -81,36 +94,112 @@ class SQLiteVecConnector(DatabaseConnectorABC):
             self.logger.debug(f"Process-safe lock acquired by thread {threading.get_ident()}. Configuring connection...")
             conn.enable_load_extension(True)
             self._sqlite_vec.load(conn)
-            self._sqlite_lembed.load(conn)
 
-            if model_name and model_path:
+            if enable_lembed:
+                self._ensure_lembed_available()
+                self._sqlite_lembed.load(conn)
+                self._ensure_trusted_schema_enabled(conn)
+
+            if enable_lembed and model_name and model_path:
                 self.logger.debug(f"Activating model '{model_name}' for connection...")
                 register_sql = """
                 INSERT OR IGNORE INTO main.lembed_models (name, model)
                 VALUES (?, lembed_model_from_file(?))
                 """
-                try:
-                    conn.execute(register_sql, (model_name, model_path))
-                    conn.commit()
-                except Exception as e:
-                    # 模型可能已经被另一个连接加载了，这是正常的
-                    self.logger.debug(f"Model '{model_name}' may already be loaded: {e}")
-                    # 不抛出异常，继续使用连接
-                    try:
-                        conn.rollback()  # 回滚失败的事务
-                    except:
-                        pass
+                temp_register_sql = """
+                INSERT OR IGNORE INTO temp.lembed_models (name, model)
+                VALUES (?, lembed_model_from_file(?))
+                """
+                def _register(sql: str, target: str) -> bool:
+                    for attempt in range(3):
+                        try:
+                            conn.execute(sql, (model_name, model_path))
+                            conn.commit()
+                            return True
+                        except Exception as exc:
+                            try:
+                                conn.rollback()
+                            except Exception:
+                                pass
+                            if attempt < 2:
+                                wait = 0.5 * (attempt + 1)
+                                self.logger.debug(
+                                    f"Registering model '{model_name}' in {target} failed (attempt {attempt + 1}/3). "
+                                    f"Retrying in {wait:.1f}s. Error: {exc}",
+                                    extra={
+                                        "db_path": db_path,
+                                        "model_name": model_name,
+                                        "target": target,
+                                        "trusted_schema": self._get_trusted_schema_value(conn),
+                                    },
+                                    exc_info=True
+                                )
+                                time.sleep(wait)
+                            else:
+                                self.logger.debug(
+                                    f"Registration attempt exhausted for '{model_name}' in {target}: {exc}",
+                                    extra={
+                                        "db_path": db_path,
+                                        "model_name": model_name,
+                                        "target": target,
+                                        "trusted_schema": self._get_trusted_schema_value(conn),
+                                    },
+                                    exc_info=True
+                                )
+                    return False
+
+                if not _register(register_sql, "main.lembed_models"):
+                    if not _register(temp_register_sql, "temp.lembed_models"):
+                        raise RuntimeError(
+                            f"Failed to register model '{model_name}' for database '{db_path}' even in temp schema."
+                        )
+                    else:
+                        self.logger.info(
+                            f"Model '{model_name}' registered in temp.lembed_models for connection '{db_path}'."
+                        )
 
         self._thread_local.connections[db_path] = conn
         self.logger.debug(f"Connection for thread {threading.get_ident()} created and configured successfully.")
         return conn
 
+    def _get_trusted_schema_value(self, connection: sqlite3.Connection) -> Optional[int]:
+        try:
+            cursor = connection.execute("PRAGMA trusted_schema")
+            result = cursor.fetchone()
+            cursor.close()
+        except Exception as exc:
+            self.logger.debug(f"Unable to read PRAGMA trusted_schema: {exc}")
+            return None
+
+        if result:
+            try:
+                return int(result[0])
+            except (TypeError, ValueError):
+                return None
+        return None
+
+    def _ensure_trusted_schema_enabled(self, connection: sqlite3.Connection) -> None:
+        """Enable trusted_schema when sqlite is built with it disabled by default."""
+        value = self._get_trusted_schema_value(connection)
+
+        if value == 1:
+            return
+
+        self.logger.info(
+            "trusted_schema is disabled for current SQLite connection. Enabling it to allow sqlite_lembed to load models."
+        )
+        connection.execute("PRAGMA trusted_schema=ON;")
+        self.logger.debug("trusted_schema set to 1 for current SQLite connection.")
+
     def _initialize_database_disk_state(self, connection_info: Dict):
-        self._ensure_extensions_available()
+        self._ensure_vec_available()
         
         db_path = connection_info['path']
         model_name = connection_info.get('model_name')
         model_path = connection_info.get('model_path')
+        enable_lembed = connection_info.get('enable_lembed', True)
+        if model_path:
+            model_path = os.path.abspath(model_path)
 
         lock_path = db_path + ".lock"
         file_lock = FileLock(lock_path, timeout=120)
@@ -122,20 +211,78 @@ class SQLiteVecConnector(DatabaseConnectorABC):
                 init_conn.execute("PRAGMA journal_mode=WAL;")
                 init_conn.enable_load_extension(True)
                 self._sqlite_vec.load(init_conn)
-                self._sqlite_lembed.load(init_conn)
 
-                if model_name and model_path:
+                if enable_lembed:
+                    self._ensure_lembed_available()
+                    self._sqlite_lembed.load(init_conn)
+                    self._ensure_trusted_schema_enabled(init_conn)
+                    trusted_schema = self._get_trusted_schema_value(init_conn)
+                else:
+                    trusted_schema = None
+
+                if enable_lembed and model_name and model_path:
                     if not os.path.exists(model_path):
                         raise FileNotFoundError(f"Embedding model file not found at path: {model_path}")
+                    abs_model_path = os.path.abspath(model_path)
 
-                    self.logger.info(f"Lock acquired. Ensuring model '{model_name}' is persisted in '{db_path}'...")
+                    self.logger.info(
+                        f"Lock acquired. Ensuring model '{model_name}' is persisted in '{db_path}' "
+                        f"(source model path: '{abs_model_path}')..."
+                    )
+                    self.logger.debug(
+                        f"trusted_schema value before model registration for '{db_path}': {trusted_schema}"
+                    )
                     register_sql = """
                     INSERT OR IGNORE INTO main.lembed_models (name, model)
                     VALUES (?, lembed_model_from_file(?))
                     """
-                    init_conn.execute(register_sql, (model_name, model_path))
-                    init_conn.commit()
-                    self.logger.info(f"Model '{model_name}' persistence check completed.")
+                    persisted = False
+                    for attempt in range(3):
+                        try:
+                            init_conn.execute(register_sql, (model_name, abs_model_path))
+                            init_conn.commit()
+                            self.logger.info(f"Model '{model_name}' persistence check completed.")
+                            persisted = True
+                            break
+                        except Exception as exc:
+                            try:
+                                init_conn.rollback()
+                            except Exception:
+                                pass
+                            if attempt < 2:
+                                wait_time = 0.5 * (attempt + 1)
+                                self.logger.warning(
+                                    "Persisting embedding model into database failed (attempt %d/3). "
+                                    "Retrying in %.1fs. Error: %s",
+                                    attempt + 1,
+                                    wait_time,
+                                    exc,
+                                    extra={
+                                        "db_path": db_path,
+                                        "model_name": model_name,
+                                        "model_path": abs_model_path,
+                                        "trusted_schema": trusted_schema,
+                                    },
+                                    exc_info=True
+                                )
+                                time.sleep(wait_time)
+                            else:
+                                self.logger.warning(
+                                    "Failed to persist embedding model into database after retries. "
+                                    "Will rely on per-connection loading. Error: %s",
+                                    exc,
+                                    extra={
+                                        "db_path": db_path,
+                                        "model_name": model_name,
+                                        "model_path": abs_model_path,
+                                        "trusted_schema": trusted_schema,
+                                    },
+                                    exc_info=True
+                                )
+                    if not persisted:
+                        self.logger.debug(
+                            f"Model '{model_name}' not stored in '{db_path}'. Runtime registration will be used."
+                        )
             finally:
                 if init_conn:
                     init_conn.close()
@@ -383,7 +530,8 @@ class SQLiteVecConnector(DatabaseConnectorABC):
                     connection_info = {
                         'path': db_path,
                         'model_name': config.get('model_name'),
-                        'model_path': config.get('model_path')
+                        'model_path': config.get('model_path'),
+                        'enable_lembed': config.get('enable_lembed', True)
                     }
                     
                     databases[db_id] = DatabaseInfo(
@@ -425,4 +573,3 @@ class SQLiteVecConnector(DatabaseConnectorABC):
         if count == 0:
                 print(f"error: No columns ending with '_embedding'.")
         return count 
-

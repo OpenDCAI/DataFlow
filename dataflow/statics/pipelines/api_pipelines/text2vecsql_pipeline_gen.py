@@ -120,7 +120,8 @@ class Text2VecSQLGeneration_APIPipeline():
             config={
                 "root_path": self.db_root_path,
                 "model_name": "all-MiniLM-L6-v2",
-                "model_path": "./hf_cache/all-MiniLM-L6-v2.e4ce9877.q8_0.gguf"
+                "model_path": "./hf_cache/all-MiniLM-L6-v2.e4ce9877.q8_0.gguf",
+                "enable_lembed": False
             }
         )
         
@@ -133,6 +134,7 @@ class Text2VecSQLGeneration_APIPipeline():
 
         self.sql_execution_filter_step2 = SQLExecutionFilter(
             database_manager=database_manager,
+            embedding_serving=embedding_serving,
         )
 
         self.text2sql_question_generator_step3 = Text2SQLQuestionGenerator(
@@ -221,4 +223,3 @@ if __name__ == "__main__":
     db_root_path = ""
     model = Text2VecSQLGeneration_APIPipeline(db_root_path)
     model.forward()
-
