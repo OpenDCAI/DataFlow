@@ -124,7 +124,6 @@ class APIGoogleVertexAIServing(LLMServingABC):
                  max_retries: int = 5,
                  temperature: float = 0.0,
                  max_tokens: int = 4096,
-                 # response_schema: Optional[Union[type[BaseModel], dict]] = None, # NEW: Allow schema at server level
                  ):
         self.logger = logging.getLogger(__name__)
         logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
@@ -134,7 +133,6 @@ class APIGoogleVertexAIServing(LLMServingABC):
         self.max_retries = max_retries
         self.temperature = temperature
         self.max_tokens = max_tokens
-        # self.response_schema = response_schema # NEW
         
         try:
             self.client = GeminiVertexAIClient(project=project, location=location)
@@ -210,7 +208,7 @@ class APIGoogleVertexAIServing(LLMServingABC):
         
         return index, None
 
-    def generate_from_input(self, user_inputs: List[str], system_prompt: str, response_schema: Optional[Union[type[BaseModel], dict]] = None) -> List[str]:
+    def generate_from_input(self, user_inputs: List[str], system_prompt: str="", response_schema: Optional[Union[type[BaseModel], dict]] = None) -> List[str]:
         """Generates responses for a list of user inputs in parallel."""
         responses = [None] * len(user_inputs)
         
