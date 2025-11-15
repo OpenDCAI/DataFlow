@@ -5,6 +5,7 @@ from huggingface_hub import snapshot_download
 
 from dataflow.operators.text2sql import (
     SQLGenerator,
+    SQLByColumnGenerator,
     Text2SQLQuestionGenerator,
     Text2SQLPromptGenerator,
     Text2SQLCoTGenerator

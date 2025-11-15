@@ -5,8 +5,8 @@ from inspect import isclass, getmembers, isfunction
 from dataflow.utils.registry import PROMPT_REGISTRY, OPERATOR_REGISTRY
 
 def export_prompt_info(output_file="prompt_info.xlsx", lang="zh"):
-    # PROMPT_REGISTRY._get_all()
-    OPERATOR_REGISTRY._get_all()
+    # PROMPT_REGISTRY._get_all() # by default, all prompts is already loaded, no need to call this
+    OPERATOR_REGISTRY._get_all() # by default, all operators are lazily loaded, need to call this to load all operators
     # get mapping of prompt name to class
     prompt2operator_str = {}
     for op_name, op_class in OPERATOR_REGISTRY.get_obj_map().items():

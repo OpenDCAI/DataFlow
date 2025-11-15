@@ -83,8 +83,8 @@ class Text2SQLRefine_APIPipeline():
             raise FileNotFoundError(f"Database path does not exist: {self.db_root_path}")
 
         self.storage = FileStorage(
-            first_entry_file_name="/mnt/public/data/cqf/DataFlow/dataflow/example/Text2SQLPipeline/pipeline_refine.jsonl",
-            cache_path="./cache_local",
+            first_entry_file_name="../example_data/Text2SQLPipeline/pipeline_refine.jsonl",
+            cache_path="./cache",
             file_name_prefix="dataflow_cache_step",
             cache_type="jsonl"
         )
