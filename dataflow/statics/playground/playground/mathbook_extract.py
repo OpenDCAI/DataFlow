@@ -1,5 +1,5 @@
-from dataflow.operators.knowledge_cleaning import MathBookQuestionExtract
-from dataflow.serving.APIVLMServing_openai import APIVLMServing_openai
+from dataflow.operators.knowledge_cleaning.generate.mathbook_question_extract import MathBookQuestionExtract
+from dataflow.serving.api_vlm_serving_openai import APIVLMServing_openai
 
 class QuestionExtractPipeline:
     def __init__(self, llm_serving: APIVLMServing_openai):
@@ -27,14 +27,14 @@ class QuestionExtractPipeline:
         )
 
 if __name__ == "__main__":
-    # 1. 初始化 LLM Serving
+    # 1. initialize LLM Serving
     llm_serving = APIVLMServing_openai(
-        api_url="https://api.openai.com/v1/chat/completions",
-        model_name="o4-mini",      # 推荐使用强推理模型
-        max_workers=20             # 并发请求数
+        api_url="https://api.openai.com/v1",  # end with /v1, DO NOT add /chat/completions
+        model_name="o4-mini",      # recommend using strong reasoning model
+        max_workers=20             # number of concurrent requests
     )
 
-    # 2. 构造并运行管道
+    # 2. construct and run pipeline
     pipeline = QuestionExtractPipeline(llm_serving)
     pipeline.forward(
         pdf_path=pipeline.test_pdf,

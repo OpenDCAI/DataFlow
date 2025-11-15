@@ -69,3 +69,5 @@ soundfile
 
 # map visualize
 # matplotlib - removed as no longer needed
+
+google-cloud-aiplatform>=1.55
