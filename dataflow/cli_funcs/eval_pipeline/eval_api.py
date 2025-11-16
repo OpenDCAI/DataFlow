@@ -57,7 +57,7 @@ class FairAnswerJudgePrompt:
 # 评估模型设置
 JUDGE_MODEL_CONFIG = {
     "model_name": "gpt-4o-mini",
-    "api_url": "http://123.129.219.111:3000/v1/chat/completions",  # 请求URL 必填 / request (required)
+    "api_url": "OPENAI_URL",  # 请求URL 必填 / request (required)
     "api_key_env": "DF_API_KEY",  # api_key 必填 / api_key (required)
     "max_workers": 3,
     "max_retries": 5,
@@ -77,7 +77,7 @@ TARGET_MODELS = [
     # },
     {
         "name": "qwen_7b",
-        "path": "/mnt/DataFlow/fyl/workspace/Qwen2.5-7B-Instruct",
+        "path": "Qwen/Qwen2.5-7B-Instruct",
         # 大模型可以用不同的参数
         "vllm_tensor_parallel_size": 2,
         "vllm_temperature" : 0.1,
@@ -97,7 +97,7 @@ TARGET_MODELS = [
     },
     {
         "name": "qwen_3b",
-        "path": "/mnt/DataFlow/fyl/workspace/Qwen2.5-3B-Instruct",
+        "path": "Qwen/Qwen2.5-3B-Instruct",
         # 大模型可以用不同的参数
         "vllm_tensor_parallel_size": 2,
         "vllm_temperature" : 0.1,
@@ -127,15 +127,15 @@ TARGET_MODELS = [
 # Data Configuration
 BENCH_CONFIG = [
     {
-        "name":"fuck_data",
-        "input_file": "/mnt/DataFlow/fyl/workspace/.cache/data/qa.json",  # 输入数据文件
+        "name":"bench_data",
+        "input_file": "path_to_your_data/qa.json",  # 输入数据文件
         "output_dir": "./api_eval",  # 输出目录
         "question_key": "input",  # 原始数据中的问题字段
         "reference_answer_key": "output"  # 原始数据中的参考答案字段
     },
     {
-        "name":"fuck_fuck_data",
-        "input_file": "/mnt/DataFlow/fyl/workspace/nt.json",  # 输入数据文件
+        "name":"other_bench_data",
+        "input_file": "path_to_your_data/qa.json",  # 输入数据文件
         "output_dir": "./api_eval",  # 输出目录
         "question_key": "input",  # 原始数据中的问题字段
         "reference_answer_key": "output"  # 原始数据中的参考答案字段

@@ -104,18 +104,18 @@ TARGET_MODELS = [
 # Bench Configuration
 BENCH_CONFIG = [
     {
-        "name": "math_bench",  # bench名称
-        "input_file": "./.cache/data/qa.json",  # 数据文件
+        "name": "bench_name",  # bench名称
+        "input_file": "path_to_your_qa/qa.json",  # 数据文件
         "question_key": "input",  # 问题字段名
         "reference_answer_key": "output",  # 答案字段名
-        "output_dir": "./eval_results/math_bench",  # 输出目录
+        "output_dir": "path//bench_name",  # 输出目录
     },
     {
-        "name": "reasoning_bench",
-        "input_file": "/mnt/DataFlow/fyl/workspace/nt.json",
+        "name": "other_bench_name",
+        "input_file": "path_to_your_qa/other_qa.json",
         "question_key": "input",
         "reference_answer_key": "output",
-        "output_dir": "./eval_results/reasoning_bench",
+        "output_dir":"path/other_bench_name",
     },
     # {
     #     "name": "code_bench",
