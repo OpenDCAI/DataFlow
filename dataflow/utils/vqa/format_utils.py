@@ -30,8 +30,9 @@ def merge_qa_pair(question_jsonl, answer_jsonl, output_jsonl):
                     data["chapter_title"] = chapter_title
             label = data["label"]
             data["chapter_id"] = chapter_id
-            # 删除title中的空格
-            data["chapter_title"] = data["chapter_title"].replace(" ", "")
+            # TODO : 这里可能需要更复杂的title清洗逻辑
+            # 删除title中的空格与换行符
+            data["chapter_title"] = re.sub(r'\s+', '', data["chapter_title"])
             if data['label'] > 0 and data["chapter_title"]:
                 # 已经完整的题目直接写入out_file
                 if data["answer"] or data["solution"]:
@@ -73,8 +74,9 @@ def merge_qa_pair(question_jsonl, answer_jsonl, output_jsonl):
                     data["chapter_title"] = chapter_title
             label = data["label"]
             data["chapter_id"] = chapter_id
-            # 删除title中的空格
-            data["chapter_title"] = data["chapter_title"].replace(" ", "")
+            # TODO : 这里可能需要更复杂的title清洗逻辑
+            # 删除title中的空格与换行符
+            data["chapter_title"] = re.sub(r'\s+', '', data["chapter_title"])
             # 动态更新，防止错误的重复label覆盖掉之前的solution或answer
             if data['label'] > 0:
                 if not answers.get((data["chapter_title"], data['label'])):
