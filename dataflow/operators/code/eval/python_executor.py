@@ -81,6 +81,42 @@ def base64_to_image(
 class PersistentWorker:
     """Persistent worker process."""
     
+    # Runtime class registry for pickle-safe serialization
+    RUNTIME_REGISTRY = {
+        'ImageRuntime': None,  # Will be set later to avoid circular import
+        'DateRuntime': None,
+        'ColorObjectRuntime': None,
+        'GenericRuntime': None,
+    }
+    
+    @classmethod
+    def _get_runtime_class(cls, runtime_identifier):
+        """Get runtime class from identifier (class name or class object)."""
+        if isinstance(runtime_identifier, str):
+            # String identifier - look up in registry
+            if runtime_identifier in cls.RUNTIME_REGISTRY:
+                return cls.RUNTIME_REGISTRY[runtime_identifier]
+            else:
+                # Default to ImageRuntime if not found
+                return cls.RUNTIME_REGISTRY.get('ImageRuntime', ImageRuntime)
+        elif isinstance(runtime_identifier, type):
+            # Class object - get its name and look up
+            class_name = runtime_identifier.__name__
+            return cls.RUNTIME_REGISTRY.get(class_name, runtime_identifier)
+        else:
+            # Default fallback
+            return cls.RUNTIME_REGISTRY.get('ImageRuntime', ImageRuntime)
+    
+    @classmethod
+    def _get_runtime_identifier(cls, runtime_class):
+        """Convert runtime class to pickle-safe identifier."""
+        if runtime_class is None:
+            return 'ImageRuntime'
+        elif isinstance(runtime_class, str):
+            return runtime_class
+        else:
+            return runtime_class.__name__
+    
     def __init__(self):
         self.input_queue = multiprocessing.Queue()
         self.output_queue = multiprocessing.Queue()
@@ -111,7 +147,8 @@ class PersistentWorker:
                 if task_type == 'init':
                     # Initialize runtime
                     messages = task.get('messages', [])
-                    runtime_class = task.get('runtime_class', ImageRuntime)
+                    runtime_identifier = task.get('runtime_class', 'ImageRuntime')
+                    runtime_class = self._get_runtime_class(runtime_identifier)
                     runtime = runtime_class(messages)
                     self.output_queue.put({
                         'status': 'success',
@@ -122,7 +159,8 @@ class PersistentWorker:
                     # Execute code
                     if runtime is None:
                         messages = task.get('messages', [])
-                        runtime_class = task.get('runtime_class', ImageRuntime)
+                        runtime_identifier = task.get('runtime_class', 'ImageRuntime')
+                        runtime_class = self._get_runtime_class(runtime_identifier)
                         runtime = runtime_class(messages)
                     
                     code = task.get('code')
@@ -184,7 +222,8 @@ class PersistentWorker:
                 elif task_type == 'reset':
                     # Reset runtime
                     messages = task.get('messages', [])
-                    runtime_class = task.get('runtime_class', ImageRuntime)
+                    runtime_identifier = task.get('runtime_class', 'ImageRuntime')
+                    runtime_class = self._get_runtime_class(runtime_identifier)
                     runtime = runtime_class(messages)
                     self.output_queue.put({
                         'status': 'success',
@@ -201,11 +240,13 @@ class PersistentWorker:
     def execute(self, code: List[str], messages: list = None, runtime_class=None, 
                 get_answer_from_stdout=True, answer_symbol=None, answer_expr=None, timeout: int = 30):
         """Execute code."""
+        # Convert runtime class to pickle-safe identifier
+        runtime_identifier = self._get_runtime_identifier(runtime_class)
         self.input_queue.put({
             'type': 'execute',
             'code': code,
             'messages': messages,
-            'runtime_class': runtime_class,
+            'runtime_class': runtime_identifier,
             'get_answer_from_stdout': get_answer_from_stdout,
             'answer_symbol': answer_symbol,
             'answer_expr': answer_expr
@@ -223,19 +264,23 @@ class PersistentWorker:
     
     def init_runtime(self, messages: list, runtime_class=None):
         """Initialize runtime."""
+        # Convert runtime class to pickle-safe identifier
+        runtime_identifier = self._get_runtime_identifier(runtime_class)
         self.input_queue.put({
             'type': 'init',
             'messages': messages,
-            'runtime_class': runtime_class
+            'runtime_class': runtime_identifier
         })
         return self.output_queue.get()
     
     def reset_runtime(self, messages: list = None, runtime_class=None):
         """Reset runtime."""
+        # Convert runtime class to pickle-safe identifier
+        runtime_identifier = self._get_runtime_identifier(runtime_class)
         self.input_queue.put({
             'type': 'reset',
             'messages': messages,
-            'runtime_class': runtime_class
+            'runtime_class': runtime_identifier
         })
         return self.output_queue.get()
     
@@ -549,3 +594,10 @@ class PythonExecutor:
         """Clean up resources."""
         if self.persistent_worker:
             self.persistent_worker.terminate()
+
+
+# Initialize runtime registry after all classes are defined
+PersistentWorker.RUNTIME_REGISTRY['ImageRuntime'] = ImageRuntime
+PersistentWorker.RUNTIME_REGISTRY['DateRuntime'] = DateRuntime
+PersistentWorker.RUNTIME_REGISTRY['ColorObjectRuntime'] = ColorObjectRuntime
+PersistentWorker.RUNTIME_REGISTRY['GenericRuntime'] = GenericRuntime

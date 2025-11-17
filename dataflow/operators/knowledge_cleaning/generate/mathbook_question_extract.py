@@ -77,7 +77,8 @@ class MathBookQuestionExtract(OperatorABC):
     def mineru2_runner(self,
                         pdf_file_path:str,
                         output_folder:str,
-                        mineru_backend: Literal["vlm-sglang-engine", "pipeline"] = "vlm-sglang-engine"
+                        # pipeline|vlm-transformers|vlm-vllm-engine|vlm-http-client
+                        mineru_backend: Literal["pipeline", "vlm-transformers", "vlm-vllm-engine", "vlm-http-client"] = "pipeline"
                         ):
 
         try:
@@ -95,7 +96,7 @@ Please make sure you have GPU on your machine.
 
         os.environ['MINERU_MODEL_SOURCE'] = "local"  # 可选：从本地加载模型
 
-        MinerU_Version = {"pipeline": "auto", "vlm-sglang-engine": "vlm"}
+        MinerU_Version = {"pipeline": "auto", "vlm-transformers": "vlm", 'vlm-vllm-engine': 'vlm', 'vlm-http-client': 'vlm'}
 
         raw_file = Path(pdf_file_path)
         pdf_name = raw_file.stem

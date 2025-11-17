@@ -28,7 +28,7 @@ class KBCTextCleanerBatch(OperatorABC):
         if prompt_template:
             self.prompt_template = prompt_template
         else:
-            self.prompt_template = KnowledgeCleanerPrompt()
+            self.prompt_template = KnowledgeCleanerPrompt(lang=lang)
 
     @staticmethod
     def get_desc(lang: str = "zh"):
