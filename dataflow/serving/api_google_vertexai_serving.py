@@ -53,7 +53,7 @@ class GeminiVertexAIClient:
         google_cloud_location = os.getenv("GOOGLE_CLOUD_LOCATION")
         google_cloud_project = os.getenv("GOOGLE_CLOUD_PROJECT")
         google_genai_use_vertexai = os.getenv("GOOGLE_GENAI_USE_VERTEXAI")
-        
+        self.logger = logging.getLogger(__name__)
         # Validate GOOGLE_APPLICATION_CREDENTIALS
         if not google_app_credentials:
             raise ValueError(
@@ -171,6 +171,11 @@ class APIGoogleVertexAIServing(LLMServingABC):
                  max_retries: int = 5,
                  temperature: float = 0.0,
                  max_tokens: int = 4096,
+                 use_batch: bool = False,
+                 batch_wait: bool = True,
+                 batch_dataset: str = "dataflow_batch",
+                 csv_filename: Optional[str] = None,
+                 bq_csv_filename: Optional[str] = None,
                  ):
         self.logger = logging.getLogger(__name__)
         logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
@@ -182,6 +187,11 @@ class APIGoogleVertexAIServing(LLMServingABC):
         self.max_tokens = max_tokens
         self.project = project
         self.location = location
+        self.use_batch = use_batch
+        self.batch_wait = batch_wait
+        self.batch_dataset = batch_dataset
+        self.csv_filename = csv_filename
+        self.bq_csv_filename = bq_csv_filename
         
         try:
             self.client = GeminiVertexAIClient(project=project, location=location)
@@ -278,9 +288,9 @@ class APIGoogleVertexAIServing(LLMServingABC):
         user_inputs: List[str], 
         system_prompt: str = "", 
         response_schema: Optional[Union[type[BaseModel], dict]] = None,
-        use_batch: bool = False,
-        batch_wait: bool = True,
-        batch_dataset: str = "dataflow_batch",
+        use_batch: Optional[bool] = None,
+        batch_wait: Optional[bool] = None,
+        batch_dataset: Optional[str] = None,
         csv_filename: Optional[str] = None,
         bq_csv_filename: Optional[str] = None,
     ) -> Union[List[str], str]:
@@ -302,6 +312,17 @@ class APIGoogleVertexAIServing(LLMServingABC):
             - If use_batch=True and batch_wait=True: List of generated responses from batch job.
             - If use_batch=True and batch_wait=False: Batch job resource name (str) for later retrieval.
         """
+        if use_batch is None:
+            use_batch = self.use_batch
+        if batch_wait is None:
+            batch_wait = self.batch_wait
+        if batch_dataset is None:
+            batch_dataset = self.batch_dataset
+        if csv_filename is None:
+            csv_filename = self.csv_filename
+        if bq_csv_filename is None:
+            bq_csv_filename = self.bq_csv_filename
+
         if use_batch:
             return self._generate_with_batch(
                 user_inputs=user_inputs,
@@ -309,6 +330,7 @@ class APIGoogleVertexAIServing(LLMServingABC):
                 response_schema=response_schema,
                 wait_for_completion=batch_wait,
                 dataset_name=batch_dataset,
+                csv_filename=csv_filename,
                 bq_csv_filename=bq_csv_filename
             )
         else:
@@ -347,6 +369,7 @@ class APIGoogleVertexAIServing(LLMServingABC):
         response_schema: Optional[Union[type[BaseModel], dict]],
         wait_for_completion: bool,
         dataset_name: str,
+        csv_filename: Optional[str] = None,
         bq_csv_filename: Optional[str] = None
     ) -> Union[List[str], str]:
         """Internal method: Generates responses using batch processing via BigQuery."""
@@ -357,16 +380,25 @@ class APIGoogleVertexAIServing(LLMServingABC):
             )
         
         # Generate CSV filename if not provided
-        if bq_csv_filename is None:
-            batch_id = str(uuid.uuid4())[:8]
-            timestamp = int(time.time())
-            bq_csv_filename = f"batch_{timestamp}_{batch_id}.csv"
+        timestamp = int(time.time())
+        if csv_filename is None:
+            if bq_csv_filename is None:
+                batch_id = str(uuid.uuid4())[:8]
+                bq_csv_filename = f"batch_{timestamp}_{batch_id}.csv"
+            else:
+                # Even if user provides a bq_csv_filename, must prefix with timestamp
+                bq_csv_filename = f"{bq_csv_filename}_{timestamp}"
+            temp_csv_path = os.path.join(tempfile.gettempdir(), bq_csv_filename)
+        else:
+            # Always prefix provided csv_filename with timestamp when copying to temp
+            base_csv_name = Path(csv_filename).name
+            bq_csv_filename = f"{base_csv_name}_{timestamp}" if bq_csv_filename is None else f"{bq_csv_filename}_{timestamp}"
+            temp_csv_path = os.path.join(tempfile.gettempdir(), bq_csv_filename)
         
         try:
             # Step 1: Generate CSV for batch processing
             self.logger.info(f"Batch mode: Generating CSV with {len(user_inputs)} inputs...")
-            
-            temp_csv_path = os.path.join(tempfile.gettempdir(), bq_csv_filename)
+            temp_csv_path = os.path.join(tempfile.gettempdir(), csv_filename)
             self.generate_bq_csv(
                 csv_filename=temp_csv_path,
                 system_prompt=system_prompt,
@@ -897,7 +929,7 @@ if __name__ == "__main__":
             capital: Literal["Paris", "Beijing", "London", "Tokyo"]
         
         gemini_server_batch = APIGoogleVertexAIServing(
-            project=gcp_project_id,
+            project=os.getenv("GCP_PROJECT_ID"),
             location='us-central1',
             model_name="gemini-2.5-flash",
         )
@@ -930,23 +962,22 @@ if __name__ == "__main__":
         print("WARNING: This test will wait for batch job completion, which may take several minutes.")
         print("Skipping this test in automated runs. Set ENABLE_BATCH_WAIT_TEST=1 to enable.")
         
-        if os.getenv("ENABLE_BATCH_WAIT_TEST") == "1":
-            try:
-                # Submit batch job and wait for completion (batch_wait=True, default)
-                results_batch = gemini_server_batch.generate_from_input(
-                    user_inputs=user_prompts_batch,
-                    system_prompt=system_prompt_batch,
-                    response_schema=Capital,
-                    use_batch=True,
-                    batch_wait=True  # Wait for completion
-                )
-                print("--- Batch Generation Complete ---")
-                for i, (prompt, result) in enumerate(zip(user_prompts_batch, results_batch)):
-                    print(f"\n[Prompt {i+1}]: {prompt}")
-                    print(f"[Gemini Batch]: {result}")
-            
-            except Exception as e:
-                print(f"Batch processing test (with wait) failed: {e}")
+        try:
+            # Submit batch job and wait for completion (batch_wait=True, default)
+            results_batch = gemini_server_batch.generate_from_input(
+                user_inputs=user_prompts_batch,
+                system_prompt=system_prompt_batch,
+                response_schema=Capital,
+                use_batch=True,
+                batch_wait=True  # Wait for completion
+            )
+            print("--- Batch Generation Complete ---")
+            for i, (prompt, result) in enumerate(zip(user_prompts_batch, results_batch)):
+                print(f"\n[Prompt {i+1}]: {prompt}")
+                print(f"[Gemini Batch]: {result}")
+        
+        except Exception as e:
+            print(f"Batch processing test (with wait) failed: {e}")
 
     except google_exceptions.PermissionDenied as e:
         print(f"\nERROR: Permission Denied. Details: {e}")
