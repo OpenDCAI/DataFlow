@@ -59,8 +59,8 @@ jobs:
         env:
           UV_SYSTEM_PYTHON: "1"
         run: |
-          uv pip install --no-cache -r requirements-ci.txt || \
           uv pip install --no-cache -r requirements.txt
+          uv pip install -e .
 
       - name: Run tests on Windows
         if: startsWith(matrix.os, 'windows')
