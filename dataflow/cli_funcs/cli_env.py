@@ -4,6 +4,7 @@ import platform
 from colorama import init, Fore, Style
 from dataflow import __version__
 import importlib.metadata
+from .paths import DataFlowPath
 
 
 def is_torch_cuda_available():
@@ -14,7 +15,8 @@ def is_torch_cuda_available():
 
 def get_env_info():
     info = {
-        "`dataflow` version": __version__,
+        "`Dataflow` version": __version__,
+        "`Dataflow` install path": DataFlowPath.get_dataflow_dir(),
         "Platform": platform.platform(),
         "Python version": platform.python_version(),
         "PyTorch version": torch.__version__,
