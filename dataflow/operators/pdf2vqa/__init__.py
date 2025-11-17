@@ -10,8 +10,8 @@ else:
 
 
 
-    cur_path = "dataflow/operators/vqa/"
+    cur_path = "dataflow/operators/pdf2vqa/"
 
 
     _import_structure = generate_import_structure_from_type_checking(__file__, cur_path)
-    sys.modules[__name__] = LazyLoader(__name__, "dataflow/operators/vqa/", _import_structure)
+    sys.modules[__name__] = LazyLoader(__name__, "dataflow/operators/pdf2vqa/", _import_structure)
