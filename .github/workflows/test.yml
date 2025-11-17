@@ -5,14 +5,15 @@ on:
     branches: [ "main" ]
     paths:
       - "**/*.py"
-      - "requirements.txt" 
+      - "requirements*.txt"
       - ".github/workflows/*.yml"
   pull_request:
     branches: [ "main" ]
     paths:
       - "**/*.py"
-      - "requirements.txt" 
+      - "requirements*.txt"
       - ".github/workflows/*.yml"
+
 jobs:
   test:
     name: Run tests on ${{ matrix.os }} with Python ${{ matrix.python }}
@@ -21,48 +22,56 @@ jobs:
       fail-fast: false
       matrix:
         os: ["ubuntu-latest", "macos-latest", "windows-latest"]
-        torch: [{base: '2.5.1', vision: '0.20.1'}]
         python: ["3.10", "3.11", "3.12"]
 
     runs-on: ${{ matrix.os }}
+
     steps:
-    - uses: actions/checkout@v4
-    - name: Set up Python ${{ matrix.python }}
-      uses: actions/setup-python@v3
-      with:
-        python-version: ${{ matrix.python }}
-    - uses: astral-sh/uv-action@v1
-    - run: |
-        uv pip install -r requirements-ci.txt --no-cache
+      - uses: actions/checkout@v4
 
-    - name: Run tests on Windows
-      if: startsWith(matrix.os, 'windows')
-      env:
-        PYTHONDONTWRITEBYTECODE: 1
-        #         torchrun --nproc_per_node=2 -m pytest ./tests/dist
-      run: |
-        pytest -m cpu test
+      - name: Set up Python ${{ matrix.python }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python }}
 
-    - name: Run '${{ matrix.testmarker }}' tests on Linux / Mac
-      if: ${{ !startsWith(matrix.os, 'windows') }}
-      env:
-        # LD_PRELOAD: /usr/lib/x86_64-linux-gnu/libtcmalloc.so.4
-        PYTHONDONTWRITEBYTECODE: 1
-      run: |
-        pytest -m cpu test
+      # 仅 Linux：释放 GitHub runner 的大块预装组件，立刻回收十几 GB
+      - name: Free up disk space on Linux
+        if: runner.os == 'Linux'
+        run: |
+          df -h
+          sudo rm -rf /usr/local/lib/android || true
+          sudo rm -rf /usr/share/dotnet || true
+          sudo rm -rf /opt/ghc || true
+          sudo rm -rf /opt/hostedtoolcache/CodeQL || true
+          docker system prune -af || true
+          sudo apt-get clean
+          sudo rm -rf /var/lib/apt/lists/*
+          df -h
 
-  # big-model-test:
-  #   if: github.repository == 'OpenDCAI/DataFlow-Preview'
-  #   runs-on: [self-hosted]  # 跑在你的私有 GPU runner 上
-  #   steps:
-  #     - uses: actions/checkout@v4
+      # 安装 uv（正确的官方 action）
+      - name: Install uv
+        uses: astral-sh/setup-uv@v7
+        with:
+          enable-cache: true  # 远端缓存 uv 自身（对磁盘占用很小）
 
-  #     - name: Install GPU dependencies
-  #       run: pip install -e .
+      # 用系统 Python 安装依赖，禁用缓存，避免写入大体积 wheel 缓存
+      - name: Install dependencies
+        env:
+          UV_SYSTEM_PYTHON: "1"
+        run: |
+          uv pip install --no-cache -r requirements-ci.txt || \
+          uv pip install --no-cache -r requirements.txt
 
-  #     - name: upgrade omegaconf
-  #       run: pip install --upgrade omegaconf
+      - name: Run tests on Windows
+        if: startsWith(matrix.os, 'windows')
+        env:
+          PYTHONDONTWRITEBYTECODE: 1
+        run: |
+          pytest -m cpu test
 
-  #     - name: Run GPU tests
-  #       run: |
-  #         pytest -m gpu test
+      - name: Run tests on Linux / macOS
+        if: ${{ !startsWith(matrix.os, 'windows') }}
+        env:
+          PYTHONDONTWRITEBYTECODE: 1
+        run: |
+          pytest -m cpu test
