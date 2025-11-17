@@ -23,6 +23,7 @@ nltk
 colorama
 gradio>5
 json5
+tiktoken
 
 # text2sql
 func_timeout
