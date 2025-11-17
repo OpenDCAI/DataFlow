@@ -70,4 +70,8 @@ soundfile
 # map visualize
 # matplotlib - removed as no longer needed
 
+# google vertex ai
 google-cloud-aiplatform>=1.55
+google-cloud-bigquery
+google-genai
+gcsfs
