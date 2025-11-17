@@ -1,12 +1,13 @@
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from .generate.vqa_extract_pdf2img import VQAExtractPdf2Img
-    from .generate.vqa_extract_doclayout import VQAExtractDocLayoutMinerU
-    from .generate.vqa_extract_pic_extractor import VQAExtractPicExtractor
-    from .generate.vqa_extract_qapair_extractor import VQAExtractQAPairExtractor
-    from .generate.vqa_extract_tag2img import VQAExtractTag2Img
-    from .generate.vqa_img_helper import VQAClipHeader, VQAConcatenateImages
+    pass
+    # from .generate.vqa_extract_pdf2img import VQAExtractPdf2Img
+    # from .generate.vqa_extract_doclayout import VQAExtractDocLayoutMinerU
+    # from .generate.vqa_extract_pic_extractor import VQAExtractPicExtractor
+    # from .generate.vqa_extract_qapair_extractor import VQAExtractQAPairExtractor
+    # from .generate.vqa_extract_tag2img import VQAExtractTag2Img
+    # from .generate.vqa_img_helper import VQAClipHeader, VQAConcatenateImages
 
 
 else:
