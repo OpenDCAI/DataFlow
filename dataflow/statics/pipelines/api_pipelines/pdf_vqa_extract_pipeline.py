@@ -8,14 +8,14 @@ from dataflow.operators.vqa import VQAExtractor
 class VQA_extract_optimized_pipeline:
     def __init__(self):
         self.storage = FileStorage(
-            first_entry_file_name="./dataflow/example/VQA/vqa_test.jsonl",
+            first_entry_file_name="../example_data/PDF2VQAPipeline/vqa_extract_test.jsonl",
             cache_path="./cache",
             file_name_prefix="vqa",
             cache_type="jsonl",
         )
         
         self.llm_serving = APILLMServing_request(
-            api_url="http://123.129.219.111:3000/v1/chat/completions",
+            api_url="https://generativelanguage.googleapis.com/v1beta/openai/chat/completions",
             key_name_of_api_key="DF_API_KEY",
             model_name="gemini-2.5-pro",
             max_workers=100,

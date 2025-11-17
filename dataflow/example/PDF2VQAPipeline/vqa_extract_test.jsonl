@@ -1,0 +1,2 @@
+{"question_pdf_path": "../example_data/PDF2VQAPipeline/questionextract_test.pdf", "answer_pdf_path": "../example_data/PDF2VQAPipeline/questionextract_test.pdf", "subject": "math", "output_dir": "../vqa_output_test/math1"}
+{"question_pdf_path": "../example_data/PDF2VQAPipeline/math_question.pdf", "answer_pdf_path": "../example_data/PDF2VQAPipeline/math_answer.pdf", "subject": "math", "output_dir": "../vqa_output_test/math2"}
