@@ -12,9 +12,9 @@ from dataflow.utils.registry import OPERATOR_REGISTRY
 from dataflow.utils.storage import DataFlowStorage
 from dataflow import get_logger
 from dataflow.core import LLMServingABC
-from dataflow.prompts.vqa import QAExtractPrompt
+from DataFlow.dataflow.prompts.pdf2vqa import QAExtractPrompt
 from dataflow.core.prompt import prompt_restrict
-from dataflow.utils.vqa.format_utils import merge_qa_pair, jsonl_to_md
+from dataflow.utils.pdf2vqa.format_utils import merge_qa_pair, jsonl_to_md
 
 @prompt_restrict(QAExtractPrompt)
 @OPERATOR_REGISTRY.register()
