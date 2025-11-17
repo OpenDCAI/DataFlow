@@ -236,5 +236,5 @@ class VQA_extract:
 if __name__ == "__main__":
     # jsonl中每一行包含question_pdf_path, answer_pdf_path, subject (math, physics, chemistry, ...), output_dir
     # 如果question和answer在同一份pdf中，请将question_pdf_path和answer_pdf_path设置为相同的路径，会自动切换为interleaved模式
-    vqa_extractor = VQA_extract("/data1/djw/VQA_input_jsonl/vqa_real_analysis.jsonl")
+    vqa_extractor = VQA_extract("./dataflow/example/VQA/vqa_test.jsonl")
     vqa_extractor.run()
