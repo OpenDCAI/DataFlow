@@ -686,7 +686,8 @@ class APIGoogleVertexAIServing(LLMServingABC):
         
         self.create_bq_dataset(dataset_name)
         
-        table_name = Path(csv_path).stem
+        timestamp = int(time.time())
+        table_name = f"{timestamp}_{Path(csv_path).stem}"
         table_id = f"{dataset_name}.{table_name}"
         
         job_config = bigquery.LoadJobConfig(
