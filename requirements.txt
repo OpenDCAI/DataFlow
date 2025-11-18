@@ -1,5 +1,5 @@
 numpy<2.0.0
-datasets<=3.2
+datasets
 scipy
 torch
 torchvision
@@ -22,6 +22,8 @@ pydantic
 nltk
 colorama
 gradio>5
+json5
+tiktoken
 
 # text2sql
 func_timeout

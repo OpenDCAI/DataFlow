@@ -1,5 +1,6 @@
+from email.policy import strict
 from dataflow.utils.reasoning.AnswerExtraction import StringCleaner, UnitTextManager, AnswerExtractor
-from dataflow.prompts.model_evaluation.general import AnswerJudgePromptQuestion
+from dataflow.prompts.model_evaluation.general import AnswerJudgePromptQuestion, AnswerJudgeMultipleQuestionsPrompt
 from dataflow.core.prompt import DIYPromptABC
 from dataflow.utils.registry import OPERATOR_REGISTRY
 from dataflow.utils.storage import DataFlowStorage
@@ -14,6 +15,8 @@ import numpy as np
 import time
 import os  # 添加os模块导入
 import re
+import json
+import json5
 
 @OPERATOR_REGISTRY.register()
 class BenchDatasetEvaluatorQuestion(OperatorABC):
@@ -22,7 +25,8 @@ class BenchDatasetEvaluatorQuestion(OperatorABC):
                 compare_method: Literal["match", "semantic"] = "match",
                 system_prompt: str = "You are a helpful assistant specialized in evaluating answer correctness.",
                 llm_serving: LLMServingABC = None,
-                prompt_template: DIYPromptABC = None
+                prompt_template: DIYPromptABC = None,
+                support_subquestions: bool = False
                 ):
         
         if eval_result_path is None:
@@ -40,10 +44,11 @@ class BenchDatasetEvaluatorQuestion(OperatorABC):
             self.answer_extractor = AnswerExtractor(string_cleaner)
         else:
             if prompt_template is None:
-                prompt_template = AnswerJudgePromptQuestion()
+                prompt_template = AnswerJudgePromptQuestion() if not support_subquestions else AnswerJudgeMultipleQuestionsPrompt()
             self.prompt_template = prompt_template
             self.system_prompt = system_prompt
             self.llm_serving = llm_serving
+            self.support_subquestions = support_subquestions
             
         self.logger = get_logger()
     
@@ -58,29 +63,61 @@ class BenchDatasetEvaluatorQuestion(OperatorABC):
 
     def ResolveResponse(self, response):
         # 检查空响应
-        if response is None or (isinstance(response, str) and response.strip() == ''):
-            self.empty_responses_count += 1
-            return False
-        try:
-            pattern = re.compile(r'"judgement_result"\s*:\s*(true|false)', re.IGNORECASE)
-            match = pattern.search(response)
-            result_value = None
-            if match:
-                result_value = match.group(1).lower()
-            else:
-                # 备用解析逻辑，检查响应中是否包含true或false
-                if "true" in response.lower():
-                    result_value = "true"
-                else:
-                    result_value = "false"
-            if result_value == "true":
-                return True
-            else:
+        if not self.support_subquestions:
+            if response is None or (isinstance(response, str) and response.strip() == ''):
+                self.empty_responses_count += 1
                 return False
-        except Exception as e:
-            self.logger.error(f"Response format error: {response}. Error: {e}")
-            return False
+            try:
+                pattern = re.compile(r'"judgement_result"\s*:\s*(true|false)', re.IGNORECASE)
+                match = pattern.search(response)
+                result_value = None
+                if match:
+                    result_value = match.group(1).lower()
+                else:
+                    # 备用解析逻辑，检查响应中是否包含true或false
+                    if "true" in response.lower():
+                        result_value = "true"
+                    else:
+                        result_value = "false"
+                if result_value == "true":
+                    return True
+                else:
+                    return False
+            except Exception as e:
+                self.logger.error(f"Response format error: {response}. Error: {e}")
+                return False
         
+        if self.support_subquestions:
+            # 如果支持子问题，假设response是一个列表, 返回正确的数量/总数
+            correct_num = 0
+            total_num = 0
+            try:
+                response = json5.loads(response, strict=False)  # 使用json5解析，允许更宽松的格式
+                judgement = response.get("judgement", [])
+            except Exception as e:
+                self.logger.error(f"Response JSON parse error: {response}. Error: {e}")
+                self.empty_responses_count += 1
+                return "0/0"
+            for resp in judgement:
+                if isinstance(resp, bool): 
+                    if resp is True:
+                        correct_num += 1
+                        total_num += 1
+                    elif resp is False:
+                        total_num += 1
+                    elif resp.lower() == "empty":
+                        continue  # 不计入总数
+                elif isinstance(resp, str):
+                    if resp.lower() == "true":
+                        correct_num += 1
+                        total_num += 1
+                    elif resp.lower() == "false":
+                        total_num += 1
+                    elif resp.lower() == "empty":
+                        continue  # 不计入总数
+                    
+            return f"{correct_num}/{total_num}"
+            
     @staticmethod
     def get_desc(lang: str = "zh"):
         if lang == "zh":
@@ -137,6 +174,16 @@ class BenchDatasetEvaluatorQuestion(OperatorABC):
             "empty_responses_count": self.empty_responses_count,
             "compare_method": compare_method
         }
+        
+        if self.support_subquestions:
+            total_subquestions = dataframe['total_subquestions'].sum()
+            correct_subquestions = dataframe['correct_answer_num'].sum()
+            subquestion_accuracy = correct_subquestions / total_subquestions if total_subquestions > 0 else 0
+            stats.update({
+                "total_subquestions": int(total_subquestions),
+                "correct_subquestions": int(correct_subquestions),
+                "subquestion_accuracy": float(subquestion_accuracy)
+            })
         
         # 将字典转换为DataFrame
         stats_df = pd.DataFrame([stats])
@@ -214,6 +261,11 @@ class BenchDatasetEvaluatorQuestion(OperatorABC):
             ) for _, row in valid_rows.iterrows()]
             
             responses = self.llm_serving.generate_from_input(user_inputs=inputs, system_prompt=self.system_prompt)
+            
+            # if self.support_subquestions:
+            #     # 每个response是一个列表，连接一个长列表，比如[["true", "false"], ["true"]] -> ["true", "false", "true"]
+            #     responses = [item for sublist in responses for item in sublist]
+            
             results = [self.ResolveResponse(response) for response in responses]
             
             # 创建结果掩码，与valid_rows长度相同
@@ -221,8 +273,17 @@ class BenchDatasetEvaluatorQuestion(OperatorABC):
             
             # 更新有效行的answer_match_result
             valid_indices = valid_rows.index
-            for i, idx in enumerate(valid_indices):
-                dataframe.at[idx, 'answer_match_result'] = results[i]
+            if not self.support_subquestions:
+                for i, idx in enumerate(valid_indices):
+                    dataframe.at[idx, 'answer_match_result'] = results[i]
+            else:
+                for i, idx in enumerate(valid_indices):
+                    correct_answer_num = int(results[i].split('/')[0])
+                    total_subquestions = int(results[i].split('/')[1])
+                    dataframe.at[idx, 'correct_answer_num'] = correct_answer_num
+                    dataframe.at[idx, 'total_subquestions'] = total_subquestions
+                    dataframe.at[idx, 'answer_match_result'] = (correct_answer_num == total_subquestions) and (total_subquestions > 0)   # 全对为True，否则为False
+                    dataframe.at[idx, 'response_evaluation'] = responses[i]  # 保存LLM的原始响应内容
                 
             output_file = storage.write(dataframe)
             

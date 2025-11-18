@@ -323,9 +323,17 @@ class LazyLoader(types.ModuleType):
             logger.debug(f"Module file: {module.__file__}")
             logger.debug(f"Module package: {module.__package__}")
             spec.loader.exec_module(module)
+
         except Exception as e:
-            logger.error(f"{e.__str__()}")
-            raise e
+            import traceback
+            logger.exception("Import failed for %s from %s", mod_name, abs_file_path)
+            # 可选：再打印一份，CI 日志更清楚
+            print("=== Lazy import traceback ===")
+            print("Module:", mod_name)
+            print("File:", abs_file_path)
+            print("".join(traceback.format_exception(e)))
+            raise
+
 
         # 提取类
         if not hasattr(module, class_name):
