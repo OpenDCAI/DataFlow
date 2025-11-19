@@ -125,6 +125,7 @@ class KBCChunkGeneratorBatch(OperatorABC):
         texts = self._load_text(text_paths)
         output_paths = []
 
+        chunks = []
         for i, text in enumerate(texts):
             if(text):
                 # 计算总token数和最大限制

@@ -21,7 +21,7 @@ class KBCleaning_batchSglang_GPUPipeline():
         self.knowledge_cleaning_step1 = FileOrURLToMarkdownConverterBatch(
             intermediate_dir="../../example_data/KBCleaningPipeline/raw/",
             lang="en",
-            mineru_backend="vlm-sglang-engine",
+            mineru_backend="vlm-vllm-engine",
         )
 
         self.knowledge_cleaning_step2 = KBCChunkGeneratorBatch(
