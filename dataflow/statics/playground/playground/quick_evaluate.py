@@ -1,4 +1,4 @@
-from dataflow.operators.general_text import MetaScorer
+from dataflow.operators.text_pt import MetaSampleEvaluator
 from dataflow.serving import APILLMServing_request
 from dataflow.utils.storage import FileStorage
 
@@ -14,7 +14,7 @@ class QuickEvaluatePipeline():
             api_url="http://123.129.219.111:3000/v1/chat/completions",
             model_name="gpt-4o"
         )
-        self.meta_scorer = MetaScorer(llm_serving=self.llm_serving)
+        self.meta_scorer = MetaSampleEvaluator(llm_serving=self.llm_serving)
         
         
     def forward(self):
