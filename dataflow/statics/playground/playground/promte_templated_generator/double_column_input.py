@@ -8,7 +8,7 @@ from dataflow.prompts.core_text import StrFormatPrompt
 class DoubleColumnInputTestCase():
     def __init__(self):
         self.storage = FileStorage(
-            first_entry_file_name="../example_data/core_text_data/double_column_input.jsonl",
+            first_entry_file_name="../example_data/core_text_data/double_column_input.json",
             file_name_prefix="double_column_input",
             cache_path="./cache",
             cache_type="jsonl",
