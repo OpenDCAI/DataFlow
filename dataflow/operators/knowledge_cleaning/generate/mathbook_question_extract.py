@@ -15,6 +15,7 @@ from typing import Literal, Union
 from dataflow.core import LLMServingABC
 from dataflow.serving import APIVLMServing_openai
 from dataflow.core.prompt import DIYPromptABC
+from dataflow.utils.storage import DataFlowStorage
 
 @OPERATOR_REGISTRY.register()
 class MathBookQuestionExtract(OperatorABC):
@@ -293,8 +294,9 @@ Please make sure you have GPU on your machine.
         input_pdf_file_path: str,
         output_file_name: str,
         output_folder: str,
+        storage: DataFlowStorage = None,
     ):
-        # 从 self 获取配置参数
+        # get the configuration parameters from self
         api_key = os.environ.get(self.key_name_of_api_key)
         if not api_key:
             raise ValueError(f"API key not found in environment variable {self.key_name_of_api_key}")
