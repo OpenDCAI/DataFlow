@@ -1,5 +1,5 @@
 from dataflow.operators.core_vision import PromptedVQAGenerator
-from dataflow.serving.APIVLMServing_openai import APIVLMServing_openai
+from dataflow.serving import APIVLMServing_openai
 from dataflow.utils.storage import FileStorage
 
 class VQA_generator():

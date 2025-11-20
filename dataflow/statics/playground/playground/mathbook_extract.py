@@ -1,10 +1,10 @@
-from dataflow.operators.knowledge_cleaning.generate.mathbook_question_extract import MathBookQuestionExtract
-from dataflow.serving.api_vlm_serving_openai import APIVLMServing_openai
+from dataflow.operators.knowledge_cleaning import MathBookQuestionExtract
+from dataflow.serving import APIVLMServing_openai
 
 class QuestionExtractPipeline:
     def __init__(self, llm_serving: APIVLMServing_openai):
         self.extractor = MathBookQuestionExtract(llm_serving)
-        self.test_pdf = "../example_data/KBCleaningPipeline/questionextract_test.pdf" 
+        self.test_pdf = "../example_data/PDF2VQAPipeline/questionextract_test.pdf" 
 
     def forward(
         self,
