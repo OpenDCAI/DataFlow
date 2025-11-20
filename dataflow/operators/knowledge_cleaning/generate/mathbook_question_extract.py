@@ -11,22 +11,19 @@ from dataflow.prompts.kbcleaning import MathbookQuestionExtractPrompt
 import re
 from openai import OpenAI
 import base64
-from typing import List, Literal
+from typing import List, Literal, Union
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from dataflow.core import LLMServingABC
 from dataflow.serving import APIVLMServing_openai
-
-
+from dataflow.core.prompt import DIYPromptABC
 
 @OPERATOR_REGISTRY.register()
 class MathBookQuestionExtract(OperatorABC):
-    def __init__(self, llm_serving: APIVLMServing_openai, prompt_template = None):
+    def __init__(self, llm_serving: APIVLMServing_openai, 
+                    prompt_template: Union[MathbookQuestionExtractPrompt, DIYPromptABC] = MathbookQuestionExtractPrompt()):
         self.logger = get_logger()
         self.llm_serving = llm_serving
-        if prompt_template:
-            self.prompt_template = prompt_template
-        else:
-            self.prompt_template = MathbookQuestionExtractPrompt()
+        self.prompt_template = prompt_template
 
     @staticmethod   
     def get_desc(lang: str = "zh"):

@@ -1,6 +1,6 @@
 from dataflow.utils.registry import PROMPT_REGISTRY
 from dataflow.core.prompt import PromptABC
-
+import re
 @PROMPT_REGISTRY.register()
 class KnowledgeCleanerPrompt(PromptABC):
    '''
@@ -220,7 +220,7 @@ Processing Steps:
 
 
 @PROMPT_REGISTRY.register()
-class MathbookQuestionExtractPrompt:
+class MathbookQuestionExtractPrompt(PromptABC):
    def __init__(self):
       pass
 
