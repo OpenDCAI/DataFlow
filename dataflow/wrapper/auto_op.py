@@ -1,4 +1,4 @@
-from typing import ParamSpec, TypeVar, Generic, Protocol, Any, Dict
+from typing import OrderedDict, ParamSpec, TypeVar, Generic, Protocol, Any, Dict
 from functools import wraps
 import inspect
 from dataflow.logger import get_logger
@@ -54,6 +54,32 @@ class AutoOP(Generic[P, R]):
         self._signature = inspect.signature(operator.run)
         self.__doc__ = self._orig_run.__doc__
 
+    def _flatten_bound_arguments(self, bound: inspect.BoundArguments, sig: inspect.Signature) -> "OrderedDict[str, object]":
+        """
+        将 bound.arguments（OrderedDict）中的 **kwargs 展平到顶层，
+        保留调用顺序；其余参数（含 *args）原样保留。
+        """
+        # 找出签名中 **kwargs 的参数名（若存在）
+        var_kw_name = None
+        for name, p in sig.parameters.items():
+            print(name, p.kind)
+            if p.kind == inspect.Parameter.VAR_KEYWORD:
+                var_kw_name = name
+                break
+
+        out = OrderedDict()
+        for name, value in bound.arguments.items():
+            if name == var_kw_name and isinstance(value, dict):
+                # 展平 **kwargs：按调用顺序插入
+                for k, v in value.items():
+                    if k in out:                   # 理论上不该冲突；保险起见
+                        out[f"__kw__{k}"] = v
+                    else:
+                        out[k] = v
+            else:
+                out[name] = value
+        return out
+
     def run(self, *args: P.args, **kwargs: P.kwargs) -> R:
         """
         这里写一份通用的 run 文档也可以，
@@ -63,8 +89,9 @@ class AutoOP(Generic[P, R]):
         bound_args = self._signature.bind(*args, **kwargs)
         bound_args.apply_defaults()
 
-        final_kwargs = bound_args.arguments  # OrderedDict
+        final_kwargs = self._flatten_bound_arguments(bound_args, self._signature)  # OrderedDict
 
+        # final_kwargs = bound_args.arguments  # OrderedDict
         # 添加一条运行记录
         # self._pipeline.op_runtimes.append(OPRuntime(self._operator, self._orig_run, dict(final_kwargs)))
         self._pipeline.op_runtimes.append(
