@@ -291,10 +291,10 @@ Please make sure you have GPU on your machine.
 
     def run(
         self,
+        storage: DataFlowStorage,
         input_pdf_file_path: str,
         output_file_name: str,
         output_folder: str,
-        storage: DataFlowStorage = None,
     ):
         # get the configuration parameters from self
         api_key = os.environ.get(self.key_name_of_api_key)

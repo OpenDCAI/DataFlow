@@ -24,6 +24,7 @@ class QuestionExtractPipeline:
         output_dir: str,
     ):
         self.extractor.run(
+            storage=None,
             input_pdf_file_path=pdf_path,
             output_file_name=output_name,
             output_folder=output_dir
