@@ -12,6 +12,8 @@ from .LocalSentenceLLMServing import LocalEmbeddingServing
 
 from .light_rag_serving import LightRAGServing
 
+from .local_model_vlm_serving import LocalVLMServing_vllm
+
 __all__ = [
     "APILLMServing_request",
     "LocalModelLLMServing_vllm",
@@ -20,5 +22,6 @@ __all__ = [
     "PerspectiveAPIServing",
     "LiteLLMServing",
     "LocalModelLALMServing_vllm"
-    "LocalHostLLMAPIServing_vllm"
+    "LocalHostLLMAPIServing_vllm",
+    "LocalVLMServing_vllm",
 ]
