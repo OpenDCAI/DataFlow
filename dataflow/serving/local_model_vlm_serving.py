@@ -215,6 +215,7 @@ class LocalVLMServing_vllm(LLMServingABC):
         self,
         list_of_image_paths: List[List[str]],
         list_of_image_labels: List[List[str]],
+        user_prompts: List[str],
         system_prompt: str = "Analyze the provided images.",
         model: str = None,  # 保持接口一致性，实际不使用
         timeout: int = 1800 # 保持接口一致性，实际不使用
@@ -234,7 +235,7 @@ class LocalVLMServing_vllm(LLMServingABC):
         vllm_inputs = []
 
         # 遍历每一个请求 (Batch Loop)
-        for paths, labels in zip(list_of_image_paths, list_of_image_labels):
+        for paths, labels, user_prompt in zip(list_of_image_paths, list_of_image_labels, user_prompts):
             if len(paths) != len(labels):
                 raise ValueError("Inner lists of paths and labels must have the same length")
             
@@ -251,7 +252,7 @@ class LocalVLMServing_vllm(LLMServingABC):
 
             # 2. 构建 User Content
             # 我们需要交替插入文本(Label)和图片占位符
-            user_content = []
+            user_content = [{"type": "text", "text": user_prompt}]
             for label, _ in zip(labels, paths):
                 # 插入标签文本（如果有）
                 if label:
