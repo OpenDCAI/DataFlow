@@ -22,12 +22,14 @@ class APILLMServing_request(LLMServingABC):
                  model_name: str = "gpt-4o",
                  max_workers: int = 10,
                  max_retries: int = 5,
+                 temperature = 0.0
                  ):
         # Get API key from environment variable or config
         self.api_url = api_url
         self.model_name = model_name
         self.max_workers = max_workers
         self.max_retries = max_retries
+        self.temperature = temperature
         self.logger = get_logger()
 
         # config api_key in os.environ global, since safty issue.
@@ -70,7 +72,7 @@ class APILLMServing_request(LLMServingABC):
                     {"role": "system", "content": system_info},
                     {"role": "user", "content": messages}
                 ],
-                "temperature": 0.0   
+                "temperature": self.temperature   
             })
 
             headers = {

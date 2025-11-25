@@ -27,7 +27,8 @@ class APIVLMServing_openai(LLMServingABC):
         key_name_of_api_key: str = "DF_API_KEY",
         model_name: str = "o4-mini",
         max_workers: int = 10,
-        timeout: int = 1800
+        timeout: int = 1800,
+        temperature = 0.0
     ):
         """
         Initialize the OpenAI client and settings.
@@ -42,6 +43,7 @@ class APIVLMServing_openai(LLMServingABC):
         self.max_workers = max_workers
         self.logger = get_logger()
         self.timeout = timeout
+        self.temperature = temperature
         api_key = os.environ.get(key_name_of_api_key)
         if not api_key:
             self.logger.error(f"API key not found in environment variable '{key_name_of_api_key}'")
@@ -104,7 +106,8 @@ class APIVLMServing_openai(LLMServingABC):
         request_params = {
             "model": model,
             "messages": messages,
-            "timeout": timeout
+            "timeout": timeout,
+            "temperature": self.temperature
         }
         
         # 如果提供了 JSON schema，添加 response_format
@@ -293,6 +296,7 @@ class APIVLMServing_openai(LLMServingABC):
         list_of_image_paths: List[List[str]],
         list_of_image_labels: List[List[str]],
         system_prompt: str = "",
+        user_prompts: List[str] = None,
         model: str = None,
         timeout: int = 1800,
         json_schema: dict = None
@@ -315,6 +319,9 @@ class APIVLMServing_openai(LLMServingABC):
 
         model = model or self.model_name
         responses = [None] * len(list_of_image_paths)
+        
+        if user_prompts == None:
+            user_prompts = [""] * len(list_of_image_paths)
 
         with ThreadPoolExecutor(max_workers=self.max_workers) as executor:
             futures = {
@@ -323,13 +330,13 @@ class APIVLMServing_openai(LLMServingABC):
                     paths,
                     labels,
                     idx,
-                    system_prompt,
+                    system_prompt + user_prompt,
                     model,
                     timeout,
                     json_schema
                 ): idx
-                for idx, (paths, labels) in enumerate(
-                    zip(list_of_image_paths, list_of_image_labels)
+                for idx, (paths, labels, user_prompt) in enumerate(
+                    zip(list_of_image_paths, list_of_image_labels, user_prompts)
                 )
             }
 
