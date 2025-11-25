@@ -100,7 +100,7 @@ class QAExtractPrompt(PromptABC):
 3. If the problem or answer is not complete, omit them.
 4. You need to put the images id into proper positions. You could look at the caption or context to decide where to put the image tags.
 5. You will also need to extract the chapter title and each problem's label/number from the text.
-6. You only need to output "id" field for chapters, questions and solutions. DO NOT OUTPUT ORIGINAL TEXT. Use ',' to separate different ids.
+6. You only need to output "id" field for chapter titles, questions and solutions. DO NOT OUTPUT ORIGINAL TEXT. Use ',' to separate different ids.
 7. However, use original labels/numbers for labels, and use original numbers for answers. DO NOT output "id" field for labels and answers. You will need to extract them from the text.
 """
         PROMPT +=f"""
@@ -114,9 +114,9 @@ Strict extraction rules:
 - If only questions or only answers with solutions appear, wrap each question or answer with solution in a `<qa_pair>`…`</qa_pair>` block with the missing part left empty. For example, if only questions appear:
   `<qa_pair><label>例1</label><question>…</question><answer></answer><solution></solution></qa_pair>`
 - If multiple questions and solutions appear, wrap each question/solution pair in its own `<qa_pair>`…`</qa_pair>` block.
-- If you do not see the full solution, only extract the short answer and leave the solution empty. YOU MUST KEEP QUESTIONS WITH ONLY SHORT ANSWERS !!!
+- If you do not see the full solution, only extract the short answer and leave the solution empty. YOU MUST KEEP SHORT ANSWERS !!!
 ** About chapter/section titles **
-- Always enclose qa pairs in a `<chapter>`…`</chapter>` block, where <title>MAIN_TITLE</title> is the chapter title or section title.
+- Always enclose qa pairs in a `<chapter>`…`</chapter>` block, where <title>MAIN_TITLE_ID</title> is the id of the chapter title or section title.
 - Normally, chapter/section titles appear before the questions/answers in an independent json item.
 - There could be multiple `<chapter>`…`</chapter>` blocks if multiple chapters/sections exist. 
 - **Any titles followed by a question/answer whose label/number is not 1, or with a score, should NOT be extracted.**
@@ -137,7 +137,7 @@ Output format (all tags run together, no extra whitespace or newlines except bet
 <qa_pair><label>…</label><question>QUESTION_IDS</question>
 <answer>ANSWER(EXTRACTED FROM SOLUTION)</answer><solution></solution></qa_pair>
 </chapter>
-<chapter><title>MAIN_TITLE</title>
+<chapter><title>MAIN_TITLE_ID</title>
 <qa_pair><label>…</label><question>QUESTION_IDS</question>
 <answer>ANSWER(EXTRACTED FROM SOLUTION)</answer><solution>SOLUTION_IDS</solution></qa_pair>
 </chapter>

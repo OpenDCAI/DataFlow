@@ -3,6 +3,7 @@ import torch
 import contextlib
 from typing import List, Optional, Union, Dict, Any
 from PIL import Image
+import re
 
 from dataflow import get_logger
 from huggingface_hub import snapshot_download
@@ -30,11 +31,20 @@ class LocalVLMServing_vllm(LLMServingABC):
                  vllm_limit_mm_per_prompt: int = 1, # Specific to VLMs: max images per prompt
                  trust_remote_code: bool = True,
                  enable_thinking:bool =True,  # Set to False to strictly disable thinking
+                 batch_size: int = 128
                  ):
         """
         Initialize the Local VLM Serving client.
         """
         self.logger = get_logger()
+        QWEN_VL_PATTERN = re.compile(r'Qwen-VL|Qwen[0-9\.]+-VL')
+        # 报Warning显示目前经过测试的VLM主要是QwenVL
+        if hf_model_name_or_path and not QWEN_VL_PATTERN.search(hf_model_name_or_path):
+            self.logger.warning(
+                "Model Compatibility Alert: LocalVLMServing_vllm is primarily tested with Qwen-VL models "
+                "(e.g., Qwen-VL-Chat, Qwen2.5-VL-Chat). Other VLMs may require additional adjustments "
+                "for correct functionality."
+            )
         self.load_model(
             hf_model_name_or_path=hf_model_name_or_path,
             hf_cache_dir=hf_cache_dir,
@@ -53,6 +63,7 @@ class LocalVLMServing_vllm(LLMServingABC):
             enable_thinking=enable_thinking
         )
         self.backend_initialized = False
+        self.batch_size = batch_size
 
     def load_model(self, 
                  hf_model_name_or_path: str = None,
@@ -119,6 +130,9 @@ class LocalVLMServing_vllm(LLMServingABC):
             temperature=self.vllm_temperature,
             top_p=self.vllm_top_p,
             max_tokens=self.vllm_max_tokens,
+            top_k=self.vllm_top_k,
+            repetition_penalty=self.vllm_repetition_penalty,
+            seed=self.vllm_seed
         )
         
         # 3. Initialize LLM Engine with VLM specific params
@@ -150,6 +164,15 @@ class LocalVLMServing_vllm(LLMServingABC):
         except Exception as e:
             self.logger.error(f"Failed to load image at {image_path}: {e}")
             raise e
+        
+    def _run_batch_inference(self, vllm_inputs, batch_size):
+        all_outputs = []
+        # 按 batch_size 分批处理
+        for i in range(0, len(vllm_inputs), batch_size):
+            batch_inputs = vllm_inputs[i:i+batch_size]
+            outputs = self.llm.generate(batch_inputs, sampling_params=self.sampling_params)
+            all_outputs.extend([output.outputs[0].text for output in outputs])
+        return all_outputs
 
     def generate_from_input_one_image(
         self,
@@ -285,10 +308,8 @@ class LocalVLMServing_vllm(LLMServingABC):
             })
 
         # 6. 执行批量推理
-        outputs = self.llm.generate(vllm_inputs, sampling_params=self.sampling_params)
-
-        # 7. 提取结果
-        return [output.outputs[0].text for output in outputs]
+        all_outputs = self._run_batch_inference(vllm_inputs, batch_size=self.batch_size)
+        return all_outputs
     
     def cleanup(self):
         """
