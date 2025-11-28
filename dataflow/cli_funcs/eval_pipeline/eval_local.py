@@ -5,6 +5,7 @@ from pathlib import Path
 from dataflow.serving import LocalModelLLMServing_vllm
 from dataflow.utils.storage import FileStorage
 from dataflow.operators.core_text import BenchDatasetEvaluatorQuestion
+from dataflow.cli_funcs.cli_eval import run_evaluation
 
 # =============================================================================
 # Fair Evaluation Prompt Template
@@ -15,7 +16,6 @@ class FairAnswerJudgePrompt:
 
     def build_prompt(self, question, answer, reference_answer):
         prompt = f"""You are an expert evaluator assessing answer quality for academic questions.
-
             **Question:**
             {question}
 
@@ -54,51 +54,78 @@ class FairAnswerJudgePrompt:
 # Judge Model Configuration (local strong model as judge)
 JUDGE_MODEL_CONFIG = {
     "model_path": "./Qwen2.5-7B-Instruct",  # 用更强的模型做裁判
-    "tensor_parallel_size": 1,
-    "max_tokens": 512,
-    "gpu_memory_utilization": 0.8,
+    "hf_cache_dir": "",
+    "hf_local_dir": "",
+    "vllm_tensor_parallel_size": 1,
+    "vllm_temperature": 0.9,
+    "vllm_top_p": 0.9,
+    "vllm_max_tokens": 512,
+    "vllm_repetition_penalty": 0.8,
+    "vllm_seed": None,
+    "vllm_max_model_len": None,
+    "vllm_gpu_memory_utilization": 0.9
 }
 
 # Target Models Configuration (字典格式 - 必需)
 TARGET_MODELS = [
-    # {
-    #     "name": "qwen_3b",  # 模型名称（可选，默认使用路径最后一部分）
-    #     "path": "./Qwen2.5-3B-Instruct",  # 模型路径（必需）
+    {
+        "name": "qwen_3b",  # 模型名称（可选，默认使用路径最后一部分）
+        "path": "./Qwen2.5-3B-Instruct",  # 模型路径（必需）
 
-    #     # ===== 答案生成的模型加载参数（可选）=====
-    #     "tensor_parallel_size": 1,  # GPU并行数量
-    #     "max_tokens": 1024,  # 最大生成token数
-    #     "gpu_memory_utilization": 0.8,  # GPU显存利用率
-    # },
+        # 大模型可以用不同的参数
+        "vllm_tensor_parallel_size": 1,
+        "vllm_temperature": 0.1,
+        "vllm_top_p": 0.9,
+        "vllm_max_tokens": 2048,
+        "vllm_repetition_penalty": 1.0,
+        "vllm_seed": None,
+        "vllm_gpu_memory_utilization": 0.9,
+    },
     {
         "name": "qwen_7b",
         "path": "./Qwen2.5-7B-Instruct",
-
         # 大模型可以用不同的参数
-        "tensor_parallel_size": 2,
-        "max_tokens": 2048,
-        "gpu_memory_utilization": 0.9,
+        "vllm_tensor_parallel_size": 1,
+        "vllm_temperature": 0.1,
+        "vllm_top_p": 0.9,
+        "vllm_max_tokens": 2048,
+        "vllm_repetition_penalty": 1.0,
+        "vllm_seed": None,
+        "vllm_gpu_memory_utilization": 0.9,
 
         # 可以为每个模型自定义提示词
-        "answer_prompt": """please answer the following question:"""
+        "answer_prompt": """Please answer the following question based on the provided information. Put your answer in \\boxed{{}}.
+
+        For example, if the answer is B, output: \\boxed{{B}}"""
 
     },
 
-    # 添加更多模型...
-    # {
-    #     "name": "llama_8b",
-    #     "path": "meta-llama/Llama-3-8B-Instruct",
-    #     "tensor_parallel_size": 2
-    # }
 ]
 
-# Data Configuration
-DATA_CONFIG = {
-    "input_file": "/data1/fyl/workspace/.cache/data/qa.json",  # 输入数据文件
-    "output_dir": "./eval_results",  # 输出目录
-    "question_key": "input",  # 原始数据中的问题字段
-    "reference_answer_key": "output"  # 原始数据中的参考答案字段
-}
+# Bench Configuration
+BENCH_CONFIG = [
+    {
+        "name": "bench_name",  # bench名称
+        "input_file": "./.cache/data/qa.json",  # 数据文件
+        "question_key": "input",  # 问题字段名
+        "reference_answer_key": "output",  # 答案字段名
+        "output_dir": "./eval_results/bench_name",  # 输出目录
+    },
+    {
+        "name": "bench_name_1",
+        "input_file": "./.cache/data/data_qa.json",
+        "question_key": "input",
+        "reference_answer_key": "output",
+        "output_dir": "./eval_results/bench_name_1",
+    },
+    # {
+    #     "name": "code_bench",
+    #     "input_file": "./.cache/data/code_qa.json",
+    #     "question_key": "problem",
+    #     "reference_answer_key": "solution",
+    #     "output_dir": "./eval_results/code_bench",
+    # },
+]
 
 # Evaluator Run Configuration (parameters passed to BenchDatasetEvaluator.run)
 EVALUATOR_RUN_CONFIG = {
@@ -136,9 +163,16 @@ def create_judge_serving():
     # Enhanced VLLM configuration
     vllm_config = {
         "hf_model_name_or_path": model_path,
-        "vllm_tensor_parallel_size": JUDGE_MODEL_CONFIG.get("tensor_parallel_size", 1),
+        "hf_cache_dir": JUDGE_MODEL_CONFIG.get("hf_cache_dir"),
+        "hf_local_dir": JUDGE_MODEL_CONFIG.get("hf_local_dir"),
+        "vllm_tensor_parallel_size": JUDGE_MODEL_CONFIG.get("vllm_tensor_parallel_size", 1),
+        "vllm_temperature": JUDGE_MODEL_CONFIG.get("vllm_temperature", 0.9),
+        "vllm_top_p": JUDGE_MODEL_CONFIG.get("vllm_top_p", 0.9),
         "vllm_max_tokens": JUDGE_MODEL_CONFIG.get("max_tokens", 512),
-        "vllm_gpu_memory_utilization": JUDGE_MODEL_CONFIG.get("gpu_memory_utilization", 0.8)
+        "vllm_repetition_penalty": JUDGE_MODEL_CONFIG.get("vllm_repetition_penalty", 1.0),
+        "vllm_seed": JUDGE_MODEL_CONFIG.get("vllm_seed", None),
+        "vllm_max_model_len": JUDGE_MODEL_CONFIG.get("vllm_max_model_len", None),
+        "vllm_gpu_memory_utilization": JUDGE_MODEL_CONFIG.get("gpu_memory_utilization", 0.9)
     }
 
     # Add optional VLLM parameters if they exist
@@ -160,12 +194,12 @@ def create_evaluator(judge_serving, eval_result_path):
     )
 
 
-def create_storage(data_file, cache_path):
+def create_storage(data_file, cache_path, bench_name="eval_result"):
     """创建存储算子"""
     return FileStorage(
         first_entry_file_name=data_file,
         cache_path=cache_path,
-        file_name_prefix="eval_result",
+        file_name_prefix=bench_name,
         cache_type="json"
     )
 
@@ -179,7 +213,7 @@ def get_evaluator_config():
     return {
         "JUDGE_MODEL_CONFIG": JUDGE_MODEL_CONFIG,
         "TARGET_MODELS": TARGET_MODELS,
-        "DATA_CONFIG": DATA_CONFIG,
+        "BENCH_CONFIG": BENCH_CONFIG,
         "EVALUATOR_RUN_CONFIG": EVALUATOR_RUN_CONFIG,
         "EVAL_CONFIG": EVAL_CONFIG,
         "create_judge_serving": create_judge_serving,
@@ -195,7 +229,6 @@ def get_evaluator_config():
 if __name__ == "__main__":
     # 直接运行时的简单评估
     print("Starting local evaluation...")
-    from dataflow.cli_funcs.cli_eval import run_evaluation
 
     try:
         config = get_evaluator_config()
