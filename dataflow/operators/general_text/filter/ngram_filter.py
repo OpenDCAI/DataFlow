@@ -7,11 +7,11 @@ from dataflow.operators.general_text import NgramSampleEvaluator
 @OPERATOR_REGISTRY.register()
 class NgramFilter(OperatorABC):
 
-    def __init__(self, min_score=0.8, max_score=1, ngrams=5):
+    def __init__(self, min_score=0.8, max_score=1, ngrams=5, language: str = 'en'):
         self.logger = get_logger()
         self.min_score = min_score
         self.max_score = max_score
-        self.scorer = NgramSampleEvaluator(ngrams)
+        self.scorer = NgramSampleEvaluator(ngrams, language)
         self.logger.info(f"Initializing {self.__class__.__name__} with min_scores: {self.min_score} and max_scores: {self.max_score}...")  
     
     @staticmethod
