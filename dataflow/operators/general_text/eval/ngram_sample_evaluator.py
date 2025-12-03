@@ -5,11 +5,14 @@ from dataflow.core import OperatorABC
 from dataflow.utils.storage import DataFlowStorage
 from dataflow.utils.registry import OPERATOR_REGISTRY
 from dataflow import get_logger
+from typing import Literal
 
 @OPERATOR_REGISTRY.register()
 class NgramSampleEvaluator(OperatorABC):
     
-    def __init__(self, ngrams=5, language: str = 'en'):
+    def __init__(self, ngrams: int = 5, language: Literal['zh', 'en'] = 'en'):
+        if language not in ['zh', 'en']:
+            raise ValueError(f"Unsupported language: '{language}'. Supported options are: ['zh', 'en'].")
         self.logger = get_logger()
         self.logger.info(f'Initializing {self.__class__.__name__}...')
         self.ngrams = ngrams
