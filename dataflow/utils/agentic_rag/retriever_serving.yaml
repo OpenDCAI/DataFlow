@@ -1,0 +1,6 @@
+gpu_id: ""
+retrieval_method: "e5"  # name of your retrieval_method. 
+retrieval_model_path: "/path/to/retrieval/model"  # name or path of the retrieval model. 
+index_path: "/path/to/index" # path to the indexed file
+faiss_gpu: False # whether use gpu to hold index
+corpus_path: "/path/to/corpus"  # path to corpus in '.jsonl' format that store the documents
