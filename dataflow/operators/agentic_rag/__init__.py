@@ -5,10 +5,12 @@ if TYPE_CHECKING:
 
     # eval
     from .eval.agenticrag_qaf1_sample_evaluator import AgenticRAGQAF1SampleEvaluator
+    from .eval.agenticrag_multihop_sample_evaluator import MultiHopRAGVerifier
     # generate
     from .generate.agenticrag_atomic_task_generator import AgenticRAGAtomicTaskGenerator
     from .generate.agenticrag_depth_qa_generator import AgenticRAGDepthQAGenerator
     from .generate.agenticrag_width_qa_generator import AgenticRAGWidthQAGenerator
+    from .generate.agenticrag_multihop_qa_generator import MultiHopRAGGenerator
 
 else:
     import sys

@@ -24,6 +24,7 @@ colorama
 gradio>5
 json5
 tiktoken
+pyarrow==20.0.0
 
 # text2sql
 func_timeout

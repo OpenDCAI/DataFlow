@@ -915,3 +915,1020 @@ Evaluate the consistency of the core content of the golden answer and the other 
     Other Answer: {llm_answer}
         '''
         return prompt
+    
+@PROMPT_REGISTRY.register()
+class AtomicQAGeneratorPrompt(PromptABC):
+    '''
+    The prompt for the AtomicQAGenerator.
+    '''
+    def __init__(self):
+        pass
+
+    def build_prompt(self, gen_qa_num: str, input_doc: str) -> str:
+        prompt = f'''You are an information extraction and question generation system.
+# Task:
+Given a document, extract a set of **atomic, verifiable facts** and convert each into a **QA pair**, where:
+- The **question** focuses on a specific, retrievable detail from the document.
+- The **answer** is concise, factual, and directly grounded in the document.
+- For each document, generate **at most {gen_qa_num} QA pairs**. Prioritize the most concrete, unique, and verifiable facts.
+- Only generate questions that require consulting the document to answer — avoid trivial facts or common-sense knowledge.
+
+# Rules for QA Generation
+
+1. Atomicity
+- Each QA must be based on a single indivisible fact (no conjunctions).
+    ✖ "A increased and B decreased" → must split into two questions.
+
+2. Verifiability
+- The answer must include at least one of:
+    - ✓ Numeric value (e.g., 59.0%)
+    - ✓ Time or date (e.g., 2025/04/28)
+    - ✓ Unique name/entity (e.g., Humpback65B)
+- ✖ Reject vague expressions: "Performance has improved"
+
+3. Time specificity
+- Explicitly mark time ranges when containing time-sensitive information  
+- Examples:  
+    ✓ "Global GDP grew by 3.0% in 2023"  
+    ✖ "Recent GDP growth of 3.0%"
+
+4. Relevance and Precision
+- Avoid abstract questions. Focus on measurable and database-friendly details.
+
+5. Answer Uniqueness
+- The question must be **specific enough** to yield a **unique answer** from the document.
+- ✖ Avoid under-specified questions that allow **multiple correct answers**.
+    - ✖ "What awards did Author X receive?" (if multiple awards are listed in the document)
+    - ✓ "What award did Author X receive in 2022?" (if only one is given for that year)
+- ✖ Avoid vague superlatives like "notable," "important," "significant" without clear criteria.
+
+# Output Format:
+A JSON array of QA pairs. Each item contains:
+- `question`: A specific, answerable question.
+- `answer`: The factual value from the document.
+
+# Examples
+
+```json
+[
+    {{
+    "question": "What is the number 1 sport in the usa?",
+    "answer": "American football"
+    }},
+    {{
+    "question": "Where did the Ottoman slave trade flourish?",
+    "answer": "In the Balkans"
+    }},
+    {{
+    "question": "Who was president when the white house was built?",
+    "answer": "John Adams"
+    }}
+]
+```
+
+The document content to be processed is as follows: 
+{input_doc}
+'''
+        return prompt
+    
+@PROMPT_REGISTRY.register()
+class MergeAtomicQAPrompt(PromptABC):
+    '''
+    The prompt for the MergeAtomicQAPrompt.
+    '''
+    def __init__(self):
+        pass
+
+    def build_prompt(self, Data: str, New_question: str, New_answer: str, New_document: str) -> str:
+        prompt = f'''You are an expert in constructing multi-hop questions grounded in document-based facts.
+
+  ## Task
+  You are given multiple question-answer-document triples to generate multi-hop question that require reasoning over the **latest previous hop** (i.e., the final element in Previous_Hops) together with New_pair. Use Previous_Hops strictly as supporting context: they may be consulted to verify entities/constraints and must be preserved (not removed, weakened, or contradicted) by the final question.
+  Only produce a multi-hop question if it is logically valid, unambiguous, and well-supported by both documents. If there is any uncertainty or weak connection, return empty JSON list instead of forcing a question.
+
+  ## Input Schema
+  Previous_Hops: 
+    type: "list of objects (ordered oldest → latest)"
+    each_item: 
+      - Hop_number
+      - Question: string
+      - Answer: string
+      - Doc: string
+  New_pair:
+    type: object (This is the candidate QA+Doc to attach to the chain.)
+    fields:
+      - Question: string
+      - Answer: string
+      - Doc: string
+ 
+  ## Output Format (ONLY JSON)
+  Valid multi-hop case:
+  {{
+    "type": "inference" | "comparison",
+    "final_question": "...",
+    "final_answer": "..."
+  }}
+
+  If no high quality multi-hop question can be created:
+  Return an empty JSON object {{}}
+
+  ## Types
+  - inference:
+    The final question chains information so that answering it requires (1) the last previous hop's facts and (2) the New_pair's facts. For inference cases, final_answer MUST equal New_pair Answer.
+  - comparison:
+    The final question compares a shared measurable dimension (e.g., date, numeric quantity, size). Both compared values must be supported explicitly in the documents. The answer should be one of the compared entities.
+
+  ## Rules
+  - 1. Use Previous_Hops as supporting context. Do NOT remove, weaken, or contradict any fact, constraint, or entity presented in any Previous_Hops's Question/Answer/Doc.
+  - 2. The final question MUST be generated from (latest Previous_Hop) + (New_pair). DO NOT remove or weaken any Previous_Hops's Question important information in final_question
+  - 3. DO NOT leak intermediate answers (no explicit exposure of any Previous_Hop answer in the final_question).
+  - 4. Do not simply restate the New_pair question, and do not return an unexpanded Hop question that is missing or only partially uses the information from the Previous Hop. The final question MUST depend on all QA-doc pairs to be answerable.
+  - 5. Ensure that there is **sufficient and accurate** evidence to get the answer.
+  - 6. When linking entities across docs, explicitly verify from the document contents (not just question text) that they refer to the exactly same real-world entity or fact
+  - 7. For comparison, only compare facts on the same axis (e.g., date vs date, size vs size), not unrelated attributes.
+  - 8. Do not create final questions that just state multiple facts independently, without a reasoning link between them.
+  - 9. Favor precision and factual grounding over producing more questions. If the logical connection is weak, ambiguous, or speculative, reject (return {{}}).
+  - 10. Output only the final JSON object. Do NOT include chain-of-thought, explanations, or any extra text.
+
+  ## Examples
+  ### final_question is inference
+  Case 1 (Extend 1-hop question to 2-hop):
+  Input:
+  Hop_1:
+  Question: What is the name of the performer of "Qui de nous deux"?
+  Answer: Matthieu Chedid
+  Doc: "Qui de nous deux" is performed by Matthieu Chedid.
+
+  New_pair:
+  Question: Who is the father of Matthieu Chedid?
+  Answer: Louis Chedid
+  Doc: Matthieu Chedid is the son of Louis Chedid.
+
+  Good Output:
+  {{
+    "type": "inference",
+    "final_question": "Who is the father of the performer of 'Qui de nous deux'?",
+    "final_answer": "Louis Chedid"
+  }}
+
+  ✖ Error Case (leaks intermediate answer):
+  -"final_question": "Who is the father of Matthieu Chedid?"
+
+  Case 2 (Extend 2-hop inference question to 3-hop):
+  Input:
+  Hop_1:
+  Question: Who is the composer of "Al gran sole carico d'amore"?
+  Answer: Luigi Nono
+  Doc: "Al gran sole carico d'amore" is an opera with music by Luigi Nono.
+
+  Hop_2:
+  Question: Where did the composer of "Al gran sole carico d'amore" work?
+  Answer: Venice
+  Doc: Luigi Nono was active as a painter in Venice.
+  type: inference
+
+  New_pair:
+  Question: What is the name of the oldest bridge in Venice?
+  Answer: Rialto Bridge
+  Doc: The Rialto Bridge is the oldest bridge spanning the Grand Canal in Venice.
+
+  Good Output:
+  {{
+    "type": "inference",
+    "final_question": "What is the name of the oldest bridge in the city where the composer of 'Al gran sole carico d'amore' worked?",
+    "final_answer": "Rialto Bridge"
+  }}
+
+  ✖ Error Case (leaks intermediate answer):
+  -"final_question": "What is the name of the oldest bridge in Luigi Nono worked?"
+
+  Case 3 (Extend 3-hop inference question to 4-hop):
+  Input:
+  Hop_1:
+  Question: Where was Francisco Vázquez born?
+  Answer: Guadalajara
+  Doc: Francisco H. Vázquez (born June 11, 1949 in Guadalajara, Jalisco, Mexico)
+
+  Hop_2:
+  Question: On which continent is Guadalajara located?
+  Answer: North America
+  Doc: Guadalajara is located in North America.
+  type: inference
+
+  Hop_3:
+  Question: Who was the Italian navigator who sailed for England and explored the east coast of the continent where Francisco Vázquez was born?
+  Answer: John Cabot
+  Doc: John Cabot (Italian: Giovanni Caboto; c. 1450 -- c. 1500) was a Venetian navigator and explorer whose 1497 discovery of the coast of North America under the commission of Henry VII of England
+  type: inference
+
+  New_pair:
+  Question: What is the name of the child of John Cabot?
+  Answer: Sebastian Cabot
+  Doc: Sebastian Cabot was the son of Italian explorer John Cabot (Giovanni Caboto)
+
+  Good Output:
+  {{
+    "type": "inference",
+    "final_question": "What is the name of the child of the Italian navigator who sailed for England and explored the east coast of the continent where Francisco Vázquez was born?",
+    "final_answer": "Sebastian Cabot"
+  }}
+
+  ✖ Error Case (leaks intermediate answer):
+  -"final_question": "What is the name of the child of the Italian navigator who sailed for England and explored the east coast of North America?"
+
+  ✖ Error Case (remove or weaken important information in Previous_Hops):
+  -"final_question": "What is the name of the child of the navigator who explored the east coast of Francisco Vázquez was born?"
+
+  ### final_question is comparison
+  Input:
+  Question: When was John Beach born?
+  Answer: January 1, 1812
+  Doc: Major John Beach( January 1, 1812 - August 31, 1874) was a United States Army officer during the Black Hawk and American Civil War.
+
+  New_pair:
+  Question: When was Seth Gordon Persons born?
+  Answer: February 5, 1902
+  Doc: Seth Gordon Persons( February 5, 1902 - May 29, 1965) was an American Democratic politician who was the 43rd Governor of Alabama from 1951 to 1955.
+
+  Good Output:
+  {{
+    "type": "comparison",
+    "final_question": "Who was born first, John Beach or Seth Gordon Persons?",
+    "final_answer": "John Beach"
+  }}
+
+  Another Good Output:
+  {{
+    "type": "comparison",
+    "final_question": "Was John Beach born before Seth Gordon Persons?",
+    "final_answer": "Yes"
+  }}
+
+  ✖ Error Case (leaks intermediate answer):
+  -"final_question": "Who was born first, John Beach (January 1, 1812 - August 31, 1874) or Seth Gordon Persons?"
+
+  ### ✖ Invalid (spurious linkage: the QA-doc pairs contain unrelated facts that are superficially similar but logically disconnected.)
+  Input:
+  Hop_1:
+  Question: How many cardinals entered the papal conclave on March 31?
+  Answer: 27
+  Doc: Only twenty-seven cardinals entered the conclave on March 31, 1721.
+  
+  New_pair:
+  Question: Which band did 27 open for in the Czech Republic?
+  Answer: Robert Plant
+  Doc: 27 is a rock band that opened for Robert Plant in Prague.
+
+  Correct Output:
+  {{}}
+  ✖ Error Output (In Example: Cardinals and the rock band '27' are unrelated entities):
+  final_question: Which band did the cardinals who entered the papal conclave on March 31 open for in the Czech Republic?
+  final_answer: Robert Plant
+
+  ### ✖ Invalid (spurious linkage: there is no necessary logical connection between them.)
+  Input:
+  Hop_1:
+  Question: What was the deployment order date for the 16th Army to the Ukraine?
+  Answer: 25 May 1941
+  Doc: The 16th Army was ordered to deploy to Ukraine on 25 May 1941.
+
+  New_pair:
+  Question: Which two spheres of influence were involved in the division of Europe in the 1940s?
+  Answer: The Western world and the Soviet Union
+  Doc: Postwar Europe was divided into the Western and Soviet spheres of influence.
+
+  Correct Output:
+  {{}}
+  ✖ Error Output (In Example: No causal or thematic link between army deployment date and geopolitical division):
+  final_question: What were the two major spheres of influence following the deployment of the 16th Army to the Ukraine in 1941?
+  final_answer: The Western world and the Soviet Union
+
+  ### ✖ Invalid: (entity-based false link: a false connection between facts or documents that arises solely because different entities share identical or highly similar names, without any actual semantic or factual relationship.)
+  Input:
+  Hop_1:
+  Question: Who presents the Statewide Drive program at 107.9 ABC Ballarat?  
+  Answer: Nicole Chvastek  
+  Doc: "107.9 ABC Ballarat" has a total of 16 full time employees. A breakfast program is presented by Steve Martin from 6.15 am to 10.00 am weekdays. A mornings program is presented by Gavin McGrath from 10.00 am to 11.00 am weekdays. The regional "Statewide Drive" program (3.00 pm to 6.00 pm weekdays) is also broadcast from the Ballarat studios. It is presented by Nicole Chvastek and covers Victoria, southern New South Wales and a small part of eastern South Australia. It does not broadcast into the Melbourne metro area. 107.9 ABC Ballarat, callsign 3CRR, is an ABC Local Radio station.
+
+  New_pair:
+  Question: What toolkit has Nicole Joseph designed for breast care?  
+  Answer: Breast-CareSolutions toolkit  
+  Doc: Nicole Joseph introduced the global and multi-lingual breast care awareness campaign "The Gesture That Saves" in San Francisco in 2016 to 100 global peers from 40 countries during the VV100 retreat. She has designed a comprehensive Breast-CareSolutions toolkit and is currently designing a reproductive-health advocacy program. Nicole Joseph-Chin is the Chief Innovator, Founder and CEO of Ms. Brafit Limited.
+
+  Correct Output:
+  {{}}
+  ✖ Error Output (In Example: Nicole Chvastek and Nicole Joseph are different individuals):
+  final_question: What toolkit has the presenter of the Statewide Drive program at 107.9 ABC Ballarat designed for breast care?  
+  final_answer: Breast-CareSolutions toolkit
+
+  ### ✖ Invalid: (trivial concatenation: the final question simply combines facts without needing reasoning or integration.)
+  Input:
+  Hop_1:
+  Question: Where was the State Normal School at Cheney located by the end of the term's first week?  
+  Answer: Pomeroy building 
+  Doc: By the end of the term's first week, the State Normal School at Cheney was located in the Pomeroy building.
+
+  New_pair:
+  Question: Who designed the Cheney Building?
+  Answer: H. H. Richardson  
+  Doc: The Cheney Building was designed by H. H. Richardson.
+
+  Correct Output:
+  {{}}
+  ✖ Error Output (In Example: Final_question simply concatenates the two questions together using 'and' without needing reasoning.):
+  final_question: Which building was used for the State Normal School at Cheney by the end of the term's first week, and who designed the Cheney Building?
+  final_answer: Pomeroy building, H. H. Richardson
+
+  ### Invalid (lacking_evidence: one or both compared values are not explicitly supported in the provided documents with sufficient precision to support the asserted comparison.)
+  Hop_1:
+  Question: What year was the Cambridge Battery completed for the 100-ton gun?
+  Answer: 1886
+  Doc: Cambridge Battery was ready in 1886.
+
+  New_pair:
+  Question: When did the 1886 United Kingdom general election take place?
+  Answer: July 1-27, 1886
+  Doc: The 1886 United Kingdom general election took place from 1 July to 27 July 1886.
+
+  Correct Output:
+  {{}}
+  ✖ Error Output (In Example: The Cambridge Battery is only dated to the year (1886), while the election records include exact dates in July. This lack of precise dating in the document makes it impossible to determine which event occurred first.):
+  final_question: Which event occurred first, the completion of the Cambridge Battery in 1886 or the United Kingdom general election led by Charles Stewart Parnell in 1886?
+  final_answer: The completion of the Cambridge Battery in 1886.
+
+  ## Checklist
+  - [ ] Do all docs describe logically connectable facts?
+  - [ ] For comparison: are both facts from the same measurable dimension?
+  - [ ] For inference: does the reasoning chain correctly lead to New_pair Answer?
+  - [ ] Is the final question truly unanswerable without all QA-doc pairs?
+  - [ ] Are all intermediate answers hidden?
+  - [ ] Are the linked entities explicitly confirmed as the same in both documents?
+  - [ ] Is there sufficient and accurate evidence to get the answer?
+
+  The data need to be processed is as follows:
+  {Data}
+  
+  New_pair:
+  Question: {New_question}
+  Answer: {New_answer}
+  Doc: {New_document}
+  Only output the final JSON object. Do not explain your reasoning.
+  '''
+        return prompt
+
+@PROMPT_REGISTRY.register()
+class InferenceCheckPrompt():
+    '''
+    The prompt for checking the inference multihop question.
+    '''
+    def __init__(self):
+        pass
+
+    def build_prompt(self, Question1: str, Answer1: str, Document1: str, Question2: str, Answer2: str, Document2: str, Final_question: str, Final_answer: str, qa_type: str) -> str:
+        prompt = f'''You are a multi-hop QA verification system.
+  ## Task
+  You are given a multi-hop QA construction based on two question-answer-document triples:
+  (Question1, Answer1, Doc1) and (Question2, Answer2, Doc2), and a final multi-hop QA:
+  - Final_question
+  - Final_answer
+  - type: "inference"
+
+  Your job is to **verify whether the final QA is logically valid** according to the reasoning paths and documents.
+
+  ## Input Fields
+  - Question1, Answer1, Doc1
+  - Question2, Answer2, Doc2
+  - Final_question, Final_answer
+  - type: "inference"
+
+  ## Output Format
+  Return a JSON object:
+  {{
+    "valid": "true" | "false",
+    "error_type": "bad_linkage" | "entity_false_link" | "trivial_concatenation" | "other",
+    "justification": "Short explanation of the issue"
+  }}
+
+  ## Definitions & Rules
+  - "inference": Final question requires combining QA1 and QA2 in a reasoning chain. The final_answer must exactly match Answer2. No intermediate answers should appear in final_question.
+
+  - "bad_linkage": If the two QA-doc pairs contain unrelated facts that are superficially similar but logically disconnected.
+  - "entity_false_link": a false connection between two facts or documents that arises solely because different entities share identical or highly similar names, without any actual semantic or factual relationship.
+  - "trivial_concatenation": If the final question is formed by simply joining two or more independent facts from the given QA-document pairs into a single sentence (often using "and" or similar conjunctions), without any logical reasoning beyond listing the facts.
+  - "other": Other errors that you think are not included above.
+
+  ## Examples
+
+  ### ✓ Valid
+  Input:
+  Question1: What is the name of the performer of 'Qui de nous deux'?
+  Answer1: Matthieu Chedid
+  Doc1: "Qui de nous deux" is performed by Matthieu Chedid.
+
+  Question2: Who is the father of Matthieu Chedid?
+  Answer2: Louis Chedid
+  Doc2: Matthieu Chedid is the son of Louis Chedid.
+
+  Final_question: Who is the father of the performer of 'Qui de nous deux'?
+  Final_answer: Louis Chedid
+  type: "inference"
+
+  Expected Output:
+  {{
+    "valid": "true",
+    "error_type": "No Error",
+    "justification": "Reasoning chain is valid."
+  }}
+
+  ### ✖ Invalid (bad linkage)
+  Input:
+  Question1: How many cardinals entered the papal conclave on March 31?
+  Answer1: 27
+  Doc1: 27 cardinals entered the 1721 Papal Conclave.
+
+  Question2: Which band did 27 open for in the Czech Republic?
+  Answer2: Robert Plant
+  Doc2: 27 is a rock band that opened for Robert Plant.
+
+  Final_question: Which band did the cardinals who entered the papal conclave on March 31 open for in the Czech Republic?
+  Final_answer: Robert Plant
+  type: "inference"
+
+  Expected Output:
+  {{
+    "valid": "false",
+    "error_type": "bad_linkage",
+    "justification": "Cardinals and the rock band '27' are unrelated entities"
+  }}
+
+  ### ✖ Invalid (bad linkage)
+  Input:
+  Question1: What was the deployment order date for the 16th Army to the Ukraine?
+  Answer1: 25 May 1941
+  Doc1: The 16th Army was ordered to deploy to Ukraine on 25 May 1941.
+
+  Question2: Which two spheres of influence were involved in the division of Europe in the 1940s?
+  Answer2: The Western world and the Soviet Union
+  Doc2: Postwar Europe was divided into the Western and Soviet spheres of influence.
+
+  Final_question: What were the two major spheres of influence following the deployment of the 16th Army to the Ukraine in 1941?
+  Final_answer: The Western world and the Soviet Union
+  type: "inference"
+
+  Expected Output:
+  {{
+    "valid": "false",
+    "error_type": "bad_linkage",
+    "justification": "No causal or thematic link between army deployment date and geopolitical division"
+  }}
+
+  ### ✖ Invalid (entity_false_link)
+  Input:
+  Question1: Who presents the Statewide Drive program at 107.9 ABC Ballarat?  
+  Answer1: Nicole Chvastek  
+  Doc1: "107.9 ABC Ballarat" has a total of 16 full time employees. A breakfast program is presented by Steve Martin from 6.15 am to 10.00 am weekdays. A mornings program is presented by Gavin McGrath from 10.00 am to 11.00 am weekdays. The regional "Statewide Drive" program (3.00 pm to 6.00 pm weekdays) is also broadcast from the Ballarat studios. It is presented by Nicole Chvastek and covers Victoria, southern New South Wales and a small part of eastern South Australia. It does not broadcast into the Melbourne metro area. 107.9 ABC Ballarat, callsign 3CRR, is an ABC Local Radio station.
+
+  Question2: What toolkit has Nicole Joseph designed for breast care?  
+  Answer2: Breast-CareSolutions toolkit  
+  Doc2: Nicole Joseph introduced the global and multi-lingual breast care awareness campaign "The Gesture That Saves" in San Francisco in 2016 to 100 global peers from 40 countries during the VV100 retreat. She has designed a comprehensive Breast-CareSolutions toolkit and is currently designing a reproductive-health advocacy program. Nicole Joseph-Chin is the Chief Innovator, Founder and CEO of Ms. Brafit Limited.
+
+  Final_question: What toolkit has the presenter of the Statewide Drive program at 107.9 ABC Ballarat designed for breast care?  
+  Final_answer: Breast-CareSolutions toolkit
+  type: "inference"
+
+  Expected Output:
+  {{
+    "valid": "false",
+    "error_type": "entity_false_link",
+    "justification": "Nicole Chvastek and Nicole Joseph are different individuals"
+  }}
+
+  ### ✖ Invalid: (trivial_concatenation)
+  Input:
+  Question1: Where was the State Normal School at Cheney located by the end of the term's first week?  
+  Answer1: Pomeroy building 
+  Doc1: By the end of the term's first week, the State Normal School at Cheney was located in the Pomeroy building.
+
+  Question2: Who designed the Cheney Building?
+  Answer2: H. H. Richardson  
+  Doc2: The Cheney Building was designed by H. H. Richardson.
+
+  Final_question: Which building was used for the State Normal School at Cheney by the end of the term's first week, and who designed the Cheney Building?
+  Final_answer: Pomeroy building, H. H. Richardson
+  type: "inference"
+
+  Expected Output:
+  {{
+    "valid": "false",
+    "error_type": "trivial_concatenation",
+    "justification": "Final_question simply concatenates the two questions together using 'and' without needing reasoning."
+  }}
+
+  The data need to be processed is as follows: 
+  Question1: {Question1}
+  Answer1: {Answer1}
+  Doc1:{Document1}
+  Question2: {Question2}
+  Answer2: {Answer2}
+  Doc2:{Document2}
+  Final_question:{Final_question}
+  Final_answer:{Final_answer}
+  type:{qa_type}
+  Only return the JSON object as described. Do not include explanations unless requested.
+'''
+        return prompt
+
+@PROMPT_REGISTRY.register()
+class ComparisonCheckPrompt():
+    '''
+    The prompt for checking the comparison multihop question.
+    '''
+    def __init__(self):
+        pass
+
+    def build_prompt(self, Question1: str, Answer1: str, Document1: str, Question2: str, Answer2: str, Document2: str, Final_question: str, Final_answer: str, qa_type: str) -> str:
+        prompt = f'''You are a multi-hop QA verification system.
+  ## Task
+  You are given two question-answer-document triples:
+  (Question1, Answer1, Doc1) and (Question2, Answer2, Doc2), plus a final multi-hop QA:
+  - Final_question
+  - Final_answer
+  - type: "comparison"
+
+  Your job is to **verify whether the final QA is logically valid** according to the reasoning paths and documents.
+
+  ## Input Fields
+  - Question1, Answer1, Doc1
+  - Question2, Answer2, Doc2
+  - Final_question, Final_answer
+  - type: "inference"
+
+  ## Output Format
+  Return a JSON object:
+  {{
+    "valid": "true" | "false",
+    "error_type": "forced_pairing" | "lacking_evidence" | "trivial_concatenation" | "other",
+    "justification": "Short explanation of the issue"
+  }}
+
+  ## Definitions & Rules
+  - "comparison": Final question compares a **shared attribute/dimension** (e.g., date, numeric quantity, size) between two entities derived from QA1 and QA2.
+
+  - "forced_pairing": The two QA-doc pairs do not share a meaningful, comparable dimension — the comparison is forced or domain-incoherent.
+  - "lacking_evidence": One or both compared values are not explicitly supported in the provided documents with sufficient precision to support the asserted comparison.
+  - "trivial_concatenation": If the final question is formed by simply joining two or more independent facts from the given QA-document pairs into a single sentence (often using "and" or similar conjunctions), without any logical comparing beyond listing the facts.
+  - "other": Other errors that you think are not included above.
+
+  ## Examples
+
+  ### ✓ Valid
+  Input:
+  Question1: When was John Beach born?
+  Answer1: January 1, 1812
+  Doc1: Major John Beach (January 1, 1812 - August 31, 1874) was a United States Army officer during the Black Hawk and American Civil War.
+
+  Question2: When was Seth Gordon Persons born?
+  Answer2: February 5, 1902
+  Doc2: Seth Gordon Persons (February 5, 1902 - May 29, 1965) was an American Democratic politician and the 43rd Governor of Alabama.
+
+  Final_question: Who was born first, John Beach or Seth Gordon Persons?
+  Final_answer: John Beach
+  type: "comparison"
+
+  Expected Output:
+  {{
+    "valid": "true",
+    "error_type": "No Error",
+    "justification": "Both docs provide explicit birth dates (1812 vs 1902) and John Beach is earlier."
+  }}
+
+  ### ✖ Invalid (forced_pairing)
+  Input:
+  Question1: What was the renumbering date of the 17th Lancers?
+  Answer1: April 1763
+  Doc1: The regiment was renumbered the 17th Regiment of (Light) Dragoons in April 1763.
+
+  Question2: What year was the 67th English cricket season?
+  Answer2: 1763
+  Doc2: The 1763 English cricket season was the 67th English cricket season.
+
+  Final_question: Was the renumbering of the 17th Lancers in April 1763 before or during the 67th English cricket season?
+  Final_answer: During
+  type: "comparison"
+
+  Expected Output:
+  {{
+    "valid": "false",
+    "error_type": "forced_pairing",
+    "justification": "This forces a link between a military renumbering (point event) and a sports season (period) without a meaningful shared comparison dimension."
+  }}
+
+  ### ✖ Invalid (lacking_evidence)
+  Input:
+  Question1: What year was the Cambridge Battery completed for the 100-ton gun?
+  Answer1: 1886
+  Doc1: Cambridge Battery was ready in 1886.
+
+  Question2: When did the 1886 United Kingdom general election take place?
+  Answer2: July 1-27, 1886
+  Doc2: The 1886 United Kingdom general election took place from 1 July to 27 July 1886.
+
+  Final_question: Which event occurred first, the completion of the Cambridge Battery in 1886 or the United Kingdom general election led by Charles Stewart Parnell in 1886?
+  Final_answer: The completion of the Cambridge Battery in 1886
+  type: "comparison"
+
+  Expected Output:
+  {{
+    "valid": "false",
+    "error_type": "lacking_evidence",
+    "justification": "The Cambridge Battery is only dated to the year (1886), while the election records include exact dates in July. This lack of precise dating in the document makes it impossible to determine which event occurred first."
+  }}
+
+  ### ✖ Invalid: (trivial_concatenation)
+  Input:
+  Question1: Where was the State Normal School at Cheney located by the end of the term's first week?  
+  Answer1: Pomeroy building 
+  Doc1: By the end of the term's first week, the State Normal School at Cheney was located in the Pomeroy building.
+
+  Question2: Who designed the Cheney Building?
+  Answer2: H. H. Richardson  
+  Doc2: The Cheney Building was designed by H. H. Richardson.
+
+  Final_question: Which building was used for the State Normal School at Cheney by the end of the term's first week, and who designed the Cheney Building?
+  Final_answer: Pomeroy building, H. H. Richardson
+  type: "comparison"
+
+  Expected Output:
+  {{
+    "valid": "false",
+    "error_type": "trivial_concatenation",
+    "justification": "Final_question simply concatenates the two questions together using 'and' without needing reasoning."
+  }}
+
+  The data need to be processed is as follows:
+  Question1: {Question1}
+  Answer1: {Answer1}
+  Doc1: {Document1}
+  Question2: {Question2}
+  Answer2: {Answer2}
+  Doc2: {Document2}
+  Final_question: {Final_question}
+  Final_answer: {Final_answer}
+  type: {qa_type}
+  Only return the JSON object as described. Do not include explanations unless requested.
+'''
+        return prompt
+    
+@PROMPT_REGISTRY.register()
+class RefineAnswerPrompt():
+    '''
+    The prompt for refining the answer.
+    '''
+    def __init__(self):
+        pass
+
+    def build_prompt(self, question: str, original_answer: str) -> str:
+        prompt = f'''You are an AI agent tasked with cleaning and extracting concise answers from original QA pairs.
+  ## Input:
+  You are given a **question** and its corresponding **original answer**. Your task is to extract the most precise and concise information that directly answers the question.
+
+  ## Processing Rules:
+  1. Extract **only** the exact information requested in the question.
+  2. Keep the original index numbering or order if present.
+  3. **Do not** omit essential information.
+  4. **Never add or infer** information not explicitly stated in the original answer.
+  5. Follow strict formatting conventions:
+    - Percentages: use format like `8%` (not "eight percent" or "8 percent")
+    - Currency: use `$1,000` format
+    - Dates: use `YYYY-MM-DD`
+    - Units: include units (e.g., `5kg`, `10cm`)
+  6. For answers that consist of multiple parts or are comparative in nature, multiple core components and comparative statements should be included.
+
+  ## Output Format (JSON):
+  For each input QA pair, output the following JSON object:
+  {{
+    "question": "<original question>",
+    "original_answer": "<original answer>",
+    "refined_answer": "<clean, concise, and direct answer>"
+  }}
+
+  ## Example:
+  Input:
+  question: What edition of the Wightman Cup was held in 1931?
+  original_answer: The 1931 Wightman Cup was its 9th edition.
+
+  Output:
+  {{
+  "question": "What edition of the Wightman Cup was held in 1931?",
+  "original_answer": "The 1931 Wightman Cup was its 9th edition.",
+  "refined_answer": "The 9th edition."
+  }}
+
+  Input:
+  question: How does the percentage of individuals under age 18 living below the poverty line in Farina, Illinois compare to the statewide percentage in Illinois?
+  original_answer: In Farina, Illinois, 10.7% of individuals under age 18 were living below the poverty line, which is lower than the statewide percentage in Illinois of 16.1%.
+
+  Output:
+  {{
+  "question": "How does the percentage of individuals under age 18 living below the poverty line in Farina, Illinois compare to the statewide percentage in Illinois?",
+  "original_answer": "In Farina, Illinois, 10.7% of individuals under age 18 were living below the poverty line, which is lower than the statewide percentage in Illinois of 16.1%.",
+  "refined_answer": "10.7%, lower than the statewide percentage in Illinois of 16.1%."
+  }}
+
+  The data need to be processed is as follows:
+  question: {question}
+  original_answer: {original_answer}
+'''
+        return prompt
+    
+@PROMPT_REGISTRY.register()
+class MoreOptionalAnswersPrompt():
+    '''
+    The prompt for generating more optional answers.
+    '''
+    def __init__(self):
+        pass
+
+    def build_prompt(self, refined_answer: str) -> str:
+        prompt = f'''You are an expert in **linguistic variation** and **data augmentation**. Your task is to generate a comprehensive list of all plausible and commonly recognized alternative expressions, formats, and aliases for a given input entity or piece of information. The goal is to create high-quality training data that captures diverse ways of referring to the same concept.
+
+  **Key Guidelines:**
+
+  1.  **Equivalence:** Each alternative expression must refer to *exactly the same entity or information* as the original input. Do not include broader categories, narrower sub-types, or related but distinct concepts.
+  2.  **Scope of Variation:** Focus on:
+      * Different **formatting conventions** (e.g., dates, numbers, units).
+      * Common **abbreviations, acronyms, or initialisms**.
+      * Well-known **aliases, nicknames, or shorter forms** in common usage.
+      * Synonyms or rephrasing should *only* be included if they are direct, commonly accepted equivalents.
+  3.  **Context-Agnosticism:** Unless the input itself implies a specific context, generate general-purpose variations. Avoid creating variations that are only valid in very niche or obscure contexts.
+  4.  **Inclusion of Original:** Always include the original input as the first item in the generated list.
+  5.  **Format:** Output the variations as a JSON list of strings.
+
+  **Examples:**
+
+  Input: 1977-01-26
+  Output: ["1977-01-26", "1977 01 26", "1977.01.26", "January 26, 1977", "26 Jan 1977", "Jan 26, 1977"]
+
+  Input: United Nations
+  Output: ["United Nations", "U.N.", "UN"]
+
+  Input: 3.14159
+  Output: ["3.14159", "π", "pi", "PI"]
+
+  Input: Doctor of Philosophy
+  Output: ["Doctor of Philosophy", "Ph.D.", "PhD", "Doctorate"]
+
+  Input: New York City
+  Output: ["New York City", "NYC", "The Big Apple"]
+
+  Input: kilogram
+  Output: ["kilogram", "kg", "kilograms"]
+
+  Input: {refined_answer}
+  Please list all possible textual expressions that have the same meaning or refer to the same entity, especially in different formats (e.g., dates, names, abbreviations).
+  Respond with a JSON list of strings. Do not explain.
+'''
+        return prompt
+        
+@PROMPT_REGISTRY.register()
+class ReasoningPrompt():
+    '''
+    The prompt for reasoning.
+    '''
+    def __init__(self):
+        pass
+
+    def build_prompt(self, problem: str) -> str:
+        prompt = f'''Please solve the following problem and return result. Ensure responses are as concise as possible, focusing only on key information while omitting redundant details. 
+  The problem is:
+  {problem}
+'''
+        return prompt
+
+@PROMPT_REGISTRY.register()
+class ComparisonReasoningPrompt():
+    '''
+    The prompt for comparison question reasoning.
+    '''
+    def __init__(self):
+        pass
+
+    def build_prompt(self, problem: str) -> str:
+        prompt = f'''Please solve the following problem and return result. 
+  For comparison question, if you are unsure of the answer, please do not guess or choose randomly. Instead, return "I cannot answer this question." 
+  The problem is:
+  {problem}
+  Ensure responses are as concise as possible, focusing only on key information while omitting redundant details.
+'''
+        return prompt
+    
+@PROMPT_REGISTRY.register()
+class SingleHopPrompt():
+    '''
+    The prompt for answer single hop question.
+    '''
+    def __init__(self):
+        pass
+
+    def build_prompt(self, Document: str, Question: str) -> str:
+        prompt = f'''You are given the following document that contains relevant information to help answer a question.
+  Document:
+  {Document}
+  Question:
+  {Question}
+  Please answer the question using the information in the provided document. Ensure responses are as concise as possible, focusing only on key information while omitting redundant details.
+  If you cannot answer the question, return "I cannot answer this question. <the reason why cannot answer this question>".
+  ## For Example:
+  ### ✓ Can answer:
+  Document:
+  \"Olive Winchester\"\n1851 in Corinna, Maine; died October 2, 1892 in Yankton, South Dakota), and Sarah A. \"\"Sadie\"\" Blackstone Winchester (born May 1, 1853 in Pownal, Maine; died February 6, 1949 in Los Angeles, California). Winchester's parents were married in Portland, Maine on February 22, 1879 in the Methodist Episcopal Church. Winchester was a relative of Oliver Fisher Winchester (born November 30, 1810 in Brookline, Massachusetts; died December 11, 1880 in New Haven, Connecticut), the manufacturer and marketer of the Winchester repeating rifle. After June 25, 1880, the Winchester family left Monson, Maine and by 1881 had relocated to Forestburg, in Sanborn
+  Question:
+  When was the first woman to graduate with a Bachelor of Divinity degree from Glasgow, Olive Winchester, born?
+  Answer:
+  1851
+
+  Document:
+  \"1996 North Indian Ocean cyclone season\"\ndue to flash flooding. Elsewhere in India, the storm killed 111 people, including 44 in Tamil Nadu where 18 boats were damaged or missing. In some areas, the rains helped end a drought. After the storm passed, the Andhra Pradesh government provided each family RS$1,000 (US$30) if their house was destroyed, and RS$100,000 (US$3,000) if they lost a family member. While the previous storm was paralleling the east Indian coastline, another disturbance formed off the west coast on June 15, also associated with the monsoon. The new area of convection persisted, developing a distinct circulation by the next day. 
+  Question:
+  What is the prime factorization of the number of people killed by the storm in India during the 1996 North Indian Ocean cyclone season?
+  Answer:
+  3 x 37
+
+  Document:
+  Seth Gordon Persons (February 5, 1902 - May 29, 1965) was an American Democratic politician who was the 43rd Governor of Alabama from 1951 to 1955.
+  Question:
+  Who was born first, John Beach (January 1, 1812 - August 31, 1874) or Seth Gordon Persons?
+  Answer:
+  John Beach
+
+  ### ✖ Cannot answer:
+  Document:
+  The Rialto Bridge (Italian: Ponte di Rialto; Venetian: Ponte de Rialto) is the oldest of the four bridges spanning the Grand Canal in Venice, Italy. Connecting the sestieri (districts) of San Marco and San Polo, it has been rebuilt several times since its first construction as a pontoon bridge in the 12th century, and is now a significant tourist attractiojn the city.
+  Question:
+  What is the name of the famous bridge in the place where Al gran sole carico d'amore's composer worked?
+  Answer:
+  I cannot answer this question. I don’t know where the composer of Al gran sole carico d’amore has worked.
+
+  Document:
+  Worst (manga) Worst is a Japanese delinquent manga series written and illustrated by Hiroshi Takahashi. It has the same setting as Takahashi's previous manga \"\"Crows\"\" and \"\"QP\"\" and revolves around a group of teenage boys who fight their way through the notorious high school, \"\"Suzuran\"\". The manga was first published by Shōnen Champion in 2002. The series is currently being serialized in Japan and has been collected into twenty-five tankōbon volumes. In North America, Digital Manga Publishing has released only three volumes, with the last graphic novel released in November 2004. The series is currently on hiatus but Digital Manga
+  Question:
+  Which of the following was critiqued as one of the worst manga, .hack//Legend of the Twilight or the manga Worst, published in 2002?
+  Answer:
+  I cannot answer this question. I don't have sufficient information about "hack/Legend of the Twilight".
+'''
+        return prompt
+    
+@PROMPT_REGISTRY.register()
+class MultihopInferencePrompt():
+    '''
+    The prompt for answer multihop inference question.
+    '''
+    def __init__(self):
+        pass
+
+    def build_prompt(self, Data: str, FinalQuestion: str) -> str:
+        prompt = f'''You are an expert at solving problems. Now you need to solve a multi-hop inference problem.
+  Multi-hop inference promblem: a question that requires combining information from multiple sources in a logical chain to reach an answer.
+
+  ## For Example:
+  Input:
+  Question1: "What is the name of the performer of Qui de nous deux?"
+  Answer1: "Matthieu Chedid"
+  Supporting Document1: "'Qui de nous deux' is performed by Matthieu Chedid."
+  Question2: "Who is the father of Matthieu Chedid?"
+  Supporting Document2: "Matthieu Chedid is the son of Louis Chedid."
+  FinalQuestion: "Who is the father of the performer of Qui de nous deux?"
+  Output:
+  "Louis Chedid"
+
+  ## The Example's Logic Chain (Just to help you better understand the multihop problem. Don't output something like this):
+  FinalQuestion:"Who is the father of the performer of Qui de nous deux?" -> Q:"What is the name of the performer of Qui de nous deux?" A:"Matthieu Chedid" -> Q:"Who is the father of Matthieu Chedid?" A:"Louis Chedid" -> FinalAnswer: "Louis Chedid"
+  
+  ## Now you are given some supporting fact to help answer a question.
+  {Data}
+  FinalQuestion: {FinalQuestion}
+  Now you need sole the promblem and return result. Ensure responses are as concise as possible, focusing only on key information while omitting redundant details.
+'''
+        return prompt
+
+@PROMPT_REGISTRY.register()
+class MultihopComparisonPrompt():
+    '''
+    The prompt for answer multihop comparison question.
+    '''
+    def __init__(self):
+        pass
+
+    def build_prompt(self, Data: str, FinalQuestion: str) -> str:
+        prompt = f'''You are an expert at solving problems. Now you need to solve a multi-hop comparison problem.
+  Multi-hop comparison promblem: a question that requires retrieving and comparing information from multiple sources to determine a relative fact.
+  
+  ## For Example:
+  Input:
+  Question1: "When was John Beach born?"
+  Answer1: "January 1, 1812"
+  Supporting Document1: "Major John Beach( January 1, 1812 - August 31, 1874) was a United States Army officer during the Black Hawk and American Civil War."
+  Question2: "When was Seth Gordon Persons born?"
+  Answer2: "February 5, 1902"
+  Supporting Document2: "Seth Gordon Persons( February 5, 1902 - May 29, 1965) was an American Democratic politician who was the 43rd Governor of Alabama from 1951 to 1955."
+  FinalQuestion: "Who was born first, John Beach or Seth Gordon Persons?"
+  Output:
+  "John Beach"
+
+  ## The Example's Logic Chain (Just to help you better understand the multihop problem. Don't output something like this):
+  FinalQuestion: "Who was born first, John Beach or Seth Gordon Persons?" -> Q:"When was John Beach born?" A:"January 1, 1812" + Q:"When was Seth Gordon Persons born?" A:"February 5, 1902" -> FinalAnswer: "John Beach"
+  
+  ## Now you are given some supporting fact to help answer a question.
+  {Data}
+  FinalQuestion: {FinalQuestion}
+  Now you need sole the promblem and return result. Ensure responses are as concise as possible, focusing only on key information while omitting redundant details.
+'''
+        return prompt
+    
+@PROMPT_REGISTRY.register()
+class EssEqPrompt():
+    '''
+    The prompt for llm judge.
+    '''
+    def __init__(self):
+        pass
+
+    def build_prompt(self, question, golden_answer, other_answer) -> str:
+        prompt = f'''You are an expert evaluator. Evaluate whether the OTHER ANSWER preserves **all essential information** in the GOLDEN ANSWER, **with respect to the QUESTION**.
+  # Scoring Criteria
+  - **2 points** → OTHER ANSWER is fully equivalent to the GOLDEN ANSWER. Same meaning, even if reworded or paraphrased. No missing or incorrect information.
+  - **1 point** → OTHER ANSWER includes ALL key information from the GOLDEN ANSWER but adds **extra non-contradictory information** that may not be strictly necessary but is still valid in context.
+  - **0 points** → OTHER ANSWER is **missing** critical information from the GOLDEN ANSWER or introduces **incorrect/contradictory** information, based on the QUESTION.
+
+  Always consider what the QUESTION is asking when judging whether information is essential.
+
+  # ✓ Positive Examples
+
+  ## ✓ 2 points
+
+  - Question: What year did the war end?  
+    Golden: 1848  
+    Other: The year was 1848.
+
+  - Question: Who became the first African American U.S. president?  
+    Golden: Barack Obama  
+    Other: Obama
+
+  - Question: When did the battle begin?  
+    Golden: The battle began in 1775.  
+    Other: The conflict started in the year 1775.
+
+  - Question: Which field of Nobel Prize did Marie Curie receive?
+    Golden: the Nobel Prize in Physics.
+    Other: Physics.
+
+  ## ✓ 1 point
+
+  - Question: What is the cause of death of Mercedesz Henger's father?  
+    Golden: diabetes mellitus.  
+    Other: Diabetes mellitus type 2.
+
+  - Question: When did the war end?  
+    Golden: 1848  
+    Other: The war ended in 1848.
+
+  - Question: Who became the first African American U.S. president?  
+    Golden: Barack Obama  
+    Other: Barack Obama, the 44th president of the United States.
+
+  - Question: Where is the Eiffel Tower located?  
+    Golden: The Eiffel Tower is in Paris.  
+    Other: The Eiffel Tower is in Paris, the capital of France.
+
+  ## ✖ Negative Examples (0 points)
+
+  - Question: How much is the price?  
+    Golden: 50  
+    Other: 25 dollars
+
+  - Question: When did the war end?  
+    Golden: 1848  
+    Other: In 1846
+
+  - Question: Where is the Eiffel Tower located?  
+    Golden: The Eiffel Tower is in Paris.  
+    Other: The Eiffel Tower is in Berlin.
+
+  - Question: Who became the first African American U.S. president?  
+    Golden: Barack Obama  
+    Other: Barack Obama and Abraham Lincoln were presidents during the same era.
+
+  # Output Format:
+  Return ONLY JSON, no extra text.
+  ```json
+  {{
+    "answer_reason": "reason for the score",
+    "answer_score": 0/1/2
+  }}
+  ```
+  Input:
+  Question: {question}
+  Golden answer: {golden_answer}
+  Other answer: {other_answer}
+'''
+        return prompt
