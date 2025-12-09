@@ -520,6 +520,7 @@ class PipelineABC(ABC):
                     self.active_llm_serving.cleanup()
                 self.active_llm_serving = op_node.llm_serving
 
+            if op_node.op_obj != None:
                 op_node.op_obj.run(
                     storage=op_node.storage,
                     **op_node.kwargs
