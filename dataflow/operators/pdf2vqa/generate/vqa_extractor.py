@@ -29,6 +29,66 @@ class VQAExtractor(OperatorABC):
         self.mineru_backend = mineru_backend
         self.max_chunk_len = max_chunk_len
     
+    @staticmethod
+    def get_desc(lang: str = "zh"):
+        if lang == "zh":
+            return (
+                "该算子用于从试题或图文PDF文档中自动提取问答（VQA）结构化数据。\n\n"
+                "功能说明：\n"
+                "- 自动调用 MinerU 模型提取 PDF 文档的版面与内容布局信息。\n"
+                "- 支持题目与答案的分离提取或交错（interleaved）模式处理。\n"
+                "- 基于 LLM 生成章节结构化问答（<chapter>、<qa_pair> 标签格式）。\n"
+                "- 自动进行内容清洗、图片路径替换与问答重建。\n"
+                "- 支持结果过滤、合并及 Markdown 文档转换。\n\n"
+                "输入要求：\n"
+                "- DataFrame 中需包含 PDF 文件路径列，可为 question_pdf_path/answer_pdf_path 或 pdf_path。\n\n"
+                "初始化参数：\n"
+                "- llm_serving: LLM 推理服务实例，用于生成问答。\n"
+                "- mineru_backend: MinerU 后端类型（可选值：\"vlm-transformers\" 或 \"vlm-vllm-engine\"）。\n"
+                "- max_chunk_len: 单批次最大token数量（默认128000）。\n\n"
+                "运行参数（run）：\n"
+                "- input_question_pdf_path_key: 题目PDF路径列名（默认：\"question_pdf_path\"）。\n"
+                "- input_answer_pdf_path_key: 答案PDF路径列名（默认：\"answer_pdf_path\"）。\n"
+                "- input_pdf_path_key: 交错模式下的PDF路径列名（默认：\"pdf_path\"）。\n"
+                "- input_subject_key: 学科类别列名（默认：\"subject\"）。\n"
+                "- output_dir_key: 输出目录列名（默认：\"output_dir\"）。\n"
+                "- output_jsonl_key: 输出JSONL路径列名（默认：\"output_jsonl_path\"）。\n"
+                "- output_default_dir: 默认输出目录（默认：\"../vqa_output\"）。\n\n"
+                "输出：\n"
+                "- 在 DataFrame 中新增一列，记录生成的VQA结构化问答JSONL文件路径。\n"
+                "- 同时生成过滤后的Markdown文档和对应图片资源文件夹。"
+            )
+        elif lang == "en":
+            return (
+                "This operator extracts structured Visual Question Answering (VQA) data from exam or multimodal PDF documents.\n\n"
+                "Functionality:\n"
+                "- Automatically uses MinerU models to extract PDF layout and textual content.\n"
+                "- Supports both separate (question/answer) and interleaved PDF processing modes.\n"
+                "- Generates structured chapter-based QA pairs using an LLM (<chapter>, <qa_pair> tags).\n"
+                "- Cleans and reconstructs QA content with proper image references.\n"
+                "- Filters, merges, and converts the output into Markdown format.\n\n"
+                "Input Requirements:\n"
+                "- The input DataFrame must contain PDF path columns: either question_pdf_path/answer_pdf_path or pdf_path.\n\n"
+                "Initialization Parameters:\n"
+                "- llm_serving: Instance of LLM inference service used for QA generation.\n"
+                "- mineru_backend: Backend type for MinerU ('vlm-transformers' or 'vlm-vllm-engine').\n"
+                "- max_chunk_len: Maximum number of tokens per batch (default: 128000).\n\n"
+                "Run Parameters:\n"
+                "- input_question_pdf_path_key: Column name for question PDF path (default: 'question_pdf_path').\n"
+                "- input_answer_pdf_path_key: Column name for answer PDF path (default: 'answer_pdf_path').\n"
+                "- input_pdf_path_key: Column name for interleaved PDF path (default: 'pdf_path').\n"
+                "- input_subject_key: Column name for subject type (default: 'subject').\n"
+                "- output_dir_key: Column name for output directory (default: 'output_dir').\n"
+                "- output_jsonl_key: Column name for output JSONL file path (default: 'output_jsonl_path').\n"
+                "- output_default_dir: Default output directory (default: '../vqa_output').\n\n"
+                "Output:\n"
+                "- Adds a new column to the DataFrame containing paths to generated structured VQA JSONL files.\n"
+                "- Also produces filtered Markdown documents and associated image folders."
+            )
+        else:
+            return "VQAExtractor extracts structured VQA data from PDF documents and outputs filtered JSONL and Markdown files."
+
+
     def _convert_json(self, input_file, output_file):
         with open(input_file, 'r') as infile:
             data = list(json.load(infile))
