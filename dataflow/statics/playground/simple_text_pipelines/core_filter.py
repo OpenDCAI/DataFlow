@@ -169,7 +169,7 @@ class CoreFilterPipeline:
         )
         self.final_scorer = PromptedGenerator(
             llm_serving=llm_serving,
-            system_prompt=GetFilterFinalScorerPrompt
+            system_prompt=GetFilterFinalScorerPrompt()
         )
         self.final_filter = GeneralFilter([lambda df: df['final_score'] >= 4])
     

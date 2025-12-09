@@ -38,7 +38,7 @@ class FuncCall_APIPipeline:
         self.multi_turn_conversations_generator = MultiTurnConversationGenerator(llm_serving=self.llm_serving)
         self.evaluator = FuncCallConversationSampleEvaluator(llm_serving=self.llm_serving)
 
-    def run(self):
+    def forward(self):
         self.scenario_extractor.run(
             self.storage.step(),
             input_chat_key="chat"
@@ -87,4 +87,4 @@ class FuncCall_APIPipeline:
 
 if __name__ == "__main__":
     pipeline = FuncCall_APIPipeline()
-    pipeline.run()
+    pipeline.forward()

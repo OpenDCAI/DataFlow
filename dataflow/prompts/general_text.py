@@ -1228,7 +1228,7 @@ Here is the user’s question and the model’s response: {dialogue}
 
 Now it’s your turn. Please provide your Critique as required:
         """
-        return base_critique_prompt.format(dialogue=dialogue)
+        return base_critique_prompt
 
 @PROMPT_REGISTRY.register()
 class CondorRefinePrompt(PromptABC):

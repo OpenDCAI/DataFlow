@@ -5,7 +5,7 @@ torch
 torchvision
 torchaudio
 tqdm
-transformers<4.54.0
+transformers
 math_verify
 word2number
 accelerate
@@ -24,7 +24,7 @@ colorama
 gradio>5
 json5
 tiktoken
-
+pyarrow==20.0.0 # larger than this will bug on python 3.10
 # text2sql
 func_timeout
 sqlglot

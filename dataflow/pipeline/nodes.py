@@ -84,6 +84,7 @@ class OperatorNode(object):
             f"OperatorNode(\n"
             f"  Operator_class: {op_class},\n"
             f"  Operator_name: {self.op_name},\n"
+            f"  Storage: {self.storage},\n"
             f"  Input Keys: [{input_keys_str}],\n"
             f"  Output Keys: [{output_keys_str}],\n"
             f"  Input Nodes: [{self.input_key_nodes}],\n"
