@@ -6,10 +6,11 @@ from dataflow.utils.registry import OPERATOR_REGISTRY
 from dataflow.utils.storage import DataFlowStorage
 from dataflow.core import LLMServingABC
 from dataflow.core import OperatorABC
+from dataflow.core.prompt import prompt_restrict
 
 from math_verify import parse, verify
 from dataflow import get_logger
-from typing import Literal
+from typing import Literal, Union
 import pandas as pd
 import numpy as np
 import time
@@ -18,6 +19,11 @@ import re
 import json
 import json5
 
+@prompt_restrict(
+    AnswerJudgePromptQuestion,
+    AnswerJudgeMultipleQuestionsPrompt
+)
+
 @OPERATOR_REGISTRY.register()
 class BenchDatasetEvaluatorQuestion(OperatorABC):
     def __init__(self,
@@ -25,7 +31,7 @@ class BenchDatasetEvaluatorQuestion(OperatorABC):
                 compare_method: Literal["match", "semantic"] = "match",
                 system_prompt: str = "You are a helpful assistant specialized in evaluating answer correctness.",
                 llm_serving: LLMServingABC = None,
-                prompt_template: DIYPromptABC = None,
+                prompt_template: Union[AnswerJudgePromptQuestion, AnswerJudgeMultipleQuestionsPrompt, DIYPromptABC] = AnswerJudgePromptQuestion,
                 support_subquestions: bool = False
                 ):
         
