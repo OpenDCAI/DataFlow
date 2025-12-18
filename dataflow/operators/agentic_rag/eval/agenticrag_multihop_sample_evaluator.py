@@ -47,6 +47,28 @@ class MultiHopRAGVerifier(OperatorABC):
     def get_desc(lang: str = "zh"):
         return "MultiHopRAG 验证算子：对 multi_hop_data 中每个候选进行多步验证并返回合格的数据。" if lang == "zh" else "Verifier for MultiHop RAG."
 
+    def _safe_json_load(self, text: str, stage: str):
+        """
+        Safely load JSON from LLM output.
+        Return None if parsing fails.
+        """
+        if not text or not text.strip():
+            self.logger.warning(f"[{stage}] Empty LLM output")
+            return None
+
+        cleaned = _clean_json_block(text)
+        if not cleaned or not cleaned.strip():
+            self.logger.warning(f"[{stage}] Empty cleaned JSON")
+            return None
+
+        try:
+            return json.loads(cleaned)
+        except json.JSONDecodeError as e:
+            self.logger.warning(
+                f"[{stage}] JSON decode failed: {e} | content: {cleaned[:200]}"
+            )
+            return None
+
     def run(self, storage: DataFlowStorage):
         df = storage.read("dataframe")
         
@@ -110,9 +132,15 @@ class MultiHopRAGVerifier(OperatorABC):
 
         check_outputs = self.llm_serving.generate_from_input(check_prompts) if check_prompts else []
         parsed_checks = []
-        for out in check_outputs:
-            cleaned = _clean_json_block(out)
-            parsed_checks.append(json.loads(cleaned))
+        valid_check_meta = []
+
+        for out, meta in zip(check_outputs, check_meta):
+            check_obj = self._safe_json_load(out, stage="phase1_check")
+            if check_obj is None:
+                continue
+            parsed_checks.append(check_obj)
+            valid_check_meta.append(meta)
+        check_meta = valid_check_meta
 
         passed_after_check = []
         for idx, check_result in enumerate(parsed_checks):
@@ -140,7 +168,6 @@ class MultiHopRAGVerifier(OperatorABC):
         # ---- Phase 2: reasoning prompts (one per passed row) ----
         reasoning_prompts = []
         reasoning_meta = []
-        print("passed_after_check: ", len(passed_after_check))
         for item in passed_after_check:
             qa_type = item["qa_type"]
             final_question = item["final_question"]
@@ -168,9 +195,16 @@ class MultiHopRAGVerifier(OperatorABC):
 
         judge_outputs = self.llm_serving.generate_from_input(judge_prompts) if judge_prompts else []
         parsed_judges = []
-        for out in judge_outputs:
-            cleaned = _clean_json_block(out)
-            parsed_judges.append(json.loads(cleaned))
+        valid_judge_meta = []
+
+        for out, meta in zip(judge_outputs, judge_meta):
+            judge_obj = self._safe_json_load(out, stage="phase3_reasoning_judge")
+            if judge_obj is None:
+                continue
+            parsed_judges.append(judge_obj)
+            valid_judge_meta.append(meta)
+
+        judge_meta = valid_judge_meta
 
         passed_after_reasoning = []
         for idx, judge_res in enumerate(parsed_judges):
@@ -227,9 +261,16 @@ class MultiHopRAGVerifier(OperatorABC):
 
         single_judge_outputs = self.llm_serving.generate_from_input(single_judge_prompts) if single_judge_prompts else []
         parsed_single_judges = []
-        for out in single_judge_outputs:
-            cleaned = _clean_json_block(out)
-            parsed_single_judges.append(json.loads(cleaned))
+        valid_single_judge_meta = []
+
+        for out, meta in zip(single_judge_outputs, single_judge_meta):
+            judge_obj = self._safe_json_load(out, stage="phase5_singlehop_judge")
+            if judge_obj is None:
+                continue
+            parsed_single_judges.append(judge_obj)
+            valid_single_judge_meta.append(meta)
+
+        single_judge_meta = valid_single_judge_meta
 
         row_fail_map = {}
         for idx, judge_res in enumerate(parsed_single_judges):
@@ -304,9 +345,16 @@ class MultiHopRAGVerifier(OperatorABC):
 
         final_judge_outputs = self.llm_serving.generate_from_input(final_judge_prompts) if final_judge_prompts else []
         parsed_final_judges = []
-        for out in final_judge_outputs:
-            cleaned = _clean_json_block(out)
-            parsed_final_judges.append(json.loads(cleaned))
+        valid_final_judge_meta = []
+
+        for out, meta in zip(final_judge_outputs, final_judge_meta):
+            judge_obj = self._safe_json_load(out, stage="phase7_final_judge")
+            if judge_obj is None:
+                continue
+            parsed_final_judges.append(judge_obj)
+            valid_final_judge_meta.append(meta)
+
+        final_judge_meta = valid_final_judge_meta
 
         verified_rows = []
         for idx, judge_res in enumerate(parsed_final_judges):

@@ -20,6 +20,7 @@ from collections import Counter
 from typing import List
 import requests
 import time
+from tqdm import tqdm
 
 def _clean_json_block(item: str) -> str:
         return item.strip().removeprefix("```json").removeprefix("```").removesuffix("```").strip()
@@ -83,7 +84,7 @@ class MultiHopRAGGenerator(OperatorABC):
         response = requests.post(
             self.retriever_url,
             json={"query": query, "topk": topk + now_hop},
-            timeout=1200
+            timeout=60
         )
         data = response.json()
         all_docs = [doc.get("contents", "") for doc in data.get("results", [])]
@@ -96,6 +97,28 @@ class MultiHopRAGGenerator(OperatorABC):
         filter_docs = [d for d in unique_docs if "(number)" not in d and "(decade)" not in d]
         return filter_docs[:topk]
 
+    def _safe_json_load(self, text: str, stage: str):
+        """
+        Safely load JSON from LLM output.
+        Return None if parsing fails.
+        """
+        if not text or not text.strip():
+            self.logger.warning(f"[{stage}] Empty LLM output")
+            return None
+
+        cleaned = _clean_json_block(text)
+        if not cleaned or not cleaned.strip():
+            self.logger.warning(f"[{stage}] Empty cleaned JSON")
+            return None
+
+        try:
+            return json.loads(cleaned)
+        except json.JSONDecodeError as e:
+            self.logger.warning(
+                f"[{stage}] JSON decode failed: {e} | content: {cleaned[:200]}"
+            )
+            return None
+
     def run(
         self, 
         storage: DataFlowStorage, 
@@ -103,8 +126,8 @@ class MultiHopRAGGenerator(OperatorABC):
         input_question_key: str = "question", 
         input_answer_key: str = "answer", 
         input_doc_key: str = "doc",
-        input_topk: int = 5,
-        input_per_doc_qa: int = 5,
+        input_topk: int = 3,
+        input_per_doc_qa: int = 1,
     ):
         self.input_hop = input_hop
         self.input_question_key = input_question_key
@@ -130,7 +153,7 @@ class MultiHopRAGGenerator(OperatorABC):
         # ---- Phase 1: build atomic prompts for ALL rows/docs and call model in batch ----
         atomic_prompts = []
         atomic_meta = []
-        for i, current_data in enumerate(rows):
+        for i, current_data in tqdm(enumerate(rows), total=len(rows), desc="Generating atomic QA prompts"):
             hop_num = input_hop
             hop_key = f"hop_{hop_num}"
             now_question = current_data[hop_key][input_question_key]
@@ -159,8 +182,10 @@ class MultiHopRAGGenerator(OperatorABC):
         atomic_outputs = self.llm_serving.generate_from_input(atomic_prompts)
         parsed_atomic = []
         for out in atomic_outputs:
-            cleaned = _clean_json_block(out)
-            parsed_atomic.append(json.loads(cleaned))
+            obj = self._safe_json_load(out, stage="atomic_qa")
+            if obj is None:
+                continue
+            parsed_atomic.append(obj)
 
         # ---- Phase 2: build merge prompts for ALL atomic qas and call model in batch ----
         merge_prompts = []
@@ -201,8 +226,12 @@ class MultiHopRAGGenerator(OperatorABC):
         merge_outputs = self.llm_serving.generate_from_input(merge_prompts)
         parsed_merges = []
         for out in merge_outputs:
-            cleaned = _clean_json_block(out)
-            parsed_merges.append(json.loads(cleaned))
+            obj = self._safe_json_load(out, stage="merge_qa")
+            if obj is None:
+                continue
+            parsed_merges.append(obj)
+
+        print("parsed_merges: ", len(parsed_merges))
 
         # ---- Phase 3: filter merges and build refine prompts ----
         refine_prompts = []
@@ -237,9 +266,14 @@ class MultiHopRAGGenerator(OperatorABC):
 
         refine_outputs = self.llm_serving.generate_from_input(refine_prompts)
         parsed_refines = []
-        for out in refine_outputs:
-            cleaned = _clean_json_block(out)
-            parsed_refines.append(json.loads(cleaned))
+        valid_refine_meta = []
+        for out, meta in zip(refine_outputs, refine_meta):
+            obj = self._safe_json_load(out, stage="refine_answer")
+            if obj is None:
+                continue
+            parsed_refines.append(obj)
+            valid_refine_meta.append(meta)
+        refine_meta = valid_refine_meta
 
         # ---- Phase 4: build optional prompts for ALL refines and batch call ----
         opt_prompts = []
@@ -268,9 +302,14 @@ class MultiHopRAGGenerator(OperatorABC):
 
         opt_outputs = self.llm_serving.generate_from_input(opt_prompts)
         parsed_opts = []
-        for out in opt_outputs:
-            cleaned = _clean_json_block(out)
-            parsed_opts.append(json.loads(cleaned))
+        valid_opt_meta = []
+        for out, meta in zip(opt_outputs, opt_meta):
+            obj = self._safe_json_load(out, stage="optional_answer")
+            if obj is None:
+                continue
+            parsed_opts.append(obj)
+            valid_opt_meta.append(meta)
+        opt_meta = valid_opt_meta
 
         # ---- Phase 5: assemble new_rows from opt results and corresponding meta ----
         new_rows = []
