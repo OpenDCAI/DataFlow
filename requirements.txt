@@ -77,3 +77,5 @@ google-cloud-aiplatform>=1.55
 google-cloud-bigquery
 google-genai
 gcsfs
+db-dtypes
+google-cloud-bigquery-storage
