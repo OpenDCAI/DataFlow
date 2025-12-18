@@ -288,7 +288,7 @@ class APIVLMServing_openai(LLMServingABC):
             timeout,
             json_schema
         )
-        self.logger.info(f"Request {request_id} completed")
+        # self.logger.info(f"Request {request_id} completed")
         return request_id, result
 
     def generate_from_input_multi_images(

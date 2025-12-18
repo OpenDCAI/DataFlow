@@ -503,9 +503,16 @@ class PipelineABC(ABC):
     #                 self.serving_resources[op_runtime.op]["LLMServingABC"] = v
     #                 self.serving_reference_count[v] += 1
                     
-    def _compiled_forward(self):
+    def _compiled_forward(self, resume_step: int=0):
+        """
+            resume_step (int): resume inference from this step
+        """
         # for loop for each op and its `storage` status
-        for op_node in self.op_nodes_list:
+        for idx, op_node in enumerate(self.op_nodes_list):
+            # resume from a expected step
+            if idx - 1 < resume_step: # minus one since INPUT-DATA Node
+                continue
+
             self.logger.debug(f"Ready to run {op_node}, with serving={op_node.llm_serving}, active_llm_serving={self.active_llm_serving}")
             if op_node.llm_serving != None:
                 if self.active_llm_serving and self.active_llm_serving is not op_node.llm_serving:
@@ -513,6 +520,7 @@ class PipelineABC(ABC):
                     self.active_llm_serving.cleanup()
                 self.active_llm_serving = op_node.llm_serving
 
+            if op_node.op_obj != None:
                 op_node.op_obj.run(
                     storage=op_node.storage,
                     **op_node.kwargs

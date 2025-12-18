@@ -14,6 +14,7 @@ from .api_google_vertexai_serving import APIGoogleVertexAIServing
 
 from .local_model_vlm_serving import LocalVLMServing_vllm
 
+
 __all__ = [
     "APIGoogleVertexAIServing",
     "APILLMServing_request",

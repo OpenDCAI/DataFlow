@@ -29,6 +29,7 @@ class OPRuntime:
         self.op_name = operator_name
         # self.func = func
         self.kwargs = args
+        self.logger = get_logger()
 
     def __repr__(self):
         # return f"OPRuntime(operator={repr(self.op)}, func={self.func.__qualname__}, args={self.kwargs})"        
@@ -90,7 +91,8 @@ class AutoOP(Generic[P, R]):
         bound_args.apply_defaults()
 
         final_kwargs = self._flatten_bound_arguments(bound_args, self._signature)  # OrderedDict
-
+        (final_kwargs)
+        self._logger.debug(final_kwargs)
         # final_kwargs = bound_args.arguments  # OrderedDict
         # 添加一条运行记录
         # self._pipeline.op_runtimes.append(OPRuntime(self._operator, self._orig_run, dict(final_kwargs)))

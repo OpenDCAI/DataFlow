@@ -77,13 +77,15 @@ class OperatorNode(object):
             self.input_key_nodes[key] = KeyNode(key, key)
 
     def __str__(self):
-        op_class = self.op_obj.__class__.__name__ if self.op_obj else "None"
+        op_class = self.op_obj.__class__.__name__ if self.op_obj else None
         input_keys_str = ', '.join(self.input_keys)
         output_keys_str = ', '.join(self.output_keys)
         return (
             f"OperatorNode(\n"
+            f"  op_obj:{self.op_obj}"
             f"  Operator_class: {op_class},\n"
             f"  Operator_name: {self.op_name},\n"
+            f"  Storage: {self.storage},\n"
             f"  Input Keys: [{input_keys_str}],\n"
             f"  Output Keys: [{output_keys_str}],\n"
             f"  Input Nodes: [{self.input_key_nodes}],\n"

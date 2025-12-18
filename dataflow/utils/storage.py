@@ -32,6 +32,40 @@ class DataFlowStorage(ABC):
     @abstractmethod
     def write(self, data: Any) -> Any:
         pass
+
+# --- 新增的 __repr__ 方法 ---
+    def __repr__(self):
+        """
+        返回一个表示该对象所有成员变量及其键值对的字符串。
+        """
+        # 获取实例的所有属性（成员变量）
+        attrs = self.__dict__
+        
+        # 格式化键值对列表
+        attr_strs = []
+        for key, value in attrs.items():
+            # 特殊处理 pandas DataFrame 或其他大型对象
+            if isinstance(value, pd.DataFrame):
+                # 如果是 DataFrame，只显示其类型和形状，避免输出过多内容
+                value_repr = f"<DataFrame shape={value.shape}>"
+            elif isinstance(value, set):
+                # 简化集合的显示
+                 value_repr = f"<{type(value).__name__} size={len(value)}>"
+            elif isinstance(value, dict):
+                # 简化字典的显示
+                 value_repr = f"<{type(value).__name__} size={len(value)}>"
+            else:
+                # 使用标准的 repr() 获取值表示，并限制长度
+                value_repr = repr(value)
+                if len(value_repr) > 100:  # 限制长度以避免超长输出
+                    value_repr = value_repr[:97] + "..."
+                    
+            attr_strs.append(f"  {key} = {value_repr}")
+            
+        # 构造最终的字符串
+        body = "\n".join(attr_strs)
+        return f"<{self.__class__.__name__} Object:\n{body}\n>"
+    # ---------------------------
 class LazyFileStorage(DataFlowStorage):
     """
     LazyFileStorage

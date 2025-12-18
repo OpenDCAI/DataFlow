@@ -3,15 +3,18 @@ from dataflow.core import OperatorABC
 from dataflow.utils.storage import DataFlowStorage
 from dataflow.utils.registry import OPERATOR_REGISTRY
 from dataflow.operators.general_text import NgramSampleEvaluator
+from typing import Literal  # 记得在文件顶部导入
 
 @OPERATOR_REGISTRY.register()
 class NgramFilter(OperatorABC):
 
-    def __init__(self, min_score=0.8, max_score=1, ngrams=5):
+    def __init__(self, min_score=0.8, max_score=1, ngrams=5, language: Literal['zh', 'en'] = 'en'):
+        if language not in ['zh', 'en']:
+            raise ValueError(f"Unsupported language: '{language}'. Supported options are: ['zh', 'en'].")
         self.logger = get_logger()
         self.min_score = min_score
         self.max_score = max_score
-        self.scorer = NgramSampleEvaluator(ngrams)
+        self.scorer = NgramSampleEvaluator(ngrams, language)
         self.logger.info(f"Initializing {self.__class__.__name__} with min_scores: {self.min_score} and max_scores: {self.max_score}...")  
     
     @staticmethod
