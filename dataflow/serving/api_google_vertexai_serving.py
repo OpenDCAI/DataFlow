@@ -113,6 +113,7 @@ class GeminiVertexAIClient:
         temperature: float = 0.0,
         max_tokens: int = 4096,
         response_schema: Optional[Union[type[BaseModel], dict]] = None,
+        use_function_call: bool = False,
     ) -> GenerationResponse:
         """Generate response from a Gemini model on Vertex AI."""
         model_name = model
@@ -125,10 +126,11 @@ class GeminiVertexAIClient:
             system_instruction=system_prompt
         )
 
-        generation_config = GenerationConfig(
-            temperature=temperature,
-            max_output_tokens=max_tokens,
-        )
+        # 先准备 GenerationConfig 的参数字典
+        config_params = {
+            "temperature": temperature,
+            "max_output_tokens": max_tokens,
+        }
         
         tools = None
         if response_schema is not None:
@@ -139,13 +141,22 @@ class GeminiVertexAIClient:
                 # 是 BaseModel，转换成 JSON Schema
                 schema_dict = response_schema.model_json_schema()
 
-            function_declaration = FunctionDeclaration(
-                name="extract_data",
-                description=f"Extracts structured data according to the provided schema.",
-                parameters=schema_dict,
-            )
-            tools = [Tool(function_declarations=[function_declaration])]
-            generation_config.response_mime_type = "application/json"
+            # 顶层 bool 控制是否启用 function_call
+            if use_function_call:
+                function_declaration = FunctionDeclaration(
+                    name="extract_data",
+                    description=f"Extracts structured data according to the provided schema.",
+                    parameters=schema_dict,
+                )
+                tools = [Tool(function_declarations=[function_declaration])]
+            else:
+                # 无论是否启用 function_call，只要有 schema 就按 JSON 返回
+                # 必须在初始化时传入，不能后续修改
+                config_params["response_mime_type"] = "application/json"
+                config_params["response_schema"] = schema_dict
+
+        # 使用完整参数创建 GenerationConfig
+        generation_config = GenerationConfig(**config_params)
 
         contents = self._prepare_content(content)
         
@@ -171,6 +182,7 @@ class APIGoogleVertexAIServing(LLMServingABC):
                  max_retries: int = 5,
                  temperature: float = 0.0,
                  max_tokens: int = 4096,
+                 use_function_call: bool = True,
                  use_batch: bool = False,
                  batch_wait: bool = True,
                  batch_dataset: str = "dataflow_batch",
@@ -187,6 +199,8 @@ class APIGoogleVertexAIServing(LLMServingABC):
         self.max_tokens = max_tokens
         self.project = project
         self.location = location
+        # 顶层开关：控制是否启用 Vertex 的 function_call（Tool 调用）
+        self.use_function_call = use_function_call
         self.use_batch = use_batch
         self.batch_wait = batch_wait
         self.batch_dataset = batch_dataset
@@ -226,8 +240,18 @@ class APIGoogleVertexAIServing(LLMServingABC):
         self.logger.info(f"Switching model from '{self.model_name}' to '{model_name_or_path}'.")
         self.model_name = model_name_or_path
 
-    def _generate_single_with_retry(self, index: int, user_input: str, system_prompt: str, response_schema: Optional[Union[type[BaseModel], dict]] = None) -> tuple[int, Optional[str]]:
+    def _generate_single_with_retry(
+        self,
+        index: int,
+        user_input: str,
+        system_prompt: str,
+        response_schema: Optional[Union[type[BaseModel], dict]] = None,
+        use_function_call: Optional[bool] = None,
+    ) -> tuple[int, Optional[str]]:
         """Generates a response for a single input with a retry mechanism."""
+        if use_function_call is None:
+            use_function_call = self.use_function_call
+
         for attempt in range(self.max_retries):
             try:
                 response = self.client.generate(
@@ -237,6 +261,7 @@ class APIGoogleVertexAIServing(LLMServingABC):
                     temperature=self.temperature,
                     max_tokens=self.max_tokens,
                     response_schema=response_schema,
+                    use_function_call=use_function_call,
                 )
                 
                 # NEW: Robust response parsing for both text and function calls
@@ -288,6 +313,7 @@ class APIGoogleVertexAIServing(LLMServingABC):
         user_inputs: List[str], 
         system_prompt: str = "", 
         response_schema: Optional[Union[type[BaseModel], dict]] = None,
+        use_function_call: Optional[bool] = None,
         use_batch: Optional[bool] = None,
         batch_wait: Optional[bool] = None,
         batch_dataset: Optional[str] = None,
@@ -312,6 +338,10 @@ class APIGoogleVertexAIServing(LLMServingABC):
             - If use_batch=True and batch_wait=True: List of generated responses from batch job.
             - If use_batch=True and batch_wait=False: Batch job resource name (str) for later retrieval.
         """
+        # 顶层 control：如果调用时未指定，则使用实例上的默认值
+        if use_function_call is None:
+            use_function_call = self.use_function_call
+
         if use_batch is None:
             use_batch = self.use_batch
         if batch_wait is None:
@@ -328,6 +358,7 @@ class APIGoogleVertexAIServing(LLMServingABC):
                 user_inputs=user_inputs,
                 system_prompt=system_prompt,
                 response_schema=response_schema,
+                use_function_call=use_function_call,
                 wait_for_completion=batch_wait,
                 dataset_name=batch_dataset,
                 csv_filename=csv_filename,
@@ -337,21 +368,33 @@ class APIGoogleVertexAIServing(LLMServingABC):
             return self._generate_with_parallel(
                 user_inputs=user_inputs,
                 system_prompt=system_prompt,
-                response_schema=response_schema
+                response_schema=response_schema,
+                use_function_call=use_function_call,
             )
     
     def _generate_with_parallel(
         self,
         user_inputs: List[str],
         system_prompt: str,
-        response_schema: Optional[Union[type[BaseModel], dict]]
+        response_schema: Optional[Union[type[BaseModel], dict]],
+        use_function_call: Optional[bool] = None,
     ) -> List[str]:
         """Internal method: Generates responses using parallel real-time API calls."""
+        if use_function_call is None:
+            use_function_call = self.use_function_call
+
         responses = [None] * len(user_inputs)
         
         with ThreadPoolExecutor(max_workers=self.max_workers) as executor:
             future_to_index = {
-                executor.submit(self._generate_single_with_retry, i, user_input, system_prompt, response_schema): i
+                executor.submit(
+                    self._generate_single_with_retry,
+                    i,
+                    user_input,
+                    system_prompt,
+                    response_schema,
+                    use_function_call,
+                ): i
                 for i, user_input in enumerate(user_inputs)
             }
             
@@ -367,6 +410,7 @@ class APIGoogleVertexAIServing(LLMServingABC):
         user_inputs: List[str],
         system_prompt: str,
         response_schema: Optional[Union[type[BaseModel], dict]],
+        use_function_call: Optional[bool],
         wait_for_completion: bool,
         dataset_name: str,
         csv_filename: Optional[str] = None,
@@ -404,6 +448,7 @@ class APIGoogleVertexAIServing(LLMServingABC):
                 system_prompt=system_prompt,
                 user_prompts=user_inputs,
                 response_schema=response_schema,
+                use_function_call=use_function_call,
                 max_token=self.max_tokens
             )
             
@@ -601,6 +646,7 @@ class APIGoogleVertexAIServing(LLMServingABC):
         user_prompts: List[str],
         doi_list: Optional[List[str]] = None,
         response_schema: Optional[Union[type[BaseModel], dict]] = None,
+        use_function_call: Optional[bool] = None,
         max_token: int = 500
     ) -> str:
         """
@@ -617,6 +663,10 @@ class APIGoogleVertexAIServing(LLMServingABC):
         Returns:
             The name of the generated CSV file.
         """
+        # 如果未显式指定，则使用实例上的默认值
+        if use_function_call is None:
+            use_function_call = self.use_function_call
+
         df = pd.DataFrame({"user_prompt": user_prompts})
         
         def create_batch_request_json(row) -> str:
@@ -633,12 +683,21 @@ class APIGoogleVertexAIServing(LLMServingABC):
             }
             
             if response_schema:
+                # 有 schema 时优先要求 JSON 输出
                 generation_config["responseMimeType"] = "application/json"
+
+                # 只有在 use_function_call=True 时才下发 responseSchema（等价于 schema 约束）
+                
                 # Handle both BaseModel and dict schemas
-                if isinstance(response_schema, dict):
-                    generation_config["responseSchema"] = response_schema
-                else:
+                if hasattr(response_schema, "model_json_schema"):
                     generation_config["responseSchema"] = response_schema.model_json_schema()
+                else:
+                    generation_config["responseSchema"] = response_schema
+
+                # if isinstance(response_schema, dict):
+                #     generation_config["responseSchema"] = response_schema
+                # else:
+                #     generation_config["responseSchema"] = response_schema.model_json_schema()
             else:
                 generation_config["responseMimeType"] = "text/plain"
             
