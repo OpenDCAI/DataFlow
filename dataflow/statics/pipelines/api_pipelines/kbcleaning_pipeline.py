@@ -26,7 +26,6 @@ class KBCleaningPDF_APIPipeline():
 
         self.knowledge_cleaning_step1 = FileOrURLToMarkdownConverterAPI(
             intermediate_dir="../example_data/KBCleaningPipeline/raw/",
-            lang="en",
             mineru_backend="vlm",  # vlm or pipeline
         )
 

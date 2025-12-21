@@ -163,11 +163,10 @@ class FileOrURLToMarkdownConverterBatch(OperatorABC):
     Choose the appropriate backend based on your needs.  Defaults to "vlm-sglang-engine".
     For more details, refer to the MinerU GitHub: https://github.com/opendatalab/MinerU.
     """
-    def __init__(self, intermediate_dir: str = "intermediate", lang: str = "en", mineru_backend: str = "vlm-sglang-engine"):
+    def __init__(self, intermediate_dir: str = "intermediate", mineru_backend: str = "vlm-sglang-engine"):
         self.logger = get_logger()
         self.intermediate_dir=intermediate_dir
         os.makedirs(self.intermediate_dir, exist_ok=True)
-        self.lang=lang
         self.mineru_backend = mineru_backend
 
     @staticmethod

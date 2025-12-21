@@ -15,7 +15,6 @@ class KBCleaning_CPUPipeline():
 
         self.knowledge_cleaning_step1 = FileOrURLToMarkdownConverterBatch(
             intermediate_dir="../example_data/KBCleaningPipeline/raw/",
-            lang="en",
             mineru_backend="pipeline",
         )
 
