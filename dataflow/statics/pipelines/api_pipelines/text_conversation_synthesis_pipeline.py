@@ -5,7 +5,7 @@ from dataflow.serving import APILLMServing_request
 class TextConversationSynthesis_APIPipeline():
     def __init__(self):
         self.storage = FileStorage(
-            first_entry_file_name="",
+            first_entry_file_name="../example_data/GeneralTextPipeline/empty.jsonl",
             cache_path="./cache",
             file_name_prefix="dataflow_cache_step",
             cache_type="jsonl",
