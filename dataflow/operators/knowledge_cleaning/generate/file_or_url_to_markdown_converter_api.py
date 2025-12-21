@@ -168,10 +168,9 @@ def download_pdf(url, save_path):
 @OPERATOR_REGISTRY.register()
 class FileOrURLToMarkdownConverterAPI(OperatorABC):
     """
-    mineru_backend sets the backend engine for MinerU. Options include:
-    - "pipeline": Traditional pipeline processing (MinerU1)
-    - "vlm-sglang-engine": New engine based on multimodal language models (MinerU2) (default recommended)
-    Choose the appropriate backend based on your needs.  Defaults to "vlm-sglang-engine".
+    Including mineru via api calling.
+    Set your mineru key in `MINERU_API_KEY` environment parameter.
+    To get the mineru token, refer to https://mineru.net/apiManage/token.
     For more details, refer to the MinerU GitHub: https://github.com/opendatalab/MinerU.
     """
     def __init__(self, intermediate_dir: str = "intermediate", mineru_backend: str = "vlm"):
