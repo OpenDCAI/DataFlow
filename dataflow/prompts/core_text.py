@@ -1,7 +1,9 @@
+from dataflow.utils.registry import PROMPT_REGISTRY
 from dataflow.core.prompt import PromptABC
-from typing import Set
+from typing import Any, Iterable, Optional, Set
 import string
 
+@PROMPT_REGISTRY.register()
 class StrFormatPrompt(PromptABC):
     """
     只需要提供 f_str_template。
@@ -29,5 +31,4 @@ class StrFormatPrompt(PromptABC):
         prompt = self.f_str_template
         for key, value in kwargs.items():
             prompt = prompt.replace(f"{{{key}}}", str(value))
-
         return prompt
