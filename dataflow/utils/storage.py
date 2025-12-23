@@ -85,6 +85,66 @@ class LazyFileStorage(DataFlowStorage):
         save_on_exit: bool = True,        # 进程退出时自动 flush
         flush_all_steps: bool = False      # True: 所有缓冲步落盘；False: 仅最新一步
     ):
+        """
+        Initialize a LazyFileStorage.
+
+        This storage keeps read/write operations in memory and only persists to disk
+        when explicitly flushed or when the process exits / is interrupted (if
+        save_on_exit is enabled). The class preserves an interface compatible with
+        a traditional FileStorage (step / reset / read / write / ...). Step 0
+        (the "first entry") may be loaded from a local file path or from remote
+        dataset identifiers prefixed with "hf:" (HuggingFace datasets) or "ms:"
+        (ModelScope datasets). Disk writes are performed atomically via os.replace,
+        and internal buffers are protected with an RLock for thread safety.
+
+        Args:
+            first_entry_file_name (str):
+                Path or source identifier used as the data source for step 0.
+                - If it starts with "hf:" the remainder is interpreted as a
+                HuggingFace dataset specification (dataset[:config][:split]).
+                - If it starts with "ms:" the remainder is interpreted as a
+                ModelScope dataset specification (dataset[:split]).
+                - Otherwise it is treated as a local file path; the file extension
+                (json, jsonl, csv, parquet, pickle) determines how it is loaded.
+            cache_path (str, optional):
+                Directory where per-step cache files are written. Defaults to "./cache".
+            file_name_prefix (str, optional):
+                Prefix used when composing cache filenames for non-zero steps.
+                Defaults to "dataflow_cache_step" (files will be like
+                "{file_name_prefix}_step{n}.{cache_type}").
+            cache_type (Literal["json","jsonl","csv","parquet","pickle"], optional):
+                Serialization format used when persisting buffers to disk.
+                - "json": full JSON array
+                - "jsonl": JSON Lines (one record per line)
+                - "csv": comma-separated values
+                - "parquet": Apache Parquet
+                - "pickle": Python pickle
+                Defaults to "jsonl".
+            save_on_exit (bool, optional):
+                If True (default), register handlers so that buffered data is flushed
+                automatically when the process exits or when SIGINT/SIGTERM is received.
+                In restricted environments registering signal handlers may fail silently.
+            flush_all_steps (bool, optional):
+                Controls flush_all() behavior:
+                - True: flush_all() persists all buffered steps.
+                - False (default): flush_all() persists only the most recently buffered step.
+
+        Returns:
+            None
+
+        Notes:
+            - The instance maintains an internal operator_step counter (initially -1).
+            Calling step() increments this counter; write() buffers data for
+            operator_step + 1.
+            - write(...) buffers data in memory and returns the file path that will
+            be used when the buffer is ultimately flushed to disk (useful for logging).
+            - Disk writes are atomic: data is first written to a temporary file and
+            then moved into place with os.replace to avoid partial files.
+            - Thread-safety: an RLock protects buffer and dirty-step state.
+            - Errors:
+            - Reading a non-existent local file raises FileNotFoundError.
+            - Unsupported file types raise ValueError.
+        """
         self.first_entry_file_name = first_entry_file_name
         self.cache_path = cache_path
         self.file_name_prefix = file_name_prefix
@@ -391,6 +451,56 @@ class FileStorage(DataFlowStorage):
         file_name_prefix:str="dataflow_cache_step",
         cache_type:Literal["json", "jsonl", "csv", "parquet", "pickle"] = "jsonl"
     ):
+        """
+        Initialize a FileStorage.
+
+        FileStorage is a disk-backed storage implementation that reads from and
+        writes to the local filesystem on every read/write operation. Unlike
+        LazyFileStorage, data is persisted immediately and no in-memory buffering
+        is maintained across steps.
+
+        The storage follows a step-based access pattern compatible with
+        DataFlowStorage. Step 0 (the "first entry") can be loaded from:
+        - a local file path, or
+        - a remote dataset specified with the "hf:" (HuggingFace) or "ms:"
+        (ModelScope) prefix.
+
+        Subsequent steps are materialized as files on disk under `cache_path`,
+        with filenames derived from `file_name_prefix`, the step index, and
+        `cache_type`.
+
+        Args:
+            first_entry_file_name (str):
+                Path or source identifier used as the data source for step 0.
+                - "hf:{dataset}[:config][:split]" loads a HuggingFace dataset.
+                - "ms:{dataset}[:split]" loads a ModelScope dataset.
+                - Otherwise, this is treated as a local file path, and the file
+                extension determines how it is read.
+            cache_path (str, optional):
+                Directory where cache files for steps >= 1 are stored.
+                Defaults to "./cache".
+            file_name_prefix (str, optional):
+                Prefix used when generating filenames for cached steps.
+                Cache files are named as
+                "{file_name_prefix}_step{n}.{cache_type}".
+                Defaults to "dataflow_cache_step".
+            cache_type (Literal["json","jsonl","csv","parquet","pickle"], optional):
+                File format used when writing step outputs to disk.
+                Defaults to "jsonl".
+
+        Returns:
+            None
+
+        Notes:
+            - The internal `operator_step` counter starts at -1 and is incremented
+            by calling `step()`.
+            - Calling `write(...)` writes data immediately to disk for
+            `operator_step + 1`.
+            - No atomic-write or buffering guarantees are provided beyond the
+            underlying pandas file writers.
+            - This class is simpler but less fault-tolerant than LazyFileStorage,
+            as partially written files may exist if a process is interrupted.
+        """
         self.first_entry_file_name = first_entry_file_name
         self.cache_path = cache_path
         self.file_name_prefix = file_name_prefix

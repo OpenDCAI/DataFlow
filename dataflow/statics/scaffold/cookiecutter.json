@@ -1,0 +1,25 @@
+{
+  "repo_name": "my-dataflow-extension",
+  "package_name": "my_dataflow_extension",
+  "author": "Your Name",
+  "description": "A DataFlow extension with operator + prompt + pipeline",
+  "init_version": "0.0.1",
+  "license": [
+    "Apache-2.0",
+    "MIT",
+    "BSD-3-Clause",
+    "Proprietary"
+  ],
+  "python_version": ["3.10", "3.11", "3.12"],
+  "include_examples": ["yes", "no"],
+  "_copy_without_render": [
+    ".github/workflows/*",
+    ".github/workflows/**/*.yml",
+    ".github/workflows/**/*.yaml",
+    "*.yml",
+    "*.yaml"
+  ],
+  "__prompts__": {
+    "include_examples": "Wether include exmaple operator & pipeline & prompt_template files in this DataFlow-extension template?"
+  }
+}
