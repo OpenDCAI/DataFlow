@@ -18,8 +18,8 @@ class PromptTemplatedGenerator(OperatorABC):
     def __init__(
             self,
             llm_serving: LLMServingABC, 
-            system_prompt: "You are a helpful agent.",
-            prompt_template: Union[StrFormatPrompt, DIYPromptABC] = None,
+            system_prompt: str =  "You are a helpful agent.",
+            prompt_template: Union[StrFormatPrompt, DIYPromptABC] = StrFormatPrompt,
             json_schema: dict = None,
         ):
         self.logger = get_logger()
@@ -29,7 +29,6 @@ class PromptTemplatedGenerator(OperatorABC):
         self.json_schema = json_schema
         if prompt_template is None:
             raise ValueError("prompt_template cannot be None")
-
 
     def run(
             self, 
