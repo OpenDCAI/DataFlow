@@ -1,0 +1,72 @@
+name: "🐞 Bug Report"
+description: "Report bugs to help us improve Dataflow. 请报告错误以帮助我们改进 Dataflow。"
+labels:
+  - bug
+
+body:
+  - type: checkboxes
+    id: reminder
+    attributes:
+      label: "Reminder / 提示"
+      description: |
+        - Please ensure you have carefully searched existing issues before submitting.
+        - 请确保您已认真搜索过现有的 Issues。
+      options:
+        - label: "I have read the above reminder and searched existing issues. / 我已阅读上述提示并搜索过现有 Issues。"
+          required: true
+
+  - type: textarea
+    id: problem-description
+    attributes:
+      label: "Problem Description / 问题描述"
+      description: |
+        Please describe your issue.
+        请描述您的问题。
+      placeholder: |
+        e.g. When I run `dataflow run`, it fails with a segmentation fault.
+        例如：当我执行 `dataflow run` 时，出现段错误。
+    validations:
+      required: true
+
+  - type: textarea
+    id: system-info
+    attributes:
+      label: "System Info (`dataflow env`) / 系统信息（`dataflow env`）"
+      description: |
+        Please run `dataflow env` in your terminal and paste the full output here.
+        请在终端运行 `dataflow env` 并将完整输出粘贴在此处。
+      placeholder: |
+        dataflow version: x.y.z
+        platform: macOS/Linux/Windows
+        python version: 3.x.x
+    validations:
+      required: true
+
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: "Reproduction Steps & Logs / 重现步骤及日志"
+      description: |
+        Provide the entry arguments, error message(s), and full stack trace to help us reproduce the issue.
+        请提供入口参数、错误信息和完整的异常堆栈，以便我们复现问题。
+      value: |
+        ```text
+        # e.g.
+        $ dataflow run --arg1 foo
+        Error: ...
+        Stack trace:
+        ...
+        ```
+    validations:
+      required: true
+
+  - type: textarea
+    id: others
+    attributes:
+      label: "Additional Information / 其他补充"
+      description: |
+        Any other details, screenshots, or logs that might help.
+        任何其他可能有帮助的细节、截图或日志。
+      placeholder: Optional
+    validations:
+      required: false

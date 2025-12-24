@@ -13,9 +13,9 @@
   "python_version": ["3.10", "3.11", "3.12"],
   "include_examples": ["yes", "no"],
   "_copy_without_render": [
-    ".github/workflows/*",
-    ".github/workflows/**/*.yml",
-    ".github/workflows/**/*.yaml",
+    ".github/*",
+    ".github/**/*.yml",
+    ".github/**/*.yaml",
     "*.yml",
     "*.yaml"
   ],
