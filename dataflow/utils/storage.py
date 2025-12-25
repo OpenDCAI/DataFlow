@@ -4,7 +4,6 @@ import signal
 import tempfile
 import weakref
 
-from librosa import cache
 from dataflow import get_logger
 import pandas as pd
 import json
