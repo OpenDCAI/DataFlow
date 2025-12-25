@@ -63,6 +63,10 @@ def init_repo_scaffold(
     """
     Initialize a DataFlow repository using the built-in scaffold template.
     """
+    import os
+    from pathlib import Path
+    from colorama import Fore, Style
+
     try:
         from cookiecutter.main import cookiecutter
     except ImportError:
@@ -80,14 +84,53 @@ def init_repo_scaffold(
     if not template_path.exists():
         raise FileNotFoundError(f"Scaffold template not found: {template_path}")
 
-    _echo(f"Using scaffold template: {template_path}", "cyan")
-    _echo(f"Output directory        : {output_dir}", "cyan")
+    # ---------- pretty header ----------
+    width = 80
+    try:
+        width = os.get_terminal_size().columns
+    except OSError:
+        pass
 
-    cookiecutter(
+    print(Fore.BLUE + "=" * width + Style.RESET_ALL)
+    print(Fore.CYAN + "🚀 DataFlow Repository Scaffold Initialization\n" + Style.RESET_ALL)
+
+    info = {
+        "Template": template_path,
+        "Output Dir": output_dir,
+        "Interactive": "No" if no_input else "Yes",
+        "Extra Context": "Provided" if context else "None",
+    }
+
+    for k, v in info.items():
+        print(f"- {k:<13}: {v}")
+
+    print("\n" + Fore.BLUE + "-" * width + Style.RESET_ALL)
+    print("Generating project from scaffold...")
+    print(Fore.BLUE + "-" * width + Style.RESET_ALL + "\n")
+
+    # ---------- cookiecutter ----------
+    generated_path = cookiecutter(
         template=str(template_path),
         no_input=no_input,
         extra_context=context,
         output_dir=str(output_dir),
     )
 
-    _echo("Repository scaffold initialized successfully 🎉", "green")
+    generated_path = Path(generated_path).resolve()
+    # ---------- footer ----------
+    print("\n" + Fore.GREEN + "✔ Repository scaffold initialized successfully 🎉" + Style.RESET_ALL)
+    print(Fore.GREEN + f"📁 Project path: {generated_path}" + Style.RESET_ALL)
+
+        # ---------- post-init guidance ----------
+    print("\n" + Fore.CYAN + "Next steps:" + Style.RESET_ALL)
+    print(f"  1. Enter project directory:")
+    print(f"     cd {generated_path}")
+    print()
+    print(f"  2. Install this project in editable mode (for local development):")
+    print(f"     pip install -e .")
+    print()
+    print(f"  3. Initialize a git repository (recommended for release & distribution):")
+    print(f"     git init")
+    print(f"     git add .")
+    print(f"     git commit -m \"Initial commit\"")
+    print(Fore.BLUE + "=" * width + Style.RESET_ALL)
