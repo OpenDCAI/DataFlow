@@ -16,7 +16,11 @@ from dataflow.version import __version__
 from dataflow.cli_funcs import cli_env, cli_init  # existing helpers
 from dataflow.cli_funcs.utils import _echo
 
-app = typer.Typer(add_completion=True, help=f"DataFlow CLI (v{__version__})")
+app = typer.Typer(
+    add_completion=True, 
+    help=f"DataFlow CLI (v{__version__})",
+    context_settings={"help_option_names": ["-h", "--help"]},
+    )
 color_init(autoreset=True)
 
 PYPI_API = "https://pypi.org/pypi/open-dataflow/json"
