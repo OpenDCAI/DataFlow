@@ -531,3 +531,79 @@ class PipelineABC(ABC):
                     self.logger.debug(f"Detected LLM Serving {self.active_llm_serving} ref reduced to 0, cleaning up...")
                     self.active_llm_serving.cleanup()
                     self.active_llm_serving = None
+
+
+class BatchedPipelineABC(PipelineABC):
+    def __init__(self):
+        super().__init__()
+        
+    def _compiled_forward(self, resume_step: int=0, batch_size: int|None=None, resume_from_last: bool=True):
+        """
+            resume_step (int): resume inference from this step
+            batch_size (int|None): if set, run the pipeline in batch mode with this batch size
+            resume_from_last (bool): if True, resume from the last successful step and batch
+        """
+        if resume_step > 0 and resume_from_last:
+            raise ValueError("Cannot set both `resume_step` and `resume_from_last` to True.")
+        
+        resume_batch = 0
+        
+        if resume_from_last:
+            cache_path = os.path.join(self.op_nodes_list[1].storage.cache_path, "last_success_step.txt")
+            if not os.path.exists(cache_path):
+                resume_step = 0
+                resume_batch = 0
+                self.logger.info(f"No last success step cache found at {cache_path}, starting from step 0.")
+            else:
+                with open(cache_path, "r") as f:
+                    line = f.readline().strip()
+                    resume_step, resume_batch = map(int, line.split(","))
+                self.logger.info(f"Resuming from last success step {resume_step}, batch step {resume_batch}.")
+                
+        # for loop for each op and its `storage` status       
+        for idx, op_node in enumerate(self.op_nodes_list):
+            # resume from a expected step
+            if idx - 1 < resume_step: # minus one since INPUT-DATA Node
+                continue
+
+            self.logger.debug(f"Ready to run {op_node}, with serving={op_node.llm_serving}, active_llm_serving={self.active_llm_serving}")
+            if op_node.llm_serving != None:
+                if self.active_llm_serving and self.active_llm_serving is not op_node.llm_serving:
+                    self.logger.debug(f"Detected active LLM Serving {self.active_llm_serving}, new serving {op_node.llm_serving}, cleaning up...")
+                    self.active_llm_serving.cleanup()
+                self.active_llm_serving = op_node.llm_serving
+
+            if op_node.op_obj != None:
+                if batch_size is not None:
+                    storage = op_node.storage
+                    storage.batch_step = 0 if idx - 1 > resume_step else resume_batch
+                    if storage.batch_size != batch_size:
+                        self.logger.info(f"Overriding storage {storage}'s batch size from {storage.batch_size} to {batch_size} for this run.")
+                        storage.batch_size = batch_size
+                    storage.read() # read to set data count
+                    record_count = storage.record_count
+                            
+                RUN_TIMES = 1 if batch_size is None else ((record_count - 1) // batch_size + 1) - storage.batch_step
+                if batch_size is not None: 
+                    self.logger.info(f"Pipeline will run for {RUN_TIMES} iterations to cover {record_count} records with batch size {batch_size}.")
+                for _ in range(RUN_TIMES):
+                    op_node.op_obj.run(
+                        storage=op_node.storage,
+                        **op_node.kwargs
+                    )
+                    if batch_size is not None:
+                        op_node.storage.batch_step += 1
+                    if resume_from_last:
+                        resume_batch = op_node.storage.batch_step if batch_size is not None else 0
+                        with open(cache_path, "w") as f:
+                            f.write(f"{idx-1},{resume_batch}\n")
+            if resume_from_last:
+                resume_batch = 0 # reset for next op_node
+                with open(cache_path, "w") as f:
+                    f.write(f"{idx},{resume_batch}\n")
+            if op_node.llm_serving != None:
+                self.llm_serving_counter[self.active_llm_serving] -= 1
+                if self.llm_serving_counter[self.active_llm_serving] == 0:
+                    self.logger.debug(f"Detected LLM Serving {self.active_llm_serving} ref reduced to 0, cleaning up...")
+                    self.active_llm_serving.cleanup()
+                    self.active_llm_serving = None
