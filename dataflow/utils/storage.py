@@ -894,7 +894,7 @@ class BatchedFileStorage(FileStorage):
                 local_cache = file_path.split(".")[-1]
         else:
             local_cache = self.cache_type
-
+        # TODO Code below may be a bottleneck for large files, consider optimizing later
         dataframe = self._load_local_file(file_path, local_cache)
         self.record_count = len(dataframe)
         # 读出当前批次数据
