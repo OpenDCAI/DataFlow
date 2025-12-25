@@ -1,8 +1,10 @@
 import os
-import re
+from pathlib import Path
+from typing import Optional
 from colorama import init, Fore, Style
 from .paths import DataFlowPath
 from .copy_funcs import copy_files_without_recursion, copy_file, copy_files_recursively
+from .utils import _echo
 
 def _copy_scripts():
     target_dir = os.getcwd()
@@ -52,3 +54,40 @@ def cli_init(subcommand):
     #     _copy_demo_configs()
     #     _copy_dataset_json()
     # print(f'{Fore.GREEN}Successfully initialized IMDLBenCo scripts.{Style.RESET_ALL}')
+
+
+def init_repo_scaffold(
+    no_input: bool = False,
+    context: Optional[dict] = None,
+) -> None:
+    """
+    Initialize a DataFlow repository using the built-in scaffold template.
+    """
+    try:
+        from cookiecutter.main import cookiecutter
+    except ImportError:
+        raise RuntimeError(
+            "cookiecutter is not installed. "
+            "Please run: pip install cookiecutter"
+        )
+
+    from .paths import DataFlowPath
+
+    template_path = DataFlowPath.get_dataflow_scaffold_dir()
+    output_dir = Path.cwd()
+    context = context or {}
+
+    if not template_path.exists():
+        raise FileNotFoundError(f"Scaffold template not found: {template_path}")
+
+    _echo(f"Using scaffold template: {template_path}", "cyan")
+    _echo(f"Output directory        : {output_dir}", "cyan")
+
+    cookiecutter(
+        template=str(template_path),
+        no_input=no_input,
+        extra_context=context,
+        output_dir=str(output_dir),
+    )
+
+    _echo("Repository scaffold initialized successfully 🎉", "green")

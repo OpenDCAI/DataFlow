@@ -1,547 +1,388 @@
 #!/usr/bin/env python3
-# dataflow/cli.py - Enhanced with local model judge support and eval init/run
-# ===============================================================
-# DataFlow 命令行入口
-#   dataflow -v                         查看版本并检查更新
-#   dataflow init [...]                初始化脚本/配置
-#   dataflow env                       查看环境
-#   WEBUI 已经暂时移除！！！！！
-#   dataflow webui operators [opts]    启动算子/管线 UI
-#   dataflow webui agent     [opts]    启动 DataFlow-Agent UI（已整合后端）
-#   dataflow pdf2model init/train      PDF to Model 训练流程
-#   dataflow text2model init/train     Text to Model 训练流程
-#   dataflow chat                      聊天界面
-#   dataflow eval init                 初始化评估配置文件
-#   dataflow eval api                  运行API模型评估
-#   dataflow eval local                运行本地模型评估
-# ===============================================================
-
-import os
-import argparse
-import requests
-import sys
+# dataflow/cli.py — Typer 版本（更简洁、现代）
+from __future__ import annotations
 import re
-import yaml
-import json
+import sys
 import subprocess
 from pathlib import Path
+from typing import Optional, Tuple, List
+
+import typer
+import requests
 from colorama import init as color_init, Fore, Style
-from dataflow.cli_funcs import cli_env, cli_init  # 项目已有工具
-from dataflow.version import __version__  # 版本号
 
+# try import project modules; fall back gracefully for tests
+from dataflow.version import __version__
+from dataflow.cli_funcs import cli_env, cli_init  # existing helpers
+from dataflow.cli_funcs.utils import _echo
+
+app = typer.Typer(add_completion=True, help=f"DataFlow CLI (v{__version__})")
 color_init(autoreset=True)
-PYPI_API_URL = "https://pypi.org/pypi/open-dataflow/json"
+
+PYPI_API = "https://pypi.org/pypi/open-dataflow/json"
+ADAPTER_FILES = {"adapter_config.json", "adapter_model.bin", "adapter_model.safetensors"}
+BASE_MODEL_FILES = {"config.json", "pytorch_model.bin", "model.safetensors", "tokenizer.json", "tokenizer_config.json"}
 
 
-# ---------------- 版本检查 ----------------
-def version_and_check_for_updates() -> None:
-    width = os.get_terminal_size().columns
-    print(Fore.BLUE + "=" * width + Style.RESET_ALL)
-    print(f"open-dataflow codebase version: {__version__}")
 
+
+def check_updates() -> None:
+    """Print version and try to query PyPI for newer version (best-effort)."""
+    cols = 80
     try:
-        r = requests.get(PYPI_API_URL, timeout=5)
+        cols = typer.get_terminal_size()[0]
+    except Exception:
+        pass
+    print("=" * cols)
+    _echo(f"open-dataflow version: {__version__}", "cyan")
+    try:
+        r = requests.get(PYPI_API, timeout=5)
         r.raise_for_status()
-        remote = r.json()["info"]["version"]
-        print("\tChecking for updates...")
-        print(f"\tLocal version : {__version__}")
-        print(f"\tPyPI  version : {remote}")
-        if remote != __version__:
-            print(Fore.YELLOW + f"New version available: {remote}."
-                                "  Run 'pip install -U open-dataflow' to upgrade."
-                  + Style.RESET_ALL)
+        remote = r.json().get("info", {}).get("version")
+        _echo(f"Local version : {__version__}", None)
+        _echo(f"PyPI  version : {remote}", None)
+        if remote and remote != __version__:
+            _echo(f"New version available: {remote} — Run 'pip install -U open-dataflow' to upgrade", "yellow")
         else:
-            print(Fore.GREEN + f"You are using the latest version: {__version__}" + Style.RESET_ALL)
-    except requests.exceptions.RequestException as e:
-        print(Fore.RED + "Failed to query PyPI – check your network." + Style.RESET_ALL)
-        print("Error:", e)
-    print(Fore.BLUE + "=" * width + Style.RESET_ALL)
+            _echo("You are using the latest version.", "green")
+    except Exception as e:
+        _echo("Failed to query PyPI — network may be unavailable.", "red")
+        _echo(str(e), "red")
+    print("=" * cols)
 
 
-# ---------------- 智能聊天功能 ----------------
-def check_current_dir_for_model():
-    """检查当前目录的模型文件，优先识别微调模型"""
-    current_dir = Path.cwd()
+def dir_has_any(path: Path, names: set) -> bool:
+    return any((path / n).exists() for n in names)
 
-    # 检查 LoRA 适配器文件
-    adapter_files = [
-        "adapter_config.json",
-        "adapter_model.bin",
-        "adapter_model.safetensors"
-    ]
 
-    # 检查基础模型文件
-    model_files = [
-        "config.json",
-        "pytorch_model.bin",
-        "model.safetensors",
-        "tokenizer.json",
-        "tokenizer_config.json"
-    ]
-
-    # 优先检查adapter（微调模型）
-    # 如果有adapter文件，就只返回微调模型，不管有没有基础模型文件
-    if any((current_dir / f).exists() for f in adapter_files):
-        return [("fine_tuned_model", current_dir)]
-
-    # 只有在没有adapter文件时，才检查base model
-    if any((current_dir / f).exists() for f in model_files):
-        return [("base_model", current_dir)]
-
+def detect_models_in_dir(d: Path) -> List[Tuple[str, Path]]:
+    """Detect fine-tuned (adapter) or base model in directory."""
+    d = d.resolve()
+    if dir_has_any(d, ADAPTER_FILES):
+        return [("fine_tuned_model", d)]
+    if dir_has_any(d, BASE_MODEL_FILES):
+        return [("base_model", d)]
     return []
 
 
-def get_latest_trained_model(cache_path="./"):
-    """查找最新训练的模型，支持text2model和pdf2model，按时间戳排序"""
-    current_dir = Path.cwd()
-    cache_path_obj = Path(cache_path)
-    if not cache_path_obj.is_absolute():
-        cache_path_obj = current_dir / cache_path_obj
-
-    saves_dir = cache_path_obj / ".cache" / "saves"
-    if not saves_dir.exists():
+def find_latest_saved_model(cache_dir: Path) -> Tuple[Optional[Path], Optional[str]]:
+    """Find latest model folder under {cache}/.cache/saves. Returns (path, type)."""
+    saves = (cache_dir / ".cache" / "saves").resolve()
+    if not saves.exists():
         return None, None
 
-    all_models = []
-
-    for dir_path in saves_dir.iterdir():
-        if not dir_path.is_dir():
+    entries = []
+    ts_re = re.compile(r"(\d{8}_\d{6})")
+    for p in saves.iterdir():
+        if not p.is_dir():
             continue
-
-        model_type = None
-        timestamp = None
-
-        # 检查text2model格式 (text2model_cache_YYYYMMDD_HHMMSS)
-        if dir_path.name.startswith('text2model_cache_'):
-            timestamp_part = dir_path.name.replace('text2model_cache_', '')
-            if len(timestamp_part) == 15 and timestamp_part[8] == '_':
-                date_part = timestamp_part[:8]
-                time_part = timestamp_part[9:]
-                if date_part.isdigit() and time_part.isdigit() and len(time_part) == 6:
-                    model_type = 'text2model'
-                    timestamp = timestamp_part
-
-        # 检查pdf2model格式 (pdf2model_cache_YYYYMMDD_HHMMSS)
-        elif dir_path.name.startswith('pdf2model_cache_'):
-            timestamp_part = dir_path.name.replace('pdf2model_cache_', '')
-            if len(timestamp_part) == 15 and timestamp_part[8] == '_':
-                date_part = timestamp_part[:8]
-                time_part = timestamp_part[9:]
-                if date_part.isdigit() and time_part.isdigit() and len(time_part) == 6:
-                    model_type = 'pdf2model'
-                    timestamp = timestamp_part
-
-        # 检查其他可能的模型目录
+        name = p.name
+        if name.startswith("text2model_cache_"):
+            entries.append((p, "text2model", name.replace("text2model_cache_", "")))
+        elif name.startswith("pdf2model_cache_"):
+            entries.append((p, "pdf2model", name.replace("pdf2model_cache_", "")))
         else:
-            # 尝试从目录名提取时间戳
-            timestamp_match = re.search(r'(\d{8}_\d{6})', dir_path.name)
-            if timestamp_match:
-                model_type = 'pdf2model'  # 默认为pdf2model
-                timestamp = timestamp_match.group(1)
-            elif 'qwen' in dir_path.name.lower() or 'model' in dir_path.name.lower():
-                # 如果找不到时间戳但看起来像模型目录，使用修改时间
-                model_type = 'pdf2model'  # 默认为pdf2model
-                mtime = dir_path.stat().st_mtime
-                # 将修改时间转换为timestamp格式以便排序
-                import datetime
-                dt = datetime.datetime.fromtimestamp(mtime)
-                timestamp = dt.strftime("%Y%m%d_%H%M%S")
-
-        if model_type and timestamp:
-            all_models.append((dir_path, model_type, timestamp))
-
-    if not all_models:
+            m = ts_re.search(name)
+            if m:
+                entries.append((p, "pdf2model", m.group(1)))
+            else:
+                # fallback to mtime
+                entries.append((p, "unknown", str(int(p.stat().st_mtime))))
+    if not entries:
         return None, None
-
-    # 按时间戳排序，最新的在前（不管是什么类型的模型）
-    all_models.sort(key=lambda x: x[2], reverse=True)
-    latest_model_path, model_type, timestamp = all_models[0]
-
-    return latest_model_path, model_type
+    entries.sort(key=lambda x: x[2], reverse=True)
+    return entries[0][0], entries[0][1]
 
 
-def call_dataflow_chat(model_path, model_type=None):
-    """调用dataflow的聊天功能（用于微调模型）"""
-    # 判断模型类型
-    if model_type is None:
-        # 从路径判断类型
-        path_str = str(model_path)
-        if 'text2model' in path_str:
-            model_type = 'text2model'
-        elif 'pdf2model' in path_str:
-            model_type = 'pdf2model'
-        else:
-            # 无法判断，默认尝试text2model
-            model_type = 'text2model'
-
-    if model_type == 'text2model':
-        try:
-            from dataflow.cli_funcs.cli_text import cli_text2model_chat
-            return cli_text2model_chat(str(model_path))
-        except ImportError:
-            print("Cannot find text model chat function")
-            return False
-    elif model_type == 'pdf2model':
-        try:
-            from dataflow.cli_funcs.cli_pdf import cli_pdf2model_chat
-            return cli_pdf2model_chat(str(model_path))
-        except ImportError:
-            print("Cannot find PDF model chat function")
-            return False
-    else:
-        print(f"Unknown model type: {model_type}")
-        return False
-
-
-def call_llamafactory_chat(model_path):
-    """调用llamafactory的聊天功能（用于基础模型）"""
-    import subprocess
-
-    chat_cmd = [
-        "llamafactory-cli", "chat",
-        "--model_name_or_path", str(model_path)
-    ]
-
+# ---------- chat bridges ----------
+def call_dataflow_chat(model_path: Path, model_type: Optional[str] = None) -> bool:
+    """Call internal dataflow chat entrypoints (text/pdf)."""
     try:
-        result = subprocess.run(chat_cmd, check=True)
+        if model_type and "text2model" in model_type:
+            from dataflow.cli_funcs.cli_text import cli_text2model_chat  # type: ignore
+            return bool(cli_text2model_chat(str(model_path)))
+        else:
+            from dataflow.cli_funcs.cli_pdf import cli_pdf2model_chat  # type: ignore
+            return bool(cli_pdf2model_chat(str(model_path)))
+    except ImportError as e:
+        _echo(f"dataflow chat module missing: {e}", "red")
+        return False
+    except Exception as e:
+        _echo(f"dataflow chat failed: {e}", "red")
+        return False
+
+
+def call_llamafactory_chat(model_path: Path) -> bool:
+    """Call external llamafactory-cli when base model present."""
+    try:
+        subprocess.run(["llamafactory-cli", "chat", "--model_name_or_path", str(model_path)], check=True)
         return True
-    except subprocess.CalledProcessError as e:
-        print(f"LlamaFactory chat failed: {e}")
-        return False
     except FileNotFoundError:
-        print("llamafactory-cli not found. Please install LlamaFactory:")
-        print("pip install llamafactory[torch,metrics]")
+        _echo("llamafactory-cli not found. Install: pip install llamafactory[torch,metrics]", "red")
+        return False
+    except subprocess.CalledProcessError as e:
+        _echo(f"llamafactory-cli failed: {e}", "red")
         return False
 
 
-def smart_chat_command(model_path=None, cache_path="./"):
-    """智能聊天命令，统一处理各种模型类型，不自动下载"""
+def start_chat(model: Optional[Path], cache_dir: Path) -> bool:
+    """Main routing for `dataflow chat`."""
+    if model:
+        if not model.exists():
+            _echo(f"Model path not found: {model}", "red")
+            return False
+        _echo(f"Using specified model: {model}", "cyan")
+        return call_dataflow_chat(model) if dir_has_any(model, ADAPTER_FILES) else call_llamafactory_chat(model)
 
-    if model_path:
-        # 如果明确指定了模型路径，直接使用
-        model_path_obj = Path(model_path)
-        if not model_path_obj.exists():
-            print(f"Specified model path does not exist: {model_path}")
+    # cwd
+    here = detect_models_in_dir(Path.cwd())
+    if here:
+        for t, p in here:
+            if t == "fine_tuned_model":
+                _echo(f"Found fine-tuned model in cwd: {p.name}", "green")
+                return call_dataflow_chat(p, "text2model")
+        for t, p in here:
+            if t == "base_model":
+                _echo(f"Found base model in cwd: {p.name}, launching llamafactory chat", "yellow")
+                return call_llamafactory_chat(p)
+
+    # cache
+    latest, mtype = find_latest_saved_model(cache_dir)
+    if latest:
+        _echo(f"Found trained model in cache: {latest.name}", "green")
+        if dir_has_any(latest, ADAPTER_FILES):
+            return call_dataflow_chat(latest, mtype)
+        else:
+            _echo("Cached model has no adapter files — cannot start dataflow chat.", "red")
             return False
 
-        print(f"{Fore.CYAN}Using specified model: {model_path}{Style.RESET_ALL}")
-
-        # 检查是否有adapter文件
-        adapter_files = [
-            "adapter_config.json",
-            "adapter_model.bin",
-            "adapter_model.safetensors"
-        ]
-
-        has_adapter = any((model_path_obj / f).exists() for f in adapter_files)
-
-        if has_adapter:
-            # 有adapter，使用dataflow chat
-            return call_dataflow_chat(model_path)
-        else:
-            # 没有adapter，使用llamafactory chat
-            return call_llamafactory_chat(model_path)
-
-    # 检查当前目录
-    detected_models = check_current_dir_for_model()
-
-    if detected_models:
-        # 优先使用fine_tuned_model（adapter）
-        for model_type, path in detected_models:
-            if model_type == "fine_tuned_model":
-                print(f"{Fore.GREEN}Found trained model in current directory: {path.name}{Style.RESET_ALL}")
-                return call_dataflow_chat(path)
-
-        # 如果没有adapter，使用base_model
-        for model_type, path in detected_models:
-            if model_type == "base_model":
-                print(f"{Fore.YELLOW}Found base model in current directory: {path.name}{Style.RESET_ALL}")
-                print(f"{Fore.CYAN}Starting chat interface...{Style.RESET_ALL}")
-                return call_llamafactory_chat(path)
-
-    # 检查缓存中的训练模型
-    latest_model, model_type = get_latest_trained_model(cache_path)
-
-    if latest_model:
-        model_name = Path(latest_model).name
-        print(f"{Fore.GREEN}Found trained model from cache: {model_name}{Style.RESET_ALL}")
-        print(f"{Fore.CYAN}Starting chat interface...{Style.RESET_ALL}")
-
-        # 检查缓存中的模型是否有adapter文件
-        latest_model_path = Path(latest_model)
-        adapter_files = [
-            "adapter_config.json",
-            "adapter_model.bin",
-            "adapter_model.safetensors"
-        ]
-
-        has_adapter = any((latest_model_path / f).exists() for f in adapter_files)
-        if has_adapter:
-            return call_dataflow_chat(latest_model, model_type)
-        else:
-            print(f"No adapter files found in {latest_model}")
-            print("This doesn't appear to be a trained model directory.")
-            return False
-
-    # 如果什么都没找到，给出提示而不下载
-    print("No model found in current directory or cache.")
-    print()
-    print("Options:")
-    print("1. Train a model first:")
-    print("   dataflow text2model init && dataflow text2model train")
-    print("   dataflow pdf2model init && dataflow pdf2model train")
-    print()
-    print("2. Use an existing model:")
-    print("   dataflow chat --model /path/to/your/model")
-    print()
-    print("3. Download a model manually and place it in current directory")
+    # nothing found
+    typer.echo()
+    _echo("No model found in cwd or cache.", "yellow")
+    typer.echo("Options:")
+    typer.echo("  - Train first: dataflow text2model init && dataflow text2model train")
+    typer.echo("  - Use an existing model: dataflow chat --model /path/to/model")
+    typer.echo("  - Put model files into current dir")
     return False
 
 
-# ---------------- 新的eval命令处理函数 ----------------
-def handle_python_config_init():
-    """处理Python配置文件初始化"""
+# ---------- eval helpers ----------
+def eval_init() -> bool:
     try:
-        from dataflow.cli_funcs.cli_eval import DataFlowEvalCLI
-
+        from dataflow.cli_funcs.cli_eval import DataFlowEvalCLI  # type: ignore
         cli = DataFlowEvalCLI()
-        success = cli.init_eval_files()  # 使用正确的方法名（复数）且无参数
-
-        if success:
-            print("Configuration files initialized successfully")
-        else:
-            print("Configuration files initialization failed")
-
-        return success
-
+        ok = cli.init_eval_files()
+        _echo("Evaluation config initialized." if ok else "Evaluation init failed.", "green" if ok else "red")
+        return bool(ok)
     except ImportError as e:
-        print(f"Python config evaluation module unavailable: {e}")
-        print("Please check if dataflow.cli_funcs.cli_eval module exists")
+        _echo(f"Eval module missing: {e}", "red")
         return False
     except Exception as e:
-        print(f"Configuration file initialization failed: {e}")
+        _echo(f"Eval init error: {e}", "red")
         return False
 
 
-def handle_python_config_eval(eval_type: str, args=None):
-    """处理Python配置文件评估模式"""
+def eval_run(mode: str) -> bool:
     try:
-        from dataflow.cli_funcs.cli_eval import DataFlowEvalCLI
-
+        from dataflow.cli_funcs.cli_eval import DataFlowEvalCLI  # type: ignore
         cli = DataFlowEvalCLI()
-
-        # 使用默认文件名
-        eval_file = f"eval_{eval_type}.py"
-
-        print(f"Starting {eval_type} model evaluation: {eval_file}")
-
-        # 传递命令行参数到评估器
-        success = cli.run_eval_file(eval_file)
-
-        if success:
-            print(f"{eval_type.upper()} model evaluation completed successfully")
-        else:
-            print(f"{eval_type.upper()} model evaluation failed")
-
-        return success
-
+        eval_file = f"eval_{mode}.py"
+        _echo(f"Running evaluation: {eval_file}", "cyan")
+        ok = cli.run_eval_file(eval_file)
+        _echo(f"Evaluation {mode} {'succeeded' if ok else 'failed'}.", "green" if ok else "red")
+        return bool(ok)
     except ImportError as e:
-        print(f"Python config evaluation module unavailable: {e}")
-        print("Please check if dataflow.cli_funcs.cli_eval module exists")
+        _echo(f"Eval module missing: {e}", "red")
         return False
     except Exception as e:
-        print(f"Python config evaluation failed: {e}")
+        _echo(f"Eval run error: {e}", "red")
         return False
 
 
+# ---------- CLI commands (Typer) ----------
+@app.callback(invoke_without_command=True)
+def main(
+    ctx: typer.Context,
+    version: Optional[bool] = typer.Option(None, "--version", "-v", help="Show version and exit"),
+    # check_updates_flag: bool = typer.Option(True, "--check-updates/--no-check-updates", help="Query PyPI for updates"),
+):
+    """DataFlow CLI entrypoint."""
+    if version:
+        _echo(f"open-dataflow {__version__}", "cyan")
+        # raise typer.Exit()
+    # if check_updates_flag:
+        check_updates()
+        raise typer.Exit()
+    # if invoked without subcommand, show help
+    if ctx.invoked_subcommand is None:
+        typer.echo(ctx.get_help())
+
+# ---------- init 子命令组 ----------
+init_app = typer.Typer(
+    name="init",
+    help="Initialize DataFlow components (repo/operator/pipeline/prompt)",
+    no_args_is_help=False,
+)
+app.add_typer(init_app, name="init")
 
 
+@init_app.callback(invoke_without_command=True)
+def init_root(
+    ctx: typer.Context,
+    sub: str = typer.Option("base", help="Which part to init (e.g. all, reasoning, base)")
+):
+    """
+    dataflow init [SUBCOMMAND]
+    If called without a subcommand, will run the 'base' init (legacy behavior).
+    """
+    # 如果调用时没有子命令，执行 base init（保留兼容原来 behavior）
+    if ctx.invoked_subcommand is None:
+        _echo(f"Initializing (base): {sub}", "cyan")
+        try:
+            # cli_init 在 dataflow.cli_funcs.cli_init 中实现，保持原有逻辑
+            cli_init(subcommand=sub)
+        except Exception as e:
+            _echo(f"Init failed: {e}", "red")
+            raise typer.Exit(code=1)
 
-def handle_eval_command(args):
-    """处理评估命令 - 支持自动检测和模型指定"""
+
+@init_app.command("repo", help="Initialize a new DataFlow repository from scaffold")
+def init_repo(
+    no_input: bool = typer.Option(False, help="Disable interactive prompts"),
+):
+    """Initialize a new DataFlow repository scaffold."""
     try:
-        eval_action = getattr(args, 'eval_action', None)
-
-        # 处理 init 子命令
-        if eval_action == 'init':
-            return handle_python_config_init()
-
-        # 处理 api 子命令
-        elif eval_action == 'api':
-            return handle_python_config_eval('api', args)
-
-        # 处理 local 子命令
-        elif eval_action == 'local':
-            return handle_python_config_eval('local', args)
-
-        # 如果没有指定子命令，显示帮助
-        else:
-            print("DataFlow Evaluation Tool")
-            print()
-            print("Available commands:")
-            print("  dataflow eval init                        # Initialize evaluation config files")
-            print("  dataflow eval api                         # Run API model evaluation (auto-detect models)")
-            print("  dataflow eval local                       # Run local model evaluation (auto-detect models)")
-            print()
-            print("Complete evaluation workflow:")
-            print("  1. dataflow eval local                     # Auto-detect and evaluate local models")
-            print("  2. View generated evaluation report        # model_comparison_report.json")
-            print()
-            print("Config file descriptions:")
-            print("  - eval_api.py: API evaluator config (GPT-4o etc.)")
-            print("  - eval_local.py: Local evaluator config")
-            return False
-
+        # 从你的实现里导入函数（放在 dataflow/cli_funcs/cli_init.py）
+        from dataflow.cli_funcs.cli_init import init_repo_scaffold
+        init_repo_scaffold(no_input=no_input)
     except Exception as e:
-        print(f"Evaluation command execution failed: {e}")
-        import traceback
-        traceback.print_exc()
-        return False
+        _echo(f"Failed to initialize repo: {e}", "red")
+        raise typer.Exit(code=1)
 
 
-# ---------------- CLI 主函数 ----------------
-def build_arg_parser() -> argparse.ArgumentParser:
-    """构建参数解析器"""
-    parser = argparse.ArgumentParser(
-        prog="dataflow",
-        description=f"DataFlow Command-Line Interface  (v{__version__})",
-    )
-    parser.add_argument("-v", "--version", action="store_true", help="Show version and exit")
-
-    # ============ 顶层子命令 ============ #
-    top = parser.add_subparsers(dest="command", required=False)
-
-    # --- init ---
-    p_init = top.add_parser("init", help="Initialize scripts/configs in current dir")
-    p_init_sub = p_init.add_subparsers(dest="subcommand", required=False)
-    p_init_sub.add_parser("all", help="Init all components").set_defaults(subcommand="all")
-    p_init_sub.add_parser("reasoning", help="Init reasoning components").set_defaults(subcommand="reasoning")
-
-    # --- env ---
-    top.add_parser("env", help="Show environment information")
-
-    # --- chat ---
-    p_chat = top.add_parser("chat", help="Start chat interface with trained model")
-    p_chat.add_argument("--model", default=None, help="Model path (default: use latest trained model from cache)")
-    p_chat.add_argument("--cache", default="./", help="Cache directory path")
-
-    # --- eval 命令
-    p_eval = top.add_parser("eval", help="Model evaluation using BenchDatasetEvaluator")
-    eval_sub = p_eval.add_subparsers(dest="eval_action", help="Evaluation actions")
-
-    # eval init 子命令
-    eval_init = eval_sub.add_parser("init", help="Initialize evaluation configuration file")
-
-    # eval api 子命令
-    eval_api = eval_sub.add_parser("api", help="Run API model evaluation")
-
-    # eval local 子命令
-    eval_local = eval_sub.add_parser("local", help="Run local model evaluation")
+# 占位：后续可以添加更多子命令
+@init_app.command("operator", help="Initialize an operator scaffold (TODO)")
+def init_operator():
+    _echo("init operator: not implemented yet", "yellow")
+    raise typer.Exit(code=0)
 
 
-    # --- pdf2model ---
-    p_pdf2model = top.add_parser("pdf2model", help="PDF to model training pipeline")
-    p_pdf2model.add_argument("--cache", default="./", help="Cache directory path")
-    p_pdf2model_sub = p_pdf2model.add_subparsers(dest="pdf2model_action", required=True)
-
-    p_pdf2model_init = p_pdf2model_sub.add_parser("init", help="Initialize PDF to model pipeline")
-
-    p_pdf2model_train = p_pdf2model_sub.add_parser("train", help="Start training after PDF processing")
-    p_pdf2model_train.add_argument("--lf_yaml", default=None,
-                                   help="LlamaFactory config file (default: {cache}/.cache/train_config.yaml)")
-
-    # --- text2model ---
-    p_text2model = top.add_parser("text2model", help="Train model from JSON/JSONL data")
-    p_text2model_sub = p_text2model.add_subparsers(dest="text2model_action", required=True)
-
-    p_text2model_init = p_text2model_sub.add_parser("init", help="Initialize text2model pipeline")
-    p_text2model_init.add_argument("--cache", default="./", help="Cache directory path")
-
-    p_text2model_train = p_text2model_sub.add_parser("train", help="Start training after text processing")
-    p_text2model_train.add_argument('input_dir', nargs='?', default='./',
-                                    help='Input directory to scan (default: ./)')
-    p_text2model_train.add_argument('--input-keys', default=None,
-                                    help='Fields to process (default: text)')
-    p_text2model_train.add_argument("--lf_yaml", default=None,
-                                    help="LlamaFactory config file (default: {cache}/.cache/train_config.yaml)")
-
-    # --- webui ---
-    p_webui = top.add_parser("webui", help="Launch Gradio WebUI")
-    p_webui.add_argument("-H", "--host", default="127.0.0.1", help="Bind host (default 127.0.0.1)")
-    p_webui.add_argument("-P", "--port", type=int, default=7862, help="Port (default 7862)")
-    p_webui.add_argument("--show-error", action="store_true", help="Show Gradio error tracebacks")
-
-    #    webui 二级子命令：operators / agent
-    w_sub = p_webui.add_subparsers(dest="ui_mode", required=False)
-    w_sub.add_parser("operators", help="Launch operator / pipeline UI")
-    w_sub.add_parser("agent", help="Launch DataFlow-Agent UI (backend included)")
-    w_sub.add_parser("pdf", help="Launch PDF Knowledge Base Cleaning UI")
-
-    return parser
+@init_app.command("pipeline", help="Initialize a pipeline scaffold (TODO)")
+def init_pipeline():
+    _echo("init pipeline: not implemented yet", "yellow")
+    raise typer.Exit(code=0)
 
 
-def main() -> None:
-    """主入口函数"""
-    parser = build_arg_parser()
-    args = parser.parse_args()
+@init_app.command("prompt", help="Initialize a prompt/template scaffold (TODO)")
+def init_prompt():
+    _echo("init prompt: not implemented yet", "yellow")
+    raise typer.Exit(code=0)
 
-    # ---------- 顶层逻辑分发 ----------
-    if args.version:
-        version_and_check_for_updates()
-        return
-
-    if args.command == "init":
-        cli_init(subcommand=args.subcommand or "base")
-
-    elif args.command == "env":
+@app.command()
+def env():
+    """Show environment info (delegates to project helper)."""
+    try:
         cli_env()
+    except Exception as e:
+        _echo(f"env failed: {e}", "red")
+        raise typer.Exit(code=1)
 
-    elif args.command == "eval":
-        handle_eval_command(args)
 
-    elif args.command == "pdf2model":
-        if args.pdf2model_action == "init":
-            from dataflow.cli_funcs.cli_pdf import cli_pdf2model_init
-            cli_pdf2model_init(cache_path=args.cache)
-        elif args.pdf2model_action == "train":
-            from dataflow.cli_funcs.cli_pdf import cli_pdf2model_train
-            # If no lf_yaml specified, use default path relative to cache
-            lf_yaml = args.lf_yaml or f"{args.cache}/.cache/train_config.yaml"
-            cli_pdf2model_train(lf_yaml=lf_yaml, cache_path=args.cache)
+@app.command()
+def chat(model: Optional[Path] = typer.Option(None, exists=False, help="Model path"),
+         cache: Path = typer.Option(Path("."), help="Cache directory")):
+    """Start an interactive chat with a model (auto-detect)."""
+    ok = start_chat(model, cache)
+    if not ok:
+        raise typer.Exit(code=2)
 
-    elif args.command == "text2model":
-        from dataflow.cli_funcs.cli_text import cli_text2model_init, cli_text2model_train
 
-        if args.text2model_action == "init":
-            cli_text2model_init(cache_path=getattr(args, 'cache', './'))
-        elif args.text2model_action == "train":
-            # 如果没有指定lf_yaml，使用默认路径
-            lf_yaml = getattr(args, 'lf_yaml', None) or "./.cache/train_config.yaml"
-            cli_text2model_train(input_keys=getattr(args, 'input_keys', None), lf_yaml=lf_yaml)
+# eval group
+eval_app = typer.Typer(help="Evaluation commands")
+app.add_typer(eval_app, name="eval")
 
-    elif args.command == "chat":
-        smart_chat_command(model_path=args.model, cache_path=args.cache)
 
-    elif args.command == "webui":
-        # 默认使用 operators
-        mode = args.ui_mode or "operators"
-        if mode == "operators":
-            print("Currently webui is under maintenance. Please check back later.")
-            # from dataflow.webui.operator_pipeline import demo
-            # demo.launch(
-            #     server_name=args.host,
-            #     server_port=args.port,
-            #     show_error=args.show_error,
-            # )
-        elif mode == "agent":
-            print("Agent UI is deprecated in Dataflow main repo, please use the dedicated https://github.com/OpenDCAI/DataFlow-Agent repo.")
-        elif mode == "pdf":
-            print("Currently webui is under maintenance. Please check back later.")
-            # from dataflow.webui import kbclean_webui
-            # kbclean_webui.create_ui().launch()
-        else:
-            parser.error(f"Unknown ui_mode {mode!r}")
+@eval_app.command("init")
+def eval_init_cmd():
+    if not eval_init():
+        raise typer.Exit(code=2)
+
+
+@eval_app.command("api")
+def eval_api_cmd():
+    if not eval_run("api"):
+        raise typer.Exit(code=2)
+
+
+@eval_app.command("local")
+def eval_local_cmd():
+    if not eval_run("local"):
+        raise typer.Exit(code=2)
+
+
+# pdf2model
+pdf_app = typer.Typer(help="PDF->model pipeline")
+app.add_typer(pdf_app, name="pdf2model")
+
+
+@pdf_app.command("init")
+def pdf2model_init(cache: Path = typer.Option(Path("."), help="Cache dir")):
+    try:
+        from dataflow.cli_funcs.cli_pdf import cli_pdf2model_init  # type: ignore
+        cli_pdf2model_init(cache_path=str(cache))
+    except Exception as e:
+        _echo(f"pdf2model init error: {e}", "red")
+        raise typer.Exit(code=1)
+
+
+@pdf_app.command("train")
+def pdf2model_train(cache: Path = typer.Option(Path("."), help="Cache dir"),
+                    lf_yaml: Optional[Path] = typer.Option(None, help="LlamaFactory yaml")):
+    try:
+        from dataflow.cli_funcs.cli_pdf import cli_pdf2model_train  # type: ignore
+        lf = str(lf_yaml) if lf_yaml else f"{cache}/.cache/train_config.yaml"
+        cli_pdf2model_train(lf_yaml=lf, cache_path=str(cache))
+    except Exception as e:
+        _echo(f"pdf2model train error: {e}", "red")
+        raise typer.Exit(code=1)
+
+
+# text2model
+text_app = typer.Typer(help="Text->model pipeline")
+app.add_typer(text_app, name="text2model")
+
+
+@text_app.command("init")
+def text2model_init(cache: Path = typer.Option(Path("."), help="Cache dir")):
+    try:
+        from dataflow.cli_funcs.cli_text import cli_text2model_init  # type: ignore
+        cli_text2model_init(cache_path=str(cache))
+    except Exception as e:
+        _echo(f"text2model init error: {e}", "red")
+        raise typer.Exit(code=1)
+
+
+@text_app.command("train")
+def text2model_train(input_dir: Path = typer.Argument(Path("."), help="Input directory"),
+                     input_keys: Optional[str] = typer.Option(None, help="Input keys"),
+                     lf_yaml: Optional[Path] = typer.Option(None, help="LlamaFactory yaml")):
+    try:
+        from dataflow.cli_funcs.cli_text import cli_text2model_train  # type: ignore
+        lf = str(lf_yaml) if lf_yaml else "./.cache/train_config.yaml"
+        cli_text2model_train(input_keys=input_keys, lf_yaml=lf, input_dir=str(input_dir))
+    except Exception as e:
+        _echo(f"text2model train error: {e}", "red")
+        raise typer.Exit(code=1)
+
+
+@app.command()
+def webui(mode: str = typer.Option("operators", help="operators | agent | pdf")):
+    """Launch (placeholder) WebUI modes."""
+    if mode in {"operators", "pdf"}:
+        _echo("WebUI is under maintenance; check back later.", "yellow")
+    else:
+        _echo("Agent UI deprecated; see DataFlow-Agent repo.", "yellow")
 
 
 if __name__ == "__main__":
-    main()
+    app()

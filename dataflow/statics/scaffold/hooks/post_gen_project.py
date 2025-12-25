@@ -1,30 +1,39 @@
-# hooks/post_gen_project.py
-# Documentation see: https://cookiecutter.readthedocs.io/en/stable/advanced/hooks.html
-
+# --- include_examples: simple & explicit ---
 import os
 import shutil
 
-def remove(path):
-    if os.path.isdir(path):
-        shutil.rmtree(path)
-    elif os.path.isfile(path):
-        os.remove(path)
+PROJECT_DIR = os.getcwd()
+PACKAGE_NAME = "{{ cookiecutter.package_name }}"
+INCLUDE_EXAMPLES = "{{ cookiecutter.include_examples }}"
 
-# include examples
-include_examples = "{{ cookiecutter.include_examples }}"
+def clear_dir(path):
+    """Remove all contents under a directory, but keep the directory itself."""
+    if not os.path.isdir(path):
+        return
+    for name in os.listdir(path):
+        p = os.path.join(path, name)
+        if os.path.isdir(p):
+            shutil.rmtree(p)
+        else:
+            os.remove(p)
 
-if include_examples != "yes":
-    print("Removing example operators, pipelines, and tests...")
+if INCLUDE_EXAMPLES != "yes":
+    print("Clearing operators / pipelines / prompts directories...")
 
-    paths_to_remove = [
-        "operators/example_operator.py",
-        "pipelines/example_pipeline.py",
-        "tests/test_example.py",
+    base_dirs = [
+        os.path.join(PROJECT_DIR, PACKAGE_NAME),
+        os.path.join(PROJECT_DIR, "src", PACKAGE_NAME),
     ]
 
-    for p in paths_to_remove:
-        if os.path.exists(p):
-            remove(p)
+    for base in base_dirs:
+        if not os.path.isdir(base):
+            continue
+
+        for sub in ("operators", "pipelines", "prompts"):
+            target = os.path.join(base, sub)
+            if os.path.isdir(target):
+                clear_dir(target)
+                print("  cleared:", os.path.relpath(target, PROJECT_DIR))
 
 
 # License
