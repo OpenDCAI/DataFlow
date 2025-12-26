@@ -940,6 +940,7 @@ class BatchedFileStorage(FileStorage):
         super().__init__(first_entry_file_name, cache_path, file_name_prefix, cache_type)
         self.batch_size = batch_size
         self.batch_step = 0
+        self._dataframe_buffer = {}
         if cache_type not in ["jsonl", "csv"]:
             raise ValueError(f"BatchedFileStorage only supports 'jsonl' and 'csv' cache types, got: {cache_type}")
         
@@ -1004,8 +1005,11 @@ class BatchedFileStorage(FileStorage):
                 local_cache = file_path.split(".")[-1]
         else:
             local_cache = self.cache_type
-        # TODO Code below may be a bottleneck for large files, consider optimizing later
-        dataframe = self._load_local_file(file_path, local_cache)
+        if self._dataframe_buffer.get(self.operator_step) is not None:
+            dataframe = self._dataframe_buffer[self.operator_step].copy()
+        else:
+            dataframe = self._load_local_file(file_path, local_cache)
+            self._dataframe_buffer[self.operator_step] = dataframe.copy()
         self.record_count = len(dataframe)
         # 读出当前批次数据
         dataframe = dataframe.iloc[

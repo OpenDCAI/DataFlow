@@ -543,6 +543,9 @@ class BatchedPipelineABC(PipelineABC):
             batch_size (int|None): if set, run the pipeline in batch mode with this batch size
             resume_from_last (bool): if True, resume from the last successful step and batch
         """
+        if not self.compiled:
+            raise RuntimeError("Pipeline is not compiled yet. Please call `compile()` before running the pipeline.")
+        
         if resume_step > 0 and resume_from_last:
             raise ValueError("Cannot set both `resume_step` and `resume_from_last` to True.")
         
