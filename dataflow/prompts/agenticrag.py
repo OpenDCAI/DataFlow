@@ -922,74 +922,73 @@ class AtomicQAGeneratorPrompt(PromptABC):
     The prompt for the AtomicQAGenerator.
     '''
     def __init__(self):
-        pass
+        self.prompt = '''You are an information extraction and question generation system.
+  # Task:
+  Given a document, extract a set of **atomic, verifiable facts** and convert each into a **QA pair**, where:
+  - The **question** focuses on a specific, retrievable detail from the document.
+  - The **answer** is concise, factual, and directly grounded in the document.
+  - For each document, generate **at most {gen_qa_num} QA pairs**. Prioritize the most concrete, unique, and verifiable facts.
+  - Only generate questions that require consulting the document to answer — avoid trivial facts or common-sense knowledge.
+
+  # Rules for QA Generation
+
+  1. Atomicity
+  - Each QA must be based on a single indivisible fact (no conjunctions).
+      ✖ "A increased and B decreased" → must split into two questions.
+
+  2. Verifiability
+  - The answer must include at least one of:
+      - ✓ Numeric value (e.g., 59.0%)
+      - ✓ Time or date (e.g., 2025/04/28)
+      - ✓ Unique name/entity (e.g., Humpback65B)
+  - ✖ Reject vague expressions: "Performance has improved"
+
+  3. Time specificity
+  - Explicitly mark time ranges when containing time-sensitive information  
+  - Examples:  
+      ✓ "Global GDP grew by 3.0% in 2023"  
+      ✖ "Recent GDP growth of 3.0%"
+
+  4. Relevance and Precision
+  - Avoid abstract questions. Focus on measurable and database-friendly details.
+
+  5. Answer Uniqueness
+  - The question must be **specific enough** to yield a **unique answer** from the document.
+  - ✖ Avoid under-specified questions that allow **multiple correct answers**.
+      - ✖ "What awards did Author X receive?" (if multiple awards are listed in the document)
+      - ✓ "What award did Author X receive in 2022?" (if only one is given for that year)
+  - ✖ Avoid vague superlatives like "notable," "important," "significant" without clear criteria.
+
+  # Output Format:
+  A JSON array of QA pairs. Each item contains:
+  - `question`: A specific, answerable question.
+  - `answer`: The factual value from the document.
+
+  # Examples
+
+  ```json
+  [
+      {{
+      "question": "What is the number 1 sport in the usa?",
+      "answer": "American football"
+      }},
+      {{
+      "question": "Where did the Ottoman slave trade flourish?",
+      "answer": "In the Balkans"
+      }},
+      {{
+      "question": "Who was president when the white house was built?",
+      "answer": "John Adams"
+      }}
+  ]
+  ```
+
+  The document content to be processed is as follows: 
+  {input_doc}
+  '''
 
     def build_prompt(self, gen_qa_num: str, input_doc: str) -> str:
-        prompt = f'''You are an information extraction and question generation system.
-# Task:
-Given a document, extract a set of **atomic, verifiable facts** and convert each into a **QA pair**, where:
-- The **question** focuses on a specific, retrievable detail from the document.
-- The **answer** is concise, factual, and directly grounded in the document.
-- For each document, generate **at most {gen_qa_num} QA pairs**. Prioritize the most concrete, unique, and verifiable facts.
-- Only generate questions that require consulting the document to answer — avoid trivial facts or common-sense knowledge.
-
-# Rules for QA Generation
-
-1. Atomicity
-- Each QA must be based on a single indivisible fact (no conjunctions).
-    ✖ "A increased and B decreased" → must split into two questions.
-
-2. Verifiability
-- The answer must include at least one of:
-    - ✓ Numeric value (e.g., 59.0%)
-    - ✓ Time or date (e.g., 2025/04/28)
-    - ✓ Unique name/entity (e.g., Humpback65B)
-- ✖ Reject vague expressions: "Performance has improved"
-
-3. Time specificity
-- Explicitly mark time ranges when containing time-sensitive information  
-- Examples:  
-    ✓ "Global GDP grew by 3.0% in 2023"  
-    ✖ "Recent GDP growth of 3.0%"
-
-4. Relevance and Precision
-- Avoid abstract questions. Focus on measurable and database-friendly details.
-
-5. Answer Uniqueness
-- The question must be **specific enough** to yield a **unique answer** from the document.
-- ✖ Avoid under-specified questions that allow **multiple correct answers**.
-    - ✖ "What awards did Author X receive?" (if multiple awards are listed in the document)
-    - ✓ "What award did Author X receive in 2022?" (if only one is given for that year)
-- ✖ Avoid vague superlatives like "notable," "important," "significant" without clear criteria.
-
-# Output Format:
-A JSON array of QA pairs. Each item contains:
-- `question`: A specific, answerable question.
-- `answer`: The factual value from the document.
-
-# Examples
-
-```json
-[
-    {{
-    "question": "What is the number 1 sport in the usa?",
-    "answer": "American football"
-    }},
-    {{
-    "question": "Where did the Ottoman slave trade flourish?",
-    "answer": "In the Balkans"
-    }},
-    {{
-    "question": "Who was president when the white house was built?",
-    "answer": "John Adams"
-    }}
-]
-```
-
-The document content to be processed is as follows: 
-{input_doc}
-'''
-        return prompt
+        return self.prompt.format(gen_qa_num=gen_qa_num, input_doc=input_doc)
     
 @PROMPT_REGISTRY.register()
 class MergeAtomicQAPrompt(PromptABC):
@@ -997,10 +996,7 @@ class MergeAtomicQAPrompt(PromptABC):
     The prompt for the MergeAtomicQAPrompt.
     '''
     def __init__(self):
-        pass
-
-    def build_prompt(self, Data: str, New_question: str, New_answer: str, New_document: str) -> str:
-        prompt = f'''You are an expert in constructing multi-hop questions grounded in document-based facts.
+        self.prompt = '''You are an expert in constructing multi-hop questions grounded in document-based facts.
 
   ## Task
   You are given multiple question-answer-document triples to generate multi-hop question that require reasoning over the **latest previous hop** (i.e., the final element in Previous_Hops) together with New_pair. Use Previous_Hops strictly as supporting context: they may be consulted to verify entities/constraints and must be preserved (not removed, weakened, or contradicted) by the final question.
@@ -1274,18 +1270,17 @@ class MergeAtomicQAPrompt(PromptABC):
   Doc: {New_document}
   Only output the final JSON object. Do not explain your reasoning.
   '''
-        return prompt
+
+    def build_prompt(self, Data: str, New_question: str, New_answer: str, New_document: str) -> str:
+        return self.prompt.format(Data=Data, New_question=New_question, New_answer=New_answer, New_document=New_document)
 
 @PROMPT_REGISTRY.register()
-class InferenceCheckPrompt():
+class InferenceCheckPrompt(PromptABC):
     '''
     The prompt for checking the inference multihop question.
     '''
     def __init__(self):
-        pass
-
-    def build_prompt(self, Question1: str, Answer1: str, Document1: str, Question2: str, Answer2: str, Document2: str, Final_question: str, Final_answer: str, qa_type: str) -> str:
-        prompt = f'''You are a multi-hop QA verification system.
+        self.prompt = '''You are a multi-hop QA verification system.
   ## Task
   You are given a multi-hop QA construction based on two question-answer-document triples:
   (Question1, Answer1, Doc1) and (Question2, Answer2, Doc2), and a final multi-hop QA:
@@ -1435,19 +1430,18 @@ class InferenceCheckPrompt():
   Final_answer:{Final_answer}
   type:{qa_type}
   Only return the JSON object as described. Do not include explanations unless requested.
-'''
-        return prompt
+ '''
+
+    def build_prompt(self, Question1: str, Answer1: str, Document1: str, Question2: str, Answer2: str, Document2: str, Final_question: str, Final_answer: str, qa_type: str) -> str:
+        return self.prompt.format(Question1=Question1, Answer1=Answer1, Document1=Document1, Question2=Question2, Answer2=Answer2, Document2=Document2, Final_question=Final_question, Final_answer=Final_answer, qa_type=qa_type)
 
 @PROMPT_REGISTRY.register()
-class ComparisonCheckPrompt():
+class ComparisonCheckPrompt(PromptABC):
     '''
     The prompt for checking the comparison multihop question.
     '''
     def __init__(self):
-        pass
-
-    def build_prompt(self, Question1: str, Answer1: str, Document1: str, Question2: str, Answer2: str, Document2: str, Final_question: str, Final_answer: str, qa_type: str) -> str:
-        prompt = f'''You are a multi-hop QA verification system.
+        self.prompt = '''You are a multi-hop QA verification system.
   ## Task
   You are given two question-answer-document triples:
   (Question1, Answer1, Doc1) and (Question2, Answer2, Doc2), plus a final multi-hop QA:
@@ -1577,18 +1571,17 @@ class ComparisonCheckPrompt():
   type: {qa_type}
   Only return the JSON object as described. Do not include explanations unless requested.
 '''
-        return prompt
+
+    def build_prompt(self, Question1: str, Answer1: str, Document1: str, Question2: str, Answer2: str, Document2: str, Final_question: str, Final_answer: str, qa_type: str) -> str:
+        return self.prompt.format(Question1=Question1, Answer1=Answer1, Document1=Document1, Question2=Question2, Answer2=Answer2, Document2=Document2, Final_question=Final_question, Final_answer=Final_answer, qa_type=qa_type)
     
 @PROMPT_REGISTRY.register()
-class RefineAnswerPrompt():
+class RefineAnswerPrompt(PromptABC):
     '''
     The prompt for refining the answer.
     '''
     def __init__(self):
-        pass
-
-    def build_prompt(self, question: str, original_answer: str) -> str:
-        prompt = f'''You are an AI agent tasked with cleaning and extracting concise answers from original QA pairs.
+        self.prompt = '''You are an AI agent tasked with cleaning and extracting concise answers from original QA pairs.
   ## Input:
   You are given a **question** and its corresponding **original answer**. Your task is to extract the most precise and concise information that directly answers the question.
 
@@ -1639,18 +1632,17 @@ class RefineAnswerPrompt():
   question: {question}
   original_answer: {original_answer}
 '''
-        return prompt
-    
+
+    def build_prompt(self, question: str, original_answer: str) -> str:
+        return self.prompt.format(question=question, original_answer=original_answer)
+
 @PROMPT_REGISTRY.register()
-class MoreOptionalAnswersPrompt():
+class MoreOptionalAnswersPrompt(PromptABC):
     '''
     The prompt for generating more optional answers.
     '''
     def __init__(self):
-        pass
-
-    def build_prompt(self, refined_answer: str) -> str:
-        prompt = f'''You are an expert in **linguistic variation** and **data augmentation**. Your task is to generate a comprehensive list of all plausible and commonly recognized alternative expressions, formats, and aliases for a given input entity or piece of information. The goal is to create high-quality training data that captures diverse ways of referring to the same concept.
+        self.prompt = '''You are an expert in **linguistic variation** and **data augmentation**. Your task is to generate a comprehensive list of all plausible and commonly recognized alternative expressions, formats, and aliases for a given input entity or piece of information. The goal is to create high-quality training data that captures diverse ways of referring to the same concept.
 
   **Key Guidelines:**
 
@@ -1688,50 +1680,47 @@ class MoreOptionalAnswersPrompt():
   Please list all possible textual expressions that have the same meaning or refer to the same entity, especially in different formats (e.g., dates, names, abbreviations).
   Respond with a JSON list of strings. Do not explain.
 '''
-        return prompt
+
+    def build_prompt(self, refined_answer: str) -> str:
+        return self.prompt.format(refined_answer=refined_answer)
         
 @PROMPT_REGISTRY.register()
-class ReasoningPrompt():
+class ReasoningPrompt(PromptABC):
     '''
     The prompt for reasoning.
     '''
     def __init__(self):
-        pass
-
-    def build_prompt(self, problem: str) -> str:
-        prompt = f'''Please solve the following problem and return result. Ensure responses are as concise as possible, focusing only on key information while omitting redundant details. 
+        self.prompt = '''Please solve the following problem and return result. Ensure responses are as concise as possible, focusing only on key information while omitting redundant details. 
   The problem is:
   {problem}
 '''
-        return prompt
+
+    def build_prompt(self, problem: str) -> str:
+        return self.prompt.format(problem=problem)
 
 @PROMPT_REGISTRY.register()
-class ComparisonReasoningPrompt():
+class ComparisonReasoningPrompt(PromptABC):
     '''
     The prompt for comparison question reasoning.
     '''
     def __init__(self):
-        pass
-
-    def build_prompt(self, problem: str) -> str:
-        prompt = f'''Please solve the following problem and return result. 
+        self.prompt = '''Please solve the following problem and return result. 
   For comparison question, if you are unsure of the answer, please do not guess or choose randomly. Instead, return "I cannot answer this question." 
   The problem is:
   {problem}
   Ensure responses are as concise as possible, focusing only on key information while omitting redundant details.
 '''
-        return prompt
+
+    def build_prompt(self, problem: str) -> str:
+        return self.prompt.format(problem=problem)
     
 @PROMPT_REGISTRY.register()
-class SingleHopPrompt():
+class SingleHopPrompt(PromptABC):
     '''
     The prompt for answer single hop question.
     '''
     def __init__(self):
-        pass
-
-    def build_prompt(self, Document: str, Question: str) -> str:
-        prompt = f'''You are given the following document that contains relevant information to help answer a question.
+        self.prompt = '''You are given the following document that contains relevant information to help answer a question.
   Document:
   {Document}
   Question:
@@ -1776,18 +1765,17 @@ class SingleHopPrompt():
   Answer:
   I cannot answer this question. I don't have sufficient information about "hack/Legend of the Twilight".
 '''
-        return prompt
+
+    def build_prompt(self, Document: str, Question: str) -> str:
+        return self.prompt.format(Document=Document, Question=Question)
     
 @PROMPT_REGISTRY.register()
-class MultihopInferencePrompt():
+class MultihopInferencePrompt(PromptABC):
     '''
     The prompt for answer multihop inference question.
     '''
     def __init__(self):
-        pass
-
-    def build_prompt(self, Data: str, FinalQuestion: str) -> str:
-        prompt = f'''You are an expert at solving problems. Now you need to solve a multi-hop inference problem.
+        self.prompt = '''You are an expert at solving problems. Now you need to solve a multi-hop inference problem.
   Multi-hop inference promblem: a question that requires combining information from multiple sources in a logical chain to reach an answer.
 
   ## For Example:
@@ -1809,18 +1797,17 @@ class MultihopInferencePrompt():
   FinalQuestion: {FinalQuestion}
   Now you need sole the promblem and return result. Ensure responses are as concise as possible, focusing only on key information while omitting redundant details.
 '''
-        return prompt
+
+    def build_prompt(self, Data: str, FinalQuestion: str) -> str:
+        return self.prompt.format(Data=Data, FinalQuestion=FinalQuestion)
 
 @PROMPT_REGISTRY.register()
-class MultihopComparisonPrompt():
+class MultihopComparisonPrompt(PromptABC):
     '''
     The prompt for answer multihop comparison question.
     '''
     def __init__(self):
-        pass
-
-    def build_prompt(self, Data: str, FinalQuestion: str) -> str:
-        prompt = f'''You are an expert at solving problems. Now you need to solve a multi-hop comparison problem.
+        self.prompt = '''You are an expert at solving problems. Now you need to solve a multi-hop comparison problem.
   Multi-hop comparison promblem: a question that requires retrieving and comparing information from multiple sources to determine a relative fact.
   
   ## For Example:
@@ -1843,18 +1830,17 @@ class MultihopComparisonPrompt():
   FinalQuestion: {FinalQuestion}
   Now you need sole the promblem and return result. Ensure responses are as concise as possible, focusing only on key information while omitting redundant details.
 '''
-        return prompt
-    
+
+    def build_prompt(self, Data: str, FinalQuestion: str) -> str:
+        return self.prompt.format(Data=Data, FinalQuestion=FinalQuestion)
+
 @PROMPT_REGISTRY.register()
-class EssEqPrompt():
+class EssEqPrompt(PromptABC):
     '''
     The prompt for llm judge.
     '''
     def __init__(self):
-        pass
-
-    def build_prompt(self, question, golden_answer, other_answer) -> str:
-        prompt = f'''You are an expert evaluator. Evaluate whether the OTHER ANSWER preserves **all essential information** in the GOLDEN ANSWER, **with respect to the QUESTION**.
+        self.prompt = '''You are an expert evaluator. Evaluate whether the OTHER ANSWER preserves **all essential information** in the GOLDEN ANSWER, **with respect to the QUESTION**.
   # Scoring Criteria
   - **2 points** → OTHER ANSWER is fully equivalent to the GOLDEN ANSWER. Same meaning, even if reworded or paraphrased. No missing or incorrect information.
   - **1 point** → OTHER ANSWER includes ALL key information from the GOLDEN ANSWER but adds **extra non-contradictory information** that may not be strictly necessary but is still valid in context.
@@ -1931,4 +1917,6 @@ class EssEqPrompt():
   Golden answer: {golden_answer}
   Other answer: {other_answer}
 '''
-        return prompt
+
+    def build_prompt(self, question, golden_answer, other_answer) -> str:
+        return self.prompt.format(question=question, golden_answer=golden_answer, other_answer=other_answer)
