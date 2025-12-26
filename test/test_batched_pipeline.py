@@ -17,7 +17,6 @@ class AutoOPPipeline(BatchedPipelineABC):
             cache_path="./cache_autoop",
             file_name_prefix="dataflow_cache_auto_run",
             cache_type="jsonl",
-            batch_size=2
         )
         self.llm_serving1 = APILLMServing_request(
                 api_url="http://123.129.219.111:3000/v1/chat/completions",

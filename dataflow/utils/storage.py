@@ -935,10 +935,9 @@ class BatchedFileStorage(FileStorage):
         cache_path:str="./cache",
         file_name_prefix:str="dataflow_cache_step",
         cache_type:Literal["jsonl", "csv"] = "jsonl",
-        batch_size: int = 10000
     ):
         super().__init__(first_entry_file_name, cache_path, file_name_prefix, cache_type)
-        self.batch_size = batch_size
+        self.batch_size = None
         self.batch_step = 0
         self._dataframe_buffer = {}
         if cache_type not in ["jsonl", "csv"]:
@@ -1012,9 +1011,10 @@ class BatchedFileStorage(FileStorage):
             self._dataframe_buffer[self.operator_step] = dataframe.copy()
         self.record_count = len(dataframe)
         # 读出当前批次数据
-        dataframe = dataframe.iloc[
-            self.batch_step * self.batch_size : (self.batch_step + 1) * self.batch_size
-        ]
+        if self.batch_size:
+            dataframe = dataframe.iloc[
+                self.batch_step * self.batch_size : (self.batch_step + 1) * self.batch_size
+            ]
         return self._convert_output(dataframe, output_type)
     
     def write(self, data: Any) -> Any:

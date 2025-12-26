@@ -14,6 +14,7 @@ import atexit
 from datetime import datetime
 from dataflow.logger import get_logger
 import colorsys
+from tqdm import tqdm
 class PipelineABC(ABC):
     def __init__(self):
         # list of dict, contains `OPRuntime` class and parameters for `operator.run()`
@@ -580,16 +581,14 @@ class BatchedPipelineABC(PipelineABC):
                 if batch_size is not None:
                     storage = op_node.storage
                     storage.batch_step = 0 if idx - 1 > resume_step else resume_batch
-                    if storage.batch_size != batch_size:
-                        self.logger.info(f"Overriding storage {storage}'s batch size from {storage.batch_size} to {batch_size} for this run.")
-                        storage.batch_size = batch_size
+                    storage.batch_size = batch_size
                     storage.read() # read to set data count
                     record_count = storage.record_count
                             
                 RUN_TIMES = 1 if batch_size is None else ((record_count - 1) // batch_size + 1) - storage.batch_step
                 if batch_size is not None: 
                     self.logger.info(f"Pipeline will run for {RUN_TIMES} iterations to cover {record_count} records with batch size {batch_size}.")
-                for _ in range(RUN_TIMES):
+                for _ in tqdm(range(RUN_TIMES), desc=f"\033[1;36mRunning {op_node.op_name} with batch size={batch_size}\033[0m", position=0, dynamic_ncols=True, colour='cyan'):
                     op_node.op_obj.run(
                         storage=op_node.storage,
                         **op_node.kwargs
