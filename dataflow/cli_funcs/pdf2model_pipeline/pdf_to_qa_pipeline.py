@@ -31,7 +31,6 @@ class KBCleaning_batchvllm_GPUPipeline():
 
         self.knowledge_cleaning_step1 = FileOrURLToMarkdownConverterBatch(
             intermediate_dir=str(cache_path / ".cache"),
-            lang="en",
             mineru_backend="vlm-vllm-engine",  # 可选 pipeline, vlm-vllm-engine, vlm-vllm-transformer, vlm-http-client
         )
 
