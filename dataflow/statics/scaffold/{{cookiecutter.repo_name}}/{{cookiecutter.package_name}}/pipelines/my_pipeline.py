@@ -20,7 +20,7 @@ class MySimplePipeline(PipelineABC):
             model_name="gpt-4o"
         )
         self.prompt_template = MyFormatStringPrompt(
-            f_str_template="What does a {input_roll} like to {input_term}?"
+            f_str_template="What does a {input_role} like to {input_term}?"
         )
         self.op1 = MyFormatStrPromptedGenerator(
             llm_serving=self.llm_serving,
@@ -34,7 +34,7 @@ class MySimplePipeline(PipelineABC):
     def forward(self):
         self.op1.run(
             storage=self.storage.step(),
-            input_roll="roll",
+            input_role="role",
             input_term="term",
             output_key="answer",
         )

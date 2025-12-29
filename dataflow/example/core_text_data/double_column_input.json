@@ -1,18 +1,18 @@
 [
     {
-        "roll": "pig",
+        "role": "pig",
         "term": "eat"
     },
     {
-        "roll": "tiger",
+        "role": "tiger",
         "term": "chase"
     },
     {
-        "roll": "people",
+        "role": "people",
         "term": "drink"
     },
     {
-        "roll": "bird",
+        "role": "bird",
         "term": "dance"
     }
 ]

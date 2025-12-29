@@ -20,7 +20,7 @@ class DoubleColumnInputTestCase():
         )
 
         self.prompt_template = FormatStrPrompt(
-            f_str_template="What does a {input_roll} like to {input_term}?"
+            f_str_template="What does a {input_role} like to {input_term}?"
         )
         self.operator = FormatStrPromptedGenerator(
             llm_serving=self.llm_serving,
@@ -30,7 +30,7 @@ class DoubleColumnInputTestCase():
     def forward(self):
         self.operator.run(
             storage=self.storage.step(),
-            input_roll="roll",
+            input_role="role",
             input_term="term",
             output_key="answer",
         )
