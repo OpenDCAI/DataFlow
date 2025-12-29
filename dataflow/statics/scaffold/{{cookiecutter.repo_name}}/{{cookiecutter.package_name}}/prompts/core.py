@@ -2,7 +2,7 @@ from dataflow.utils.registry import PROMPT_REGISTRY
 from dataflow.core.prompt import PromptABC
 
 @PROMPT_REGISTRY.register()
-class MyStrFormatPrompt(PromptABC):
+class MyFormatStringPrompt(PromptABC):
     """
     Only the f_str_template needs to be provided.
     - Automatically parses the required fields from the template (self.fields)

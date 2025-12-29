@@ -1,10 +1,10 @@
-from {{cookiecutter.package_name}}.operators.core.my_prompt_template_generator import MyPromptTemplatedGenerator
+from {{cookiecutter.package_name}}.operators.core.my_format_str_prompted_generator import MyFormatStrPromptedGenerator
 from {{cookiecutter.package_name}}.operators.core.my_prompted_generator import MyPromptedGenerator
 from dataflow.serving import APILLMServing_request
 from dataflow.utils.storage import FileStorage
 from dataflow.pipeline import PipelineABC
 
-from {{cookiecutter.package_name}}.prompts.core import MyStrFormatPrompt
+from {{cookiecutter.package_name}}.prompts.core import MyFormatStringPrompt
 
 class MySimplePipeline(PipelineABC):
     def __init__(self):
@@ -19,10 +19,10 @@ class MySimplePipeline(PipelineABC):
             api_url="https://api.openai.com/v1/chat/completions",   
             model_name="gpt-4o"
         )
-        self.prompt_template = MyStrFormatPrompt(
+        self.prompt_template = MyFormatStringPrompt(
             f_str_template="What does a {input_roll} like to {input_term}?"
         )
-        self.op1 = MyPromptTemplatedGenerator(
+        self.op1 = MyFormatStrPromptedGenerator(
             llm_serving=self.llm_serving,
             prompt_template=self.prompt_template
         )

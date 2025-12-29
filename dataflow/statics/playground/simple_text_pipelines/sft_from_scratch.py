@@ -1,10 +1,10 @@
  
 from dataflow.operators.text_sft import CondorGenerator
-from dataflow.operators.core_text import PromptedGenerator,PromptTemplatedGenerator
+from dataflow.operators.core_text import PromptedGenerator,FormatStrPromptedGenerator
 from dataflow.operators.core_text import GeneralFilter
 from dataflow.utils.storage import FileStorage
 from dataflow.serving import APILLMServing_request
-from dataflow.prompts.core_text import StrFormatPrompt
+from dataflow.prompts.core_text import FormatStrPrompt
 
 prompt = (
         "You are a senior content quality evaluator performing final assessment. "
@@ -42,10 +42,10 @@ class SFT_From_Scratch():
         )
         self.instruction_generator = CondorGenerator(llm_serving=self.llm_serving, num_samples=self.num_generated_samples)
         self.answer_generator = PromptedGenerator(llm_serving=self.llm_serving, system_prompt="Please answer this question.")
-        self.prompt_template = StrFormatPrompt(
+        self.prompt_template = FormatStrPrompt(
             f_str_template="Please rate the following SFT data: instruction: {instruction}, output: {output}?"
         )
-        self.rater = PromptTemplatedGenerator(llm_serving=self.llm_serving, system_prompt = prompt, prompt_template=self.prompt_template)
+        self.rater = FormatStrPromptedGenerator(llm_serving=self.llm_serving, system_prompt = prompt, prompt_template=self.prompt_template)
         self.filter = GeneralFilter([lambda df: df['data_score'] >= 3])
 
     def forward(self):

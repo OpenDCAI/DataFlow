@@ -1,25 +1,25 @@
-import pandas as pd
+
 from dataflow.utils.registry import OPERATOR_REGISTRY
 from dataflow import get_logger
-import string
 
 from dataflow.utils.storage import DataFlowStorage
 from dataflow.core import OperatorABC
 from dataflow.core import LLMServingABC
-from dataflow.core.prompt import prompt_restrict, PromptABC, DIYPromptABC
-from typing import Union, Any, Set
+from dataflow.core.prompt import prompt_restrict, DIYPromptABC
+from typing import Union, Any
 
-from dataflow.prompts.core_text import StrFormatPrompt
+from {{cookiecutter.package_name}}.prompts.core import MyFormatStringPrompt
+
 @prompt_restrict(
-    StrFormatPrompt,
+    MyFormatStringPrompt,
 )
 @OPERATOR_REGISTRY.register()
-class PromptTemplatedGenerator(OperatorABC):
+class MyFormatStrPromptedGenerator(OperatorABC):
     def __init__(
             self,
             llm_serving: LLMServingABC, 
-            system_prompt: str =  "You are a helpful agent.",
-            prompt_template: Union[StrFormatPrompt, DIYPromptABC] = StrFormatPrompt,
+            system_prompt: str = "You are a helpful agent.",
+            prompt_template: Union[MyFormatStringPrompt, DIYPromptABC] = MyFormatStringPrompt,
             json_schema: dict = None,
         ):
         self.logger = get_logger()
@@ -29,6 +29,7 @@ class PromptTemplatedGenerator(OperatorABC):
         self.json_schema = json_schema
         if prompt_template is None:
             raise ValueError("prompt_template cannot be None")
+
 
     def run(
             self, 
