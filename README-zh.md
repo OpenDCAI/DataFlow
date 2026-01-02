@@ -2,34 +2,59 @@
 
 <div align="center">
   <img src="https://github.com/user-attachments/assets/3fe636ad-3026-4faf-aa44-c84b8f97a05d">
+<!-- [![](https://img.shields.io/github/forks/OpenDCAI/DataFlow?style=social)](https://github.com/OpenDCAI/DataFlow) -->
 
-[![Documents](https://img.shields.io/badge/官方文档-单击此处-brightgreen?logo=read-the-docs)](https://OpenDCAI.github.io/DataFlow-Doc/)
-[![](https://img.shields.io/github/license/OpenDCAI/DataFlow)](https://github.com/OpenDCAI/DataFlow/blob/main/LICENSE)
 [![](https://img.shields.io/github/stars/OpenDCAI/DataFlow?style=social)](https://github.com/OpenDCAI/DataFlow)
 [![](https://img.shields.io/github/issues-raw/OpenDCAI/DataFlow)](https://github.com/OpenDCAI/DataFlow/issues)
+[![issue resolution](https://img.shields.io/github/issues-closed-raw/opendcai/DataFlow)](https://github.com/OpenDCAI/DataFlow/issues?q=is%3Aissue%20state%3Aclosed)
+[![](https://img.shields.io/github/issues-pr-raw/OpenDCAI/DataFlow)](https://github.com/OpenDCAI/DataFlow/pulls)
+[![issue resolution](https://img.shields.io/github/issues-pr-closed-raw/opendcai/DataFlow)](https://github.com/OpenDCAI/DataFlow/pulls?q=is%3Apr+is%3Aclosed)
 [![](https://img.shields.io/github/contributors/OpenDCAI/DataFlow)](https://github.com/OpenDCAI/DataFlow/graphs/contributors)
 [![](https://img.shields.io/github/repo-size/OpenDCAI/DataFlow?color=green)](https://github.com/OpenDCAI/DataFlow)
 
+[![PyPI version](https://img.shields.io/pypi/v/open-dataflow)](https://pypi.org/project/open-dataflow/)
+[![PyPI - Python Version](https://img.shields.io/pypi/pyversions/open-dataflow)](https://pypi.org/project/open-dataflow/)
+![PyPI - Downloads](https://img.shields.io/pypi/dm/open-dataflow?style=flat&logo=python)
+[![Downloads](https://static.pepy.tech/badge/open-dataflow)](https://pepy.tech/project/open-dataflow)
+
+[![Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/drive/1haosl2QS4N4HM7u7HvSsz_MnLabxexXl?usp=sharing)
+[![Documents](https://img.shields.io/badge/官方文档-单击此处-brightgreen?logo=read-the-docs)](https://OpenDCAI.github.io/DataFlow-Doc/)
+[![Arxiv](https://img.shields.io/badge/技术报告-2512.16676-b31b1b.svg?logo=arxiv)](https://arxiv.org/abs/2512.16676)
+[![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/OpenDCAI/DataFlow)
+
+[![wechat](https://img.shields.io/badge/wechat-brightgreen?logo=wechat&logoColor=white)](https://github.com/user-attachments/assets/3c2e5d4d-d1ea-4d8c-9146-ff14e657e857)
+
+<a href="https://trendshift.io/repositories/16045" target="_blank"><img src="https://trendshift.io/api/badge/repositories/16045" alt="OpenDCAI%2FDataFlow | Trendshift" style="width: 250px; height: 55px;" width="250" height="55"/></a>
+
+<!-- ![PyPI - Downloads](https://img.shields.io/pypi/dd/open-dataflow?style=flat&logo=python) -->
+<!-- ![PyPI - Downloads](https://img.shields.io/pypi/dw/open-dataflow?style=flat&logo=python) -->
+<!-- [![](https://img.shields.io/github/license/OpenDCAI/DataFlow)](https://github.com/OpenDCAI/DataFlow/blob/main/LICENSE) -->
 <!-- [![](https://img.shields.io/github/last-commit/OpenDCAI/DataFlow)](https://github.com/OpenDCAI/DataFlow/commits/main/) -->
 
 🎉 如果你认可我们的项目，欢迎在 GitHub 上点个 ⭐ Star，关注项目最新进展。
 
-**新手友好的学习资源（持续更新中）**：🎬  [DataFlow 视频教程](https://space.bilibili.com/3546929239689711?spm_id_from=333.337.0.0)；📚 [DataFlow 图文教程](https://wcny4qa9krto.feishu.cn/wiki/I9tbw2qnBi0lEakmmAGclTysnFd)
-
+**新手友好的学习资源（持续更新）**:  
+[[🎬 视频教程]](https://space.bilibili.com/3546929239689711?spm_id_from=333.337.0.0)  
+[[📚 图文教程]](https://wcny4qa9krto.feishu.cn/wiki/I9tbw2qnBi0lEakmmAGclTysnFd)
 
 简体中文 | [English](./README.md)
 
 </div>
 
 ## 📰 1. 最新动态
-- **[2025-11-20] DataFlow 全新上线 Data Agents！** 🤖  欢迎体验，并可查看 Bilibili 上的教程快速上手。
+- **[2025-12-19] 🎉 我们的 DataFlow 技术报告正式发布！**  
+  如果我们的工作对你有所帮助，欢迎查阅并引用。  
+  👉 在 arXiv 阅读完整报告：[https://arxiv.org/abs/2512.16676](https://arxiv.org/abs/2512.16676)
+
+- **[2025-11-20] DataFlow 全新上线 Data Agents！** 🤖  欢迎体验，并可查看 [Bilibili](https://space.bilibili.com/3546929239689711/lists/6761342?type=season) 上的教程快速上手。
 
 - [2025-06-28] 🎉 我们全新发布的以数据为中心的系统**DataFlow**已开源 —— 敬请关注后续更新！
 
 ## 🔍 2. 项目概述
 
-  ![dataflow_framework](https://github.com/user-attachments/assets/b44db630-754a-44a8-bec7-6d350bf5ed61)
+<!-- ![dataflow_framework](https://github.com/user-attachments/assets/b44db630-754a-44a8-bec7-6d350bf5ed61) -->
   
+![df_overview_final](https://github.com/user-attachments/assets/2bb51edb-86b5-4add-a3af-f5a6c377f710)
 
 DataFlow 是一个数据准备系统，旨在从噪声数据源（PDF、纯文本、低质量问答）中**解析，生成，加工并评估高质量数据**，以提升大语言模型（LLMs）在特定领域的表现，支持预训练、监督微调（SFT）、强化学习训练以及基于知识库的 RAG 系统。**我们在医疗、金融和法律等多个垂类领域实证验证了 DataFlow 的有效性。**
 
@@ -163,49 +188,129 @@ dataflow -v
 
 > **注意**：Docker 镜像包含 CUDA 12.4.1 支持，并预装了 vLLM 用于 GPU 加速。请确保您已安装 [NVIDIA Container Toolkit](https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/install-guide.html) 以使用 GPU 功能。
 
-### 📖 5.2 参考DataFlow项目文档
+### 🚀 5.2 用Google Colab快速开始
+你可以直接在 Google Colab 上启动你的第一个 DataFlow 翻译项目，无需任何本地环境配置。
+按照 Notebook 中提供的指导流程，你可以从基础的翻译示例逐步扩展到更复杂的 DataFlow 数据处理流水线。
+
+👉 [使用 Google Colab 启动 DataFlow](https://colab.research.google.com/drive/1haosl2QS4N4HM7u7HvSsz_MnLabxexXl?usp=sharing)
+
+### 📖 5.3 参考DataFlow项目文档
 
 详细**使用说明**和**入门指南**，请参考我们的 [项目文档](https://OpenDCAI.github.io/DataFlow-Doc/)。
 
-## 🧪 6. 实验结果
-
-如需详细的实验设置，请参考文档或论文说明。
-
-### 📝 6.1 文本流程（Text Pipeline）
-
-#### 6.1.1 预训练数据过滤流程
-
-我们将 `预训练数据处理流程` 应用于从 RedPajama 数据集中随机采样的数据，最终保留率为 **13.65%**。使用 `QuratingScorer` 进行质量评估，结果如下图所示：在**写作风格、专业性要求、事实准确性和教育价值**四个维度上，过滤后的数据显著优于原始数据，验证了 DataFlow 预训练数据处理流程的有效性。
-
-<div align="center">
-  <img src="https://github.com/user-attachments/assets/bc756c64-6640-4f46-b8ed-a4cd9be0a623" width="60%">
-</div>
+## 🧪 6. Experimental Results
+For Detailed Experiments setting, please visit our [DataFlow Technical Report](https://arxiv.org/abs/2512.16676).
 
 
+### 6.1 Text Pipeline
 
-#### 6.1.2 微调（SFT）数据过滤流程
+#### 6.1.1 预训练数据过滤
+我们从 SlimPajama-627B 语料库中抽取了一个 100B token 的子集，并对其应用了多种 DataFlow 文本预训练过滤器。随后，我们基于 Megatron-DeepSpeed 训练框架，从零开始训练了一个 Qwen2.5-0.5B 模型，总训练规模为 30B tokens。实验结果如下所示。
 
-我们从 `alpaca` 数据集中筛选了 3000 条高质量数据，与随机选取的 3000 条 `alpaca` 数据进行对比，并在 Qwen2.5-7B 模型上进行 SFT 训练。对比结果如下：
+| Methods            | ARC-C | ARC-E | MMLU | HellaSwag | WinoGrande | Gaokao-MathQA | Avg   |
+|--------------------|:-----:|:-----:|:----:|:---------:|:----------:|:-------------:|:-----:|
+| **Random-30B**     | 25.26 | 43.94 | 27.03 | 37.02 | 50.99 | 27.35 | 35.26 |
+| **Qurating-30B**   | 25.00 | 43.14 | 27.50 | 37.03 | 50.67 | 26.78 | 35.02 |
+| **FineWeb-Edu-30B**| 26.45 | 45.41 | 27.41 | 38.06 | 50.43 | 25.64 | 35.57 |
+| **DataFlow-30B**   | 25.51 | 45.58 | 27.42 | 37.58 | 50.67 | 27.35 | **35.69** |
 
-<div align="center">
-  <img src="https://github.com/user-attachments/assets/38d477d4-523d-4843-83f7-b7f518a18c1d" width="60%">
-</div>
+#### 6.1.2 小规模 SFT 数据过滤与合成
+为研究 小规模 SFT 数据的质量影响，我们使用 LLaMA-Factory 对 Qwen2.5-7B Base 模型进行了微调，所用数据集包括 WizardLM 和 Alpaca。
+对于每个数据集，我们比较了 随机采样的 5K 样本 与 经过 DataFlow SFT 流水线过滤的 5K 样本 在下游性能上的差异。此外，我们还基于 DataFlow 的 Condor Generator 与 Condor Refiner 流水线 合成了一个规模为 15K 的数据集（记为 DataFlow-SFT-15K），并进一步对其应用了 DataFlow 的 SFT 过滤流程（不包含 Instagram 过滤器）。评测覆盖了 数学、代码与知识 三大类的综合基准。
 
-### 🧠 6.2 推理流程（Reasoning Pipeline）
+### Math Benchmarks
+| Methods | math | gsm8k | aime24 | minerva | olympiad | Avg |
+|--------|:----:|:-----:|:------:|:-------:|:--------:|:---:|
+| **Alpaca (random)** | 54.9 | 77.2 | 13.3 | 14.0 | 27.0 | 37.3 |
+| **Alpaca (filtered)** | 60.3 | 80.0 | 13.3 | 14.7 | 30.7 | 39.8 |
+| **WizardLM (random)** | 61.1 | 84.2 | 6.7 | 18.0 | 29.3 | 39.9 |
+| **WizardLM (filtered)** | 69.7 | 88.8 | 10.0 | 19.9 | 35.4 | 44.8 |
+| **DataFlow-SFT-15K (random)** | 72.6 | 89.6 | 13.3 | 37.9 | 32.9 | **49.3** |
+| **DataFlow-SFT-15K (filtered)** | 73.3 | 90.2 | 13.3 | 36.0 | 35.9 | **49.7** |
 
-我们在 Qwen2.5-32B-Instruct 模型上，使用 Reasoning Pipeline 合成的 1000 条和 5000 条数据进行了微调训练（SFT），评估其对模型推理能力的提升，结果如下图所示：
+---
 
-<div align="center">
-  <img src="https://github.com/user-attachments/assets/d3af9728-0372-4c2c-9cd3-73f1e337d4c0" width="60%">
-</div>
+### Code Benchmarks
+| Methods | HumanEval | MBPP | Avg |
+|--------|:---------:|:----:|:---:|
+| **Alpaca (random)** | 71.3 | 75.9 | 73.6 |
+| **Alpaca (filtered)** | 73.8 | 75.7 | 74.8 |
+| **WizardLM (random)** | 75.6 | 82.0 | **78.8** |
+| **WizardLM (filtered)** | 77.4 | 80.4 | **78.9** |
+| **DataFlow-SFT-15K (random)** | 79.9 | 75.9 | 77.9 |
+| **DataFlow-SFT-15K (filtered)** | 82.9 | 74.9 | **78.9** |
 
-### 🗃️ 6.3 Text2SQL 流程
+---
 
-我们使用 DataFlow-Text2SQL 流程构建数据，并分别通过监督微调（SFT）与强化学习（RL）对 Qwen2.5-Coder-7B-Instruct 模型进行了训练。实验结果如下：
+### Knowledge Benchmarks
+| Methods | MMLU | C-EVAL | Avg |
+|--------|:----:|:------:|:---:|
+| **Alpaca (random)** | 71.8 | 80.0 | 75.9 |
+| **Alpaca (filtered)** | 71.8 | 80.0 | 75.9 |
+| **WizardLM (random)** | 71.8 | 79.2 | 75.5 |
+| **WizardLM (filtered)** | 71.9 | 79.6 | 75.8 |
+| **DataFlow-SFT-15K (random)** | 72.1 | 80.0 | **76.1** |
+| **DataFlow-SFT-15K (filtered)** | 72.2 | 80.4 | **76.3** |
 
-<div align="center">
-  <img src="https://github.com/user-attachments/assets/7809f57a-33c5-4792-b91b-10e4f39bafc1" width="60%">
-</div>
+#### 6.1.3 对话数据合成
+我们使用 DataFlow 的对话生成流水线 合成了 DataFlow-Chat-15K 数据集，并基于该数据对 Qwen2.5-7B-Base 模型进行了微调。对比方法包括 ShareGPT-15K、UltraChat-15K 及其 完整（未截断）版本。评测涵盖了 对话领域基准（TopDial、Light）以及 通用能力基准（MMLU、AlpacaEval、Arena-Hard）。
+
+### Conversation Benchmarks
+| Model | TopDial | Light | Avg |
+|------|:-------:|:-----:|:---:|
+| **Qwen2.5-7B** | 7.71 | 7.79 | 7.75 |
+| **+ ShareGPT-15K** | 7.75 | 6.72 | 7.24 |
+| **+ UltraChat-15K** | 7.72 | 6.83 | 7.28 |
+| **+ DataFlow-Chat-15K** | **7.98** | **8.10** | **8.04** |
+
+---
+
+### General Benchmarks
+| Model | MMLU | AlpacaEval | Arena-Hard | Avg |
+|------|:----:|:----------:|:----------:|:---:|
+| **Qwen2.5-7B** | 71.45 | 7.05 | 0.60 | 26.36 |
+| **+ ShareGPT-15K** | 73.09 | 3.70 | 1.30 | 26.03 |
+| **+ UltraChat-15K** | 72.97 | 3.97 | 0.80 | 25.91 |
+| **+ DataFlow-Chat-15K** | 73.41 | **10.11** | 1.10 | **28.21** |
+
+### 6.2 推理数据合成流水线
+我们采用 NuminaMath 数据集作为高质量的种子数据集，并比较了三种不同的训练数据来源：（1）从 Open-R1 中随机采样的 10K 子集，（2）从 Synthetic-1 中随机采样的 10K 子集，以及（3）使用 DataFlow 构建的、规模为 10K 的合成数据集 DataFlow-Reasoning-10K。
+
+| Setting | Model | gsm8k | math | amc23 | olympiad | gaokao24_mix | minerva | AIME24@32 | AIME25@32 | Avg |
+|--------|-------|:-----:|:----:|:-----:|:--------:|:-------------:|:--------:|:---------:|:---------:|:----:|
+| Baseline | **Qwen2.5-32B-Instruct** | 95.8 | 73.5 | 70.0 | 38.5 | 42.9 | 26.5 | 16.8 | 11.6 | 46.95 |
+| 1 Epoch | **+ SYNTHETIC-1-10k** | 92.9 | 71.8 | 52.5 | 38.4 | 23.1 | 24.3 | 35.6 | 34.0 | 46.6 |
+| 1 Epoch | **+ Open-R1-10k** | 91.5 | 72.3 | 65.0 | 38.4 | 20.9 | 24.6 | 43.0 | 33.5 | 48.7 |
+| 1 Epoch | **+ DataFlow-Reasoning-10K** | 93.9 | 72.3 | 72.5 | 38.7 | 38.5 | 26.5 | 35.9 | 34.5 | **51.6** |
+| 2 Epochs | **+ SYNTHETIC-1-10k** | 94.5 | 78.4 | 75.0 | 45.0 | 24.2 | 28.3 | 48.4 | 37.9 | 54.0 |
+| 2 Epochs | **+ Open-R1-10k** | 93.9 | 77.2 | 80.0 | 44.1 | 20.9 | 25.4 | 51.0 | 40.7 | 54.2 |
+| 2 Epochs | **+ DataFlow-Reasoning-10K** | 94.4 | 76.6 | 75.0 | 45.2 | 42.9 | 25.7 | 45.4 | 40.0 | **55.7** |
+
+### 6.3 代码数据构建流水线
+我们从 Ling-Coder-SFT 语料库中随机采样 20K 条实例，并将其输入 DataFlow Code Pipeline 进行处理，从而得到三个不同规模的高质量代码指令数据集：DataFlow-Code-1K、DataFlow-Code-5K 和 DataFlow-Code-10K。这些数据集旨在为代码生成任务提供经过流水线精炼的高质量监督信号。
+我们将所合成的数据集与 Code-Alpaca-1K 以及 Self-OSS-Instruct-SC2-Exec-Filter-1K 进行对比评测。
+
+#### Trained on Qwen2.5-7B-Instruct
+| Training Data | BigCodeBench | LiveCodeBench (v6) | CruxEval (Input) | CruxEval (Output) | HumanEval+ | Avg |
+|--------------|:------------:|:------------------:|:----------------:|:-----------------:|:----------:|:---:|
+| **Qwen2.5-7B-Instruct** | 35.3 | 23.4 | 44.8 | 43.9 | 72.6 | 44.0 |
+| **+ Code Alpaca-1K** | 33.3 | 18.7 | 45.6 | 46.4 | 66.5 | 42.1 |
+| **+ Self-OSS** | 31.9 | 21.4 | 46.9 | 45.9 | 70.1 | 43.2 |
+| **+ DataFlow-Code-1K** | 35.5 | 25.7 | 48.0 | 45.1 | 72.6 | 45.4 |
+| **+ DataFlow-Code-5K** | 36.2 | **26.4** | 48.6 | 45.0 | 73.2 | 45.9 |
+| **+ DataFlow-Code-10K** | **36.8** | 26.0 | **48.8** | **45.4** | **73.8** | **46.2** |
+
+---
+
+#### Trained on Qwen2.5-14B-Instruct
+| Training Data | BigCodeBench | LiveCodeBench (v6) | CruxEval (Input) | CruxEval (Output) | HumanEval+ | Avg |
+|--------------|:------------:|:------------------:|:----------------:|:-----------------:|:----------:|:---:|
+| **Qwen2.5-14B-Instruct** | 37.5 | 33.4 | 48.0 | 48.5 | 74.4 | 48.4 |
+| **+ Code Alpaca-1K** | 37.0 | 28.2 | 50.2 | 49.6 | 71.3 | 47.3 |
+| **+ Self-OSS** | 36.9 | 22.3 | 52.6 | 50.1 | 68.3 | 46.0 |
+| **+ DataFlow-Code-1K** | 41.4 | **33.7** | 51.0 | 50.9 | **77.3** | 50.9 |
+| **+ DataFlow-Code-5K** | 41.1 | 33.2 | 52.5 | 50.6 | 76.2 | 50.7 |
+| **+ DataFlow-Code-10K** | **41.9** | 33.2 | **52.9** | **51.0** | 76.2 | **51.0** |
 
 
 ## 📄 7. 发表论文
@@ -214,6 +319,7 @@ dataflow -v
 
 | 论文标题 | DataFlow组件 | 会议 | 年份 |
 |---------|-------------|:------:|------|
+| [Let's Verify Math Questions Step by Step](https://arxiv.org/abs/2505.13903) | Math question quality evaluation | KDD | 2026 |
 | [MM-Verify: Enhancing Multimodal Reasoning with Chain-of-Thought Verification](https://arxiv.org/pdf/2502.13383) | 多模态推理验证框架，用于数据处理和评估 | ACL | 2025 |
 | [Efficient Pretraining Data Selection for Language Models via Multi-Actor Collaboration](https://arxiv.org/pdf/2410.08102) | 多智能体协作数据选择机制，增强数据筛选和处理能力 | ACL | 2025 |
 
@@ -254,7 +360,8 @@ dataflow -v
 
 ## 💐 9. 致谢
 我们衷心感谢 [MinerU](https://github.com/opendatalab/MinerU) 的卓越工作，其强大的 PDF/文档文本提取功能为数据加载提供了关键支持。
-
+同时，我们感谢 [LLaMA-Factory](https://github.com/hiyouga/LLaMA-Factory) 提供的高效、易用的大模型微调框架，为我们在模型训练与实验流程上的快速迭代带来了极大便利。  
+感谢所有开源社区的贡献者，你们的工作共同推动了 DataFlow 的发展。
 ## 🤝 10. 社区与支持
 
 欢迎加入 DataFlow 开源社区，提出问题、分享想法、与其他开发者一起共建项目！
@@ -266,7 +373,7 @@ dataflow -v
 •	💬 欢迎扫码加入下方社群（微信群、小红书、Twitter），与我们和其他开发者互动交流~
 
 <div align="center">
-  <img src="https://github.com/user-attachments/assets/3c2e5d4d-d1ea-4d8c-9146-ff14e657e857" width="60%">
+  <img src="https://github.com/user-attachments/assets/090b8a20-6193-41b3-88a1-fe3f4791cb95" width="60%">
 </div>
 
 
@@ -275,12 +382,11 @@ dataflow -v
 如果 DataFlow 对你的研究或项目有帮助，欢迎引用支持我们：
 
 ```bibtex
-@misc{dataflow2025,
-  author       = {DataFlow Develop Team},
-  title        = {DataFlow: A Unified Framework for Data-Centric AI},
-  year         = {2025},
-  howpublished = {\url{https://github.com/OpenDCAI/DataFlow}},
-  note         = {Accessed: 2025-07-08}
+@article{liang2025dataflow,
+  title={DataFlow: An LLM-Driven Framework for Unified Data Preparation and Workflow Automation in the Era of Data-Centric AI},
+  author={Liang, Hao and Ma, Xiaochen and Liu, Zhou and Wong, Zhen Hao and Zhao, Zhengyang and Meng, Zimo and He, Runming and Shen, Chengyu and Cai, Qifeng and Han, Zhaoyang and others},
+  journal={arXiv preprint arXiv:2512.16676},
+  year={2025}
 }
 ```
 

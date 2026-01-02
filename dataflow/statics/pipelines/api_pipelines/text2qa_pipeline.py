@@ -8,7 +8,7 @@ from dataflow.utils.storage import FileStorage
 from dataflow.serving import APILLMServing_request
 from dataflow.serving import LocalModelLLMServing_vllm
 
-class AgenticRAG_APIPipeline():
+class Text2QA_APIPipeline():
     def __init__(self):
 
         self.storage = FileStorage(
@@ -65,5 +65,5 @@ class AgenticRAG_APIPipeline():
         )
         
 if __name__ == "__main__":
-    model = AgenticRAG_APIPipeline()
+    model = Text2QA_APIPipeline()
     model.forward()

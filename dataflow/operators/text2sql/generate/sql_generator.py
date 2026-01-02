@@ -66,7 +66,7 @@ class SQLGenerator(OperatorABC):
             return ""
 
     def run(self, storage: DataFlowStorage,
-            output_sql_key: str = "sql",
+            output_sql_key: str = "SQL",
             output_db_id_key: str = "db_id"
         ):
         self.output_sql_key = output_sql_key

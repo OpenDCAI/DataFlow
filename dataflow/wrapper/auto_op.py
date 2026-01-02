@@ -63,7 +63,7 @@ class AutoOP(Generic[P, R]):
         # 找出签名中 **kwargs 的参数名（若存在）
         var_kw_name = None
         for name, p in sig.parameters.items():
-            print(name, p.kind)
+            # print(name, p.kind)
             if p.kind == inspect.Parameter.VAR_KEYWORD:
                 var_kw_name = name
                 break

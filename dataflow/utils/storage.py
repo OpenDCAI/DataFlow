@@ -3,6 +3,7 @@ import atexit
 import signal
 import tempfile
 import weakref
+
 from dataflow import get_logger
 import pandas as pd
 import json
@@ -85,6 +86,66 @@ class LazyFileStorage(DataFlowStorage):
         save_on_exit: bool = True,        # 进程退出时自动 flush
         flush_all_steps: bool = False      # True: 所有缓冲步落盘；False: 仅最新一步
     ):
+        """
+        Initialize a LazyFileStorage.
+
+        This storage keeps read/write operations in memory and only persists to disk
+        when explicitly flushed or when the process exits / is interrupted (if
+        save_on_exit is enabled). The class preserves an interface compatible with
+        a traditional FileStorage (step / reset / read / write / ...). Step 0
+        (the "first entry") may be loaded from a local file path or from remote
+        dataset identifiers prefixed with "hf:" (HuggingFace datasets) or "ms:"
+        (ModelScope datasets). Disk writes are performed atomically via os.replace,
+        and internal buffers are protected with an RLock for thread safety.
+
+        Args:
+            first_entry_file_name (str):
+                Path or source identifier used as the data source for step 0.
+                - If it starts with "hf:" the remainder is interpreted as a
+                HuggingFace dataset specification (dataset[:config][:split]).
+                - If it starts with "ms:" the remainder is interpreted as a
+                ModelScope dataset specification (dataset[:split]).
+                - Otherwise it is treated as a local file path; the file extension
+                (json, jsonl, csv, parquet, pickle) determines how it is loaded.
+            cache_path (str, optional):
+                Directory where per-step cache files are written. Defaults to "./cache".
+            file_name_prefix (str, optional):
+                Prefix used when composing cache filenames for non-zero steps.
+                Defaults to "dataflow_cache_step" (files will be like
+                "{file_name_prefix}_step{n}.{cache_type}").
+            cache_type (Literal["json","jsonl","csv","parquet","pickle"], optional):
+                Serialization format used when persisting buffers to disk.
+                - "json": full JSON array
+                - "jsonl": JSON Lines (one record per line)
+                - "csv": comma-separated values
+                - "parquet": Apache Parquet
+                - "pickle": Python pickle
+                Defaults to "jsonl".
+            save_on_exit (bool, optional):
+                If True (default), register handlers so that buffered data is flushed
+                automatically when the process exits or when SIGINT/SIGTERM is received.
+                In restricted environments registering signal handlers may fail silently.
+            flush_all_steps (bool, optional):
+                Controls flush_all() behavior:
+                - True: flush_all() persists all buffered steps.
+                - False (default): flush_all() persists only the most recently buffered step.
+
+        Returns:
+            None
+
+        Notes:
+            - The instance maintains an internal operator_step counter (initially -1).
+            Calling step() increments this counter; write() buffers data for
+            operator_step + 1.
+            - write(...) buffers data in memory and returns the file path that will
+            be used when the buffer is ultimately flushed to disk (useful for logging).
+            - Disk writes are atomic: data is first written to a temporary file and
+            then moved into place with os.replace to avoid partial files.
+            - Thread-safety: an RLock protects buffer and dirty-step state.
+            - Errors:
+            - Reading a non-existent local file raises FileNotFoundError.
+            - Unsupported file types raise ValueError.
+        """
         self.first_entry_file_name = first_entry_file_name
         self.cache_path = cache_path
         self.file_name_prefix = file_name_prefix
@@ -391,6 +452,56 @@ class FileStorage(DataFlowStorage):
         file_name_prefix:str="dataflow_cache_step",
         cache_type:Literal["json", "jsonl", "csv", "parquet", "pickle"] = "jsonl"
     ):
+        """
+        Initialize a FileStorage.
+
+        FileStorage is a disk-backed storage implementation that reads from and
+        writes to the local filesystem on every read/write operation. Unlike
+        LazyFileStorage, data is persisted immediately and no in-memory buffering
+        is maintained across steps.
+
+        The storage follows a step-based access pattern compatible with
+        DataFlowStorage. Step 0 (the "first entry") can be loaded from:
+        - a local file path, or
+        - a remote dataset specified with the "hf:" (HuggingFace) or "ms:"
+        (ModelScope) prefix.
+
+        Subsequent steps are materialized as files on disk under `cache_path`,
+        with filenames derived from `file_name_prefix`, the step index, and
+        `cache_type`.
+
+        Args:
+            first_entry_file_name (str):
+                Path or source identifier used as the data source for step 0.
+                - "hf:{dataset}[:config][:split]" loads a HuggingFace dataset.
+                - "ms:{dataset}[:split]" loads a ModelScope dataset.
+                - Otherwise, this is treated as a local file path, and the file
+                extension determines how it is read.
+            cache_path (str, optional):
+                Directory where cache files for steps >= 1 are stored.
+                Defaults to "./cache".
+            file_name_prefix (str, optional):
+                Prefix used when generating filenames for cached steps.
+                Cache files are named as
+                "{file_name_prefix}_step{n}.{cache_type}".
+                Defaults to "dataflow_cache_step".
+            cache_type (Literal["json","jsonl","csv","parquet","pickle"], optional):
+                File format used when writing step outputs to disk.
+                Defaults to "jsonl".
+
+        Returns:
+            None
+
+        Notes:
+            - The internal `operator_step` counter starts at -1 and is incremented
+            by calling `step()`.
+            - Calling `write(...)` writes data immediately to disk for
+            `operator_step + 1`.
+            - No atomic-write or buffering guarantees are provided beyond the
+            underlying pandas file writers.
+            - This class is simpler but less fault-tolerant than LazyFileStorage,
+            as partially written files may exist if a process is interrupted.
+        """
         self.first_entry_file_name = first_entry_file_name
         self.cache_path = cache_path
         self.file_name_prefix = file_name_prefix
@@ -812,3 +923,151 @@ class MyScaleDBStorage(DataFlowStorage):
         """
         dataframe = self.read(output_type="dataframe")
         return dataframe.columns.tolist() if isinstance(dataframe, pd.DataFrame) else []
+    
+    
+class BatchedFileStorage(FileStorage):
+    """
+    批量文件存储，支持按批次读写数据。
+    """
+    def __init__(
+        self, 
+        first_entry_file_name: str,
+        cache_path:str="./cache",
+        file_name_prefix:str="dataflow_cache_step",
+        cache_type:Literal["jsonl", "csv"] = "jsonl",
+    ):
+        super().__init__(first_entry_file_name, cache_path, file_name_prefix, cache_type)
+        self.batch_size = None
+        self.batch_step = 0
+        self._dataframe_buffer = {}
+        if cache_type not in ["jsonl", "csv"]:
+            raise ValueError(f"BatchedFileStorage only supports 'jsonl' and 'csv' cache types, got: {cache_type}")
+        
+    def read(self, output_type: Literal["dataframe", "dict"]="dataframe") -> Any:
+        """
+        Read data from current file managed by storage.
+        
+        Args:
+            output_type: Type that you want to read to, either "dataframe" or "dict".
+            Also supports remote datasets with prefix:
+                - "hf:{dataset_name}{:config}{:split}"  => HuggingFace dataset eg. "hf:openai/gsm8k:main:train"
+                - "ms:{dataset_name}{}:split}"          => ModelScope dataset eg. "ms:modelscope/gsm8k:train"
+        
+        Returns:
+            Depending on output_type:
+            - "dataframe": pandas DataFrame
+            - "dict": List of dictionaries
+        
+        Raises:
+            ValueError: For unsupported file types or output types
+        """
+        if self.operator_step == 0 and self.first_entry_file_name == "":
+            self.logger.info("first_entry_file_name is empty, returning empty dataframe")
+            empty_dataframe = pd.DataFrame()
+            return self._convert_output(empty_dataframe, output_type)
+
+        file_path = self._get_cache_file_path(self.operator_step)
+        self.logger.info(f"Reading data from {file_path} with type {output_type}")
+
+        if self.operator_step == 0:
+            source = self.first_entry_file_name
+            self.logger.info(f"Reading remote dataset from {source} with type {output_type}")
+            if source.startswith("hf:"):
+                from datasets import load_dataset
+                _, dataset_name, *parts = source.split(":")
+
+                if len(parts) == 1:
+                    config, split = None, parts[0]
+                elif len(parts) == 2:
+                    config, split = parts
+                else:
+                    config, split = None, "train"
+
+                dataset = (
+                    load_dataset(dataset_name, config, split=split) 
+                    if config 
+                    else load_dataset(dataset_name, split=split)
+                )
+                dataframe = dataset.to_pandas()
+                return self._convert_output(dataframe, output_type)
+        
+            elif source.startswith("ms:"):
+                from modelscope import MsDataset
+                _, dataset_name, *split_parts = source.split(":")
+                split = split_parts[0] if split_parts else "train"
+
+                dataset = MsDataset.load(dataset_name, split=split)
+                dataframe = pd.DataFrame(dataset)
+                return self._convert_output(dataframe, output_type)
+                            
+            else:
+                local_cache = file_path.split(".")[-1]
+        else:
+            local_cache = self.cache_type
+        if self._dataframe_buffer.get(self.operator_step) is not None:
+            dataframe = self._dataframe_buffer[self.operator_step].copy()
+        else:
+            dataframe = self._load_local_file(file_path, local_cache)
+            self._dataframe_buffer[self.operator_step] = dataframe.copy()
+        self.record_count = len(dataframe)
+        # 读出当前批次数据
+        if self.batch_size:
+            dataframe = dataframe.iloc[
+                self.batch_step * self.batch_size : (self.batch_step + 1) * self.batch_size
+            ]
+        return self._convert_output(dataframe, output_type)
+    
+    def write(self, data: Any) -> Any:
+        """
+        Write data to current file managed by storage.
+        data: Any, the data to write, it should be a dataframe, List[dict], etc.
+        """
+        def clean_surrogates(obj):
+            """递归清理数据中的无效Unicode代理对字符"""
+            if isinstance(obj, str):
+                # 替换无效的Unicode代理对字符（如\udc00）
+                return obj.encode('utf-8', 'replace').decode('utf-8')
+            elif isinstance(obj, dict):
+                return {k: clean_surrogates(v) for k, v in obj.items()}
+            elif isinstance(obj, list):
+                return [clean_surrogates(item) for item in obj]
+            elif isinstance(obj, (int, float, bool)) or obj is None:
+                # 数字、布尔值和None直接返回
+                return obj
+            else:
+                # 其他类型（如自定义对象）尝试转为字符串处理
+                try:
+                    return clean_surrogates(str(obj))
+                except:
+                    # 如果转换失败，返回原对象或空字符串（根据需求选择）
+                    return obj
+
+        # 转换数据为DataFrame
+        if isinstance(data, list):
+            if len(data) > 0 and isinstance(data[0], dict):
+                # 清洗列表中的每个字典
+                cleaned_data = [clean_surrogates(item) for item in data]
+                dataframe = pd.DataFrame(cleaned_data)
+            else:
+                raise ValueError(f"Unsupported data type: {type(data[0])}")
+        elif isinstance(data, pd.DataFrame):
+            # 对DataFrame的每个元素进行清洗
+            dataframe = data.map(clean_surrogates)
+        else:
+            raise ValueError(f"Unsupported data type: {type(data)}")
+
+        file_path = self._get_cache_file_path(self.operator_step + 1)
+        os.makedirs(os.path.dirname(file_path), exist_ok=True)
+        self.logger.success(f"Writing data to {file_path} with type {self.cache_type}")
+        if self.cache_type == "jsonl":
+            with open(file_path, 'a', encoding='utf-8') as f:
+                dataframe.to_json(f, orient="records", lines=True, force_ascii=False)
+        elif self.cache_type == "csv":
+            if self.batch_step == 0:
+                dataframe.to_csv(file_path, index=False)
+            else:
+                dataframe.to_csv(file_path, index=False, header=False, mode='a')
+        else:
+            raise ValueError(f"Unsupported file type: {self.cache_type}, output file should end with jsonl, csv")
+        
+        return file_path 

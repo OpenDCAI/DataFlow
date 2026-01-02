@@ -1,6 +1,6 @@
 from dataflow.operators.knowledge_cleaning import (
     KBCChunkGenerator,
-    FileOrURLToMarkdownConverterBatch,
+    FileOrURLToMarkdownConverterAPI,
     KBCTextCleaner,
     # KBCMultiHopQAGenerator,
 )
@@ -24,10 +24,9 @@ class KBCleaningPDF_APIPipeline():
                 max_workers=100
         )
 
-        self.knowledge_cleaning_step1 = FileOrURLToMarkdownConverterBatch(
+        self.knowledge_cleaning_step1 = FileOrURLToMarkdownConverterAPI(
             intermediate_dir="../example_data/KBCleaningPipeline/raw/",
-            lang="en",
-            mineru_backend="vlm-vllm-engine",
+            mineru_backend="vlm",  # vlm or pipeline
         )
 
         self.knowledge_cleaning_step2 = KBCChunkGenerator(

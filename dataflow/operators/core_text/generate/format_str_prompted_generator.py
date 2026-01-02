@@ -9,23 +9,26 @@ from dataflow.core import LLMServingABC
 from dataflow.core.prompt import prompt_restrict, PromptABC, DIYPromptABC
 from typing import Union, Any, Set
 
-from dataflow.prompts.core_text import StrFormatPrompt
+from dataflow.prompts.core_text import FormatStrPrompt
 @prompt_restrict(
-    StrFormatPrompt
+    FormatStrPrompt,
 )
 @OPERATOR_REGISTRY.register()
-class PromptTemplatedGenerator(OperatorABC):
+class FormatStrPromptedGenerator(OperatorABC):
     def __init__(
             self,
             llm_serving: LLMServingABC, 
-            prompt_template: Union[StrFormatPrompt, DIYPromptABC] = None,
+            system_prompt: str =  "You are a helpful agent.",
+            prompt_template: Union[FormatStrPrompt, DIYPromptABC] = FormatStrPrompt,
+            json_schema: dict = None,
         ):
         self.logger = get_logger()
         self.llm_serving = llm_serving
+        self.system_prompt = system_prompt
         self.prompt_template = prompt_template
+        self.json_schema = json_schema
         if prompt_template is None:
             raise ValueError("prompt_template cannot be None")
-
 
     def run(
             self, 
@@ -37,9 +40,7 @@ class PromptTemplatedGenerator(OperatorABC):
         self.output_key = output_key
         self.logger.info("Running PromptTemplatedGenerator...")
         self.input_keys = input_keys
-
         need_fields = set(input_keys.keys())
-
     # Load the raw dataframe from the input file
         dataframe = storage.read('dataframe')
         self.logger.info(f"Loading, number of rows: {len(dataframe)}")
@@ -54,7 +55,7 @@ class PromptTemplatedGenerator(OperatorABC):
         self.logger.info(f"Prepared {len(llm_inputs)} prompts for LLM generation.")
         # Create a list to hold all generated contents
         # Generate content using the LLM serving
-        generated_outputs = self.llm_serving.generate_from_input(llm_inputs)
+        generated_outputs = self.llm_serving.generate_from_input(user_inputs = llm_inputs, system_prompt = self.system_prompt, json_schema = self.json_schema)
 
         dataframe[self.output_key] = generated_outputs
 

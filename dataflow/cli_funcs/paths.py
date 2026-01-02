@@ -33,14 +33,6 @@ class DataFlowPath:
     def get_dataflow_playground_dir():
         return DataFlowPath.get_dataflow_statics_dir() / "playground"
     
-    # @staticmethod
-    # def get_dataset_json_dir() -> Path:
-    #     return DataFlowPath.get_dataflow_dir() / "dataset_json"
-
-    # @staticmethod
-    # def get_init_base_dir() -> Path:
-    #     return DataFlowPath.get_dataflow_dir() / "init_base"
-
-    # @staticmethod
-    # def get_model_zoo_runs_dir() -> Path:
-    #     return DataFlowPath.get_dataflow_dir() / "model_zoo" / "runs"
+    @staticmethod
+    def get_dataflow_scaffold_dir():
+        return DataFlowPath.get_dataflow_statics_dir() / "scaffold"

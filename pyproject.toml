@@ -19,10 +19,12 @@ classifiers = [
     "Topic :: Scientific/Engineering :: Artificial Intelligence",
     "License :: Free For Educational Use",
     "Programming Language :: Python :: 3",
-    "Programming Language :: Python :: 3.7",
-    "Programming Language :: Python :: 3.8",
-    "Programming Language :: Python :: 3.9",
+    # "Programming Language :: Python :: 3.7",
+    # "Programming Language :: Python :: 3.8",
+    # "Programming Language :: Python :: 3.9",
     "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
     "Programming Language :: Python :: 3 :: Only",
 ]
 keywords = [
@@ -37,7 +39,7 @@ Documentation = "https://open-dataflow.github.io/DataFlow-Doc/"
 "Bug Reports" = "https://github.com/Open-DataFlow/DataFlow/issues"
 
 [project.scripts]
-dataflow = "dataflow.cli:main"
+dataflow = "dataflow.cli:app"
 
 [tool.setuptools]
 include-package-data = true

@@ -75,7 +75,7 @@ class Text2SQLGeneration_GPUPipeline():
             raise FileNotFoundError(f"Database path does not exist: {self.db_root_path}")
 
         self.storage = FileStorage(
-            first_entry_file_name="",
+            first_entry_file_name="../example_data/Text2SQLPipeline/empty.jsonl",
             cache_path="./cache",
             file_name_prefix="dataflow_cache_step",
             cache_type="jsonl",

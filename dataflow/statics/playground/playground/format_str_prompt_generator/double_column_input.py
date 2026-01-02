@@ -1,8 +1,8 @@
-from dataflow.operators.core_text import PromptTemplatedGenerator
+from dataflow.operators.core_text import FormatStrPromptedGenerator
 from dataflow.serving import APILLMServing_request
 from dataflow.utils.storage import FileStorage
 
-from dataflow.prompts.core_text import StrFormatPrompt
+from dataflow.prompts.core_text import FormatStrPrompt
 
 
 class DoubleColumnInputTestCase():
@@ -19,10 +19,10 @@ class DoubleColumnInputTestCase():
             model_name="gpt-4o"
         )
 
-        self.prompt_template = StrFormatPrompt(
-            f_str_template="What does a {input_roll} like to {input_term}?"
+        self.prompt_template = FormatStrPrompt(
+            f_str_template="What does a {input_role} like to {input_term}?"
         )
-        self.operator = PromptTemplatedGenerator(
+        self.operator = FormatStrPromptedGenerator(
             llm_serving=self.llm_serving,
             prompt_template=self.prompt_template
         )
@@ -30,7 +30,7 @@ class DoubleColumnInputTestCase():
     def forward(self):
         self.operator.run(
             storage=self.storage.step(),
-            input_roll="roll",
+            input_role="role",
             input_term="term",
             output_key="answer",
         )

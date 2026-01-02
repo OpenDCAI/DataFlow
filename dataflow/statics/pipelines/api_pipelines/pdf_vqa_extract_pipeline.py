@@ -8,7 +8,7 @@ from dataflow.operators.pdf2vqa import VQAExtractor
 class VQA_extract_optimized_pipeline:
     def __init__(self):
         self.storage = FileStorage(
-            first_entry_file_name="./example_data/PDF2VQAPipeline/vqa_extract_test.jsonl",
+            first_entry_file_name="../example_data/PDF2VQAPipeline/vqa_extract_test.jsonl",
             cache_path="./cache",
             file_name_prefix="vqa",
             cache_type="jsonl",

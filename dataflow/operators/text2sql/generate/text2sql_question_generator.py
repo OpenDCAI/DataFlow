@@ -110,7 +110,7 @@ class Text2SQLQuestionGenerator(OperatorABC):
             return question_candidates[min_index]
     
     def run(self, storage: DataFlowStorage,
-            input_sql_key: str = "sql",
+            input_sql_key: str = "SQL",
             input_db_id_key: str = "db_id",
             output_question_key: str = "question",
             output_evidence_key: str = "evidence"

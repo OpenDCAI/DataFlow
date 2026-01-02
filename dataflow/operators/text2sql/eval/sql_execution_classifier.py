@@ -243,7 +243,7 @@ class SQLExecutionClassifier(OperatorABC):
     def run(self, storage: DataFlowStorage,
             input_db_id_key: str = "db_id",
             input_sql_key: str = "SQL",
-            input_prompt_key: str = "rl_prompt",
+            input_prompt_key: str = "prompt",
             output_difficulty_key: str = "sql_execution_difficulty"
         ):
         self.input_sql_key = input_sql_key

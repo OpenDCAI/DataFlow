@@ -54,7 +54,7 @@ class SQLExecutionFilter(OperatorABC):
             raise ValueError(f"Missing required columns: {missing_columns}")
 
     def run(self, storage: DataFlowStorage,
-            input_sql_key: str = "sql",
+            input_sql_key: str = "SQL",
             input_db_id_key: str = "db_id"
         ):
         self.input_sql_key = input_sql_key

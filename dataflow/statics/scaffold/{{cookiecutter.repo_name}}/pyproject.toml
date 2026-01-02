@@ -1,0 +1,20 @@
+[build-system]
+requires = ["setuptools", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "{{cookiecutter.package_name}}"
+version = "{{cookiecutter.init_version}}"
+license = { text = "{{cookiecutter.license}}" }
+description = "{{cookiecutter.description}}"
+authors = [{name="{{cookiecutter.author}}"}]
+requires-python = ">={{cookiecutter.python_version}}"
+
+
+[tool.setuptools]
+include-package-data = true
+packages = ["{{cookiecutter.package_name}}"]  # 显式指定主包
+
+[tool.setuptools.dynamic]
+version = {attr = "{{cookiecutter.package_name}}.version.__version__"}
+dependencies = {file = "requirements.txt"}

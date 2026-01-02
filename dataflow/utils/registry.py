@@ -251,7 +251,7 @@ class Registry():
             module_str = obj.__module__
             # print(obj.__name__, module_str)
             parts = module_str.split(".")
-            object_types_dict[name] = parts[1:]
+            object_types_dict[name] = parts[0:]
         return object_types_dict
 
 OPERATOR_REGISTRY = Registry(name='operators')
