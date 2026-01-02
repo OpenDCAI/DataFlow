@@ -14,13 +14,13 @@ from dataflow.serving import FlashRAGServing
 # --- 算子导入 ---
 from dataflow.operators.core_text import (
     PandasOperator, 
-    PromptTemplatedGenerator, 
+    FormatStrPromptedGenerator, 
     RetrievalGenerator, 
     GeneralFilter
 )
 
 # --- Prompt 模板导入 ---
-from dataflow.prompts.core_text import StrFormatPrompt
+from dataflow.prompts.core_text import FormatStrPrompt
 from dataflow.prompts.agenticrag import (
     AtomicQAGeneratorPrompt,
     MergeAtomicQAPrompt,
@@ -191,11 +191,10 @@ def build_multihop_prompt_str(row: pd.Series, current_hop: int) -> str:
 # ==========================================
 
 class MultiHopRAGPipeline:
-    def __init__(self, input_hop: int = 1, gen_qa_num: int = 3, topk: int = 3):
+    def __init__(self, input_hop: int = 1, topk: int = 5):
         self.input_hop = input_hop
         self.hop_key = f"hop_{input_hop}"
         self.next_hop_key = f"hop_{input_hop + 1}"
-        self.gen_qa_num = gen_qa_num
         self.topk = topk
 
         # 1. 初始化
@@ -239,13 +238,13 @@ class MultiHopRAGPipeline:
             lambda df: df.explode('retrieved_docs').reset_index(drop=True),
             lambda df: df.rename(columns={'retrieved_docs': 'doc_content'}),
             lambda df: df.dropna(subset=['doc_content']),
-            lambda df: df.assign(gen_qa_num=self.gen_qa_num)
+            lambda df: df.assign(gen_qa_num=1)
         ])
 
         # Step: Atomic QA
-        self.op_atomic_gen = PromptTemplatedGenerator(
+        self.op_atomic_gen = FormatStrPromptedGenerator(
             llm_serving=self.llm_serving,
-            prompt_template=StrFormatPrompt(f_str_template=AtomicQAGeneratorPrompt().prompt)
+            prompt_template=FormatStrPrompt(f_str_template=AtomicQAGeneratorPrompt().prompt)
         )
 
         self.op_parse_atomic = PandasOperator(process_fn=[
@@ -260,9 +259,9 @@ class MultiHopRAGPipeline:
         ])
         
         # 使用字段映射: {Data} <- history_str, {New_question} <- mid_question ...
-        self.op_merge_gen = PromptTemplatedGenerator(
+        self.op_merge_gen = FormatStrPromptedGenerator(
             llm_serving=self.llm_serving,
-            prompt_template=StrFormatPrompt(f_str_template=MergeAtomicQAPrompt().prompt)
+            prompt_template=FormatStrPrompt(f_str_template=MergeAtomicQAPrompt().prompt)
         )
 
         self.op_parse_merge = PandasOperator(process_fn=[
@@ -279,9 +278,9 @@ class MultiHopRAGPipeline:
             )
         ])
         
-        self.op_refine_gen = PromptTemplatedGenerator(
+        self.op_refine_gen = FormatStrPromptedGenerator(
             llm_serving=self.llm_serving,
-            prompt_template=StrFormatPrompt(f_str_template=RefineAnswerPrompt().prompt)
+            prompt_template=FormatStrPrompt(f_str_template=RefineAnswerPrompt().prompt)
         )
 
         self.op_parse_refine = PandasOperator(process_fn=[
@@ -290,9 +289,9 @@ class MultiHopRAGPipeline:
         ])
 
         # Step: Optional Answers
-        self.op_optional_gen = PromptTemplatedGenerator(
+        self.op_optional_gen = FormatStrPromptedGenerator(
             llm_serving=self.llm_serving,
-            prompt_template=StrFormatPrompt(f_str_template=MoreOptionalAnswersPrompt().prompt)
+            prompt_template=FormatStrPrompt(f_str_template=MoreOptionalAnswersPrompt().prompt)
         )
 
         self.op_finalize = PandasOperator(process_fn=[
@@ -310,9 +309,9 @@ class MultiHopRAGPipeline:
             lambda df: df if df.empty else df.assign(check_prompt_str=df.apply(lambda r: build_check_prompt_str(r, self.input_hop), axis=1))
         ])
         
-        self.op_verify_gen_check = PromptTemplatedGenerator(
+        self.op_verify_gen_check = FormatStrPromptedGenerator(
             llm_serving=self.llm_serving,
-            prompt_template=StrFormatPrompt(f_str_template="{input_str}"),
+            prompt_template=FormatStrPrompt(f_str_template="{input_str}"),
         )
         
         self.op_verify_filter_check = PandasOperator(process_fn=[
@@ -326,15 +325,15 @@ class MultiHopRAGPipeline:
             lambda df: df if df.empty else df.assign(target_ans=df[self.next_hop_key].apply(lambda x: x.get('final_answer') if isinstance(x, dict) else ''))
         ])
 
-        self.op_verify_gen_reasoning = PromptTemplatedGenerator(
+        self.op_verify_gen_reasoning = FormatStrPromptedGenerator(
             llm_serving=self.llm_serving,
-            prompt_template=StrFormatPrompt(f_str_template="{input_str}"),
+            prompt_template=FormatStrPrompt(f_str_template="{input_str}"),
         )
 
         # --- Phase 3: Judge Reasoning (Static) ---
-        self.op_verify_judge_reasoning = PromptTemplatedGenerator(
+        self.op_verify_judge_reasoning = FormatStrPromptedGenerator(
             llm_serving=self.llm_serving,
-            prompt_template=StrFormatPrompt(f_str_template=EssEqPrompt().prompt)
+            prompt_template=FormatStrPrompt(f_str_template=EssEqPrompt().prompt)
         )
 
         self.op_verify_filter_reasoning = PandasOperator(process_fn=[
@@ -348,15 +347,15 @@ class MultiHopRAGPipeline:
             lambda df: df.explode('doc_combos').reset_index(drop=True).dropna(subset=['doc_combos'])
         ])
 
-        self.op_verify_gen_shortcut = PromptTemplatedGenerator(
+        self.op_verify_gen_shortcut = FormatStrPromptedGenerator(
             llm_serving=self.llm_serving,
-            prompt_template=StrFormatPrompt(f_str_template=SingleHopPrompt().prompt)
+            prompt_template=FormatStrPrompt(f_str_template=SingleHopPrompt().prompt)
         )
 
         # --- Phase 5: Judge Shortcut (Static) ---
-        self.op_verify_judge_shortcut = PromptTemplatedGenerator(
+        self.op_verify_judge_shortcut = FormatStrPromptedGenerator(
             llm_serving=self.llm_serving,
-            prompt_template=StrFormatPrompt(f_str_template=EssEqPrompt().prompt)
+            prompt_template=FormatStrPrompt(f_str_template=EssEqPrompt().prompt)
         )
 
         self.op_verify_filter_shortcut = PandasOperator(process_fn=[
@@ -371,15 +370,15 @@ class MultiHopRAGPipeline:
             lambda df: df if df.empty else df.assign(final_prompt_str=df.apply(lambda r: build_multihop_prompt_str(r, self.input_hop), axis=1))
         ])
 
-        self.op_verify_gen_final = PromptTemplatedGenerator(
+        self.op_verify_gen_final = FormatStrPromptedGenerator(
             llm_serving=self.llm_serving,
-            prompt_template=StrFormatPrompt(f_str_template="{input_str}"),
+            prompt_template=FormatStrPrompt(f_str_template="{input_str}"),
         )
 
         # --- Phase 7: Final Judge (Static) ---
-        self.op_verify_judge_final = PromptTemplatedGenerator(
+        self.op_verify_judge_final = FormatStrPromptedGenerator(
             llm_serving=self.llm_serving,
-            prompt_template=StrFormatPrompt(f_str_template=EssEqPrompt().prompt)
+            prompt_template=FormatStrPrompt(f_str_template=EssEqPrompt().prompt)
         )
 
         self.op_verify_filter_final = PandasOperator(process_fn=[
@@ -495,5 +494,5 @@ class MultiHopRAGPipeline:
         print(f"Pipeline Hop {self.input_hop} -> {self.input_hop + 1} Completed and Verified.")
 
 if __name__ == "__main__":
-    pipeline = MultiHopRAGPipeline(input_hop=1, gen_qa_num=3, topk=3)
+    pipeline = MultiHopRAGPipeline(input_hop=1, topk=5)
     asyncio.run(pipeline.forward())

@@ -19,14 +19,13 @@ from flashrag.utils import get_retriever
 
 class FlashRAGServing(LLMServingABC):
     def __init__(self,
-                 # --- FlashRAG 核心配置参数 ---
                  retrieval_method: str = "e5",
                  retrieval_model_path: str = None,
                  index_path: str = None,
                  corpus_path: str = None,
                  faiss_gpu: bool = False,
                  gpu_id: str = "",
-                 # --- Serving 配置参数 ---
+
                  max_workers: int = 1,
                  topk: int = 2,
                  **kwargs
@@ -45,12 +44,10 @@ class FlashRAGServing(LLMServingABC):
         """
         self.logger = get_logger()
         
-        # 1. 验证必要参数
         if not retrieval_model_path or not index_path or not corpus_path:
              self.logger.warning("FlashRAGServing initialized without critical paths (model, index, or corpus). "
                                  "Ensure they are passed before loading.")
 
-        # 2. 将传入的参数组装成字典，模拟 yaml 的内容
         self.rag_config_dict = {
             "retrieval_method": retrieval_method,
             "retrieval_model_path": retrieval_model_path,
@@ -110,7 +107,6 @@ class FlashRAGServing(LLMServingABC):
             return self.retriever.batch_search(user_inputs, topk, return_score=True)
 
         try:
-            # 在线程池中执行同步的检索操作
             results, scores = await loop.run_in_executor(self.executor, _run_sync_search)
         
             # results 结构: [ [doc1_obj, doc2_obj...], [doc1_obj, doc2_obj...] ]
@@ -128,68 +124,3 @@ class FlashRAGServing(LLMServingABC):
             self.logger.error(f"Error during retrieval: {e}")
             # 出错时返回空列表的列表，保持维度一致
             return [[] for _ in user_inputs]
-
-# class FlashRAGServing(LLMServingABC):
-#     def __init__(self,
-#                  config_path: str = "retriever_config.yaml",
-#                  max_workers: int = 1,
-#                  topk: int = 2,
-#                  **kwargs
-#                  ):
-#         self.logger = get_logger()
-#         self.default_config_path = config_path
-#         self.topk = topk
-#         self.executor = ThreadPoolExecutor(max_workers=max_workers)
-#         self.retriever = None
-
-#     def load_model(self, model_name_or_path: str = None, **kwargs: Any):
-#         target_config_path = model_name_or_path if model_name_or_path else self.default_config_path
-#         self.logger.info(f"Loading FlashRAG retriever from: {target_config_path}")
-        
-#         try:
-#             config_dict = Config(target_config_path)
-#             self.retriever = get_retriever(config_dict)
-#             self.logger.info("FlashRAG Retriever loaded successfully.")
-#         except Exception as e:
-#             self.logger.error(f"Failed to load FlashRAG retriever: {e}")
-#             raise e
-
-#     def start_serving(self):
-#         if self.retriever is None:
-#             self.logger.warning("FlashRAGServing started but retriever is NOT loaded. Call load_model() first.")
-#         else:
-#             self.logger.info("FlashRAGServing is ready to serve.")
-
-#     async def cleanup(self):
-#         self.logger.info("Cleaning up FlashRAGServing resources...")
-#         self.executor.shutdown(wait=True)
-
-#     async def generate_from_input(self, user_inputs: List[str], system_prompt: str = "") -> List[List[str]]:
-#         # 1. 懒加载检查
-#         if self.retriever is None:
-#             self.logger.warning("Retriever not loaded explicitly. Triggering lazy load...")
-#             loop = asyncio.get_running_loop()
-#             await loop.run_in_executor(self.executor, lambda: self.load_model())
-
-
-#         topk = self.topk
-#         loop = asyncio.get_running_loop()
-#         def _run_sync_search():
-#             return self.retriever.batch_search(user_inputs, topk, return_score=True)
-
-#         try:
-#             results, scores = await loop.run_in_executor(self.executor, _run_sync_search)
-        
-#             # results 结构: [ [doc1_obj, doc2_obj...], [doc1_obj, doc2_obj...] ]
-#             formatted_outputs = []
-            
-#             for docs in results:
-#                 docs_content_list = [doc.get('contents', '') for doc in docs]
-#                 formatted_outputs.append(docs_content_list)
-
-#             # 返回 List[List[str]]
-#             return formatted_outputs
-
-#         except Exception as e:
-#             self.logger.error(f"Error during retrieval: {e}")
-#             return [[] for _ in user_inputs]
