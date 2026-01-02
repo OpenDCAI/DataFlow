@@ -6,10 +6,12 @@ import pandas as pd
 from itertools import combinations
 from typing import Any, List, Dict
 
+# --- Dataflow 核心组件 ---
 from dataflow.utils.storage import FileStorage
 from dataflow.serving import APILLMServing_request
 from dataflow.serving import FlashRAGServing 
 
+# --- 算子导入 ---
 from dataflow.operators.core_text import (
     PandasOperator, 
     PromptTemplatedGenerator, 
@@ -17,6 +19,7 @@ from dataflow.operators.core_text import (
     GeneralFilter
 )
 
+# --- Prompt 模板导入 ---
 from dataflow.prompts.core_text import StrFormatPrompt
 from dataflow.prompts.agenticrag import (
     AtomicQAGeneratorPrompt,
@@ -188,11 +191,12 @@ def build_multihop_prompt_str(row: pd.Series, current_hop: int) -> str:
 # ==========================================
 
 class MultiHopRAGPipeline:
-    def __init__(self, input_hop: int = 1, gen_qa_num = 1):
+    def __init__(self, input_hop: int = 1, gen_qa_num: int = 3, topk: int = 3):
         self.input_hop = input_hop
         self.hop_key = f"hop_{input_hop}"
         self.next_hop_key = f"hop_{input_hop + 1}"
         self.gen_qa_num = gen_qa_num
+        self.topk = topk
 
         # 1. 初始化
         self.storage = FileStorage(
@@ -209,9 +213,14 @@ class MultiHopRAGPipeline:
         )
 
         self.retriever_serving = FlashRAGServing(
-            config_path="./retriever_config.yaml",
+            retrieval_method="e5",  # name of your retrieval_method.
+            retrieval_model_path="/path/to/retrieval/model",  # name or path of the retrieval model. 
+            index_path="/path/to/index", # path to the indexed file
+            corpus_path="/path/to/corpus",  # path to corpus in '.jsonl' format that store the documents
+            faiss_gpu=False, # whether use gpu to hold index
+            gpu_id="",
             max_workers=1,
-            topk=3
+            topk=self.topk
         )
 
         # =======================================================
@@ -486,5 +495,5 @@ class MultiHopRAGPipeline:
         print(f"Pipeline Hop {self.input_hop} -> {self.input_hop + 1} Completed and Verified.")
 
 if __name__ == "__main__":
-    pipeline = MultiHopRAGPipeline(input_hop=1, gen_qa_num=3)
+    pipeline = MultiHopRAGPipeline(input_hop=1, gen_qa_num=3, topk=3)
     asyncio.run(pipeline.forward())
