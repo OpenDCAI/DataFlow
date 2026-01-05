@@ -179,16 +179,34 @@ class LocalModelLLMServing_vllm(LLMServingABC):
         return [output.outputs.embedding for output in outputs]
 
     def cleanup(self):
-        free_mem = torch.cuda.mem_get_info()[0]  # 返回可用显存（单位：字节）
-        total_mem = torch.cuda.get_device_properties(0).total_memory
-        self.logger.info(f"Free memory: {free_mem / (1024 ** 2):.2f} MB / {total_mem / (1024 ** 2):.2f} MB")
-        self.logger.info("Cleaning up vLLM backend resources...")
         self.backend_initialized = False
+
+        if torch.cuda.is_available():
+            free_mem = torch.cuda.mem_get_info()[0]
+            total_mem = torch.cuda.get_device_properties(0).total_memory
+            self.logger.info(f"Free memory: {free_mem / (1024 ** 2):.2f} MB / {total_mem / (1024 ** 2):.2f} MB")
+
+        self.logger.info("Cleaning up vLLM backend resources...")
+
+        if not hasattr(self, "llm") or self.llm is None:
+            import gc
+            gc.collect()
+            if torch.cuda.is_available():
+                torch.cuda.empty_cache()
+            try:
+                import ray
+                ray.shutdown()
+            except Exception:
+                pass
+            return
+
         from vllm.distributed.parallel_state import (
             destroy_model_parallel,
             destroy_distributed_environment,
         )
-        del self.llm.llm_engine
+
+        if hasattr(self.llm, "llm_engine"):
+            del self.llm.llm_engine
         del self.llm
         destroy_model_parallel()
         destroy_distributed_environment()
@@ -196,13 +214,18 @@ class LocalModelLLMServing_vllm(LLMServingABC):
             torch.distributed.destroy_process_group()
         import gc
         gc.collect()
-        torch.cuda.empty_cache()
-        import ray
-        ray.shutdown()
-        free_mem = torch.cuda.mem_get_info()[0]  # 返回可用显存（单位：字节）
-        total_mem = torch.cuda.get_device_properties(0).total_memory
+        if torch.cuda.is_available():
+            torch.cuda.empty_cache()
+        try:
+            import ray
+            ray.shutdown()
+        except Exception:
+            pass
 
-        self.logger.info(f"Free memory: {free_mem / (1024 ** 2):.2f} MB / {total_mem / (1024 ** 2):.2f} MB")
+        if torch.cuda.is_available():
+            free_mem = torch.cuda.mem_get_info()[0]
+            total_mem = torch.cuda.get_device_properties(0).total_memory
+            self.logger.info(f"Free memory: {free_mem / (1024 ** 2):.2f} MB / {total_mem / (1024 ** 2):.2f} MB")
             
 class LocalModelLLMServing_sglang(LLMServingABC):
     def __init__(
