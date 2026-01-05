@@ -4,6 +4,7 @@ import json
 import os
 import re
 import time
+import unicodedata
 from dataclasses import dataclass
 from typing import Any, Callable, Dict, List, Literal, Optional, Tuple, Union
 import numpy as np
@@ -189,14 +190,47 @@ class UnifiedBenchDatasetEvaluator(OperatorABC):
     # -----------------------------
     # math_verify compare
     # -----------------------------
-    def _math_verify_compare(self, answer: Any, ground_truth: Any) -> bool:
+    def _try_math_verify_compare(self, answer: Any, ground_truth: Any) -> Optional[bool]:
         try:
             return verify(parse(str(ground_truth)), parse(str(answer)))
         except Exception:
             try:
                 return verify(parse(ground_truth), parse(answer))
             except Exception:
-                return False
+                return None
+
+    def _math_verify_compare(self, answer: Any, ground_truth: Any) -> bool:
+        res = self._try_math_verify_compare(answer, ground_truth)
+        return bool(res) if res is not None else False
+
+    def _normalize_text_for_match(self, text: Any) -> str:
+        if text is None:
+            return ""
+        s = unicodedata.normalize("NFKC", str(text))
+        s = s.translate(str.maketrans({
+            "₀": "0",
+            "₁": "1",
+            "₂": "2",
+            "₃": "3",
+            "₄": "4",
+            "₅": "5",
+            "₆": "6",
+            "₇": "7",
+            "₈": "8",
+            "₉": "9",
+        }))
+        s = s.strip()
+        s = re.sub(r"\s+", " ", s)
+        if s.endswith((".", "。", "!", "！", "?", "？")):
+            s = s[:-1].strip()
+        return s.casefold()
+
+    def _text_contains_match(self, pred: Any, ref: Any) -> bool:
+        p = self._normalize_text_for_match(pred)
+        r = self._normalize_text_for_match(ref)
+        if not p or not r:
+            return False
+        return (r in p) or (p in r)
 
     # -----------------------------
     # 多参考答案：把 targets 解析成 List[str]
@@ -367,8 +401,106 @@ class UnifiedBenchDatasetEvaluator(OperatorABC):
                     self.logger.error(f"llm_serving.{name} failed: {e}")
                     return None
 
-        self.logger.error("llm_serving does not provide any loglikelihood/score interface.")
-        return None
+        model_id = getattr(self.llm_serving, "real_model_path", None) or getattr(self.llm_serving, "hf_model_name_or_path", None)
+        hf_cache_dir = getattr(self.llm_serving, "hf_cache_dir", None)
+        trust_remote_code = getattr(self.llm_serving, "trust_remote_code", True)
+
+        if model_id is None:
+            self.logger.error("llm_serving does not expose real_model_path/hf_model_name_or_path; cannot compute loglikelihood.")
+            return None
+
+        try:
+            tokenizer = getattr(self, "_ll_hf_tokenizer", None)
+            model = getattr(self, "_ll_hf_model", None)
+            loaded_id = getattr(self, "_ll_hf_model_id", None)
+            if tokenizer is None or model is None or loaded_id != model_id:
+                tokenizer = AutoTokenizer.from_pretrained(model_id, cache_dir=hf_cache_dir, trust_remote_code=trust_remote_code)
+                model = AutoModelForCausalLM.from_pretrained(model_id, cache_dir=hf_cache_dir, trust_remote_code=trust_remote_code)
+                device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+                model.to(device)
+                model.eval()
+                self._ll_hf_tokenizer = tokenizer
+                self._ll_hf_model = model
+                self._ll_hf_model_id = model_id
+        except Exception as e:
+            self.logger.error(f"failed to load hf model/tokenizer for loglikelihood: {e}")
+            return None
+
+        try:
+            device = next(model.parameters()).device
+            pad_id = tokenizer.pad_token_id
+            if pad_id is None:
+                pad_id = tokenizer.eos_token_id if tokenizer.eos_token_id is not None else 0
+
+            batch_size = 4
+            lls: List[float] = []
+
+            def _safe_ids(text: str) -> List[int]:
+                return tokenizer(text, add_special_tokens=False).input_ids
+
+            for start in range(0, len(prompts), batch_size):
+                ps = ["" if p is None else str(p) for p in prompts[start:start + batch_size]]
+                cs = ["" if c is None else str(c) for c in continuations[start:start + batch_size]]
+
+                full_ids_list: List[List[int]] = []
+                prompt_lens: List[int] = []
+                cont_lens: List[int] = []
+
+                for p, c in zip(ps, cs):
+                    full_ids = _safe_ids(p + c)
+                    p_ids = _safe_ids(p)
+                    if len(p_ids) <= len(full_ids) and full_ids[:len(p_ids)] == p_ids:
+                        prompt_len = len(p_ids)
+                    else:
+                        c_ids = _safe_ids(c)
+                        prompt_len = max(0, len(full_ids) - len(c_ids))
+                    cont_len = max(0, len(full_ids) - prompt_len)
+                    full_ids_list.append(full_ids)
+                    prompt_lens.append(prompt_len)
+                    cont_lens.append(cont_len)
+
+                max_len = max((len(x) for x in full_ids_list), default=0)
+                if max_len == 0:
+                    lls.extend([0.0] * len(full_ids_list))
+                    continue
+
+                input_ids = torch.full((len(full_ids_list), max_len), pad_id, dtype=torch.long, device=device)
+                attention_mask = torch.zeros((len(full_ids_list), max_len), dtype=torch.long, device=device)
+                for i, ids in enumerate(full_ids_list):
+                    if not ids:
+                        continue
+                    t = torch.tensor(ids, dtype=torch.long, device=device)
+                    input_ids[i, : t.numel()] = t
+                    attention_mask[i, : t.numel()] = 1
+
+                with torch.no_grad():
+                    logits = model(input_ids=input_ids, attention_mask=attention_mask).logits
+                    log_probs = F.log_softmax(logits, dim=-1)
+
+                shift_log_probs = log_probs[:, :-1, :].contiguous()
+                shift_labels = input_ids[:, 1:].contiguous()
+                token_ll = shift_log_probs.gather(-1, shift_labels.unsqueeze(-1)).squeeze(-1)
+
+                for i in range(len(full_ids_list)):
+                    cont_len = cont_lens[i]
+                    prompt_len = prompt_lens[i]
+                    if cont_len <= 0:
+                        lls.append(0.0)
+                        continue
+                    start_pos = max(prompt_len, 1)
+                    end_pos = prompt_len + cont_len
+                    start_idx = start_pos - 1
+                    end_idx = end_pos - 1
+                    if end_idx <= start_idx:
+                        lls.append(0.0)
+                        continue
+                    ll_val = float(token_ll[i, start_idx:end_idx].sum().detach().cpu())
+                    lls.append(ll_val)
+
+            return lls
+        except Exception as e:
+            self.logger.error(f"hf loglikelihood computation failed: {e}")
+            return None
 
     def _ppl_batch(self, texts: List[str]) -> Optional[List[float]]:
         if self.llm_serving is None:
@@ -477,8 +609,6 @@ class UnifiedBenchDatasetEvaluator(OperatorABC):
         """
         df = storage.read("dataframe")
         eval_type = self.eval_type
-
-
 
         # 输出列统一
         if "eval_valid" not in df.columns:
@@ -787,7 +917,7 @@ class UnifiedBenchDatasetEvaluator(OperatorABC):
                 df["eval_error"] = "semantic_judge_unavailable"
                 return
 
-            # 默认用“预测 vs 标准”直接 judge（你旧逻辑那套需要特定 Prompt，这里只做通用；你可自行替换为你自己的 AnswerJudgePrompt）
+            # 默认用“预测 vs 标准”直接 judge（这里只做通用；可自行替换 AnswerJudgePrompt）
             inputs = []
             row_indices = []
             for idx, row in df.iterrows():
@@ -845,9 +975,11 @@ class UnifiedBenchDatasetEvaluator(OperatorABC):
                 continue
 
             final_answer = self.answer_extractor.extract_answer(pred_raw, None)
-            ok = self._math_verify_compare(final_answer, gt)
+            text_ok = self._text_contains_match(pred_raw, gt) or self._text_contains_match(final_answer, gt)
+            math_res = self._try_math_verify_compare(final_answer, gt)
+            ok = text_ok or (math_res is True)
             df.at[idx, "eval_score"] = 1.0 if ok else 0.0
-            df.at[idx, "eval_pred"] = str(final_answer)
+            df.at[idx, "eval_pred"] = str(final_answer) if (math_res is True) else str(pred_raw)
             df.at[idx, "eval_valid"] = True
             df.at[idx, "eval_error"] = ""
 
@@ -880,13 +1012,17 @@ class UnifiedBenchDatasetEvaluator(OperatorABC):
 
             final_answer = self.answer_extractor.extract_answer(pred_raw, None)
             ok_any = False
+            matched_by_text = False
             for gt in targets:
-                if self._math_verify_compare(final_answer, gt):
+                text_ok = self._text_contains_match(pred_raw, gt) or self._text_contains_match(final_answer, gt)
+                math_res = self._try_math_verify_compare(final_answer, gt)
+                if text_ok or (math_res is True):
                     ok_any = True
+                    matched_by_text = matched_by_text or text_ok
                     break
 
             df.at[idx, "eval_score"] = 1.0 if ok_any else 0.0
-            df.at[idx, "eval_pred"] = str(final_answer)
+            df.at[idx, "eval_pred"] = str(pred_raw) if matched_by_text else str(final_answer)
             df.at[idx, "eval_valid"] = True
             df.at[idx, "eval_error"] = ""
 

@@ -1,0 +1,10 @@
+{"eval_type":"key3_q_choices_a","id":"mc_0001","context":null,"question":"What is the capital of France?","choices":["Paris","London","Berlin","Rome"],"label":0}
+{"eval_type":"key3_q_choices_a","id":"mc_0002","context":null,"question":"In Python, what does len([1, 2, 3]) return?","choices":["2","3","4","An error"],"label":1}
+{"eval_type":"key3_q_choices_a","id":"mc_0003","context":"Assume standard SI units.","question":"Which physical quantity is measured in Newtons (N)?","choices":["Energy","Force","Power","Voltage"],"label":1}
+{"eval_type":"key3_q_choices_a","id":"mc_0004","context":null,"question":"Which planet is the largest in the Solar System?","choices":["Earth","Mars","Jupiter","Venus"],"label":2}
+{"eval_type":"key3_q_choices_a","id":"mc_0005","context":"Consider basic probability with a fair six-sided die.","question":"What is the probability of rolling a 6?","choices":["1/2","1/3","1/6","1/12"],"label":2}
+{"eval_type":"key3_q_choices_a","id":"mc_0006","context":"You are reading an English sentence.","question":"Choose the word that best completes the sentence: \"She ___ to the store yesterday.\"","choices":["go","goes","went","going"],"label":2}
+{"eval_type":"key3_q_choices_a","id":"mc_0007","context":"Pick the most appropriate next step in the sequence.","question":"What is the next number in the sequence 2, 4, 8, 16, ?","choices":["18","24","32","34"],"label":2}
+{"eval_type":"key3_q_choices_a","id":"mc_0008","context":"Computer science basics.","question":"Which data structure uses FIFO (first in, first out)?","choices":["Stack","Queue","Tree","Heap"],"label":1}
+{"eval_type":"key3_q_choices_a","id":"mc_0009","context":"Geography.","question":"Which ocean is the largest by surface area?","choices":["Indian Ocean","Atlantic Ocean","Arctic Ocean","Pacific Ocean"],"label":3}
+{"eval_type":"key3_q_choices_a","id":"mc_0010","context":"Mathematics.","question":"If x = 3, what is the value of 2x + 5?","choices":["8","10","11","12"],"label":2}

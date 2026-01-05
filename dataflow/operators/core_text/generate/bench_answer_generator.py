@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import inspect
 import re
 from typing import Any, Dict, List, Literal, Optional, Union
 
@@ -32,7 +33,15 @@ class BenchAnswerGenerator(OperatorABC):
 
     def __init__(
         self,
-        llm_serving: LLMServingABC,
+        eval_type: Literal[
+                "key1_text_score",
+                "key2_qa",
+                "key2_q_ma",
+                "key3_q_choices_a",
+                "key3_q_choices_as",
+                "key3_q_a_rejected",
+            ] = "key2_qa",
+        llm_serving: Optional[LLMServingABC] = None,
         prompt_template: Optional[Union[DIYPromptABC, Any]] = None,
         system_prompt: str = "You are a helpful assistant specialized in generating answers to questions.",
         allow_overwrite: bool = False,
@@ -45,6 +54,7 @@ class BenchAnswerGenerator(OperatorABC):
         self.system_prompt = system_prompt
         self.allow_overwrite = allow_overwrite
         self.force_generate = force_generate
+        self.eval_type = eval_type
 
     # ---------- 工具函数 ----------
     def _normalize_context(self, ctx: Any) -> Optional[str]:
@@ -127,13 +137,25 @@ class BenchAnswerGenerator(OperatorABC):
     ) -> str:
         if self.prompt_template is not None and hasattr(self.prompt_template, "build_prompt"):
             try:
-                return self.prompt_template.build_prompt(
-                    eval_type=eval_type,
-                    question=question,
-                    context=context,
-                    choices=choices,
-                    choices_text=self._format_choices_text(choices) if choices else None,
-                )
+                fn = getattr(self.prompt_template, "build_prompt")
+                kwargs = {
+                    "eval_type": eval_type,
+                    "question": question,
+                    "context": context,
+                    "choices": choices,
+                    "choices_text": self._format_choices_text(choices) if choices else None,
+                }
+                kwargs = {k: v for k, v in kwargs.items() if v is not None}
+
+                sig = inspect.signature(fn)
+                params = sig.parameters.values()
+                has_varkw = any(p.kind == inspect.Parameter.VAR_KEYWORD for p in params)
+                if has_varkw:
+                    return fn(**kwargs)
+
+                accepted = {p.name for p in params if p.name != "self"}
+                filtered = {k: v for k, v in kwargs.items() if k in accepted}
+                return fn(**filtered)
             except Exception as e:
                 self.logger.error(f"prompt_template.build_prompt 失败, fallback 默认模板: {e}")
         return self._build_prompt_fallback(eval_type=eval_type, question=question, context=context, choices=choices)
@@ -156,30 +178,24 @@ class BenchAnswerGenerator(OperatorABC):
         # evaluator 当前实现里:
         # - key1_text_score: 不需要 generated_ans
         # - key2_qa / key2_q_ma: 需要 generated_ans
-        # - key3_q_choices_a: 若 evaluator 用 ll 则不需要; 但为了可测试/兜底, 这里默认生成
+        # - key3_q_choices_a: evaluator 可用 ll 做选择题评估 -> 默认不生成
         # - key3_q_choices_as: evaluator 当前用解析 generated_ans -> 需要
         # - key3_q_a_rejected: evaluator 用 ll 比较 better vs rejected -> 不需要
         if self.force_generate:
             return eval_type != "key1_text_score"
-        return eval_type in ("key2_qa", "key2_q_ma", "key3_q_choices_a", "key3_q_choices_as")
+        return eval_type in ("key2_qa", "key2_q_ma", "key3_q_choices_as")
 
     # ---------- 主入口 ----------
     def run(
         self,
         storage: DataFlowStorage,
-        eval_type: Literal[
-            "key1_text_score",
-            "key2_qa",
-            "key2_q_ma",
-            "key3_q_choices_a",
-            "key3_q_choices_as",
-            "key3_q_a_rejected",
-        ],
         keys_map: Dict[str, str],
         context_key: Optional[str] = None,
         output_key: str = "generated_ans",
     ) -> List[str]:
+
         df = storage.read("dataframe")
+        eval_type = self.eval_type
 
         if not self._need_generation(eval_type):
             self.logger.info(f"[BenchAnswerGenerator] eval_type={eval_type} 默认不需要生成, 跳过")

@@ -1,0 +1,6 @@
+{"eval_type":"key2_q_ma","id":"ma_0001","context":"France's capital city is Paris.","question":"What is the capital of France?","targets":["Paris","The capital of France is Paris."]}
+{"eval_type":"key2_q_ma","id":"ma_0002","context":"The chemical symbol for water is H2O.","question":"What is the chemical formula for water?","targets":["H2O","h2o"]}
+{"eval_type":"key2_q_ma","id":"ma_0003","context":"Python is a popular programming language created by Guido van Rossum.","question":"Who created Python?","targets":["Guido van Rossum","Guido"]}
+{"eval_type":"key2_q_ma","id":"ma_0004","context":"The largest planet in our solar system is Jupiter.","question":"Which is the largest planet in the solar system?","targets":["Jupiter","The largest planet is Jupiter."]}
+{"eval_type":"key2_q_ma","id":"ma_0005","context":"Light travels at approximately 300,000 kilometers per second in vacuum.","question":"What is the approximate speed of light in vacuum?","targets":["300000 km/s","300,000 km/s","3e5 km/s","approximately 300,000 kilometers per second"]}
+{"eval_type":"key2_q_ma","id":"ma_0006","context":"Shakespeare wrote the tragedy Hamlet.","question":"Who wrote Hamlet?","targets":["William Shakespeare","Shakespeare"]}
