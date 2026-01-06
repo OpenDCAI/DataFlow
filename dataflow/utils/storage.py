@@ -1060,7 +1060,8 @@ class BatchedFileStorage(FileStorage):
         os.makedirs(os.path.dirname(file_path), exist_ok=True)
         self.logger.success(f"Writing data to {file_path} with type {self.cache_type}")
         if self.cache_type == "jsonl":
-            with open(file_path, 'a', encoding='utf-8') as f:
+            open_mode = 'w' if self.batch_step == 0 else 'a'
+            with open(file_path, open_mode, encoding='utf-8') as f:
                 dataframe.to_json(f, orient="records", lines=True, force_ascii=False)
         elif self.cache_type == "csv":
             if self.batch_step == 0:

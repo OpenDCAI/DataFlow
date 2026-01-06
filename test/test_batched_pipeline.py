@@ -57,3 +57,4 @@ if __name__ == "__main__":
     pipeline = AutoOPPipeline()
     pipeline.compile()
     pipeline.forward(batch_size=2, resume_from_last=True)
+    pipeline.forward(batch_size=2, resume_from_last=False)  # should overwrite
