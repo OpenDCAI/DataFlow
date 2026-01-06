@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 import json
 import inspect
 import re
@@ -41,11 +39,10 @@ class BenchAnswerGenerator(OperatorABC):
                 "key3_q_choices_as",
                 "key3_q_a_rejected",
             ] = "key2_qa",
-        llm_serving: Optional[LLMServingABC] = None,
-        prompt_template: Optional[Union[DIYPromptABC, Any]] = None,
+        llm_serving: LLMServingABC = None,
+        prompt_template: DIYPromptABC = None,
         system_prompt: str = "You are a helpful assistant specialized in generating answers to questions.",
         allow_overwrite: bool = False,
-        # 是否强制对所有类型都生成, 默认只对需要 pred 的类型生成
         force_generate: bool = False,
     ):
         self.logger = get_logger()
@@ -189,8 +186,8 @@ class BenchAnswerGenerator(OperatorABC):
     def run(
         self,
         storage: DataFlowStorage,
-        keys_map: Dict[str, str],
-        context_key: Optional[str] = None,
+        input_keys_map: Dict[str, str],
+        input_context_key: Optional[str] = None,
         output_key: str = "generated_ans",
     ) -> List[str]:
 
@@ -208,13 +205,13 @@ class BenchAnswerGenerator(OperatorABC):
             return []
 
         # 读取字段
-        q_col = keys_map.get("question")
+        q_col = input_keys_map.get("question")
         if not q_col or q_col not in df.columns:
             self.logger.error(f"缺少 question 列, keys_map.question={q_col}")
             storage.write(df)
             return []
 
-        ch_col = keys_map.get("choices")
+        ch_col = input_keys_map.get("choices")
         need_choices = eval_type in ("key3_q_choices_a", "key3_q_choices_as")
         if need_choices and (not ch_col or ch_col not in df.columns):
             self.logger.error(f"缺少 choices 列, keys_map.choices={ch_col}")
@@ -222,11 +219,11 @@ class BenchAnswerGenerator(OperatorABC):
             return []
 
         ctx_series = None
-        if context_key:
-            if context_key in df.columns:
-                ctx_series = df[context_key]
+        if input_context_key:
+            if input_context_key in df.columns:
+                ctx_series = df[input_context_key]
             else:
-                self.logger.error(f"context_key 不存在: {context_key}, 视为 None")
+                self.logger.error(f"context_key 不存在: {input_context_key}, 视为 None")
 
         prompts: List[str] = []
         for idx, row in df.iterrows():
@@ -259,8 +256,39 @@ class BenchAnswerGenerator(OperatorABC):
     def get_desc(lang: str = "zh"):
         if lang == "zh":
             return (
-                "用于 bench 评测的统一生成算子, 与 evaluator 的 eval_type + keys_map 对齐。\n"
-                "默认只对需要生成输出的类型生成 output_key=generated_ans, 并支持 context_key 作为可选上下文。\n"
-                "可通过 allow_overwrite 控制是否覆盖已存在的输出列。"
+                "该算子用于 bench 评测的统一答案生成，根据 eval_type + keys_map 从 DataFrame 取字段构造 prompt 并批量调用 LLM 生成答案。\n"
+                "对于默认不需要生成的类型会跳过生成（可用 force_generate 强制）。\n\n"
+                "初始化参数：\n"
+                "- eval_type：评测类型（key1_text_score / key2_qa / key2_q_ma / key3_q_choices_a / key3_q_choices_as / key3_q_a_rejected）\n"
+                "- llm_serving：LLM 服务对象（需提供 generate_from_input）\n"
+                "- prompt_template：提示模板对象（可选，需提供 build_prompt；否则使用内置 fallback 模板）\n"
+                "- system_prompt：系统提示词\n"
+                "- allow_overwrite：输出列已存在时是否允许覆盖\n"
+                "- force_generate：是否强制对可生成类型都生成\n\n"
+                "运行参数：\n"
+                "- storage：DataFlowStorage\n"
+                "- input_keys_map：字段映射，至少包含 question；选择题需包含 choices\n"
+                "- input_context_key：可选，上下文字段名\n"
+                "- output_key：生成结果列名（默认 generated_ans）\n\n"
+                "输出：\n"
+                "- 写回 DataFrame 的 output_key 列（若跳过生成则不写）\n"
+                "- 返回新增/写入的列名列表（通常为 [output_key] 或 []）"
             )
-        return "Unified bench answer generator aligned with evaluator eval_type and keys_map."
+        return (
+            "This operator generates answers for unified bench evaluation by building prompts from a dataframe and calling an LLM.\n\n"
+            "Input Parameters:\n"
+            "- eval_type: Evaluation type (key1_text_score/key2_qa/key2_q_ma/key3_q_choices_a/key3_q_choices_as/key3_q_a_rejected)\n"
+            "- llm_serving: LLM serving object (must provide generate_from_input)\n"
+            "- prompt_template: Prompt template object (optional; must provide build_prompt; falls back to an internal template)\n"
+            "- system_prompt: System prompt passed to the serving (if supported)\n"
+            "- allow_overwrite: Whether to overwrite an existing output column\n"
+            "- force_generate: Whether to force generation for types that can be skipped by default\n\n"
+            "Run Parameters:\n"
+            "- storage: DataFlowStorage\n"
+            "- keys_map: Column mapping (requires question; for choice tasks requires choices)\n"
+            "- context_key: Optional context column name\n"
+            "- output_key: Output column name for generated answers (default: generated_ans)\n\n"
+            "Output Parameters:\n"
+            "- Writes output_key into the dataframe when generation is performed\n"
+            "- Returns a list of written keys (usually [output_key] or [])"
+        )

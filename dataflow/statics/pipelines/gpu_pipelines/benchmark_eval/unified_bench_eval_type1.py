@@ -53,15 +53,15 @@ class UnifiedBenchEvalPipeline():
     def forward(self):
         self.answer_generator_step1.run(
             storage=self.storage.step(),
-            keys_map=KEY_MAPS,
-            context_key=None,
+            input_keys_map=KEY_MAPS,
+            input_context_key=None,
             output_key="generated_ans",
         )
 
         self.evaluator_step2.run(
             storage=self.storage.step(),
-            keys_map=KEY_MAPS,
-            context_key=None,
+            input_keys_map=KEY_MAPS,
+            input_context_key=None,
             input_pred_key="generated_ans",
 
         )

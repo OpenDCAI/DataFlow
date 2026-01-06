@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 import json
 import os
 import re
@@ -594,9 +592,13 @@ class UnifiedBenchDatasetEvaluator(OperatorABC):
     def run(
         self,
         storage: DataFlowStorage,
-        keys_map: Optional[Dict[str, str]] = None,
-        context_key: Optional[str] = None,
+        input_keys_map: Optional[Dict[str, str]] = None,
+        input_context_key: Optional[str] = None,
         input_pred_key: str = "generated_ans",
+        output_eval_valid_key: str = "eval_valid",
+        output_eval_error_key: str = "eval_error",
+        output_eval_pred_key: str = "eval_pred",
+        output_eval_score_key: str = "eval_score",
     ) -> List[str]:
         """
         keys_map 示例：
@@ -611,43 +613,43 @@ class UnifiedBenchDatasetEvaluator(OperatorABC):
         eval_type = self.eval_type
 
         # 输出列统一
-        if "eval_valid" not in df.columns:
-            df["eval_valid"] = True
-        df["eval_error"] = ""
-        df["eval_pred"] = None
-        df["eval_score"] = np.nan  # 数值型评分（accuracy 类用 0/1）
+        if output_eval_valid_key not in df.columns:
+            df[output_eval_valid_key] = True
+        df[output_eval_error_key] = ""
+        df[output_eval_pred_key] = None
+        df[output_eval_score_key] = np.nan  # 数值型评分（accuracy 类用 0/1）
 
         # 默认 metric
         metric_type = self.metric_type
         if metric_type is None:
             metric_type = self._default_metric_for_type(eval_type, self.use_semantic_judge)
 
-        if keys_map is None:
+        if input_keys_map is None:
             self.logger.error("keys_map is required.")
             storage.write(df)
-            return ["eval_valid", "eval_error", "eval_pred", "eval_score"]
+            return [output_eval_valid_key, output_eval_error_key, output_eval_pred_key, output_eval_score_key]
 
         # context 处理：统一读一列（可无）
         ctx_series = None
-        if context_key is not None:
-            if context_key not in df.columns:
-                self.logger.error(f"context_key '{context_key}' not found; treat as None.")
+        if input_context_key is not None:
+            if input_context_key not in df.columns:
+                self.logger.error(f"context_key '{input_context_key}' not found; treat as None.")
             else:
-                ctx_series = df[context_key]
+                ctx_series = df[input_context_key]
 
         # 分发
         if eval_type == "key1_text_score":
-            required = [keys_map.get("text", "")]
+            required = [input_keys_map.get("text", "")]
             if not self._check_columns(df, required):
                 storage.write(df)
                 return required
 
-            text_col = keys_map["text"]
+            text_col = input_keys_map["text"]
             texts = [str(x) if x is not None else "" for x in df[text_col].tolist()]
             ppl = self._ppl_batch(texts)
             if ppl is None:
-                df["eval_valid"] = False
-                df["eval_error"] = "ppl_unavailable"
+                df[output_eval_valid_key] = False
+                df[output_eval_error_key] = "ppl_unavailable"
                 storage.write(df)
                 self._save_stats(storage.file_name_prefix, {
                     "bench_name_or_prefix": storage.file_name_prefix,
@@ -657,11 +659,11 @@ class UnifiedBenchDatasetEvaluator(OperatorABC):
                     "valid_samples": 0,
                     "note": "ppl unavailable in llm_serving",
                 })
-                return [text_col, "eval_score", "eval_valid", "eval_error"]
+                return [text_col, output_eval_score_key, output_eval_valid_key, output_eval_error_key]
 
-            df["eval_score"] = ppl
-            df["eval_pred"] = None
-            df["eval_valid"] = True
+            df[output_eval_score_key] = ppl
+            df[output_eval_pred_key] = None
+            df[output_eval_valid_key] = True
             storage.write(df)
 
             stats = {
@@ -673,15 +675,15 @@ class UnifiedBenchDatasetEvaluator(OperatorABC):
                 "ppl_mean": float(np.mean(ppl)) if len(ppl) else 0.0,
             }
             self._save_stats(storage.file_name_prefix, stats)
-            return [text_col, "eval_score", "eval_valid", "eval_error"]
+            return [text_col, output_eval_score_key, output_eval_valid_key, output_eval_error_key]
 
         elif eval_type in ("key2_qa", "key2_q_ma"):
             # QA：默认走 math_verify 抽取+对比（可选 semantic_judge）
             # 单参考：target
             # 多参考：targets
-            question_col = keys_map.get("question", "")
+            question_col = input_keys_map.get("question", "")
             if eval_type == "key2_qa":
-                target_col = keys_map.get("target", "")
+                target_col = input_keys_map.get("target", "")
                 required = [question_col, target_col, input_pred_key]
                 if not self._check_columns(df, required):
                     storage.write(df)
@@ -704,10 +706,10 @@ class UnifiedBenchDatasetEvaluator(OperatorABC):
                     "metric": metric_type,
                 })
                 self._save_stats(storage.file_name_prefix, stats)
-                return [question_col, target_col, input_pred_key, "eval_score", "eval_valid", "eval_error"]
+                return [question_col, target_col, input_pred_key, output_eval_score_key, output_eval_valid_key, output_eval_error_key]
 
             else:
-                targets_col = keys_map.get("targets", "")
+                targets_col = input_keys_map.get("targets", "")
                 required = [question_col, targets_col, input_pred_key]
                 if not self._check_columns(df, required):
                     storage.write(df)
@@ -730,12 +732,12 @@ class UnifiedBenchDatasetEvaluator(OperatorABC):
                     "metric": metric_type,
                 })
                 self._save_stats(storage.file_name_prefix, stats)
-                return [question_col, targets_col, input_pred_key, "eval_score", "eval_valid", "eval_error"]
+                return [question_col, targets_col, input_pred_key, output_eval_score_key, output_eval_valid_key, output_eval_error_key] 
 
         elif eval_type == "key3_q_choices_a":
-            question_col = keys_map.get("question", "")
-            choices_col = keys_map.get("choices", "")
-            label_col = keys_map.get("label", "")
+            question_col = input_keys_map.get("question", "")
+            choices_col = input_keys_map.get("choices", "")
+            label_col = input_keys_map.get("label", "")
             required = [question_col, choices_col, label_col]
             # 若没有 llm_serving，则 fallback 需要 pred_col
             if self.llm_serving is None:
@@ -763,12 +765,12 @@ class UnifiedBenchDatasetEvaluator(OperatorABC):
                 "metric": metric_type,
             })
             self._save_stats(storage.file_name_prefix, stats)
-            return [question_col, choices_col, label_col, "eval_score", "eval_valid", "eval_error"]
+            return [question_col, choices_col, label_col, output_eval_score_key, output_eval_valid_key, output_eval_error_key]
 
         elif eval_type == "key3_q_choices_as":
-            question_col = keys_map.get("question", "")
-            choices_col = keys_map.get("choices", "")
-            labels_col = keys_map.get("labels", "")
+            question_col = input_keys_map.get("question", "")
+            choices_col = input_keys_map.get("choices", "")
+            labels_col = input_keys_map.get("labels", "")
             required = [question_col, choices_col, labels_col, input_pred_key]  # 先按“解析模型输出集合”实现
             if not self._check_columns(df, required):
                 storage.write(df)
@@ -791,12 +793,12 @@ class UnifiedBenchDatasetEvaluator(OperatorABC):
                 "metric": metric_type,
             })
             self._save_stats(storage.file_name_prefix, stats)
-            return [question_col, choices_col, labels_col, input_pred_key, "eval_score", "eval_valid", "eval_error"]
+            return [question_col, choices_col, labels_col, input_pred_key, output_eval_score_key, output_eval_valid_key, output_eval_error_key]
 
         elif eval_type == "key3_q_a_rejected":
-            question_col = keys_map.get("question", "")
-            better_col = keys_map.get("better", "")
-            rejected_col = keys_map.get("rejected", "")
+            question_col = input_keys_map.get("question", "")
+            better_col = input_keys_map.get("better", "")
+            rejected_col = input_keys_map.get("rejected", "")
             required = [question_col, better_col, rejected_col]
             if not self._check_columns(df, required):
                 storage.write(df)
@@ -804,8 +806,9 @@ class UnifiedBenchDatasetEvaluator(OperatorABC):
 
             if self.llm_serving is None:
                 # 这个类型没有 pred_col 可 fallback，只能报错
-                df["eval_valid"] = False
-                df["eval_error"] = "llm_serving_required_for_pairwise"
+                self.logger.error("llm_serving is required for pairwise evaluation")
+                df[output_eval_valid_key] = False
+                df[output_eval_error_key] = "llm_serving_required_for_pairwise"
                 storage.write(df)
                 stats = {
                     "bench_name_or_prefix": storage.file_name_prefix,
@@ -816,7 +819,7 @@ class UnifiedBenchDatasetEvaluator(OperatorABC):
                     "note": "pairwise requires llm_serving loglikelihood",
                 }
                 self._save_stats(storage.file_name_prefix, stats)
-                return required + ["eval_score", "eval_valid", "eval_error"]
+                return required + [output_eval_score_key, output_eval_valid_key, output_eval_error_key]
 
             self._eval_pairwise(
                 df=df,
@@ -835,12 +838,12 @@ class UnifiedBenchDatasetEvaluator(OperatorABC):
                 "metric": metric_type,
             })
             self._save_stats(storage.file_name_prefix, stats)
-            return required + ["eval_score", "eval_valid", "eval_error"]
+            return required + [output_eval_score_key, output_eval_valid_key, output_eval_error_key]
 
         else:
             self.logger.error(f"Unknown bench_dataflow_eval_type: {eval_type}")
             storage.write(df)
-            return ["eval_valid", "eval_error", "eval_pred", "eval_score"]
+            return [output_eval_valid_key, output_eval_error_key, input_pred_key, output_eval_score_key]
 
     # -----------------------------
     # 默认 metric
@@ -865,11 +868,11 @@ class UnifiedBenchDatasetEvaluator(OperatorABC):
     # -----------------------------
     def _stats_for_binary(self, df: pd.DataFrame) -> Dict[str, Any]:
         total = len(df)
-        valid_mask = df["eval_valid"] == True
+        valid_mask = df[output_eval_valid_key] == True
         valid = int(valid_mask.sum())
         # eval_score: 0/1
         if valid > 0:
-            acc = float(df.loc[valid_mask, "eval_score"].mean())
+            acc = float(df.loc[valid_mask, output_eval_score_key].mean())
         else:
             acc = 0.0
         return {
@@ -883,11 +886,11 @@ class UnifiedBenchDatasetEvaluator(OperatorABC):
     # -----------------------------
     def _stats_for_multiselect(self, df: pd.DataFrame) -> Dict[str, Any]:
         total = len(df)
-        valid_mask = df["eval_valid"] == True
+        valid_mask = df[output_eval_valid_key] == True
         valid = int(valid_mask.sum())
         # eval_score 默认存 f1
         if valid > 0:
-            f1_mean = float(df.loc[valid_mask, "eval_score"].mean())
+            f1_mean = float(df.loc[valid_mask, output_eval_score_key].mean())   
         else:
             f1_mean = 0.0
         # 如果你想要更多维度（jaccard/exact_set），可以从 eval_pred 里扩展存 dict，这里先给最小
@@ -913,8 +916,8 @@ class UnifiedBenchDatasetEvaluator(OperatorABC):
             # 语义 judge 需要 llm_serving.generate_from_input
             if self.llm_serving is None or not hasattr(self.llm_serving, "generate_from_input"):
                 self.logger.error("semantic_judge requires llm_serving.generate_from_input")
-                df["eval_valid"] = False
-                df["eval_error"] = "semantic_judge_unavailable"
+                df[output_eval_valid_key] = False
+                df[output_eval_error_key] = "semantic_judge_unavailable"
                 return
 
             # 默认用“预测 vs 标准”直接 judge（这里只做通用；可自行替换 AnswerJudgePrompt）
@@ -924,12 +927,12 @@ class UnifiedBenchDatasetEvaluator(OperatorABC):
                 gt = row[target_col]
                 pred = row[pred_col]
                 if gt is None or (isinstance(gt, str) and gt.strip() == ""):
-                    df.at[idx, "eval_valid"] = False
-                    df.at[idx, "eval_error"] = "empty_reference"
+                    df.at[idx, output_eval_valid_key] = False
+                    df.at[idx, output_eval_error_key] = "empty_reference"
                     continue
                 if pred is None or (isinstance(pred, str) and pred.strip() == ""):
-                    df.at[idx, "eval_valid"] = False
-                    df.at[idx, "eval_error"] = "empty_prediction"
+                    df.at[idx, output_eval_valid_key] = False
+                    df.at[idx, output_eval_error_key] = "empty_prediction"
                     continue
 
                 prompt = (
@@ -948,16 +951,16 @@ class UnifiedBenchDatasetEvaluator(OperatorABC):
             except Exception as e:
                 self.logger.error(f"semantic_judge generate_from_input failed: {e}")
                 for idx in row_indices:
-                    df.at[idx, "eval_valid"] = False
-                    df.at[idx, "eval_error"] = "semantic_judge_failed"
+                    df.at[idx, output_eval_valid_key] = False
+                    df.at[idx, output_eval_error_key] = "semantic_judge_failed"
                 return
 
             for idx, resp in zip(row_indices, responses):
                 ok = self._resolve_judge_response(resp)
-                df.at[idx, "eval_score"] = 1.0 if ok else 0.0
-                df.at[idx, "eval_pred"] = None
-                df.at[idx, "eval_valid"] = True
-                df.at[idx, "eval_error"] = ""
+                df.at[idx, output_eval_score_key] = 1.0 if ok else 0.0
+                df.at[idx, output_eval_pred_key] = None
+                df.at[idx, output_eval_valid_key] = True    
+                df.at[idx, output_eval_error_key] = ""
 
             return
 
@@ -966,22 +969,22 @@ class UnifiedBenchDatasetEvaluator(OperatorABC):
             gt = row[target_col]
             pred_raw = row[pred_col]
             if gt is None or (isinstance(gt, str) and gt.strip() == ""):
-                df.at[idx, "eval_valid"] = False
-                df.at[idx, "eval_error"] = "empty_reference"
+                df.at[idx, output_eval_valid_key] = False
+                df.at[idx, output_eval_error_key] = "empty_reference"
                 continue
             if pred_raw is None or (isinstance(pred_raw, str) and pred_raw.strip() == ""):
-                df.at[idx, "eval_valid"] = False
-                df.at[idx, "eval_error"] = "empty_prediction"
+                df.at[idx, output_eval_valid_key] = False
+                df.at[idx, output_eval_error_key] = "empty_prediction"
                 continue
 
             final_answer = self.answer_extractor.extract_answer(pred_raw, None)
             text_ok = self._text_contains_match(pred_raw, gt) or self._text_contains_match(final_answer, gt)
             math_res = self._try_math_verify_compare(final_answer, gt)
             ok = text_ok or (math_res is True)
-            df.at[idx, "eval_score"] = 1.0 if ok else 0.0
-            df.at[idx, "eval_pred"] = str(final_answer) if (math_res is True) else str(pred_raw)
-            df.at[idx, "eval_valid"] = True
-            df.at[idx, "eval_error"] = ""
+            df.at[idx, output_eval_score_key] = 1.0 if ok else 0.0
+            df.at[idx, output_eval_pred_key] = str(final_answer) if (math_res is True) else str(pred_raw)
+            df.at[idx, output_eval_valid_key] = True
+            df.at[idx, output_eval_error_key] = ""
 
     # -----------------------------
     # key2_q_ma：多参考
@@ -1002,12 +1005,12 @@ class UnifiedBenchDatasetEvaluator(OperatorABC):
             targets = self._normalize_targets(targets_raw)
 
             if len(targets) == 0:
-                df.at[idx, "eval_valid"] = False
-                df.at[idx, "eval_error"] = "empty_references"
+                df.at[idx, output_eval_valid_key] = False
+                df.at[idx, output_eval_error_key] = "empty_references"
                 continue
             if pred_raw is None or (isinstance(pred_raw, str) and pred_raw.strip() == ""):
-                df.at[idx, "eval_valid"] = False
-                df.at[idx, "eval_error"] = "empty_prediction"
+                df.at[idx, output_eval_valid_key] = False
+                df.at[idx, output_eval_error_key] = "empty_prediction"
                 continue
 
             final_answer = self.answer_extractor.extract_answer(pred_raw, None)
@@ -1021,10 +1024,10 @@ class UnifiedBenchDatasetEvaluator(OperatorABC):
                     matched_by_text = matched_by_text or text_ok
                     break
 
-            df.at[idx, "eval_score"] = 1.0 if ok_any else 0.0
-            df.at[idx, "eval_pred"] = str(pred_raw) if matched_by_text else str(final_answer)
-            df.at[idx, "eval_valid"] = True
-            df.at[idx, "eval_error"] = ""
+            df.at[idx, output_eval_score_key] = 1.0 if ok_any else 0.0
+            df.at[idx, output_eval_pred_key] = str(pred_raw) if matched_by_text else str(final_answer)
+            df.at[idx, output_eval_valid_key] = True
+            df.at[idx, output_eval_error_key] = ""  
 
     # -----------------------------
     # key3_q_choices_a：单选
@@ -1048,20 +1051,20 @@ class UnifiedBenchDatasetEvaluator(OperatorABC):
                 label = row[label_col]
 
                 if choices is None or (isinstance(choices, float) and np.isnan(choices)):
-                    df.at[idx, "eval_valid"] = False
-                    df.at[idx, "eval_error"] = "empty_choices"
+                    df.at[idx, output_eval_valid_key] = False
+                    df.at[idx, output_eval_error_key] = "empty_choices"
                     continue
                 if not isinstance(choices, list):
                     # 尝试 json
                     try:
                         choices = json.loads(str(choices))
                     except Exception:
-                        df.at[idx, "eval_valid"] = False
-                        df.at[idx, "eval_error"] = "choices_not_list"
+                        df.at[idx, output_eval_valid_key] = False
+                        df.at[idx, output_eval_error_key] = "choices_not_list"
                         continue
                 if len(choices) == 0:
-                    df.at[idx, "eval_valid"] = False
-                    df.at[idx, "eval_error"] = "empty_choices"
+                    df.at[idx, output_eval_valid_key] = False
+                    df.at[idx, output_eval_error_key] = "empty_choices"
                     continue
 
                 ctx = None
@@ -1073,8 +1076,8 @@ class UnifiedBenchDatasetEvaluator(OperatorABC):
                 # label 规范化为 idx
                 gold_idx = self._normalize_label_to_index(label, len(choices))
                 if gold_idx is None:
-                    df.at[idx, "eval_valid"] = False
-                    df.at[idx, "eval_error"] = "invalid_label"
+                    df.at[idx, output_eval_valid_key] = False
+                    df.at[idx, output_eval_error_key] = "invalid_label"
                     continue
 
                 prompts = [prompt] * len(choices)
@@ -1086,15 +1089,15 @@ class UnifiedBenchDatasetEvaluator(OperatorABC):
 
                 lls = self._ll_batch(prompts, conts)
                 if lls is None:
-                    df.at[idx, "eval_valid"] = False
-                    df.at[idx, "eval_error"] = "ll_unavailable"
+                    df.at[idx, output_eval_valid_key] = False
+                    df.at[idx, output_eval_error_key] = "ll_unavailable"
                     continue
 
                 pred_idx = int(np.argmax(np.array(lls)))
-                df.at[idx, "eval_pred"] = int(pred_idx)
-                df.at[idx, "eval_score"] = 1.0 if pred_idx == gold_idx else 0.0
-                df.at[idx, "eval_valid"] = True
-                df.at[idx, "eval_error"] = ""
+                df.at[idx, output_eval_pred_key] = int(pred_idx)
+                df.at[idx, output_eval_score_key] = 1.0 if pred_idx == gold_idx else 0.0
+                df.at[idx, output_eval_valid_key] = True
+                df.at[idx, output_eval_error_key] = ""
 
             return
 
@@ -1106,28 +1109,28 @@ class UnifiedBenchDatasetEvaluator(OperatorABC):
             pred_text = row[pred_col] if pred_col in df.columns else None
 
             if choices is None:
-                df.at[idx, "eval_valid"] = False
-                df.at[idx, "eval_error"] = "empty_choices"
+                df.at[idx, output_eval_valid_key] = False
+                df.at[idx, output_eval_error_key] = "empty_choices"
                 continue
             if not isinstance(choices, list):
                 try:
                     choices = json.loads(str(choices))
                 except Exception:
-                    df.at[idx, "eval_valid"] = False
-                    df.at[idx, "eval_error"] = "choices_not_list"
+                    df.at[idx, output_eval_valid_key] = False
+                    df.at[idx, output_eval_error_key] = "choices_not_list"
                     continue
 
             gold_idx = self._normalize_label_to_index(label, len(choices))
             pred_idx = self._parse_choice_from_text(str(pred_text), len(choices)) if pred_text is not None else None
             if gold_idx is None or pred_idx is None:
-                df.at[idx, "eval_valid"] = False
-                df.at[idx, "eval_error"] = "parse_failed"
+                df.at[idx, output_eval_valid_key] = False
+                df.at[idx, output_eval_error_key] = "parse_failed"
                 continue
 
-            df.at[idx, "eval_pred"] = int(pred_idx)
-            df.at[idx, "eval_score"] = 1.0 if pred_idx == gold_idx else 0.0
-            df.at[idx, "eval_valid"] = True
-            df.at[idx, "eval_error"] = ""
+            df.at[idx, output_eval_pred_key] = int(pred_idx)
+            df.at[idx, output_eval_score_key] = 1.0 if pred_idx == gold_idx else 0.0
+            df.at[idx, output_eval_valid_key] = True
+            df.at[idx, output_eval_error_key] = ""
 
     def _normalize_label_to_index(self, label: Any, n: int) -> Optional[int]:
         if label is None:
@@ -1175,15 +1178,15 @@ class UnifiedBenchDatasetEvaluator(OperatorABC):
             pred_text = row[pred_col]
 
             if choices is None:
-                df.at[idx, "eval_valid"] = False
-                df.at[idx, "eval_error"] = "empty_choices"
+                df.at[idx, output_eval_valid_key] = False
+                df.at[idx, output_eval_error_key] = "empty_choices"
                 continue
             if not isinstance(choices, list):
                 try:
                     choices = json.loads(str(choices))
                 except Exception:
-                    df.at[idx, "eval_valid"] = False
-                    df.at[idx, "eval_error"] = "choices_not_list"
+                    df.at[idx, output_eval_valid_key] = False
+                    df.at[idx, output_eval_error_key] = "choices_not_list"
                     continue
 
             n = len(choices)
@@ -1191,20 +1194,20 @@ class UnifiedBenchDatasetEvaluator(OperatorABC):
             pred_set = self._parse_multiselect_set(str(pred_text), n)
 
             if gold_set is None or pred_set is None:
-                df.at[idx, "eval_valid"] = False
-                df.at[idx, "eval_error"] = "parse_failed"
+                df.at[idx, output_eval_valid_key] = False
+                df.at[idx, output_eval_error_key] = "parse_failed"
                 continue
 
             m = self._set_metrics(pred_set, gold_set)
             # eval_score 默认存 f1（你的上层聚合最常用）
-            df.at[idx, "eval_score"] = float(m["f1"])
+            df.at[idx, output_eval_score_key] = float(m["f1"])
             # eval_pred 存更丰富的信息，便于 debug
-            df.at[idx, "eval_pred"] = json.dumps(
+            df.at[idx, output_eval_pred_key] = json.dumps(
                 {"pred_set": sorted(list(pred_set)), "gold_set": sorted(list(gold_set)), **m},
                 ensure_ascii=False,
             )
-            df.at[idx, "eval_valid"] = True
-            df.at[idx, "eval_error"] = ""
+            df.at[idx, output_eval_valid_key] = True
+            df.at[idx, output_eval_error_key] = ""
 
     def _normalize_multilabel_to_set(self, labels: Any, n: int) -> Optional[set]:
         if labels is None:
@@ -1268,12 +1271,12 @@ class UnifiedBenchDatasetEvaluator(OperatorABC):
             rej = row[rejected_col]
 
             if better is None or (isinstance(better, str) and better.strip() == ""):
-                df.at[idx, "eval_valid"] = False
-                df.at[idx, "eval_error"] = "empty_better"
+                df.at[idx, output_eval_valid_key] = False
+                df.at[idx, output_eval_error_key] = "empty_better"
                 continue
             if rej is None or (isinstance(rej, str) and rej.strip() == ""):
-                df.at[idx, "eval_valid"] = False
-                df.at[idx, "eval_error"] = "empty_rejected"
+                df.at[idx, output_eval_valid_key] = False
+                df.at[idx, output_eval_error_key] = "empty_rejected"
                 continue
 
             ctx = None
@@ -1291,15 +1294,15 @@ class UnifiedBenchDatasetEvaluator(OperatorABC):
 
             lls = self._ll_batch(prompts, conts)
             if lls is None or len(lls) != 2:
-                df.at[idx, "eval_valid"] = False
-                df.at[idx, "eval_error"] = "ll_unavailable"
+                df.at[idx, output_eval_valid_key] = False
+                df.at[idx, output_eval_error_key] = "ll_unavailable"
                 continue
 
             win = 1.0 if float(lls[0]) > float(lls[1]) else 0.0
-            df.at[idx, "eval_score"] = win
-            df.at[idx, "eval_pred"] = json.dumps({"ll_better": float(lls[0]), "ll_rejected": float(lls[1])}, ensure_ascii=False)
-            df.at[idx, "eval_valid"] = True
-            df.at[idx, "eval_error"] = ""
+            df.at[idx, output_eval_score_key] = win
+            df.at[idx, output_eval_pred_key] = json.dumps({"ll_better": float(lls[0]), "ll_rejected": float(lls[1])}, ensure_ascii=False)
+            df.at[idx, output_eval_valid_key] = True
+            df.at[idx, output_eval_error_key] = ""
 
     # -----------------------------
     # 语义 judge 响应解析（兼容你旧逻辑）
@@ -1335,17 +1338,62 @@ class UnifiedBenchDatasetEvaluator(OperatorABC):
     def get_desc(lang: str = "zh"):
         if lang == "zh":
             return (
-                "统一 Bench 评测算子：支持 6 类纯文本评测范式。\n\n"
-                "支持类型：\n"
-                "- key1_text_score（默认 ppl）\n"
-                "- key2_qa（默认 math_verify / 可选 semantic_judge）\n"
-                "- key2_q_ma（默认 any_math_verify）\n"
-                "- key3_q_choices_a（默认 ll_choice_acc，若无 ll 接口则 fallback 解析生成）\n"
-                "- key3_q_choices_as（默认 micro_f1：解析多选集合后算 F1）\n"
-                "- key3_q_a_rejected（默认 pairwise_ll_winrate）\n\n"
-                "统一输出列：eval_score / eval_pred / eval_valid / eval_error，并支持统计落盘。"
+                "该算子用于统一 Bench 评测，支持多种任务范式并将评测结果写回 DataFrame，同时输出整体统计到 eval_result_path。\n\n"
+                "支持类型与默认 metric：\n"
+                "- key1_text_score：ppl\n"
+                "- key2_qa：math_verify（或 use_semantic_judge=True 时 semantic_judge）\n"
+                "- key2_q_ma：any_math_verify（多参考）\n"
+                "- key3_q_choices_a：ll_choice_acc（基于 loglikelihood；无 serving 接口时使用 HF forward 计算 ll）\n"
+                "- key3_q_choices_as：micro_f1（解析多选集合后计算）\n"
+                "- key3_q_a_rejected：pairwise_ll_winrate（基于 ll 比较 better vs rejected）\n\n"
+                "初始化参数：\n"
+                "- eval_result_path：统计结果落盘路径\n"
+                "- eval_type：评测类型（同上）\n"
+                "- llm_serving：可选；用于 semantic_judge 或提供模型路径信息以进行 PPL/LL 的 HF 计算\n"
+                "- prompt_template：提示模板对象（可选；需提供 build_prompt；默认使用 AnswerJudgePrompt）\n"
+                "- system_prompt：语义评测/judge 的系统提示词\n"
+                "- metric_type：可选；不传则使用 eval_type 的默认 metric\n"
+                "- use_semantic_judge：仅对 key2_qa 有效；是否使用语义评测\n\n"
+                "运行参数：\n"
+                "- storage：DataFlowStorage\n"
+                "- input_keys_map：字段映射（不同 eval_type 需要不同 key：text/question/target/targets/choices/label/labels/better/rejected）\n"
+                "- input_context_key：可选，上下文字段名\n"
+                "- input_pred_key：预测答案字段名（默认 generated_ans）\n\n"
+                "输出：\n"
+                "- output_eval_score_key（数值分数）\n"
+                "- output_eval_pred_key（解析后的预测）\n"
+                "- output_eval_valid_key（是否有效）\n"
+                "- output_eval_error_key（错误信息）\n"
+                "- 保存统计：total_samples/valid_samples/accuracy 或 ppl_mean 等到 eval_result_path\n"
+                "- 返回本次评测涉及/产出的列名列表"
             )
         return (
-            "Unified bench evaluator supporting 6 text-only task archetypes.\n"
-            "Outputs: eval_score / eval_pred / eval_valid / eval_error with stats saved."
+            "This operator evaluates unified bench datasets across multiple task archetypes. It writes per-sample results back to the dataframe and saves aggregated statistics to eval_result_path.\n\n"
+            "Supported Types (default metric):\n"
+            "- key1_text_score (ppl)\n"
+            "- key2_qa (math_verify or semantic_judge)\n"
+            "- key2_q_ma (any_math_verify)\n"
+            "- key3_q_choices_a (ll_choice_acc)\n"
+            "- key3_q_choices_as (micro_f1)\n"
+            "- key3_q_a_rejected (pairwise_ll_winrate)\n\n"
+            "Input Parameters:\n"
+            "- eval_result_path: Path to save aggregated statistics\n"
+            "- eval_type: Evaluation type (one of the supported types)\n"
+            "- llm_serving: Optional; required for semantic_judge and used as model source for HF-based PPL/LL computation\n"
+            "- prompt_template: Prompt template object (optional; must provide build_prompt; default is AnswerJudgePrompt)\n"
+            "- system_prompt: System prompt for semantic judging\n"
+            "- metric_type: Optional; overrides the default metric for the given eval_type\n"
+            "- use_semantic_judge: Only for key2_qa; whether to use LLM-based semantic judging\n\n"
+            "Run Parameters:\n"
+            "- storage: DataFlowStorage\n"
+            "- keys_map: Column mapping; depends on eval_type (text/question/target/targets/choices/label/labels/better/rejected)\n"
+            "- context_key: Optional context column name\n"
+            "- input_pred_key: Prediction column name (default: generated_ans)\n\n"
+            "Output Parameters:\n"
+            f"- output_eval_score_key: Numeric score (accuracy classes use 0/1)\n"
+            f"- output_eval_pred_key: Parsed prediction\n"
+            f"- output_eval_valid_key: Whether the sample is valid\n"
+            f"- output_eval_error_key: Error message if any\n"
+            "- Saves aggregated stats to eval_result_path\n"
+            "- Returns a list of involved/output keys"
         )
