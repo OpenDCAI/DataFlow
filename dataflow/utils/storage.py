@@ -548,6 +548,8 @@ class FileStorage(DataFlowStorage):
                 return pd.read_parquet(file_path)
             elif file_type == "pickle":
                 return pd.read_pickle(file_path)
+            elif self.cache_type == "xlsx":
+                return pd.read_excel(file_path)
             else:
                 raise ValueError(f"Unsupported file type: {file_type}")
         except Exception as e:
@@ -688,8 +690,10 @@ class FileStorage(DataFlowStorage):
             dataframe.to_parquet(file_path)
         elif self.cache_type == "pickle":
             dataframe.to_pickle(file_path)
+        elif self.cache_type == "xlsx":
+            dataframe.to_excel(file_path, index=False)
         else:
-            raise ValueError(f"Unsupported file type: {self.cache_type}, output file should end with json, jsonl, csv, parquet, pickle")
+            raise ValueError(f"Unsupported file type: {self.cache_type}, output file should end with json, jsonl, csv, parquet, pickle or xlsx")
         
         return file_path    
     
