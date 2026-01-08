@@ -159,20 +159,40 @@ class APILLMServing_request(LLMServingABC):
                     # self.logger.exception(f"API request failed (id = {id}) with status {response.status_code}: {response.text}")
                     self.logger.error(f"API request failed id={id} status={response.status_code} cost={cost:.2f}s body={response.text[:500]}")
                     return id, None
+            # ✅ 1) 连接阶段超时：认为“根本连不上” => 统一抛 RuntimeError（Win/Linux 一致）
+            except requests.exceptions.ConnectTimeout as e:
+                cost = time.time() - start
+                self.logger.error(f"API connect timeout (id={id}) cost={cost:.2f}s: {e}")
+                raise RuntimeError(f"Cannot connect to LLM server (connect timeout): {e}") from e
+
+            # ✅ 2) 读超时：服务可达但没有数据（排队/推理太久）=> warn + None
+            except requests.exceptions.ReadTimeout as e:
+                cost = time.time() - start
+                warnings.warn(f"API read timeout (id={id}) cost={cost:.2f}s: {e}", RuntimeWarning)
+                return id, None
+
+            # ✅ 3) 其他 Timeout（极少）按 warn 处理
             except requests.exceptions.Timeout as e:
                 cost = time.time() - start
                 warnings.warn(f"API timeout (id={id}) cost={cost:.2f}s: {e}", RuntimeWarning)
                 return id, None
 
+            # ✅ 4) ConnectionError：这里面 Win/Linux/urllib3 可能包装了各种“超时/断开”
             except requests.exceptions.ConnectionError as e:
                 cost = time.time() - start
                 msg = str(e).lower()
 
                 # requests/urllib3 有时会把 ReadTimeout 包装成 ConnectionError
-                if "timed out" in msg or "read timed out" in msg:
-                    warnings.warn(f"API timeout (id={id}) cost={cost:.2f}s: {e}", RuntimeWarning)
+                if "read timed out" in msg:
+                    warnings.warn(f"API read timeout (id={id}) cost={cost:.2f}s: {e}", RuntimeWarning)
                     return id, None
 
+                # 连接阶段超时在某些平台也可能表现为 ConnectionError 文本
+                if "connect timeout" in msg or ("timed out" in msg and "connect" in msg):
+                    self.logger.error(f"API connect timeout (id={id}) cost={cost:.2f}s: {e}")
+                    raise RuntimeError(f"Cannot connect to LLM server (connect timeout): {e}") from e
+
+                # 其它连接错误：refused/reset/remote disconnected 等 => 统一抛 RuntimeError
                 self.logger.error(f"API connection error (id={id}) cost={cost:.2f}s: {e}")
                 raise RuntimeError(f"Cannot connect to LLM server: {e}") from e
 
