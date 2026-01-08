@@ -13,22 +13,20 @@ all types:
 "key3_q_a_rejected",
 """
 
-DIY_PROMPT_ANSWER = """Please output the answer."""
 EVAL_TYPE = "key1_text_score"
-KEY_MAPS = {"text": "text"}
 
 class UnifiedBenchEvalPipeline():
     def __init__(self, llm_serving_generator: LLMServingABC = None, llm_serving_judger: LLMServingABC = None):
         
         self.storage = FileStorage(
-            first_entry_file_name="/mnt/DataFlow/scy/DataFlow/dataflow/example/core_text_data/unified_bench_eval_type1.jsonl",
+            first_entry_file_name="../example_data/core_text_data/unified_bench_eval_type1.jsonl",
             cache_path="./cache_local",
             file_name_prefix="dataflow_cache_step",
             cache_type="jsonl",
         )
 
         self.llm_serving_generator = LocalModelLLMServing_vllm(
-            hf_model_name_or_path="/mnt/DataFlow/models/Qwen2.5-7B-Instruct", # set to your own model path
+            hf_model_name_or_path="Qwen/Qwen2.5-7B-Instruct", # set to your own model path
             vllm_tensor_parallel_size=1,
             vllm_max_tokens=2048,
         )
@@ -53,17 +51,16 @@ class UnifiedBenchEvalPipeline():
     def forward(self):
         self.answer_generator_step1.run(
             storage=self.storage.step(),
-            input_keys_map=KEY_MAPS,
+            input_text_key="text",
             input_context_key=None,
             output_key="generated_ans",
         )
 
         self.evaluator_step2.run(
             storage=self.storage.step(),
-            input_keys_map=KEY_MAPS,
+            input_text_key="text",
             input_context_key=None,
             input_pred_key="generated_ans",
-
         )
 
 if __name__ == "__main__":

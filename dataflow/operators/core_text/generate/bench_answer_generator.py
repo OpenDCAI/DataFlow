@@ -1,6 +1,5 @@
 import json
 import inspect
-import re
 from typing import Any, Dict, List, Literal, Optional, Union
 
 import numpy as np
@@ -9,11 +8,14 @@ import pandas as pd
 from dataflow import get_logger
 from dataflow.core import OperatorABC, LLMServingABC
 from dataflow.core.prompt import DIYPromptABC, prompt_restrict
+from dataflow.prompts.core_text import FormatStrPrompt
 from dataflow.utils.registry import OPERATOR_REGISTRY
 from dataflow.utils.storage import DataFlowStorage
 
 
-@prompt_restrict()  # 保持通用, 不强绑固定 prompt 类
+@prompt_restrict(
+    FormatStrPrompt
+    )
 
 @OPERATOR_REGISTRY.register()
 class BenchAnswerGenerator(OperatorABC):
@@ -22,8 +24,8 @@ class BenchAnswerGenerator(OperatorABC):
 
     输入:
       - eval_type: 评测类型, 取值同 evaluator
-      - keys_map: 指定各字段名, 同 evaluator
-      - context_key: 可选, 上下文字段名, 不传则 None
+      - 运行时通过 input_xxx_key 传入各字段名（未传默认 None）
+      - input_context_key: 可选, 上下文字段名, 不传则 None
     输出:
       - output_key: 生成结果列, 默认 generated_ans
       - 对于不需要生成的类型, 默认不写 output_key, 直接返回空列表
@@ -40,7 +42,7 @@ class BenchAnswerGenerator(OperatorABC):
                 "key3_q_a_rejected",
             ] = "key2_qa",
         llm_serving: LLMServingABC = None,
-        prompt_template: DIYPromptABC = None,
+        prompt_template: Union[FormatStrPrompt, DIYPromptABC] = FormatStrPrompt,
         system_prompt: str = "You are a helpful assistant specialized in generating answers to questions.",
         allow_overwrite: bool = False,
         force_generate: bool = False,
@@ -135,23 +137,35 @@ class BenchAnswerGenerator(OperatorABC):
         if self.prompt_template is not None and hasattr(self.prompt_template, "build_prompt"):
             try:
                 fn = getattr(self.prompt_template, "build_prompt")
+
+                if eval_type in ("key3_q_choices_a", "key3_q_choices_as"):
+                    need_fields = {"question", "choices"}
+                else:
+                    need_fields = {"question"}
+
                 kwargs = {
                     "eval_type": eval_type,
                     "question": question,
-                    "context": context,
+                    "context": context or "",
                     "choices": choices,
-                    "choices_text": self._format_choices_text(choices) if choices else None,
+                    "choices_text": self._format_choices_text(choices) if choices else "",
                 }
-                kwargs = {k: v for k, v in kwargs.items() if v is not None}
 
                 sig = inspect.signature(fn)
-                params = sig.parameters.values()
+                params = list(sig.parameters.values())
                 has_varkw = any(p.kind == inspect.Parameter.VAR_KEYWORD for p in params)
-                if has_varkw:
-                    return fn(**kwargs)
 
                 accepted = {p.name for p in params if p.name != "self"}
+                expects_need_fields = "need_fields" in accepted
+
+                if has_varkw:
+                    if expects_need_fields:
+                        return fn(need_fields, **kwargs)
+                    return fn(**kwargs)
+
                 filtered = {k: v for k, v in kwargs.items() if k in accepted}
+                if expects_need_fields:
+                    return fn(need_fields, **filtered)
                 return fn(**filtered)
             except Exception as e:
                 self.logger.error(f"prompt_template.build_prompt 失败, fallback 默认模板: {e}")
@@ -186,7 +200,15 @@ class BenchAnswerGenerator(OperatorABC):
     def run(
         self,
         storage: DataFlowStorage,
-        input_keys_map: Dict[str, str],
+        input_text_key: Optional[str] = None,
+        input_question_key: Optional[str] = None,
+        input_target_key: Optional[str] = None,
+        input_targets_key: Optional[str] = None,
+        input_choices_key: Optional[str] = None,
+        input_label_key: Optional[str] = None,
+        input_labels_key: Optional[str] = None,
+        input_better_key: Optional[str] = None,
+        input_rejected_key: Optional[str] = None,
         input_context_key: Optional[str] = None,
         output_key: str = "generated_ans",
     ) -> List[str]:
@@ -205,16 +227,16 @@ class BenchAnswerGenerator(OperatorABC):
             return []
 
         # 读取字段
-        q_col = input_keys_map.get("question")
+        q_col = input_question_key
         if not q_col or q_col not in df.columns:
-            self.logger.error(f"缺少 question 列, keys_map.question={q_col}")
+            self.logger.error(f"缺少 question 列, input_question_key={q_col}")
             storage.write(df)
             return []
 
-        ch_col = input_keys_map.get("choices")
+        ch_col = input_choices_key
         need_choices = eval_type in ("key3_q_choices_a", "key3_q_choices_as")
         if need_choices and (not ch_col or ch_col not in df.columns):
-            self.logger.error(f"缺少 choices 列, keys_map.choices={ch_col}")
+            self.logger.error(f"缺少 choices 列, input_choices_key={ch_col}")
             storage.write(df)
             return []
 
@@ -267,7 +289,15 @@ class BenchAnswerGenerator(OperatorABC):
                 "- force_generate：是否强制对可生成类型都生成\n\n"
                 "运行参数：\n"
                 "- storage：DataFlowStorage\n"
-                "- input_keys_map：字段映射，至少包含 question；选择题需包含 choices\n"
+                "- input_text_key：文本列名（key1_text_score）\n"
+                "- input_question_key：问题列名（key2/key3）\n"
+                "- input_target_key：单个参考答案列名（key2_qa）\n"
+                "- input_targets_key：多个参考答案列名（key2_q_ma）\n"
+                "- input_choices_key：选项列名（key3_q_choices_a/key3_q_choices_as）\n"
+                "- input_label_key：单个标签列名（key3_q_choices_a）\n"
+                "- input_labels_key：多个标签列名（key3_q_choices_as）\n"
+                "- input_better_key：优选答案列名（key3_q_a_rejected）\n"
+                "- input_rejected_key：劣选答案列名（key3_q_a_rejected）\n"
                 "- input_context_key：可选，上下文字段名\n"
                 "- output_key：生成结果列名（默认 generated_ans）\n\n"
                 "输出：\n"
@@ -285,8 +315,16 @@ class BenchAnswerGenerator(OperatorABC):
             "- force_generate: Whether to force generation for types that can be skipped by default\n\n"
             "Run Parameters:\n"
             "- storage: DataFlowStorage\n"
-            "- keys_map: Column mapping (requires question; for choice tasks requires choices)\n"
-            "- context_key: Optional context column name\n"
+            "- input_text_key: Text column name (key1_text_score)\n"
+            "- input_question_key: Question column name (key2/key3)\n"
+            "- input_target_key: Single reference answer column name (key2_qa)\n"
+            "- input_targets_key: Multiple reference answers column name (key2_q_ma)\n"
+            "- input_choices_key: Choices column name (key3_q_choices_a/key3_q_choices_as)\n"
+            "- input_label_key: Single label column name (key3_q_choices_a)\n"
+            "- input_labels_key: Multiple labels column name (key3_q_choices_as)\n"
+            "- input_better_key: Better answer column name (key3_q_a_rejected)\n"
+            "- input_rejected_key: Rejected answer column name (key3_q_a_rejected)\n"
+            "- input_context_key: Optional context column name\n"
             "- output_key: Output column name for generated answers (default: generated_ans)\n\n"
             "Output Parameters:\n"
             "- Writes output_key into the dataframe when generation is performed\n"

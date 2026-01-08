@@ -41,7 +41,7 @@ class UnifiedBenchDatasetEvaluator(OperatorABC):
       - key3_q_a_rejected
 
     核心思想：
-      只需要传 bench_dataflow_eval_type + metric_type + keys_map + (可选) context_key
+      只需要传 bench_dataflow_eval_type + metric_type + input_xxx_key + (可选) context_key
       - evaluator 内部负责：
           1) 读取 dataframe
           2) 取 keys
@@ -592,7 +592,15 @@ class UnifiedBenchDatasetEvaluator(OperatorABC):
     def run(
         self,
         storage: DataFlowStorage,
-        input_keys_map: Optional[Dict[str, str]] = None,
+        input_text_key: Optional[str] = None,
+        input_question_key: Optional[str] = None,
+        input_target_key: Optional[str] = None,
+        input_targets_key: Optional[str] = None,
+        input_choices_key: Optional[str] = None,
+        input_label_key: Optional[str] = None,
+        input_labels_key: Optional[str] = None,
+        input_better_key: Optional[str] = None,
+        input_rejected_key: Optional[str] = None,
         input_context_key: Optional[str] = None,
         input_pred_key: str = "generated_ans",
         output_eval_valid_key: str = "eval_valid",
@@ -601,16 +609,21 @@ class UnifiedBenchDatasetEvaluator(OperatorABC):
         output_eval_score_key: str = "eval_score",
     ) -> List[str]:
         """
-        keys_map 示例：
-          - key1_text_score: {"text": "text"}
-          - key2_qa: {"question":"question", "target":"golden_answer"}
-          - key2_q_ma: {"question":"question", "targets":"gold_answers"}
-          - key3_q_choices_a: {"question":"question", "choices":"choices", "label":"label"}
-          - key3_q_choices_as: {"question":"question", "choices":"choices", "labels":"labels"}
-          - key3_q_a_rejected: {"question":"question", "better":"chosen", "rejected":"rejected"}
+        字段列名通过 input_xxx_key 显式传入（未传默认 None）：
+          - key1_text_score: input_text_key
+          - key2_qa: input_question_key + input_target_key
+          - key2_q_ma: input_question_key + input_targets_key
+          - key3_q_choices_a: input_question_key + input_choices_key + input_label_key
+          - key3_q_choices_as: input_question_key + input_choices_key + input_labels_key
+          - key3_q_a_rejected: input_question_key + input_better_key + input_rejected_key
         """
         df = storage.read("dataframe")
         eval_type = self.eval_type
+
+        self.output_eval_valid_key = output_eval_valid_key
+        self.output_eval_error_key = output_eval_error_key
+        self.output_eval_pred_key = output_eval_pred_key
+        self.output_eval_score_key = output_eval_score_key
 
         # 输出列统一
         if output_eval_valid_key not in df.columns:
@@ -624,10 +637,6 @@ class UnifiedBenchDatasetEvaluator(OperatorABC):
         if metric_type is None:
             metric_type = self._default_metric_for_type(eval_type, self.use_semantic_judge)
 
-        if input_keys_map is None:
-            self.logger.error("keys_map is required.")
-            storage.write(df)
-            return [output_eval_valid_key, output_eval_error_key, output_eval_pred_key, output_eval_score_key]
 
         # context 处理：统一读一列（可无）
         ctx_series = None
@@ -639,12 +648,12 @@ class UnifiedBenchDatasetEvaluator(OperatorABC):
 
         # 分发
         if eval_type == "key1_text_score":
-            required = [input_keys_map.get("text", "")]
+            text_col = input_text_key or ""
+            required = [text_col]
             if not self._check_columns(df, required):
                 storage.write(df)
                 return required
 
-            text_col = input_keys_map["text"]
             texts = [str(x) if x is not None else "" for x in df[text_col].tolist()]
             ppl = self._ppl_batch(texts)
             if ppl is None:
@@ -681,9 +690,9 @@ class UnifiedBenchDatasetEvaluator(OperatorABC):
             # QA：默认走 math_verify 抽取+对比（可选 semantic_judge）
             # 单参考：target
             # 多参考：targets
-            question_col = input_keys_map.get("question", "")
+            question_col = input_question_key or ""
             if eval_type == "key2_qa":
-                target_col = input_keys_map.get("target", "")
+                target_col = input_target_key or ""
                 required = [question_col, target_col, input_pred_key]
                 if not self._check_columns(df, required):
                     storage.write(df)
@@ -709,7 +718,7 @@ class UnifiedBenchDatasetEvaluator(OperatorABC):
                 return [question_col, target_col, input_pred_key, output_eval_score_key, output_eval_valid_key, output_eval_error_key]
 
             else:
-                targets_col = input_keys_map.get("targets", "")
+                targets_col = input_targets_key or ""
                 required = [question_col, targets_col, input_pred_key]
                 if not self._check_columns(df, required):
                     storage.write(df)
@@ -735,9 +744,9 @@ class UnifiedBenchDatasetEvaluator(OperatorABC):
                 return [question_col, targets_col, input_pred_key, output_eval_score_key, output_eval_valid_key, output_eval_error_key] 
 
         elif eval_type == "key3_q_choices_a":
-            question_col = input_keys_map.get("question", "")
-            choices_col = input_keys_map.get("choices", "")
-            label_col = input_keys_map.get("label", "")
+            question_col = input_question_key or ""
+            choices_col = input_choices_key or ""
+            label_col = input_label_key or ""
             required = [question_col, choices_col, label_col]
             # 若没有 llm_serving，则 fallback 需要 pred_col
             if self.llm_serving is None:
@@ -768,9 +777,9 @@ class UnifiedBenchDatasetEvaluator(OperatorABC):
             return [question_col, choices_col, label_col, output_eval_score_key, output_eval_valid_key, output_eval_error_key]
 
         elif eval_type == "key3_q_choices_as":
-            question_col = input_keys_map.get("question", "")
-            choices_col = input_keys_map.get("choices", "")
-            labels_col = input_keys_map.get("labels", "")
+            question_col = input_question_key or ""
+            choices_col = input_choices_key or ""
+            labels_col = input_labels_key or ""
             required = [question_col, choices_col, labels_col, input_pred_key]  # 先按“解析模型输出集合”实现
             if not self._check_columns(df, required):
                 storage.write(df)
@@ -796,9 +805,9 @@ class UnifiedBenchDatasetEvaluator(OperatorABC):
             return [question_col, choices_col, labels_col, input_pred_key, output_eval_score_key, output_eval_valid_key, output_eval_error_key]
 
         elif eval_type == "key3_q_a_rejected":
-            question_col = input_keys_map.get("question", "")
-            better_col = input_keys_map.get("better", "")
-            rejected_col = input_keys_map.get("rejected", "")
+            question_col = input_question_key or ""
+            better_col = input_better_key or ""
+            rejected_col = input_rejected_key or ""
             required = [question_col, better_col, rejected_col]
             if not self._check_columns(df, required):
                 storage.write(df)
@@ -867,6 +876,9 @@ class UnifiedBenchDatasetEvaluator(OperatorABC):
     # 统计：binary（0/1）
     # -----------------------------
     def _stats_for_binary(self, df: pd.DataFrame) -> Dict[str, Any]:
+        output_eval_valid_key = self.output_eval_valid_key
+        output_eval_score_key = self.output_eval_score_key
+
         total = len(df)
         valid_mask = df[output_eval_valid_key] == True
         valid = int(valid_mask.sum())
@@ -885,6 +897,9 @@ class UnifiedBenchDatasetEvaluator(OperatorABC):
     # 统计：多选（f1/jaccard 等）
     # -----------------------------
     def _stats_for_multiselect(self, df: pd.DataFrame) -> Dict[str, Any]:
+        output_eval_valid_key = self.output_eval_valid_key
+        output_eval_score_key = self.output_eval_score_key
+
         total = len(df)
         valid_mask = df[output_eval_valid_key] == True
         valid = int(valid_mask.sum())
@@ -912,6 +927,11 @@ class UnifiedBenchDatasetEvaluator(OperatorABC):
         ctx_series: Optional[pd.Series],
         metric_type: str,
     ) -> None:
+        output_eval_valid_key = self.output_eval_valid_key
+        output_eval_error_key = self.output_eval_error_key
+        output_eval_pred_key = self.output_eval_pred_key
+        output_eval_score_key = self.output_eval_score_key
+
         if metric_type == "semantic_judge":
             # 语义 judge 需要 llm_serving.generate_from_input
             if self.llm_serving is None or not hasattr(self.llm_serving, "generate_from_input"):
@@ -998,6 +1018,11 @@ class UnifiedBenchDatasetEvaluator(OperatorABC):
         ctx_series: Optional[pd.Series],
         metric_type: str,
     ) -> None:
+        output_eval_valid_key = self.output_eval_valid_key
+        output_eval_error_key = self.output_eval_error_key
+        output_eval_pred_key = self.output_eval_pred_key
+        output_eval_score_key = self.output_eval_score_key
+
         # 默认：any_math_verify
         for idx, row in df.iterrows():
             targets_raw = row[targets_col]
@@ -1042,6 +1067,11 @@ class UnifiedBenchDatasetEvaluator(OperatorABC):
         metric_type: str,
         pred_col: str,
     ) -> None:
+        output_eval_valid_key = self.output_eval_valid_key
+        output_eval_error_key = self.output_eval_error_key
+        output_eval_pred_key = self.output_eval_pred_key
+        output_eval_score_key = self.output_eval_score_key
+
         # 优先：loglikelihood
         if metric_type == "ll_choice_acc" and self.llm_serving is not None:
             # 批量做：每行要对 choices 逐个算 ll，先实现清晰版（你后面可优化 batching）
@@ -1171,6 +1201,11 @@ class UnifiedBenchDatasetEvaluator(OperatorABC):
         pred_col: str,
         metric_type: str,
     ) -> None:
+        output_eval_valid_key = self.output_eval_valid_key
+        output_eval_error_key = self.output_eval_error_key
+        output_eval_pred_key = self.output_eval_pred_key
+        output_eval_score_key = self.output_eval_score_key
+
         # 这里按你说的“先最小落地”：从 pred_col 解析集合 -> micro_f1
         for idx, row in df.iterrows():
             choices = row[choices_col]
@@ -1264,6 +1299,11 @@ class UnifiedBenchDatasetEvaluator(OperatorABC):
         ctx_series: Optional[pd.Series],
         metric_type: str,
     ) -> None:
+        output_eval_valid_key = self.output_eval_valid_key
+        output_eval_error_key = self.output_eval_error_key
+        output_eval_pred_key = self.output_eval_pred_key
+        output_eval_score_key = self.output_eval_score_key
+
         # 默认：pairwise_ll_winrate
         for idx, row in df.iterrows():
             q = row[question_col]
@@ -1356,7 +1396,15 @@ class UnifiedBenchDatasetEvaluator(OperatorABC):
                 "- use_semantic_judge：仅对 key2_qa 有效；是否使用语义评测\n\n"
                 "运行参数：\n"
                 "- storage：DataFlowStorage\n"
-                "- input_keys_map：字段映射（不同 eval_type 需要不同 key：text/question/target/targets/choices/label/labels/better/rejected）\n"
+                "- input_text_key：文本列名（key1_text_score）\n"
+                "- input_question_key：问题列名（key2/key3）\n"
+                "- input_target_key：单个参考答案列名（key2_qa）\n"
+                "- input_targets_key：多个参考答案列名（key2_q_ma）\n"
+                "- input_choices_key：选项列名（key3_q_choices_a/key3_q_choices_as）\n"
+                "- input_label_key：单个标签列名（key3_q_choices_a）\n"
+                "- input_labels_key：多个标签列名（key3_q_choices_as）\n"
+                "- input_better_key：优选答案列名（key3_q_a_rejected）\n"
+                "- input_rejected_key：劣选答案列名（key3_q_a_rejected）\n"
                 "- input_context_key：可选，上下文字段名\n"
                 "- input_pred_key：预测答案字段名（默认 generated_ans）\n\n"
                 "输出：\n"
@@ -1386,8 +1434,16 @@ class UnifiedBenchDatasetEvaluator(OperatorABC):
             "- use_semantic_judge: Only for key2_qa; whether to use LLM-based semantic judging\n\n"
             "Run Parameters:\n"
             "- storage: DataFlowStorage\n"
-            "- keys_map: Column mapping; depends on eval_type (text/question/target/targets/choices/label/labels/better/rejected)\n"
-            "- context_key: Optional context column name\n"
+            "- input_text_key: Text column name (key1_text_score)\n"
+            "- input_question_key: Question column name (key2/key3)\n"
+            "- input_target_key: Single reference answer column name (key2_qa)\n"
+            "- input_targets_key: Multiple reference answers column name (key2_q_ma)\n"
+            "- input_choices_key: Choices column name (key3_q_choices_a/key3_q_choices_as)\n"
+            "- input_label_key: Single label column name (key3_q_choices_a)\n"
+            "- input_labels_key: Multiple labels column name (key3_q_choices_as)\n"
+            "- input_better_key: Better answer column name (key3_q_a_rejected)\n"
+            "- input_rejected_key: Rejected answer column name (key3_q_a_rejected)\n"
+            "- input_context_key: Optional context column name\n"
             "- input_pred_key: Prediction column name (default: generated_ans)\n\n"
             "Output Parameters:\n"
             f"- output_eval_score_key: Numeric score (accuracy classes use 0/1)\n"
