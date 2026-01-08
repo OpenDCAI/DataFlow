@@ -60,18 +60,19 @@ jobs:
           UV_SYSTEM_PYTHON: "1"
         run: |
           uv pip install --no-cache -r requirements.txt
-          uv pip install -e .
+          uv pip install -e .[test]
 
       - name: Run tests on Windows
         if: startsWith(matrix.os, 'windows')
         env:
           PYTHONDONTWRITEBYTECODE: 1
         run: |
-          pytest -m cpu test
+          pytest -m "cpu or api"
 
       - name: Run tests on Linux / macOS
         if: ${{ !startsWith(matrix.os, 'windows') }}
         env:
           PYTHONDONTWRITEBYTECODE: 1
         run: |
-          pytest -m cpu test
+          pytest -m "cpu or api"
+

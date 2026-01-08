@@ -1,5 +1,7 @@
 import json
+import warnings
 import requests
+from requests.adapters import HTTPAdapter
 import os
 import logging
 from ..logger import get_logger
@@ -20,16 +22,19 @@ class APILLMServing_request(LLMServingABC):
                  api_url: str = "https://api.openai.com/v1/chat/completions",
                  key_name_of_api_key: str = "DF_API_KEY",
                  model_name: str = "gpt-4o",
+                 temperature: float = 0.0,
                  max_workers: int = 10,
                  max_retries: int = 5,
-                 temperature = 0.0
+                 timeout: tuple[float, float] = (10.0, 120.0), # connect timeout, read timeout
                  ):
         # Get API key from environment variable or config
         self.api_url = api_url
         self.model_name = model_name
+        self.temperature = temperature
         self.max_workers = max_workers
         self.max_retries = max_retries
-        self.temperature = temperature
+        self.timeout = timeout
+
         self.logger = get_logger()
 
         # config api_key in os.environ global, since safty issue.
@@ -38,7 +43,25 @@ class APILLMServing_request(LLMServingABC):
             error_msg = f"Lack of `{key_name_of_api_key}` in environment variables. Please set `{key_name_of_api_key}` as your api-key to {api_url} before using APILLMServing_request."
             self.logger.error(error_msg)
             raise ValueError(error_msg)
+        
+
+        self.session = requests.Session()
+        adapter = HTTPAdapter(
+            pool_connections=self.max_workers,
+            pool_maxsize=self.max_workers,
+            max_retries=0,  # 你已经有 _api_chat_id_retry 了，这里不要重复重试
+            pool_block=True # 池满时阻塞，避免无限建连接导致资源抖动
+        )
+        self.session.mount("https://", adapter)
+        self.session.mount("http://", adapter)
   
+        self.headers = {
+            'Authorization': f"Bearer {self.api_key}",
+            'Content-Type': 'application/json',
+            'User-Agent': 'Apifox/1.0.0 (https://apifox.com)'
+        }
+
+
     def format_response(self, response: dict, is_embedding: bool = False) -> str:
         """Format API response, supporting both embedding and chat completion modes"""
         
@@ -62,37 +85,44 @@ class APILLMServing_request(LLMServingABC):
             return f"<think>{reasoning_content}</think>\n<answer>{content}</answer>"
         
         return content
+    # deprecated
+    # def api_chat(self, system_info: str, messages: str, model: str):
+    #     try:
+    #         payload = json.dumps({
+    #             "model": model,
+    #             "messages": [
+    #                 {"role": "system", "content": system_info},
+    #                 {"role": "user", "content": messages}
+    #             ],
+    #             "temperature": self.temperature   
+    #         })
 
+    #         headers = {
+    #             'Authorization': f"Bearer {self.api_key}",
+    #             'Content-Type': 'application/json',
+    #             'User-Agent': 'Apifox/1.0.0 (https://apifox.com)'
+    #         }
+    #         # Make a POST request to the API
+    #         response = requests.post(self.api_url, headers=headers, data=payload, timeout=60)
+    #         if response.status_code == 200:
+    #             response_data = response.json()
+    #             return self.format_response(response_data)
+    #         else:
+    #             logging.error(f"API request failed with status {response.status_code}: {response.text}")
+    #             return None
+    #     except Exception as e:
+    #         logging.error(f"API request error: {e}")
+    #         return None
 
-    def api_chat(self, system_info: str, messages: str, model: str):
-        try:
-            payload = json.dumps({
-                "model": model,
-                "messages": [
-                    {"role": "system", "content": system_info},
-                    {"role": "user", "content": messages}
-                ],
-                "temperature": self.temperature   
-            })
-
-            headers = {
-                'Authorization': f"Bearer {self.api_key}",
-                'Content-Type': 'application/json',
-                'User-Agent': 'Apifox/1.0.0 (https://apifox.com)'
-            }
-            # Make a POST request to the API
-            response = requests.post(self.api_url, headers=headers, data=payload, timeout=60)
-            if response.status_code == 200:
-                response_data = response.json()
-                return self.format_response(response_data)
-            else:
-                logging.error(f"API request failed with status {response.status_code}: {response.text}")
-                return None
-        except Exception as e:
-            logging.error(f"API request error: {e}")
-            return None
-
-    def _api_chat_with_id(self, id, payload, model, is_embedding: bool = False, json_schema: dict = None):
+    def _api_chat_with_id(
+              self, 
+              id: int, 
+              payload, 
+              model: str, 
+              is_embedding: bool = False, 
+              json_schema: dict = None
+              ):
+            start = time.time()
             try:
                 if is_embedding:
                     payload = json.dumps({
@@ -117,24 +147,38 @@ class APILLMServing_request(LLMServingABC):
                             }
                         }
                     })
-                    
-                headers = {
-                    'Authorization': f"Bearer {self.api_key}",
-                    'Content-Type': 'application/json',
-                    'User-Agent': 'Apifox/1.0.0 (https://apifox.com)'
-                }
                 # Make a POST request to the API
-                response = requests.post(self.api_url, headers=headers, data=payload, timeout=1800)
+                response = self.session.post(self.api_url, headers=self.headers, data=payload, timeout=self.timeout)
+                cost = time.time() - start
                 if response.status_code == 200:
                     # logging.info(f"API request successful")
                     response_data = response.json()
                     # logging.info(f"API response: {response_data['choices'][0]['message']['content']}")
                     return id,self.format_response(response_data, is_embedding)
                 else:
-                    logging.error(f"API request failed with status {response.status_code}: {response.text}")
+                    # self.logger.exception(f"API request failed (id = {id}) with status {response.status_code}: {response.text}")
+                    self.logger.error(f"API request failed id={id} status={response.status_code} cost={cost:.2f}s body={response.text[:500]}")
                     return id, None
+            except requests.exceptions.Timeout as e:
+                cost = time.time() - start
+                warnings.warn(f"API timeout (id={id}) cost={cost:.2f}s: {e}", RuntimeWarning)
+                return id, None
+
+            except requests.exceptions.ConnectionError as e:
+                cost = time.time() - start
+                msg = str(e).lower()
+
+                # requests/urllib3 有时会把 ReadTimeout 包装成 ConnectionError
+                if "timed out" in msg or "read timed out" in msg:
+                    warnings.warn(f"API timeout (id={id}) cost={cost:.2f}s: {e}", RuntimeWarning)
+                    return id, None
+
+                self.logger.error(f"API connection error (id={id}) cost={cost:.2f}s: {e}")
+                raise RuntimeError(f"Cannot connect to LLM server: {e}") from e
+
             except Exception as e:
-                logging.error(f"API request error: {e}")
+                cost = time.time() - start
+                self.logger.exception(f"API request error (id = {id}) cost={cost:.2f}s: {e}")
                 return id, None
         
     def _api_chat_id_retry(self, id, payload, model, is_embedding : bool = False, json_schema: dict = None):
@@ -145,81 +189,80 @@ class APILLMServing_request(LLMServingABC):
             time.sleep(2**i)
         return id, None    
     
+    def _run_threadpool(self, task_args_list: list[dict], desc: str) -> list:
+        """
+        task_args_list: 每个元素都是 _api_chat_id_retry 的入参 dict
+        e.g. {"id": 0, "payload": [...], "model": "...", "is_embedding": False, "json_schema": None}
+        返回值按 id 回填到 responses
+        """
+        responses = [None] * len(task_args_list)
+
+        with ThreadPoolExecutor(max_workers=self.max_workers) as executor:
+            futures = [
+                executor.submit(self._api_chat_id_retry, **task_args)
+                for task_args in task_args_list
+            ]
+
+            for future in tqdm(as_completed(futures), total=len(futures), desc=desc):
+                try:
+                    response = future.result()  # (id, response)
+                    # response[0] 是 id，response[1] 是实际响应， 用于按 id 回填 responses 列表
+                    responses[response[0]] = response[1]
+                except Exception:
+                    # 理论上 worker 内部已经 try/except 了，但这里兜底更安全
+                    self.logger.exception("Worker crashed unexpectedly in threadpool")
+
+        return responses
+    
     def generate_from_input(self, 
                             user_inputs: list[str], 
                             system_prompt: str = "You are a helpful assistant",
                             json_schema: dict = None,
                             ) -> list[str]:
+        task_args_list = [
+            dict(
+                id=idx,
+                payload=[
+                    {"role": "system", "content": system_prompt},
+                    {"role": "user", "content": question},
+                ],
+                model=self.model_name,
+                json_schema=json_schema,
+            )
+            for idx, question in enumerate(user_inputs)
+        ]
+        return self._run_threadpool(task_args_list, desc="Generating responses from prompts......")
 
-
-        responses = [None] * len(user_inputs)
-        # -- end of subfunction api_chat_with_id --
-
-        # 使用 ThreadPoolExecutor 并行处理多个问题
-        # logging.info(f"Generating {len(questions)} responses")
-        with ThreadPoolExecutor(max_workers=self.max_workers) as executor:
-            futures = [
-                executor.submit(
-                    self._api_chat_id_retry,
-                    payload = [
-                        {"role": "system", "content": system_prompt},
-                        {"role": "user", "content": question}
-                        ],
-                    model = self.model_name,
-                    json_schema = json_schema,
-                    id = idx,
-                ) for idx, question in enumerate(user_inputs)
-            ]
-            for future in tqdm(as_completed(futures), total=len(futures), desc="Generating......"):
-                    response = future.result() # (id, response)
-                    responses[response[0]] = response[1]
-        return responses
     
     def generate_from_conversations(self, conversations: list[list[dict]]) -> list[str]:
 
-        responses = [None] * len(conversations)
-        # -- end of subfunction api_chat_with_id --
-
-        # 使用 ThreadPoolExecutor 并行处理多个问题
-        # logging.info(f"Generating {len(questions)} responses")
-        with ThreadPoolExecutor(max_workers=self.max_workers) as executor:
-            futures = [
-                executor.submit(
-                    self._api_chat_id_retry,
-                    payload = dialogue,
-                    model = self.model_name,
-                    id = idx
-                ) for idx, dialogue in enumerate(conversations)
-            ]
-            for future in tqdm(as_completed(futures), total=len(futures), desc="Generating......"):
-                    response = future.result() # (id, response)
-                    responses[response[0]] = response[1]
-        return responses
+        task_args_list = [
+            dict(
+                id=idx,
+                payload=dialogue,
+                model=self.model_name,
+            )
+            for idx, dialogue in enumerate(conversations)
+        ]
+        return self._run_threadpool(task_args_list, desc="Generating responses from conversations......")
+              
     
     def generate_embedding_from_input(self, texts: list[str]) -> list[list[float]]:
-
-        responses = [None] * len(texts)
-        # -- end of subfunction api_embedding_with_id --
-
-        # 使用 ThreadPoolExecutor 并行处理多个问题
-        # logging.info(f"Generating {len(questions)} responses")
-        with ThreadPoolExecutor(max_workers=self.max_workers) as executor:
-            futures = [
-                executor.submit(
-                    self._api_chat_id_retry,
-                    payload = txt,
-                    model = self.model_name,
-                    id = idx,
-                    is_embedding = True
-                ) for idx, txt in enumerate(texts)
-            ]
-            for future in tqdm(as_completed(futures), total=len(futures), desc="Generating embedding......"):
-                    response = future.result() # (id, response)
-                    responses[response[0]] = response[1]
-        return responses
+        task_args_list = [
+            dict(
+                id=idx,
+                payload=txt,
+                model=self.model_name,
+                is_embedding=True,
+            )
+            for idx, txt in enumerate(texts)
+        ]
+        return self._run_threadpool(task_args_list, desc="Generating embedding......")
     
     def cleanup(self):
-        # Cleanup resources if needed
-        logging.info("Cleaning up resources in APILLMServing_request")
-        # No specific cleanup actions needed for this implementation
-        pass
+        self.logger.info("Cleaning up resources in APILLMServing_request")
+        try:
+            if hasattr(self, "session") and self.session:
+                self.session.close()
+        except Exception:
+            self.logger.exception("Failed to close requests session")
