@@ -59,7 +59,7 @@ class CodeGenDataset_APIPipeline():
         # Step 1: Generate instructions from raw data
         self.instruction_generater_step1.run(
             storage=self.storage.step(),
-            input_key="messages",
+            input_key="input",
             output_key="generated_instruction",
         )
         

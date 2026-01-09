@@ -77,10 +77,11 @@ class CodeEnhancementInstructionGenerator(OperatorABC):
     def _build_prompts(self, dataframe: pd.DataFrame) -> List[str]:
         def get_human_instruction(messages):
             """Extract human instruction from message list."""
-            for item in messages:
-                if item.get('role') == 'HUMAN':
-                    return item.get('content', '')
-            return ''
+            # for item in messages:
+            #     if item.get('role') == 'HUMAN':
+            #         return item.get('content', '')
+            # return ''
+            return messages
         return [
             self.prompt_template.build_prompt(instruction=get_human_instruction(row[self.input_key]))
             for _, row in dataframe.iterrows()
