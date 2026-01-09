@@ -205,8 +205,8 @@ class HallucinationInjectionOperator(OperatorABC):
         storage: DataFlowStorage,
         input_key: str = "dataframe",
         output_key: str = "hallucinated_dataframe",
-        context_field: str = "context",
-        answer_field: str = "answer",
+        input_context_field: str = "context",
+        input_answer_field: str = "answer",
     ) -> None:
         """Run the hallucination injection operation.
         
@@ -214,8 +214,8 @@ class HallucinationInjectionOperator(OperatorABC):
             storage: DataFlow storage object.
             input_key: Key for the input dataframe.
             output_key: Key for the output dataframe.
-            context_field: Column name for the reference context.
-            answer_field: Column name for the answer to modify.
+            input_context_field: Column name for the reference context.
+            input_answer_field: Column name for the answer to modify.
         """
         df = storage.get(input_key)
         
@@ -223,7 +223,7 @@ class HallucinationInjectionOperator(OperatorABC):
             raise ValueError(f"Expected DataFrame, got {type(df)}")
         
         # Validate required columns
-        for col in [context_field, answer_field]:
+        for col in [input_context_field, input_answer_field]:
             if col not in df.columns:
                 raise ValueError(f"Missing required column: {col}")
         
@@ -251,14 +251,14 @@ class HallucinationInjectionOperator(OperatorABC):
                 
                 # Inject hallucination
                 modified = self._inject_hallucination(
-                    answer=row[answer_field],
-                    context=row[context_field],
+                    answer=row[input_answer_field],
+                    context=row[input_context_field],
                     hal_type=hal_type,
                 )
                 
                 if modified and "<hal>" in modified:
                     labels, clean_answer = self._parse_hal_tags(modified)
-                    result[answer_field] = clean_answer
+                    result[input_answer_field] = clean_answer
                     result["has_hallucination"] = True
                     result["hallucination_type"] = hal_type
                     result["labels"] = labels

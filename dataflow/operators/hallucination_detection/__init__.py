@@ -12,19 +12,18 @@ Operators:
 - HallucinationDetectionEvaluator: Evaluate hallucination detection models
 """
 
-from dataflow.operators.hallucination_detection.filter.long_context_filter import (
-    LongContextFilterOperator,
-)
-from dataflow.operators.hallucination_detection.generate.hallucination_injection import (
-    HallucinationInjectionOperator,
-)
-from dataflow.operators.hallucination_detection.generate.span_annotation import (
-    SpanAnnotationOperator,
-)
+from typing import TYPE_CHECKING
 
-__all__ = [
-    "LongContextFilterOperator",
-    "HallucinationInjectionOperator",
-    "SpanAnnotationOperator",
-]
+if TYPE_CHECKING:
+    from .filter.long_context_filter import LongContextFilterOperator
+    from .generate.hallucination_injection import HallucinationInjectionOperator
+    from .generate.span_annotation import SpanAnnotationOperator
+else:
+    import sys
+    from dataflow.utils.registry import LazyLoader, generate_import_structure_from_type_checking
+
+    cur_path = "dataflow/operators/hallucination_detection/"
+
+    _import_structure = generate_import_structure_from_type_checking(__file__, cur_path)
+    sys.modules[__name__] = LazyLoader(__name__, "dataflow/operators/hallucination_detection/", _import_structure)
 

@@ -65,8 +65,8 @@ class HallucinationDetectionPipeline(PipelineABC):
             storage=self.storage,
             input_key="long_context_data",
             output_key="hallucinated_data",
-            context_field="document",
-            answer_field="answer",
+            input_context_field="document",
+            input_answer_field="answer",
         )
 
 

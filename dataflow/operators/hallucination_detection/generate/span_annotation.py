@@ -133,9 +133,9 @@ class SpanAnnotationOperator(OperatorABC):
         storage: DataFlowStorage,
         input_key: str = "dataframe",
         output_key: str = "annotated_dataframe",
-        context_field: str = "context",
-        answer_field: str = "answer",
-        is_hallucinated_field: str = "is_hallucinated",
+        input_context_field: str = "context",
+        input_answer_field: str = "answer",
+        input_is_hallucinated_field: str = "is_hallucinated",
     ) -> None:
         """Run the span annotation operation.
         
@@ -143,9 +143,9 @@ class SpanAnnotationOperator(OperatorABC):
             storage: DataFlow storage object.
             input_key: Key for the input dataframe.
             output_key: Key for the output dataframe.
-            context_field: Column name for the reference context.
-            answer_field: Column name for the answer.
-            is_hallucinated_field: Column name indicating if sample is hallucinated.
+            input_context_field: Column name for the reference context.
+            input_answer_field: Column name for the answer.
+            input_is_hallucinated_field: Column name indicating if sample is hallucinated.
         """
         df = storage.get(input_key)
         
@@ -153,7 +153,7 @@ class SpanAnnotationOperator(OperatorABC):
             raise ValueError(f"Expected DataFrame, got {type(df)}")
         
         # Validate required columns
-        for col in [context_field, answer_field]:
+        for col in [input_context_field, input_answer_field]:
             if col not in df.columns:
                 raise ValueError(f"Missing required column: {col}")
         
@@ -166,9 +166,9 @@ class SpanAnnotationOperator(OperatorABC):
             result = row.to_dict()
             result["labels"] = []
             
-            answer = row[answer_field]
-            context = row[context_field]
-            is_hallucinated = row.get(is_hallucinated_field, True)
+            answer = row[input_answer_field]
+            context = row[input_context_field]
+            is_hallucinated = row.get(input_is_hallucinated_field, True)
             
             if is_hallucinated:
                 # Split answer into sentences
