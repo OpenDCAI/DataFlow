@@ -78,19 +78,41 @@ class SpanAnnotationOperator(OperatorABC):
             )
     
     @staticmethod
-    def get_desc(lang: str = "en") -> tuple:
+    def get_desc(lang: str = "en") -> str:
         """Returns a description of the operator's functionality."""
         if lang == "zh":
             return (
-                "SpanAnnotationOperator 使用NLI将文档级标签转换为span级标注。",
-                "对每个句子运行NLI，判断其与上下文是否矛盾。",
-                "输出：带有span级幻觉标注的数据集。",
+                "使用NLI将文档级幻觉标签转换为span级标注的算子。\n\n"
+                "__init__参数：\n"
+                "- nli_model: NLI模型名称，默认'MoritzLaurer/DeBERTa-v3-base-mnli-fever-anli'\n"
+                "- contradiction_threshold: 矛盾判定阈值，默认0.7\n"
+                "- device: 运行设备'cuda'或'cpu'，默认'cuda'\n"
+                "- batch_size: NLI推理批次大小，默认8\n\n"
+                "run参数：\n"
+                "- storage: DataFlow存储对象\n"
+                "- input_key: 输入数据的键名\n"
+                "- output_key: 输出数据的键名\n"
+                "- input_context_field: 上下文字段名，默认'context'\n"
+                "- input_answer_field: 答案字段名，默认'answer'\n"
+                "- input_is_hallucinated_field: 幻觉标记字段名，默认'is_hallucinated'\n\n"
+                "输出：DataFrame包含labels字段（含text、start、end、confidence）。"
             )
         else:
             return (
-                "SpanAnnotationOperator converts document-level labels to span-level using NLI.",
-                "Runs NLI on each sentence to detect contradictions with the context.",
-                "Output: Dataset with span-level hallucination annotations.",
+                "An operator that converts document-level hallucination labels to span-level using NLI.\n\n"
+                "__init__ Parameters:\n"
+                "- nli_model: NLI model name, default 'MoritzLaurer/DeBERTa-v3-base-mnli-fever-anli'\n"
+                "- contradiction_threshold: Threshold for contradiction detection, default 0.7\n"
+                "- device: 'cuda' or 'cpu', default 'cuda'\n"
+                "- batch_size: Batch size for NLI inference, default 8\n\n"
+                "run Parameters:\n"
+                "- storage: DataFlow storage object\n"
+                "- input_key: Key for input data\n"
+                "- output_key: Key for output data\n"
+                "- input_context_field: Column name for context, default 'context'\n"
+                "- input_answer_field: Column name for answer, default 'answer'\n"
+                "- input_is_hallucinated_field: Column for hallucination flag, default 'is_hallucinated'\n\n"
+                "Output: DataFrame with labels field containing text, start, end, confidence."
             )
     
     def _split_sentences(self, text: str) -> List[str]:

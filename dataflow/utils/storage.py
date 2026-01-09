@@ -404,6 +404,7 @@ class DummyStorage(DataFlowStorage):
         cache_type: Literal["json", "jsonl", "csv", "parquet", "pickle", None] = None
     ):
         self._data = None
+        self._store = {}  # Key-value store for get/set operations
         self.cache_path = cache_path
         self.file_name_prefix = file_name_prefix
         self.cache_type = cache_type
@@ -413,12 +414,33 @@ class DummyStorage(DataFlowStorage):
         Set data to be written later.
         """
         self._data = data
+    
+    def get(self, key: str) -> Any:
+        """
+        Get data by key from the key-value store.
+        """
+        return self._store.get(key, self._data)
+    
+    def set(self, key: str, data: Any):
+        """
+        Set data by key in the key-value store.
+        """
+        self._store[key] = data
+        self._data = data  # Also update _data for compatibility
         
     def set_file_name_prefix(self, file_name_prefix: str):
         """
         Set the file name prefix for cache files.
         """
         self.file_name_prefix = file_name_prefix
+    
+    def get_keys_from_dataframe(self) -> list[str]:
+        """
+        Get keys from the dataframe stored in the storage.
+        """
+        if isinstance(self._data, pd.DataFrame):
+            return self._data.columns.tolist()
+        return []
             
     def read(self, output_type: Literal["dataframe", "dict"] = "dataframe") -> Any:
         return self._data

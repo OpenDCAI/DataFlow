@@ -80,19 +80,39 @@ class LongContextFilterOperator(OperatorABC):
         self.add_token_count = add_token_count
     
     @staticmethod
-    def get_desc(lang: str = "en") -> tuple:
+    def get_desc(lang: str = "en") -> str:
         """Returns a description of the operator's functionality."""
         if lang == "zh":
             return (
-                "LongContextFilterOperator 根据token数量过滤样本，用于创建长上下文评估数据集。",
-                "参数：min_tokens（最小token数），max_tokens（最大token数），text_fields（要计算的文本字段）",
-                "输出：过滤后的数据集，可选添加num_tokens列。",
+                "根据token数量过滤样本的算子，用于创建长上下文评估数据集。\n\n"
+                "__init__参数：\n"
+                "- tokenizer: HuggingFace tokenizer对象，用于token计数\n"
+                "- tokenizer_name: tokenizer模型名称，默认'answerdotai/ModernBERT-base'\n"
+                "- min_tokens: 最小token数（含），默认8000\n"
+                "- max_tokens: 最大token数（含），默认32000\n"
+                "- text_fields: 需要计算token的文本字段列表，默认['prompt', 'answer']\n"
+                "- add_token_count: 是否添加num_tokens列，默认True\n\n"
+                "run参数：\n"
+                "- storage: DataFlow存储对象\n"
+                "- input_key: 输入数据的键名\n"
+                "- output_key: 输出数据的键名\n\n"
+                "输出：过滤后的DataFrame，包含符合token范围的样本。"
             )
         else:
             return (
-                "LongContextFilterOperator filters samples by token count for long-context evaluation.",
-                "Parameters: min_tokens (minimum tokens), max_tokens (maximum tokens), text_fields (fields to count)",
-                "Output: Filtered dataset with optional num_tokens column.",
+                "An operator that filters samples by token count for long-context evaluation datasets.\n\n"
+                "__init__ Parameters:\n"
+                "- tokenizer: HuggingFace tokenizer object for token counting\n"
+                "- tokenizer_name: Tokenizer model name, default 'answerdotai/ModernBERT-base'\n"
+                "- min_tokens: Minimum token count (inclusive), default 8000\n"
+                "- max_tokens: Maximum token count (inclusive), default 32000\n"
+                "- text_fields: List of text fields to count tokens from, default ['prompt', 'answer']\n"
+                "- add_token_count: Whether to add num_tokens column, default True\n\n"
+                "run Parameters:\n"
+                "- storage: DataFlow storage object\n"
+                "- input_key: Key for input data\n"
+                "- output_key: Key for output data\n\n"
+                "Output: Filtered DataFrame containing samples within the token range."
             )
     
     def _count_tokens(self, row: pd.Series) -> int:

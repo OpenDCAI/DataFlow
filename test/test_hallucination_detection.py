@@ -15,7 +15,7 @@ class TestLongContextFilterOperator:
     def test_filter_by_token_count(self):
         """Test filtering samples by token count."""
         from dataflow.operators.hallucination_detection import LongContextFilterOperator
-        from dataflow.utils.storage import DataFlowStorage
+        from dataflow.utils.storage import DummyStorage
         
         # Create mock tokenizer
         mock_tokenizer = Mock()
@@ -38,8 +38,8 @@ class TestLongContextFilterOperator:
             text_fields=["text"],
         )
         
-        # Run
-        storage = DataFlowStorage()
+        # Run using DummyStorage
+        storage = DummyStorage()
         storage.set("dataframe", df)
         op.run(storage, input_key="dataframe", output_key="filtered")
         
@@ -51,7 +51,7 @@ class TestLongContextFilterOperator:
     def test_multiple_text_fields(self):
         """Test filtering with multiple text fields."""
         from dataflow.operators.hallucination_detection import LongContextFilterOperator
-        from dataflow.utils.storage import DataFlowStorage
+        from dataflow.utils.storage import DummyStorage
         
         mock_tokenizer = Mock()
         mock_tokenizer.encode = lambda text, **kwargs: list(range(len(text.split())))
@@ -68,7 +68,7 @@ class TestLongContextFilterOperator:
             text_fields=["prompt", "answer"],
         )
         
-        storage = DataFlowStorage()
+        storage = DummyStorage()
         storage.set("dataframe", df)
         op.run(storage, input_key="dataframe", output_key="filtered")
         
@@ -83,7 +83,7 @@ class TestHallucinationInjectionOperator:
     def test_injection_ratio(self):
         """Test that hallucination ratio is respected."""
         from dataflow.operators.hallucination_detection import HallucinationInjectionOperator
-        from dataflow.utils.storage import DataFlowStorage
+        from dataflow.utils.storage import DummyStorage
         
         # Create mock LLM serving
         mock_llm = Mock()
@@ -100,7 +100,7 @@ class TestHallucinationInjectionOperator:
             seed=42,
         )
         
-        storage = DataFlowStorage()
+        storage = DummyStorage()
         storage.set("dataframe", df)
         op.run(storage, input_key="dataframe", output_key="output")
         
@@ -132,35 +132,34 @@ class TestSpanAnnotationOperator:
     
     def test_sentence_splitting(self):
         """Test sentence splitting."""
+        # Import the module to get the actual class
         from dataflow.operators.hallucination_detection import SpanAnnotationOperator
         
-        with patch("dataflow.operators.hallucination_detection.generate.span_annotation.HAS_TRANSFORMERS", True):
-            op = SpanAnnotationOperator.__new__(SpanAnnotationOperator)
-            op.logger = Mock()
-            
-            text = "This is sentence one. This is sentence two! Is this three?"
-            sentences = op._split_sentences(text)
-            
-            assert len(sentences) == 3
-            assert sentences[0] == "This is sentence one."
-            assert sentences[1] == "This is sentence two!"
-            assert sentences[2] == "Is this three?"
+        # Create instance without initializing (to avoid transformers import)
+        op = SpanAnnotationOperator.__new__(SpanAnnotationOperator)
+        op.logger = Mock()
+        
+        text = "This is sentence one. This is sentence two! Is this three?"
+        sentences = op._split_sentences(text)
+        
+        assert len(sentences) == 3
+        assert sentences[0] == "This is sentence one."
+        assert sentences[1] == "This is sentence two!"
+        assert sentences[2] == "Is this three?"
     
     def test_position_finding(self):
         """Test finding sentence positions."""
         from dataflow.operators.hallucination_detection import SpanAnnotationOperator
         
-        with patch("dataflow.operators.hallucination_detection.generate.span_annotation.HAS_TRANSFORMERS", True):
-            op = SpanAnnotationOperator.__new__(SpanAnnotationOperator)
-            op.logger = Mock()
-            
-            text = "The quick brown fox jumps."
-            start, end = op._find_sentence_position(text, "brown fox")
-            
-            assert start == 10
-            assert end == 19
+        op = SpanAnnotationOperator.__new__(SpanAnnotationOperator)
+        op.logger = Mock()
+        
+        text = "The quick brown fox jumps."
+        start, end = op._find_sentence_position(text, "brown fox")
+        
+        assert start == 10
+        assert end == 19
 
 
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])
-

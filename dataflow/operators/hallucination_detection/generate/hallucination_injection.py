@@ -130,19 +130,41 @@ class HallucinationInjectionOperator(OperatorABC):
                 )
     
     @staticmethod
-    def get_desc(lang: str = "en") -> tuple:
+    def get_desc(lang: str = "en") -> str:
         """Returns a description of the operator's functionality."""
         if lang == "zh":
             return (
-                "HallucinationInjectionOperator 向LLM生成的答案中注入RAGTruth风格的幻觉。",
-                "支持的幻觉类型：明显冲突、明显无依据、微妙无依据、微妙冲突。",
-                "输出：带有<hal>标记的修改后答案，用于训练幻觉检测模型。",
+                "向LLM生成的答案中注入RAGTruth风格幻觉的算子，用于创建幻觉检测训练数据。\n\n"
+                "__init__参数：\n"
+                "- llm_serving: LLM服务对象，用于生成带幻觉的答案\n"
+                "- hallucination_ratio: 注入幻觉的样本比例(0-1)，默认0.5\n"
+                "- hallucination_types: 幻觉类型列表，可选'Evident Conflict'、'Evident Baseless Info'、'Subtle Baseless Info'、'Subtle Conflict'\n"
+                "- seed: 随机种子，默认42\n"
+                "- max_reference_chars: 参考文本最大字符数，默认4000\n\n"
+                "run参数：\n"
+                "- storage: DataFlow存储对象\n"
+                "- input_key: 输入数据的键名\n"
+                "- output_key: 输出数据的键名\n"
+                "- input_context_field: 上下文字段名，默认'context'\n"
+                "- input_answer_field: 答案字段名，默认'answer'\n\n"
+                "输出：DataFrame包含has_hallucination、hallucination_type、labels等字段。"
             )
         else:
             return (
-                "HallucinationInjectionOperator injects RAGTruth-style hallucinations into answers.",
-                "Supported types: Evident Conflict, Evident Baseless Info, Subtle Baseless Info, Subtle Conflict.",
-                "Output: Modified answers with <hal> tags for hallucination detection training.",
+                "An operator that injects RAGTruth-style hallucinations into LLM answers for creating detection training data.\n\n"
+                "__init__ Parameters:\n"
+                "- llm_serving: LLM serving object for generating hallucinated answers\n"
+                "- hallucination_ratio: Fraction of samples to inject hallucinations (0-1), default 0.5\n"
+                "- hallucination_types: List of hallucination types, options: 'Evident Conflict', 'Evident Baseless Info', 'Subtle Baseless Info', 'Subtle Conflict'\n"
+                "- seed: Random seed, default 42\n"
+                "- max_reference_chars: Max chars from reference context, default 4000\n\n"
+                "run Parameters:\n"
+                "- storage: DataFlow storage object\n"
+                "- input_key: Key for input data\n"
+                "- output_key: Key for output data\n"
+                "- input_context_field: Column name for context, default 'context'\n"
+                "- input_answer_field: Column name for answer, default 'answer'\n\n"
+                "Output: DataFrame with has_hallucination, hallucination_type, labels fields."
             )
     
     def _get_reference_excerpt(self, context: str) -> str:
