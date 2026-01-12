@@ -83,25 +83,25 @@ class CodeQualitySampleEvaluator(OperatorABC):
         if conflict:
             raise ValueError(f"The following column(s) already exist and would be overwritten by CodeQualitySampleEvaluator: {conflict}")
 
-    def _score_func(self, instruction: str, code: str) -> Tuple[int, str]:
+    def _build_prompts(self, dataframe: pd.DataFrame, input_instruction_key: str, input_code_key: str) -> List[str]:
         """
-        Evaluate a single instruction-code pair and return score and feedback.
+        Build prompts for all instruction-code pairs in the dataframe.
         
         Args:
-            instruction: The instruction text
-            code: The generated code text
+            dataframe: Input DataFrame
+            input_instruction_key: Field name containing instructions
+            input_code_key: Field name containing code
             
         Returns:
-            Tuple of (score, feedback) where score is an integer and feedback is a string
+            List of prompt strings
         """
-        prompt = self.prompt_template.build_prompt(instruction=instruction, code=code)
-        response = self.llm_serving.generate_from_input(user_inputs=[prompt], system_prompt="")
-        
-        if not response or len(response) == 0:
-            self.logger.warning("Empty response from LLM")
-            return 0, "No response from LLM"
-            
-        return self._parse_score_and_feedback(response[0])
+        prompts = []
+        for _, row in dataframe.iterrows():
+            instruction = row[input_instruction_key]
+            code = row[input_code_key]
+            prompt = self.prompt_template.build_prompt(instruction=instruction, code=code)
+            prompts.append(prompt)
+        return prompts
     
     def _parse_score_and_feedback(self, response: str) -> Tuple[int, str]:
         """
@@ -133,23 +133,34 @@ class CodeQualitySampleEvaluator(OperatorABC):
         
         Args:
             dataframe: Input DataFrame
-            input_key: Field name containing instruction-code pairs (as dict with 'instruction' and 'code' keys)
+            input_instruction_key: Field name containing instructions
+            input_code_key: Field name containing code
             
         Returns:
             Tuple of (scores, feedbacks) lists
         """
         self.logger.info(f"Evaluating {self.score_name}...")
         
-        scores = []
-        feedbacks = []
+        # Build all prompts at once
+        prompts = self._build_prompts(dataframe, input_instruction_key, input_code_key)
         
-        for _, row in dataframe.iterrows():
-            instruction = row[input_instruction_key]
-            code = row[input_code_key]
-
-            score, feedback = self._score_func(instruction, code)
-            scores.append(score)
-            feedbacks.append(feedback)
+        # Generate responses in batch
+        responses = self.llm_serving.generate_from_input(user_inputs=prompts, system_prompt="")
+        
+        if not responses or len(responses) == 0:
+            self.logger.warning("Empty response from LLM")
+            scores = [0] * len(dataframe)
+            feedbacks = ["No response from LLM"] * len(dataframe)
+        elif len(responses) != len(dataframe):
+            self.logger.warning(f"Response count ({len(responses)}) doesn't match dataframe length ({len(dataframe)})")
+            scores = [0] * len(dataframe)
+            feedbacks = ["Response count mismatch"] * len(dataframe)
+        else:
+            # Parse all responses
+            results = [self._parse_score_and_feedback(response) for response in responses]
+            scores, feedbacks = zip(*results)
+            scores = list(scores)
+            feedbacks = list(feedbacks)
         
         self.logger.info("Evaluation complete!")
         return scores, feedbacks
