@@ -1,4 +1,5 @@
 from dataflow.operators.conversations import ConsistentChatGenerator
+from dataflow.prompts.general_text import ConsistentChatPrompt
 from dataflow.utils.storage import FileStorage
 from dataflow.serving import APILLMServing_request 
 
@@ -16,7 +17,7 @@ class TextConversationSynthesis_APIPipeline():
             max_workers=100
         )
         self.model_cache_dir = './dataflow_cache'
-        self.processor = ConsistentChatGenerator(llm_serving=self.llm_serving, num_dialogs_per_intent=5)
+        self.processor = ConsistentChatGenerator(llm_serving=self.llm_serving, num_dialogs_per_intent=5, prompt_template=ConsistentChatPrompt())
 
     def forward(self):
         self.processor.run(

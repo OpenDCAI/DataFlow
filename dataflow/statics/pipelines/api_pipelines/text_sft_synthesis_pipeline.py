@@ -4,6 +4,7 @@ from dataflow.operators.text_sft import CondorGenerator
 from dataflow.operators.text_sft import CondorRefiner
 from dataflow.utils.storage import FileStorage
 from dataflow.serving import APILLMServing_request
+from dataflow.prompts.general_text import CondorQuestionPrompt, CondorRefinePrompt
 
 class TextSFTSynthesis_APIPipeline():
     def __init__(self):
@@ -20,8 +21,8 @@ class TextSFTSynthesis_APIPipeline():
                 model_name="gpt-4o",
                 max_workers=100
         )
-        self.generator = CondorGenerator(llm_serving=self.llm_serving, num_samples=self.num_generated_samples)
-        self.refiner = CondorRefiner(llm_serving=self.llm_serving)
+        self.generator = CondorGenerator(llm_serving=self.llm_serving, num_samples=self.num_generated_samples, prompt_template=CondorQuestionPrompt())
+        self.refiner = CondorRefiner(llm_serving=self.llm_serving, prompt_template=CondorRefinePrompt())
         self.alpagasus_filter = AlpagasusFilter(min_score=3,max_score=5,llm_serving=self.llm_serving)
 
     def forward(self):

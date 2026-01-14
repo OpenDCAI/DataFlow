@@ -6,25 +6,23 @@ from dataflow.core import OperatorABC
 from dataflow.utils.storage import DataFlowStorage
 import pandas as pd
 from dataflow.core import LLMServingABC
-from dataflow.prompts.general_text import ConsistentQueryPrompt, ConsistentResponsePrompt
+from dataflow.prompts.general_text import ConsistentChatPrompt
 from dataflow.core.prompt import prompt_restrict
 
 @prompt_restrict(
-    ConsistentQueryPrompt,
-    ConsistentResponsePrompt
+    ConsistentChatPrompt
 ) 
 
 @OPERATOR_REGISTRY.register()
 class ConsistentChatGenerator(OperatorABC):
-    def __init__(self, llm_serving: LLMServingABC = None, num_dialogs_per_intent = 20, num_turns_per_dialog = 6, temperature = 0.9):
+    def __init__(self, llm_serving: LLMServingABC = None, num_dialogs_per_intent = 20, num_turns_per_dialog = 6, temperature = 0.9, prompt_template : ConsistentChatPrompt = None):
         self.logger = get_logger()
         self.logger.info(f'Initializing {self.__class__.__name__}...')
         self.llm_serving = llm_serving
         self.num_dialogs_per_intent = num_dialogs_per_intent # Based on the topic_dict in the existing prompt, it is recommended to set the value to below 1000 (which can generate 9000 conversation data). Otherwise, it is recommended to add more topic_dict in dataflow.prompts.general_text.ConsistentChatPrompt to increase data richness
         self.num_turns_per_dialog = num_turns_per_dialog
         self.temperature = temperature
-        self.query_prompt = ConsistentQueryPrompt()
-        self.response_prompt = ConsistentResponsePrompt()
+        self.prompt_template = prompt_template
         self.logger.info(f'{self.__class__.__name__} initialized.')
     
     @staticmethod
@@ -37,6 +35,7 @@ class ConsistentChatGenerator(OperatorABC):
                 "- num_dialogs_per_intent：每个意图生成的对话数量，默认20\n"
                 "- num_turns_per_dialog：每个对话的轮次数量，默认6\n"
                 "- temperature：生成温度，控制输出随机性，默认0.9\n"
+                "- prompt_template：提示词模板对象，用于定义提示结构\n"
                 "输出参数：\n"
                 "- 包含category和conversation字段的DataFrame，其中conversation为多轮对话列表"
             )
@@ -48,6 +47,7 @@ class ConsistentChatGenerator(OperatorABC):
                 "- num_dialogs_per_intent: Number of dialogs generated per intent, default 20\n"
                 "- num_turns_per_dialog: Number of turns per dialog, default 6\n"
                 "- temperature: Sampling temperature for generation, default 0.9\n"
+                "- prompt_template: Prompt template object, for defining the prompt structure\n"
                 "Output Parameters:\n"
                 "- DataFrame containing 'category' and 'conversation' fields, where conversation is a list of multi-turn dialogues"
             )
@@ -57,7 +57,7 @@ class ConsistentChatGenerator(OperatorABC):
     def run(self, storage: DataFlowStorage):
         
         # Step 1: Generate all queries using LLM
-        all_query_prompts = self.query_prompt.build_prompt(num_dialogs_per_intent=self.num_dialogs_per_intent)
+        all_query_prompts = self.prompt_template.build_prompt(mode="query", num_dialogs_per_intent=self.num_dialogs_per_intent)
         # Step 2: Generate queries by calling llm_serving once
         self.logger.info("Generating queries...")
         queries_list = self.llm_serving.generate_from_input(user_inputs=all_query_prompts)
@@ -78,7 +78,7 @@ class ConsistentChatGenerator(OperatorABC):
         for queries in valid_queries:
             category = queries.get("category")
             turns = queries.get("turns")
-            all_response_prompts.append(self.response_prompt.build_prompt(topic=category, queries=turns))
+            all_response_prompts.append(self.prompt_template.build_prompt(mode="response", topic=category, queries=turns))
         self.logger.info("Generating responses...")
         responses_list = self.llm_serving.generate_from_input(user_inputs=all_response_prompts)
 

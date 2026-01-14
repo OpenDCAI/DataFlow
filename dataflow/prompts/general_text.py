@@ -1,4 +1,5 @@
 import random
+from typing import Literal
 from dataflow.utils.registry import PROMPT_REGISTRY
 from dataflow.core.prompt import PromptABC
 '''
@@ -196,9 +197,9 @@ class TreeinstructPrompt(PromptABC):
 
 
 @PROMPT_REGISTRY.register()
-class ConsistentQueryPrompt(PromptABC):
+class ConsistentChatPrompt(PromptABC):
     def __init__(self):
-        self.intent_categories = {
+        self.query_intent_categories = {
             "Problem Solving Interaction": [
                 "From Problem Diagnosis to Solution Optimization"
             ],
@@ -235,7 +236,7 @@ class ConsistentQueryPrompt(PromptABC):
                 "From Problem Diagnosis to Solution Optimization"
             ]
         }
-        self.topic_dict = {
+        self.query_topic_dict = {
             "Problem Solving Interaction": [
                 "Technical support for computer hardware issues",
                 "Home repair advice for plumbing problems",
@@ -701,90 +702,93 @@ class ConsistentQueryPrompt(PromptABC):
             ]
         }
     
-    def build_prompt(self, num_dialogs_per_intent):
-        prompt = """
-        Task Description and Rules 
-        1. Generate multiple rounds of realistic user questions based on the provided topic: 
-        - Based on a single core topic (provided directly by the user), generate multiple rounds of realistic user questions, comprising 6-8 turns in total. 
-        - The questions should match the characteristics of real users in natural communication: sometimes simple, sometimes vague, or including contextual backgrounds, and should reflect the language style of daily communication. 
-        - Note: Avoid directly including the exact expression of the input topic in the questions. Instead, abstract it with natural and conversational language in practical scenarios. 
-        
-        2. Dynamic Dialogue Information Flow in Conversations: Below are the relevant steps of the information flow: {info_flow}
+    def build_prompt(self, mode: Literal["query", "response"], num_dialogs_per_intent: int = None, topic: str = None, queries: list[str] = None) -> str:
+        if mode == "query":
+            if topic is not None or queries is not None:
+                raise ValueError("Topic and queries should be None when mode is query")
+            if num_dialogs_per_intent is None:
+                raise ValueError("num_dialogs_per_intent should be provided when mode is query")
+            prompt = """
+            Task Description and Rules 
+            1. Generate multiple rounds of realistic user questions based on the provided topic: 
+            - Based on a single core topic (provided directly by the user), generate multiple rounds of realistic user questions, comprising 6-8 turns in total. 
+            - The questions should match the characteristics of real users in natural communication: sometimes simple, sometimes vague, or including contextual backgrounds, and should reflect the language style of daily communication. 
+            - Note: Avoid directly including the exact expression of the input topic in the questions. Instead, abstract it with natural and conversational language in practical scenarios. 
+            
+            2. Dynamic Dialogue Information Flow in Conversations: Below are the relevant steps of the information flow: {info_flow}
 
-        The dialogue style should adhere to the following requirements: 
-        - Utilize natural phrasing and vivid language, avoiding overly mechanical responses. 
-        - Favor shorter sentences in questions, with occasional subject omission allowed. 
-        - Ensure smooth and logical transitions through lighthearted or entertaining interjections. 
-        - Permit the expression of specific personality traits and individualized tones. 
-        - Proactively introduce new topics when appropriate, ensuring relevance to the current theme. 
+            The dialogue style should adhere to the following requirements: 
+            - Utilize natural phrasing and vivid language, avoiding overly mechanical responses. 
+            - Favor shorter sentences in questions, with occasional subject omission allowed. 
+            - Ensure smooth and logical transitions through lighthearted or entertaining interjections. 
+            - Permit the expression of specific personality traits and individualized tones. 
+            - Proactively introduce new topics when appropriate, ensuring relevance to the current theme. 
+            
+            The dialogue should comply with the following generation rules: 
+            - For each round of dialogue, only simulate user questions without providing answers. 
+            - Ensure the conversation flows naturally and reflects realistic interactive thinking. 
+            - Avoid overly polished or templated content, ensuring the questions feel authentic and relatable in life scenarios. 
+            
+            Output Format: 
+            Multi-turn Questions in JSON Format: 
+            "category": "<Core Topic of the Conversation>", 
+            "turns": ["<turn_1>", "<turn_2>", "<turn_3>", "..."] 
+            To generate multi-turn queries with high topic consistency, please think step-by-step. 
+            The input core topic for this task is: {topic}
+            """
+            all_query_prompts = []
+            for intent, info_flows in self.query_intent_categories.items():
+                for _ in range(num_dialogs_per_intent):
+                    info_flow = random.choice(info_flows)
+                    topic = random.choice(self.query_topic_dict[intent])
+                    query_prompt = prompt.format(info_flow=info_flow, topic=topic)
+                    all_query_prompts.append(query_prompt)
+            return all_query_prompts
         
-        The dialogue should comply with the following generation rules: 
-        - For each round of dialogue, only simulate user questions without providing answers. 
-        - Ensure the conversation flows naturally and reflects realistic interactive thinking. 
-        - Avoid overly polished or templated content, ensuring the questions feel authentic and relatable in life scenarios. 
-        
-        Output Format: 
-        Multi-turn Questions in JSON Format: 
-        "category": "<Core Topic of the Conversation>", 
-        "turns": ["<turn_1>", "<turn_2>", "<turn_3>", "..."] 
-        To generate multi-turn queries with high topic consistency, please think step-by-step. 
-        The input core topic for this task is: {topic}
-        """
-        all_query_prompts = []
-        for intent, info_flows in self.intent_categories.items():
-            for _ in range(num_dialogs_per_intent):
-                info_flow = random.choice(info_flows)
-                topic = random.choice(self.topic_dict[intent])
-                query_prompt = prompt.format(info_flow=info_flow, topic=topic)
-                all_query_prompts.append(query_prompt)
-        return all_query_prompts
+        elif mode == "response":
+            if topic is None or queries is None:
+                raise ValueError("Topic and queries should be provided when mode is response")
+            if num_dialogs_per_intent is not None:
+                raise ValueError("num_dialogs_per_intent should be None when mode is response")
+            prompt = f"""
+            Your task is to simulate a multi-turn conversation where you progressively answer a series of user questions provided under a given topic category. For each answer, focus on delivering a natural, contextually relevant, and actionable response while considering both the current question and future questions in the sequence. The goal is to ensure consistency and logical progression throughout the dialogue and to avoid unnecessary follow-up questions in the responses simultaneously. To generate multi-turn responses with high topic consistency, think step-by-step. Key Dialogue Style Requirements are as follows: 
+            Content and Structure:
+            1. Directly Answer the Current Question:
+            - Provide a complete, useful response to the current question without posing additional questions unless they are directly relevant to future queries. 
+            - If clarification or additional steps are needed, frame these as suggestions or explanations rather than questions.
+            2. Be Context-Aware:
+            - Always tailor each response to the current question while remaining mindful of the context provided by prior and future questions.
+            - Avoid prematurely addressing future queries but create subtle links where necessary to ensure smooth progression.
+            3. Clear, Action-Oriented Responses:
+            - Focus on providing actionable advice, logical explanations, or troubleshooting steps rather than speculative or rhetorical remarks.
+            - Avoid long or overly complex explanations; aim for clarity and efficiency.
+            Tone and Style:
+            1. Conversational and Supportive:
+            - Use a natural, empathetic tone that simulates real-life problem-solving interactions.
+            - Avoid mechanical or overly formal responses.
+            2. Economical with Words:
+            - Keep responses concise but informative. Minimize extraneous content while ensuring answers have enough detail to be helpful.
+            3. No Unnecessary Questions:
+            - Limit unnecessary questions in the responses and focus instead on providing actionable steps or solutions directly. Avoid follow-up questions that don’t align with the next user query.
+            Turn-by-Turn Instructions:
+            1. Answer Exclusively for the Current Question:
+            - For each turn, generate an answer that directly addresses the immediate question. Avoid revisiting past details unnecessarily unless they are highly relevant.
+            - While you shouldn’t anticipate or directly answer future queries, your response should create natural openings for upcoming questions if applicable.
+            2. Avoid Irrelevant Follow-Up Questions:
+            - If the immediate question doesn’t require clarification, frame your response as a statement or suggestion rather than a question.
+            - Maintain alignment with the logical flow of dialogue to ensure each turn is coherent.
+            3. Proactively Provide Scenarios or Steps:
+            - Where appropriate, guide the user with specific recommendations, troubleshooting actions, or observations they can make without requiring back-and-forth clarification.
+            Output Requirements:
+            The output must simulate the conversation by only providing responses (one per turn) in a sequential manner. The final format must strictly adhere to valid JSON and include the required structure.
+            
+            The input core topic and questions-only turns for this task is: 
+            core topic: {topic}
+            queries:
+            {', '.join([f'User query: {query}' for query in queries])}
+            """
+            return prompt
 
-
-@PROMPT_REGISTRY.register()
-class ConsistentResponsePrompt(PromptABC):
-    
-    def __init__(self):
-        pass
-    
-    def build_prompt(self, topic, queries):
-        prompt = f"""
-        Your task is to simulate a multi-turn conversation where you progressively answer a series of user questions provided under a given topic category. For each answer, focus on delivering a natural, contextually relevant, and actionable response while considering both the current question and future questions in the sequence. The goal is to ensure consistency and logical progression throughout the dialogue and to avoid unnecessary follow-up questions in the responses simultaneously. To generate multi-turn responses with high topic consistency, think step-by-step. Key Dialogue Style Requirements are as follows: 
-        Content and Structure:
-        1. Directly Answer the Current Question:
-        - Provide a complete, useful response to the current question without posing additional questions unless they are directly relevant to future queries. 
-        - If clarification or additional steps are needed, frame these as suggestions or explanations rather than questions.
-        2. Be Context-Aware:
-        - Always tailor each response to the current question while remaining mindful of the context provided by prior and future questions.
-        - Avoid prematurely addressing future queries but create subtle links where necessary to ensure smooth progression.
-        3. Clear, Action-Oriented Responses:
-        - Focus on providing actionable advice, logical explanations, or troubleshooting steps rather than speculative or rhetorical remarks.
-        - Avoid long or overly complex explanations; aim for clarity and efficiency.
-        Tone and Style:
-        1. Conversational and Supportive:
-        - Use a natural, empathetic tone that simulates real-life problem-solving interactions.
-        - Avoid mechanical or overly formal responses.
-        2. Economical with Words:
-        - Keep responses concise but informative. Minimize extraneous content while ensuring answers have enough detail to be helpful.
-        3. No Unnecessary Questions:
-        - Limit unnecessary questions in the responses and focus instead on providing actionable steps or solutions directly. Avoid follow-up questions that don’t align with the next user query.
-        Turn-by-Turn Instructions:
-        1. Answer Exclusively for the Current Question:
-        - For each turn, generate an answer that directly addresses the immediate question. Avoid revisiting past details unnecessarily unless they are highly relevant.
-        - While you shouldn’t anticipate or directly answer future queries, your response should create natural openings for upcoming questions if applicable.
-        2. Avoid Irrelevant Follow-Up Questions:
-        - If the immediate question doesn’t require clarification, frame your response as a statement or suggestion rather than a question.
-        - Maintain alignment with the logical flow of dialogue to ensure each turn is coherent.
-        3. Proactively Provide Scenarios or Steps:
-        - Where appropriate, guide the user with specific recommendations, troubleshooting actions, or observations they can make without requiring back-and-forth clarification.
-        Output Requirements:
-        The output must simulate the conversation by only providing responses (one per turn) in a sequential manner. The final format must strictly adhere to valid JSON and include the required structure.
-        
-        The input core topic and questions-only turns for this task is: 
-        core topic: {topic}
-        queries:
-        {', '.join([f'User query: {query}' for query in queries])}
-        """
-        return prompt
     
 @PROMPT_REGISTRY.register()
 class CondorQuestionPrompt(PromptABC):
@@ -1201,14 +1205,20 @@ Now it's your turn. Please provide the three Questions of different difficulty l
 
     
 @PROMPT_REGISTRY.register()
-class CondorCritiquePrompt(PromptABC):
+class CondorRefinePrompt(PromptABC):
     
     def __init__(self):
         pass
     
-    def build_prompt(self, question, answer):
-        dialogue = [question, answer]
-        base_critique_prompt = f"""
+    def build_prompt(self, mode: Literal["critique", "refine"], question: str = None, answer: str = None, critique: str = None):
+
+        if mode == "critique":
+            if question is None or answer is None:
+                raise ValueError("Question and answer should be provided when mode is critique")
+            if critique is not None:
+                raise ValueError("Critique should be None when mode is critique")
+            dialogue = [question, answer]
+            base_critique_prompt = f"""
 There is now a user’s question and a model’s response. You need to write a critique for this response, pointing out the
 strengths and weaknesses of the model’s answer to help the model improve its response.
 
@@ -1228,16 +1238,11 @@ Here is the user’s question and the model’s response: {dialogue}
 
 Now it’s your turn. Please provide your Critique as required:
         """
-        return base_critique_prompt
-
-@PROMPT_REGISTRY.register()
-class CondorRefinePrompt(PromptABC):
-    
-    def __init__(self):
-        pass
-
-    def build_prompt(self, question, answer, critique):
-        base_refine_prompt = """
+            return base_critique_prompt
+        elif mode == "refine":
+            if question is None or answer is None or critique is None:
+                raise ValueError("Question, answer and critique should be provided when mode is refine")
+            base_refine_prompt = """
 Now there is a user's question, a model's answer, and the user's feedback. Please help modify the model's answer based on the user's feedback to make it better.
 Your improved answer must strictly adhere to the following format:
 
@@ -1250,7 +1255,30 @@ Below is the user's question, the model's answer, and the feedback:
 
 Now it's your turn, please provide your improved answer as required:
         """
-        return base_refine_prompt.format(question=question, answer=answer, critique=critique)
+            return base_refine_prompt.format(question=question, answer=answer, critique=critique)
+
+
+# @PROMPT_REGISTRY.register()
+# class CondorRefinePrompt(PromptABC):
+    
+#     def __init__(self):
+#         pass
+
+#     def build_prompt(self, question, answer, critique):
+#         base_refine_prompt = """
+# Now there is a user's question, a model's answer, and the user's feedback. Please help modify the model's answer based on the user's feedback to make it better.
+# Your improved answer must strictly adhere to the following format:
+
+# [Improved Answer Start]Your answer[Improved Answer End]
+
+# Below is the user's question, the model's answer, and the feedback:
+# [Question Start]{question}[Question End]
+# [Answer Start]{answer}[Answer End]
+# [Feedback Start]{critique}[Feedback End]
+
+# Now it's your turn, please provide your improved answer as required:
+#         """
+#         return base_refine_prompt.format(question=question, answer=answer, critique=critique)
 
 @PROMPT_REGISTRY.register()
 class LanguageFilterPrompt(PromptABC):

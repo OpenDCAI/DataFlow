@@ -1,5 +1,6 @@
  
 from dataflow.operators.text_sft import CondorGenerator
+from dataflow.prompts.general_text import CondorQuestionPrompt
 from dataflow.operators.core_text import PromptedGenerator,FormatStrPromptedGenerator
 from dataflow.operators.core_text import GeneralFilter
 from dataflow.utils.storage import FileStorage
@@ -40,7 +41,7 @@ class SFT_From_Scratch():
                 model_name="gpt-4o",
                 max_workers=100
         )
-        self.instruction_generator = CondorGenerator(llm_serving=self.llm_serving, num_samples=self.num_generated_samples)
+        self.instruction_generator = CondorGenerator(llm_serving=self.llm_serving, num_samples=self.num_generated_samples, prompt_template=CondorQuestionPrompt())
         self.answer_generator = PromptedGenerator(llm_serving=self.llm_serving, system_prompt="Please answer this question.")
         self.prompt_template = FormatStrPrompt(
             f_str_template="Please rate the following SFT data: instruction: {instruction}, output: {output}?"

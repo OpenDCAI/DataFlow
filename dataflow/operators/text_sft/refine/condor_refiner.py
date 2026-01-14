@@ -6,22 +6,20 @@ from dataflow.core import OperatorABC
 from dataflow.utils.storage import DataFlowStorage
 import pandas as pd
 from dataflow.core import LLMServingABC
-from dataflow.prompts.general_text import CondorCritiquePrompt, CondorRefinePrompt
+from dataflow.prompts.general_text import CondorRefinePrompt
 from dataflow.core.prompt import prompt_restrict
 
 @prompt_restrict(
-    CondorCritiquePrompt,
     CondorRefinePrompt
 )
 
 @OPERATOR_REGISTRY.register()
 class CondorRefiner(OperatorABC):
-    def __init__(self, llm_serving: LLMServingABC = None):
+    def __init__(self, llm_serving: LLMServingABC = None, prompt_template: CondorRefinePrompt = None):
         self.logger = get_logger()
         self.logger.info(f'Initializing {self.__class__.__name__}...')
         self.llm_serving = llm_serving
-        self.critique_prompt = CondorCritiquePrompt()  # 创建 CondorPrompt 类的实例
-        self.refine_prompt = CondorRefinePrompt()
+        self.prompt_template = prompt_template
         self.logger.info(f'{self.__class__.__name__} initialized.')
     
     @staticmethod
@@ -33,6 +31,7 @@ class CondorRefiner(OperatorABC):
                 "- llm_serving：LLM服务对象，需实现LLMServingABC接口\n"
                 "- input_instruction_key：输入指令字段名，默认为'instruction'\n"
                 "- input_output_key：输入回复字段名，默认为'output'\n"
+                "- prompt_template：提示词模板对象，用于定义提示结构\n"
                 "输出参数：\n"
                 "- 包含优化后回复的DataFrame\n"
                 "- 返回包含优化后回复字段名的列表，用于后续算子引用"
@@ -44,7 +43,8 @@ class CondorRefiner(OperatorABC):
                 "Input Parameters:\n"
                 "- llm_serving: LLM serving object implementing LLMServingABC interface\n"
                 "- input_instruction_key: Field name for input instructions, default is 'instruction'\n"
-                "- input_output_key: Field name for input responses, default is 'output'\n\n"
+                "- input_output_key: Field name for input responses, default is 'output'\n"
+                "- prompt_template: Prompt template object, for defining the prompt structure\n"
                 "Output Parameters:\n"
                 "- DataFrame containing refined responses\n"
                 "- List containing refined response field name for subsequent operator reference"
@@ -56,13 +56,13 @@ class CondorRefiner(OperatorABC):
 
     def generate_critique(self, question, answer):
         # 批量生成 Critique
-        critique_prompts = [self.critique_prompt.build_prompt(q, a) for q, a in zip(question, answer)]
+        critique_prompts = [self.prompt_template.build_prompt(mode="critique", question=q, answer=a) for q, a in zip(question, answer)]
         critique_responses = self.llm_serving.generate_from_input(critique_prompts)
         return critique_responses
 
     def generate_refined_answer(self, question, answer, critique):
         # 批量生成修改后的答案
-        refine_prompts = [self.refine_prompt.build_prompt(q, a, c) for q, a, c in zip(question, answer, critique)]
+        refine_prompts = [self.prompt_template.build_prompt(mode="refine", question=q, answer=a, critique=c) for q, a, c in zip(question, answer, critique)]
         refined_answers = self.llm_serving.generate_from_input(refine_prompts)
         refined_answers = [answer.replace('[Improved Answer Start]', '').replace('[Improved Answer End]', '').strip() for answer in refined_answers]
         return refined_answers
