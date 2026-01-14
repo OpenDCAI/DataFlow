@@ -7,7 +7,8 @@ from dataflow.utils.storage import DataFlowStorage
 import pandas as pd
 from dataflow.core import LLMServingABC
 from dataflow.prompts.general_text import CondorQuestionPrompt
-from dataflow.core.prompt import prompt_restrict
+from dataflow.core.prompt import DIYPromptABC, prompt_restrict
+from typing import Union
 
 @prompt_restrict(
     CondorQuestionPrompt
@@ -15,7 +16,7 @@ from dataflow.core.prompt import prompt_restrict
 
 @OPERATOR_REGISTRY.register()
 class CondorGenerator(OperatorABC):
-    def __init__(self, llm_serving: LLMServingABC = None, num_samples=15, use_task_diversity=True, prompt_template: CondorQuestionPrompt = None):
+    def __init__(self, llm_serving: LLMServingABC = None, num_samples=15, use_task_diversity=True, prompt_template: Union[CondorQuestionPrompt, DIYPromptABC] = None):
         # Based on the existing topics, it is recommended to set num_samples below 5000. Otherwise, it is recommended to add topics in dataflow.prompts.general_text.CondorPrompt on your own to increase data richness
         self.logger = get_logger()
         self.logger.info(f'Initializing {self.__class__.__name__}...')

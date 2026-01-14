@@ -7,7 +7,8 @@ from dataflow.utils.storage import DataFlowStorage
 import pandas as pd
 from dataflow.core import LLMServingABC
 from dataflow.prompts.general_text import ConsistentChatPrompt
-from dataflow.core.prompt import prompt_restrict
+from dataflow.core.prompt import DIYPromptABC, prompt_restrict
+from typing import Union
 
 @prompt_restrict(
     ConsistentChatPrompt
@@ -15,7 +16,7 @@ from dataflow.core.prompt import prompt_restrict
 
 @OPERATOR_REGISTRY.register()
 class ConsistentChatGenerator(OperatorABC):
-    def __init__(self, llm_serving: LLMServingABC = None, num_dialogs_per_intent = 20, num_turns_per_dialog = 6, temperature = 0.9, prompt_template : ConsistentChatPrompt = None):
+    def __init__(self, llm_serving: LLMServingABC = None, num_dialogs_per_intent = 20, num_turns_per_dialog = 6, temperature = 0.9, prompt_template : Union[ConsistentChatPrompt, DIYPromptABC] = None):
         self.logger = get_logger()
         self.logger.info(f'Initializing {self.__class__.__name__}...')
         self.llm_serving = llm_serving

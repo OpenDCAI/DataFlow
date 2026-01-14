@@ -7,7 +7,8 @@ from dataflow.utils.storage import DataFlowStorage
 import pandas as pd
 from dataflow.core import LLMServingABC
 from dataflow.prompts.general_text import CondorRefinePrompt
-from dataflow.core.prompt import prompt_restrict
+from dataflow.core.prompt import prompt_restrict, DIYPromptABC
+from typing import Union
 
 @prompt_restrict(
     CondorRefinePrompt
@@ -15,7 +16,7 @@ from dataflow.core.prompt import prompt_restrict
 
 @OPERATOR_REGISTRY.register()
 class CondorRefiner(OperatorABC):
-    def __init__(self, llm_serving: LLMServingABC = None, prompt_template: CondorRefinePrompt = None):
+    def __init__(self, llm_serving: LLMServingABC = None, prompt_template: Union[CondorRefinePrompt, DIYPromptABC] = None):
         self.logger = get_logger()
         self.logger.info(f'Initializing {self.__class__.__name__}...')
         self.llm_serving = llm_serving
