@@ -13,6 +13,9 @@ if TYPE_CHECKING:
     # from .generate.kbc_multihop_qa_generator import KBCMultiHopQAGenerator
     from .generate.kbc_multihop_qa_generator_batch import KBCMultiHopQAGeneratorBatch
     from .generate.qa_extract import QAExtractor
+    from .generate.pdf_table_qa_generator import PDFTableQAGenerator
+    from .generate.table_chunk_splitter import TableChunkSplitter
+    from .generate.map_reduce_qa_generator import MapReduceQAGenerator
 
 else:
     import sys

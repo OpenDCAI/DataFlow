@@ -12,16 +12,16 @@ class KBCleaningPDF_APIPipeline():
     def __init__(self):
 
         self.storage = FileStorage(
-            first_entry_file_name="../example_data/KBCleaningPipeline/kbc_test_1.jsonl",
+            first_entry_file_name="/home/wangdeng/Github/dataflow/DataFlow/dataflow/example/KBCleaningPipeline/kbc_test_1.jsonl",
             cache_path="./.cache/api",
             file_name_prefix="knowledge_cleaning_step",
             cache_type="json",
         )
 
         self.llm_serving = APILLMServing_request(
-                api_url="https://api.openai.com/v1/chat/completions",
-                model_name="gpt-4o",
-                max_workers=100
+                api_url="https://oneapi.hkgai.net/v1/chat/completions",
+                model_name="kimi-k2",
+                max_workers=8
         )
 
         self.knowledge_cleaning_step1 = FileOrURLToMarkdownConverterAPI(
@@ -31,7 +31,7 @@ class KBCleaningPDF_APIPipeline():
 
         self.knowledge_cleaning_step2 = KBCChunkGenerator(
             split_method="token",
-            chunk_size=512,
+            chunk_size=1024,
             tokenizer_name="Qwen/Qwen2.5-7B-Instruct",
         )
 

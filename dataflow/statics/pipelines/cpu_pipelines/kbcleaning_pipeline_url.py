@@ -7,7 +7,7 @@ class KBCleaning_CPUPipeline():
     def __init__(self):
 
         self.storage = FileStorage(
-            first_entry_file_name="../example_data/KBCleaningPipeline/kbc_test_1.jsonl",
+            first_entry_file_name="/home/wangdeng/dataflow/DataFlow/dataflow/example/KBCleaningPipeline/kbc_test_1.jsonl",
             cache_path="./.cache/cpu",
             file_name_prefix="url_cleaning_step",
             cache_type="json",
@@ -20,7 +20,7 @@ class KBCleaning_CPUPipeline():
 
         self.knowledge_cleaning_step2 = KBCChunkGenerator(
             split_method="token",
-            chunk_size=512,
+            chunk_size=5120,
             tokenizer_name="Qwen/Qwen2.5-7B-Instruct",
         )
 

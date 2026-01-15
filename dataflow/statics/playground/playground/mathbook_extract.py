@@ -4,10 +4,10 @@ from dataflow.serving import APIVLMServing_openai
 class QuestionExtractPipeline:
     def __init__(self, 
                  llm_serving: APIVLMServing_openai,
-                 api_url: str = "https://api.openai.com/v1", # end with /v1
+                 api_url: str = "https://oneapi.hkgai.net/v1", # end with /v1
                  key_name_of_api_key: str = "DF_API_KEY", # set in environment first: export DF_API_KEY="your_openai_api_key"
-                 model_name: str = "o4-mini",
-                 max_workers: int = 20
+                 model_name: str = "kimi-k2",
+                 max_workers: int = 8
                  ):
         self.extractor = MathBookQuestionExtract(
             llm_serving=llm_serving,
@@ -15,7 +15,7 @@ class QuestionExtractPipeline:
             model_name=model_name,
             max_workers=max_workers
         )
-        self.test_pdf = "../example_data/PDF2VQAPipeline/questionextract_test.pdf" 
+        self.test_pdf = "/home/wangdeng/dataflow/DataFlow/dataflow/example/Math/test2.pdf" 
 
     def forward(
         self,
@@ -32,9 +32,9 @@ class QuestionExtractPipeline:
 
 if __name__ == "__main__":
     llm_serving = APIVLMServing_openai(
-        api_url="https://api.openai.com/v1",
-        model_name="o4-mini",
-        max_workers=20
+        api_url="https://oneapi.hkgai.net/v1",
+        model_name="kimi-k2",
+        max_workers=8
     )
 
     pipeline = QuestionExtractPipeline(llm_serving=llm_serving)

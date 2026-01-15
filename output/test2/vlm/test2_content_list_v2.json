@@ -1,0 +1,117 @@
+[
+    [
+        {
+            "type": "table",
+            "content": {
+                "image_source": {
+                    "path": "images/d2f343f47d83955bd58d8cc05cfcba7b6830a90bd1dc456cb37038b9007b2387.jpg"
+                },
+                "table_caption": [],
+                "table_footnote": [
+                    {
+                        "type": "text",
+                        "content": "SDI=Socio-demographic Index. UI=uncertainty interval."
+                    },
+                    {
+                        "type": "text",
+                        "content": "Table 2: Deaths attributable to air pollution, ambient particulate matter pollution, and household air pollution in the states of India, 2017"
+                    }
+                ],
+                "html": "<table><tr><td></td><td>Death rate per 100 000 population attributable to air pollution (95% UI)</td><td>Number of deaths attributable to air pollution (95% UI)</td><td>Percentage of total deaths attributable to air pollution that were in people younger than 70 years (95% UI)</td><td>Number of deaths attributable to ambient particulate matter pollution (95% UI)</td><td>Number of deaths attributable to household air pollution (95% UI)</td></tr><tr><td>India</td><td>89.9 (78.7-100.4)</td><td>1240 530 (1086 200-1385 930)</td><td>51.4 (49.1-54.1)</td><td>673 129 (551 832-793 262)</td><td>481 738 (393 810-580 207)</td></tr><tr><td>Low SDI states</td><td>95.4 (81.5-108.3)</td><td>643 872 (549 996-731 115)</td><td>53.5 (51.1-56.7)</td><td>340 190 (263 550-416 005)</td><td>258 287 (205 354-324 027)</td></tr><tr><td>Bihar</td><td>79.0 (68.5-89.3)</td><td>96 967 (84 078-109 709)</td><td>57.0 (54.0-60.3)</td><td>53 634 (34 033-71 587)</td><td>37 824 (25 054-53 047)</td></tr><tr><td>Madhya Pradesh</td><td>97.0 (83.8-111.6)</td><td>83 045 (71 698-95 520)</td><td>50.0 (47.0-53.1)</td><td>37 745 (26 975-52 117)</td><td>39 895 (28 515-51 405)</td></tr><tr><td>Jharkhand</td><td>69.0 (60.1-78.1)</td><td>26 486 (23 080-29 956)</td><td>59.2 (56.5-62.1)</td><td>12 053 (8629-16 445)</td><td>12 768 (9280-16 397)</td></tr><tr><td>Uttar Pradesh</td><td>111.1 (87.0-131.0)</td><td>260 028 (203 701-306 568)</td><td>53.1 (50.4-56.8)</td><td>161 178 (111 757-213 041)</td><td>78 888 (50 625-113 260)</td></tr><tr><td>Rajasthan</td><td>112.5 (88.6-132.8)</td><td>90 499 (71 340-106 868)</td><td>50.9 (47.9-55.3)</td><td>43 295 (28 068-59 617)</td><td>39 288 (27 444-52 551)</td></tr><tr><td>Chhattisgarh</td><td>98.9 (86.5-111.9)</td><td>29 841 (26 102-33 768)</td><td>57.8 (54.9-60.7)</td><td>11 144 (7844-14 823)</td><td>17 028 (13 231-21 093)</td></tr><tr><td>Odisha</td><td>65.3 (54.6-80.6)</td><td>31 118 (26 035-38 400)</td><td>54.9 (51.0-58.5)</td><td>11 985 (8004-16 865)</td><td>17 633 (13 486-22 464)</td></tr><tr><td>Assam</td><td>72.3 (62.3-82.2)</td><td>25 888 (22 282-29 426)</td><td>53.1 (50.0-56.6)</td><td>9156 (6748-12 050)</td><td>14 962 (12 114-18 319)</td></tr><tr><td>Middle SDI states</td><td>86.7 (76.3-97.7)</td><td>336 235 (295 958-378 769)</td><td>50.2 (47.8-52.9)</td><td>173 401 (140 417-209 827)</td><td>139 053 (111 735-167 916)</td></tr><tr><td>Andhra Pradesh</td><td>83.7 (65.5-105.2)</td><td>45 525 (35 629-57 235)</td><td>48.7 (45.5-52.1)</td><td>23 280 (17 188-31 262)</td><td>19 345 (13 519-25 999)</td></tr><tr><td>West Bengal</td><td>93.3 (81.4-106.6)</td><td>94 534 (82 494-108 038)</td><td>50.9 (48.1-53.9)</td><td>49 882 (38 014-61 616)</td><td>38 846 (29 193-49 869)</td></tr><tr><td>Tripura</td><td>91.1 (76.3-106.3)</td><td>3711 (3107-4329)</td><td>49.5 (45.9-53.7)</td><td>1627 (1236-2090)</td><td>1842 (1410-2331)</td></tr><tr><td>Arunachal Pradesh</td><td>36.0 (28.9-45.4)</td><td>608 (488-766)</td><td>50.0 (46.4-54.1)</td><td>197 (124-282)</td><td>363 (270-473)</td></tr><tr><td>Meghalaya</td><td>42.7 (34.3-51.7)</td><td>1440 (1157-1742)</td><td>54.8 (51.2-59.0)</td><td>520 (378-694)</td><td>847 (629-1091)</td></tr><tr><td>Karnataka</td><td>94.8 (79.9-109.9)</td><td>64 333 (54 254-74 645)</td><td>49.9 (47.0-52.9)</td><td>26 311 (17 415-36 597)</td><td>33 697 (25 528-42 243)</td></tr><tr><td>Telangana</td><td>65.8 (51.6-81.7)</td><td>26 000 (20 400-32 271)</td><td>50.4 (47.4-53.5)</td><td>15 239 (11 355-20 095)</td><td>8789 (5940-12 008)</td></tr><tr><td>Gujarat</td><td>84.9 (70.0-99.2)</td><td>58 696 (48 429-68 625)</td><td>49.3 (46.4-52.5)</td><td>29 791 (20 117-41 188)</td><td>24 169 (17 239-31 012)</td></tr><tr><td>Manipur</td><td>57.2 (46.4-69.8)</td><td>1949 (1583-2380)</td><td>50.0 (46.7-53.6)</td><td>944 (678-1269)</td><td>908 (671-1208)</td></tr><tr><td>Jammu and Kashmir</td><td>75.4 (61.7-88.3)</td><td>10 476 (8579-12 265)</td><td>45.8 (43.1-48.8)</td><td>5822 (4157-7681)</td><td>3496 (2459-4680)</td></tr><tr><td>Haryana</td><td>100.1 (84.5-116.6)</td><td>28 965 (24 456-33 749)</td><td>54.3 (51.9-57.1)</td><td>19 788 (14 268-25 114)</td><td>6751 (4230-10 120)</td></tr><tr><td>High SDI states</td><td>81.9 (72.9-91.5)</td><td>260 421 (231 677-290 889)</td><td>47.5 (44.9-50.0)</td><td>159 538 (132 798-188 666)</td><td>84 398 (67 746-104 058)</td></tr><tr><td>Uttarakhand</td><td>106.4 (88.0-125.9)</td><td>12 000 (9917-14 190)</td><td>44.7 (42.1-47.8)</td><td>69 595 (45 24-9575)</td><td>3570 (2260-5185)</td></tr><tr><td>Tamil Nadu</td><td>75.9 (63.6-90.2)</td><td>61 205 (51 249-72 725)</td><td>53.0 (50.0-56.1)</td><td>39 860 (28 617-54 082)</td><td>19 625 (13 916-25 680)</td></tr><tr><td>Mizoram</td><td>52.9 (42.4-64.7)</td><td>652 (522-797)</td><td>46.0 (43.1-49.6)</td><td>339 (242-446)</td><td>243 (176-317)</td></tr><tr><td>Maharashtra</td><td>86.9 (74.7-99.2)</td><td>108 038 (92 977-123 398)</td><td>44.3 (41.6-47.1)</td><td>62 677 (48 480-77 981)</td><td>36 932 (26 928-47 989)</td></tr><tr><td>Punjab</td><td>86.3 (75.5-97.1)</td><td>26 594 (23 259-29 896)</td><td>58.1 (55.5-60.7)</td><td>19 178 (15 170-23 383)</td><td>6139 (4128-8543)</td></tr><tr><td>Sikkim</td><td>61.5 (48.2-75.2)</td><td>413 (323-505)</td><td>43.5 (40.8-46.8)</td><td>243 (170-319)</td><td>131 (89-184)</td></tr><tr><td>Nagaland</td><td>48.8 (38.8-60.5)</td><td>958 (762-1188)</td><td>50.5 (46.9-54.4)</td><td>427 (315-562)</td><td>494 (359-661)</td></tr><tr><td>Himachal Pradesh</td><td>99.7 (80.2-119.1)</td><td>7485 (6022-8937)</td><td>40.9 (38.2-44.1)</td><td>3307 (2073-4602)</td><td>2986 (2080-4046)</td></tr><tr><td>Union territories other than Delhi</td><td>48.5 (36.3-65.0)</td><td>1812 (1356-2425)</td><td>52.0 (48.6-55.7)</td><td>1362 (886-1973)</td><td>340 (226-485)</td></tr><tr><td>Kerala</td><td>79.3 (68.2-91.3)</td><td>28 051 (24 130-32 278)</td><td>38.6 (35.3-42.0)</td><td>12 754 (10 003-16 224)</td><td>13 758 (10 834-16 961)</td></tr><tr><td>Delhi</td><td>65.3 (54.4-76.9)</td><td>12 322 (10 264-14 498)</td><td>51.1 (48.7-53.5)</td><td>11 732 (9705-13 882)</td><td>52 (27-93)</td></tr><tr><td>Goa</td><td>58.2 (46.9-73.7)</td><td>892 (719-1130)</td><td>42.5 (39.1-45.8)</td><td>700 (539-914)</td><td>129 (85-184)</td></tr></table>",
+                "table_type": "simple_table",
+                "table_nest_level": 1
+            },
+            "bbox": [
+                47,
+                158,
+                937,
+                712
+            ]
+        },
+        {
+            "type": "paragraph",
+            "content": {
+                "paragraph_content": [
+                    {
+                        "type": "text",
+                        "content": "Table 2). Among the low SDI states, the point estimate of the number of deaths attributable to ambient particulate matter pollution was two times higher than that of household air pollution in Uttar Pradesh and 1.4 times higher in Bihar, although with wide uncertainty ranges, consistent with the very high exposure to ambient particulate matter pollution in these states (table 2; appendix p 30). In most of the other low SDI states, however, the point estimate of the number of deaths attributable to household air pollution was higher than that of ambient particulate matter pollution, but again with wide uncertainty ranges. Delhi, in the high SDI"
+                    }
+                ]
+            },
+            "bbox": [
+                193,
+                775,
+                559,
+                943
+            ]
+        },
+        {
+            "type": "paragraph",
+            "content": {
+                "paragraph_content": [
+                    {
+                        "type": "text",
+                        "content": "state group, stands out as having an extreme contrast between the deaths attributable to ambient particulate matter pollution. Two other north Indian states, Haryana and Punjab, also had a higher number of deaths attributable to ambient particulate matter pollution than attributable to household air pollution. In two neighbouring high SDI states in south India, Tamil Nadu and Kerala, Tamil Nadu had twice the number of deaths attributable to ambient particulate matter pollution than to household air pollution, whereas Kerala had a similar number of deaths attributable to ambient particulate matter pollution than to household air pollution. These"
+                    }
+                ]
+            },
+            "bbox": [
+                571,
+                775,
+                939,
+                943
+            ]
+        },
+        {
+            "type": "page_header",
+            "content": {
+                "page_header_content": [
+                    {
+                        "type": "text",
+                        "content": "Articles"
+                    }
+                ]
+            },
+            "bbox": [
+                82,
+                46,
+                146,
+                58
+            ]
+        },
+        {
+            "type": "page_number",
+            "content": {
+                "page_number_content": [
+                    {
+                        "type": "text",
+                        "content": "e31"
+                    }
+                ]
+            },
+            "bbox": [
+                45,
+                966,
+                63,
+                974
+            ]
+        },
+        {
+            "type": "page_footer",
+            "content": {
+                "page_footer_content": [
+                    {
+                        "type": "text",
+                        "content": "www.thelancet.com/planetary-health Vol 3 January 2019"
+                    }
+                ]
+            },
+            "bbox": [
+                660,
+                964,
+                932,
+                976
+            ]
+        }
+    ]
+]
