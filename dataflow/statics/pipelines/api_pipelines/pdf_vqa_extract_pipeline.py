@@ -8,7 +8,7 @@ from dataflow.operators.pdf2vqa import VQAExtractor
 class VQA_extract_optimized_pipeline:
     def __init__(self):
         self.storage = FileStorage(
-            first_entry_file_name="../example_data/PDF2VQAPipeline/vqa_extract_test.jsonl",
+            first_entry_file_name="./example_data/PDF2VQAPipeline/vqa_extract_test.jsonl",
             cache_path="./cache",
             file_name_prefix="vqa",
             cache_type="jsonl",
@@ -24,7 +24,8 @@ class VQA_extract_optimized_pipeline:
         self.vqa_extractor = VQAExtractor(
             llm_serving=self.llm_serving,
             mineru_backend='vlm-vllm-engine',
-            max_chunk_len=128000
+            max_chunk_len=128000,
+            strict_title_match=False, # 新参数，设置为True会对问答所属章节标题作严格匹配，否则会尝试提取标题中的序号
         )
         
     def forward(self):
