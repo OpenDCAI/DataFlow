@@ -1018,7 +1018,7 @@ class BatchedFileStorage(FileStorage):
         if self.batch_size:
             dataframe = dataframe.iloc[
                 self.batch_step * self.batch_size : (self.batch_step + 1) * self.batch_size
-            ]
+            ].reset_index(drop=True)
         return self._convert_output(dataframe, output_type)
     
     def write(self, data: Any) -> Any:
