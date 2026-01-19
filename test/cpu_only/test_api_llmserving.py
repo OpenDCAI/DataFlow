@@ -17,7 +17,9 @@ def test_non_stream_keepalive_then_json_parse_ok(dummy_server_base_url, monkeypa
         api_url=api_url,
         key_name_of_api_key="DF_API_KEY",
         model_name="dummy-model",
-        timeout=(1.0, 3.0),
+        # timeout=(1.0, 3.0),
+        connect_timeout=1.0,
+        read_timeout=3.0,
         max_retries=1,
         max_workers=1,
     )
