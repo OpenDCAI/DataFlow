@@ -25,8 +25,9 @@ class APILLMServing_request(LLMServingABC):
                  temperature: float = 0.0,
                  max_workers: int = 10,
                  max_retries: int = 5,
-                 timeout: tuple[float, float] = (10.0, 120.0), # connect timeout, read timeout
-                 **configs
+                 connect_timeout: float = 10.0,
+                 read_timeout: float = 120.0,
+                 **configs : dict
                  ):
         # Get API key from environment variable or config
         self.api_url = api_url
@@ -34,7 +35,14 @@ class APILLMServing_request(LLMServingABC):
         # self.temperature = temperature
         self.max_workers = max_workers
         self.max_retries = max_retries
-        self.timeout = timeout
+
+        self.timeout = (connect_timeout, read_timeout)  # (connect timeout, read timeout)
+        # check for deprecated timeout
+        if 'timeout' in configs:
+            warnings.warn("The `timeout` parameter is deprecated. Please use `connect_timeout` and `read_timeout` instead.", DeprecationWarning)
+            self.timeout = (connect_timeout, configs['timeout'])
+            configs.pop('timeout')
+
         self.configs = configs
         self.configs.update({"temperature": temperature})
 
