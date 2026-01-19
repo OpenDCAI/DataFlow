@@ -127,3 +127,5 @@ class PDFTableQAGeneratorPrompt(PromptABC):
             """)
         
         return user_prompt
+
+

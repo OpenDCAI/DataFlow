@@ -186,7 +186,15 @@ class VQAExtractor(OperatorABC):
         
         os.environ['MINERU_MODEL_SOURCE'] = "local"
         
-        MinerU_Version = {"pipeline": "auto", "vlm-transformers": "vlm", "vlm-vllm-engine": "vlm"}
+        MinerU_Version = {
+            "pipeline": "auto", 
+            "vlm-transformers": "vlm", 
+            "vlm-vllm-engine": "vlm",
+            "vlm-http-client": "vlm",
+            "hybrid-http-client": "vlm",
+            "vlm-auto-engine": "vlm",
+            "hybrid-auto-engine": "vlm"
+        }
         
         if mineru_backend == "pipeline":
             raise ValueError("The 'pipeline' backend is not supported due to its incompatible output format. Please use 'vlm-transformers' or 'vlm-vllm-engine' instead.")
@@ -464,10 +472,10 @@ class VQAExtractor(OperatorABC):
             a_qa_list, a_output_dir = group_info["answer"] if group_info["answer"] else (None, None)
             interleaved = group_info["interleaved"]
             
-            # 写入 question jsonl
+            # 写入 question jsonl (即使为空也要创建文件)
             q_jsonl_path = os.path.join(output_root, "vqa_extracted_questions.jsonl")
-            if q_qa_list:
-                with open(q_jsonl_path, 'w', encoding='utf-8') as f:
+            with open(q_jsonl_path, 'w', encoding='utf-8') as f:
+                if q_qa_list:
                     for item in q_qa_list:
                         f.write(json.dumps(item, ensure_ascii=False) + '\n')
             
@@ -484,7 +492,7 @@ class VQAExtractor(OperatorABC):
             if not interleaved and a_jsonl_path:
                 merge_qa_pair(q_jsonl_path, a_jsonl_path, merged_jsonl)
             else:
-                os.system(f"cp {q_jsonl_path} {merged_jsonl}")
+                shutil.copy(q_jsonl_path, merged_jsonl)
             
             # 过滤
             filtered_items = []

@@ -37,9 +37,9 @@ class PDFTableQA_APIPipeline():
 
         self.llm_serving = APILLMServing_request(
             api_url="https://oneapi.hkgai.net/v1/chat/completions",
-            model_name="qwen3next",
+            model_name="kimi-k2",
             max_workers=8,
-            temperature=0.3
+            temperature=0.3,
         )
 
         # Step 1: PDF to Markdown conversion (preserves tables)

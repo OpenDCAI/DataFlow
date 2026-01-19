@@ -118,9 +118,12 @@ class MapReduceQAGenerator(OperatorABC):
 
     def _parse_summary_response(self, response: str, chunk_id: int) -> Dict[str, Any]:
         """Parse LLM response for chunk summary."""
+        # First clean the response to remove thinking mode content
+        cleaned = self._clean_llm_response(response)
+        
         try:
-            # Try to parse as JSON
-            parsed = json.loads(response)
+            # Try to parse cleaned response as JSON
+            parsed = json.loads(cleaned)
             if isinstance(parsed, dict):
                 parsed['chunk_id'] = chunk_id
                 parsed['has_table'] = True
@@ -128,7 +131,19 @@ class MapReduceQAGenerator(OperatorABC):
         except json.JSONDecodeError:
             pass
         
-        # Try to extract JSON from response
+        # Try to extract JSON from cleaned response
+        try:
+            json_match = re.search(r'\{[\s\S]*\}', cleaned)
+            if json_match:
+                parsed = json.loads(json_match.group())
+                if isinstance(parsed, dict):
+                    parsed['chunk_id'] = chunk_id
+                    parsed['has_table'] = True
+                    return parsed
+        except:
+            pass
+        
+        # Fallback: try original response
         try:
             json_match = re.search(r'\{[\s\S]*\}', response)
             if json_match:
@@ -188,15 +203,62 @@ class MapReduceQAGenerator(OperatorABC):
         
         return self._parse_qa_plan(responses[0]) if responses else []
 
+    def _clean_llm_response(self, response: str) -> str:
+        """
+        Clean LLM response by removing thinking tags and extracting content from code blocks.
+        
+        Handles:
+        1. <think>...</think> tags (Qwen models thinking chain)
+        2. ```json ... ``` markdown code blocks
+        """
+        if not response:
+            return response
+            
+        cleaned = response
+        
+        # Remove <think>...</think> tags and their content
+        cleaned = re.sub(r'<think>[\s\S]*?</think>', '', cleaned, flags=re.IGNORECASE)
+        
+        # If response still starts with <think> (unclosed tag), try to find JSON after it
+        if cleaned.strip().lower().startswith('<think>'):
+            # Look for JSON array or object
+            json_start_match = re.search(r'[\[\{]', cleaned)
+            if json_start_match:
+                cleaned = cleaned[json_start_match.start():]
+            else:
+                cleaned = ""
+        
+        # Extract content from markdown code blocks
+        code_block_match = re.search(r'```(?:json)?\s*([\s\S]*?)```', cleaned)
+        if code_block_match:
+            cleaned = code_block_match.group(1)
+        
+        return cleaned.strip()
+
     def _parse_qa_plan(self, response: str) -> List[Dict[str, Any]]:
         """Parse QA plan from LLM response."""
+        # First clean the response to remove thinking mode content
+        cleaned = self._clean_llm_response(response)
+        
+        # Try to parse cleaned response as JSON
         try:
-            parsed = json.loads(response)
+            parsed = json.loads(cleaned)
             if isinstance(parsed, list):
                 return parsed
         except json.JSONDecodeError:
             pass
         
+        # Try to extract JSON array from cleaned response
+        try:
+            json_match = re.search(r'\[[\s\S]*\]', cleaned)
+            if json_match:
+                parsed = json.loads(json_match.group())
+                if isinstance(parsed, list):
+                    return parsed
+        except:
+            pass
+        
+        # Fallback: try original response
         try:
             json_match = re.search(r'\[[\s\S]*\]', response)
             if json_match:
@@ -206,6 +268,8 @@ class MapReduceQAGenerator(OperatorABC):
         except:
             pass
         
+        # Log warning for debugging
+        self.logger.warning(f"Failed to parse QA plan. Response starts with: {response[:200] if response else 'empty'}")
         return []
 
     def _generate_qa_from_plan(
@@ -270,13 +334,27 @@ class MapReduceQAGenerator(OperatorABC):
 
     def _parse_qa_response(self, response: str) -> Optional[Dict[str, Any]]:
         """Parse Q/A from LLM response."""
+        # First clean the response to remove thinking mode content
+        cleaned = self._clean_llm_response(response)
+        
         try:
-            parsed = json.loads(response)
+            parsed = json.loads(cleaned)
             if isinstance(parsed, dict) and 'question' in parsed and 'answer' in parsed:
                 return parsed
         except json.JSONDecodeError:
             pass
         
+        # Try to extract JSON from cleaned response
+        try:
+            json_match = re.search(r'\{[\s\S]*\}', cleaned)
+            if json_match:
+                parsed = json.loads(json_match.group())
+                if isinstance(parsed, dict) and 'question' in parsed and 'answer' in parsed:
+                    return parsed
+        except:
+            pass
+        
+        # Fallback: try original response
         try:
             json_match = re.search(r'\{[\s\S]*\}', response)
             if json_match:

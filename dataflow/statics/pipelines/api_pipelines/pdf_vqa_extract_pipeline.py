@@ -8,22 +8,22 @@ from dataflow.operators.pdf2vqa import VQAExtractor
 class VQA_extract_optimized_pipeline:
     def __init__(self):
         self.storage = FileStorage(
-            first_entry_file_name="../example_data/PDF2VQAPipeline/vqa_extract_test.jsonl",
+            first_entry_file_name="/home/wangdeng/Github/dataflow/DataFlow/dataflow/example/PDF2VQAPipeline/vqa_extract_test.jsonl",
             cache_path="./cache",
             file_name_prefix="vqa",
             cache_type="jsonl",
         )
         
         self.llm_serving = APILLMServing_request(
-            api_url="https://generativelanguage.googleapis.com/v1beta/openai/chat/completions",
+            api_url="https://oneapi.hkgai.net/v1/chat/completions",
             key_name_of_api_key="DF_API_KEY",
-            model_name="gemini-2.5-pro",
-            max_workers=100,
+            model_name="kimi-k2",
+            max_workers=8,
         )
         
         self.vqa_extractor = VQAExtractor(
             llm_serving=self.llm_serving,
-            mineru_backend='vlm-vllm-engine',
+            mineru_backend='vlm-auto-engine',
             max_chunk_len=128000
         )
         
