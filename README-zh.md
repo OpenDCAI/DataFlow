@@ -43,6 +43,9 @@
 </div>
 
 ## 📰 1. 最新动态
+- **[2026-01-20] 🌟 Awesome Works Using DataFlow 正式上线！**  
+  我们新增了 “Awesome Works Using DataFlow” 章节，用于展示基于 DataFlow 及其生态构建的优秀开源项目、研究工作与应用系统。  
+  欢迎社区通过 Pull Request 提交你的项目，一起共建 DataFlow 生态！👉 [Awesome Works](#awesome-dataflow)
 - **[2025-12-19] 🎉 我们的 DataFlow 技术报告正式发布！**  
   如果我们的工作对你有所帮助，欢迎查阅并引用。  
   👉 在 arXiv 阅读完整报告：[https://arxiv.org/abs/2512.16676](https://arxiv.org/abs/2512.16676)
@@ -365,8 +368,9 @@ For Detailed Experiments setting, please visit our [DataFlow Technical Report](h
 感谢所有开源社区的贡献者，你们的工作共同推动了 DataFlow 的发展。
 
 
+<a id="awesome-dataflow"></a>
 
-## 10 使用 DataFlow 及其生态的优秀项目（Awesome Works）
+## 🌟 10. 使用 DataFlow 及其生态的优秀项目（Awesome Works）
 
 本章节用于展示**基于 DataFlow 构建，或与 DataFlow 生态深度集成的项目、研究工作与应用系统**，涵盖数据处理、合成、评测及自动化工作流等多个方向。
 

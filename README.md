@@ -49,6 +49,9 @@
 
 ## 📰 1. News
 
+- **[2026-01-20] 🌟 Awesome Works Using DataFlow is now live!**  
+  We have added a new section to highlight open-source projects, research works, and applications built on top of DataFlow and its ecosystem.  
+  If you are using DataFlow in your project, feel free to submit a Pull Request and showcase your work to the community! 👉 [Awesome Works](#awesome-dataflow)
 - **[2025-12-19] 🎉 Our DataFlow technical report is now available!** We welcome you to read and cite our work if you find it helpful.👉 Read the full report on arXiv: [https://arxiv.org/abs/2512.16676](https://arxiv.org/abs/2512.16676)
 - **[2025-11-20] Introducing New Data Agents for DataFlow!** 🤖
   You can try them out now and follow the tutorial on [Bilibili](https://space.bilibili.com/3546929239689711/lists/6761342?type=season) for a quick start.
@@ -396,8 +399,9 @@ We also thank [LLaMA-Factory](https://github.com/hiyouga/LLaMA-Factory) for offe
 Our gratitude extends to all contributors in the open-source community—their efforts collectively drive the development of DataFlow.
 
 
+<a id="awesome-dataflow"></a>
 
-## 10 Awesome Work Using DataFlow & DataFlow Ecosystem
+## 🌟 10. Awesome Work Using DataFlow & DataFlow Ecosystem
 
 This section highlights **projects, research works, and applications** built on top of DataFlow or deeply integrated with the DataFlow ecosystem.
 
