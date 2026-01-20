@@ -1,7 +1,7 @@
 import os
 import time
 import re
-from typing import List, Optional, Dict, Any, Union, Tuple
+from typing import List, Optional, Dict, Any, Tuple, Literal
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from tqdm import tqdm
 from dataflow.core import LLMServingABC
@@ -25,7 +25,9 @@ class LiteLLMServing(LLMServingABC):
         self.logger.info("LiteLLMServing: no local service to start.")
         return
     
-    def __init__(self, 
+    def __init__(self,
+                 serving_type: Literal["chat", "embedding"] = "chat",
+                 validate_on_init: bool = True,
                  api_url: str = "https://api.openai.com/v1/chat/completions",
                  key_name_of_api_key: str = "DF_API_KEY",
                  model_name: str = "gpt-4o",
@@ -42,6 +44,8 @@ class LiteLLMServing(LLMServingABC):
         Initialize LiteLLM serving instance.
         
         Args:
+            serving_type: Type of serving, "chat" or "embedding"
+            validate_on_init: Whether to validate the model and API configuration on initialization
             api_url: Custom API base URL
             key_name_of_api_key: Environment variable name for API key (default: "DF_API_KEY")
             model_name: Model name (e.g., "gpt-4o", "claude-3-sonnet", "command-r-plus")
@@ -78,6 +82,7 @@ class LiteLLMServing(LLMServingABC):
                 "pip install open-dataflow[litellm] or pip install litellm"
             )
         
+        self.serving_type = serving_type
         self.model_name = model_name
         self.api_url = api_url
         self.api_version = api_version
@@ -100,7 +105,8 @@ class LiteLLMServing(LLMServingABC):
         if custom_llm_provider is not None:
             self.custom_llm_provider = custom_llm_provider
         # Validate model by making a test call
-        self._validate_setup()
+        if validate_on_init:
+            self._validate_setup()
         
         self.logger.info(f"LiteLLMServing initialized with model: {model_name}")
     
@@ -197,25 +203,35 @@ class LiteLLMServing(LLMServingABC):
     def _validate_setup(self):
         """Validate the model and API configuration."""
         try:
-            # Prepare completion parameters
-            completion_params = {
+            # Prepare common parameters
+            common_params = {
                 "model": self.model_name,
-                "messages": [{"role": "user", "content": "Hi"}],
-                "max_tokens": 1,
                 "timeout": self.timeout
             }
             
             # Add optional parameters if provided
             if self.api_key:
-                completion_params["api_key"] = self.api_key
+                common_params["api_key"] = self.api_key
             if self.api_url:
-                completion_params["api_base"] = self.api_url
+                common_params["api_base"] = self.api_url
             if self.api_version:
-                completion_params["api_version"] = self.api_version
+                common_params["api_version"] = self.api_version
             if hasattr(self, "custom_llm_provider"):
-                completion_params["custom_llm_provider"] = self.custom_llm_provider
+                common_params["custom_llm_provider"] = self.custom_llm_provider
+
             # Make a minimal test call to validate setup
-            response = self._litellm.completion(**completion_params)
+            if self.serving_type == "embedding":
+                self._litellm.embedding(
+                    input=["test"],
+                    **common_params,
+                )
+            else:
+                self._litellm.completion(
+                    messages=[{"role": "user", "content": "Hi"}],
+                    max_tokens=1,
+                    **common_params,
+                )
+
             self.logger.success("LiteLLM setup validation successful")
         except Exception as e:
             self.logger.error(f"LiteLLM setup validation failed: {e}")
