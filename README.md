@@ -395,7 +395,21 @@ We sincerely thank [MinerU](https://github.com/opendatalab/MinerU) for their out
 We also thank [LLaMA-Factory](https://github.com/hiyouga/LLaMA-Factory) for offering an efficient and user-friendly framework for large model fine-tuning, which greatly facilitated rapid iteration in our training and experimentation workflows.
 Our gratitude extends to all contributors in the open-source community—their efforts collectively drive the development of DataFlow.
 
-## 🤝 10. Community & Support
+
+
+## 10 Awesome Work Using DataFlow & DataFlow Ecosystem
+
+This section highlights **projects, research works, and applications** built on top of DataFlow or deeply integrated with the DataFlow ecosystem.
+
+**📌 Curated list of featured projects:**
+[[Awesome Work Using DataFlow](./awesome_dataflow.md)]
+
+We warmly welcome the community to contribute new entries via **Pull Requests**. 🙌 [Detailed Guidance](https://opendcai.github.io/DataFlow-Doc/en/guide/df_ecosystem/) can help you creating a Dataflow extension repository from DataFlow-CLI.
+
+
+
+
+## 🤝 11. Community & Support
 
 Join the DataFlow open-source community to ask questions, share ideas, and collaborate with other developers!
 
@@ -409,7 +423,7 @@ Join the DataFlow open-source community to ask questions, share ideas, and colla
   <img src="https://github.com/user-attachments/assets/8bc519c5-8ddb-4d34-b596-ae1b5c7cd20a" width="60%">
 </div>
 
-## 📜 11. Citation
+## 📜 12. Citation
 
 If you use DataFlow in your research, feel free to give us a cite.
 
@@ -422,7 +436,7 @@ If you use DataFlow in your research, feel free to give us a cite.
 }
 ```
 
-## 📊 12. Statistics
+## 📊 13. Statistics
 
 <div align="center">
   <a href="https://star-history.com/#OpenDCAI/DataFlow&Date">

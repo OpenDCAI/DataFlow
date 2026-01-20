@@ -363,7 +363,23 @@ For Detailed Experiments setting, please visit our [DataFlow Technical Report](h
 我们衷心感谢 [MinerU](https://github.com/opendatalab/MinerU) 的卓越工作，其强大的 PDF/文档文本提取功能为数据加载提供了关键支持。
 同时，我们感谢 [LLaMA-Factory](https://github.com/hiyouga/LLaMA-Factory) 提供的高效、易用的大模型微调框架，为我们在模型训练与实验流程上的快速迭代带来了极大便利。  
 感谢所有开源社区的贡献者，你们的工作共同推动了 DataFlow 的发展。
-## 🤝 10. 社区与支持
+
+
+
+## 10 使用 DataFlow 及其生态的优秀项目（Awesome Works）
+
+本章节用于展示**基于 DataFlow 构建，或与 DataFlow 生态深度集成的项目、研究工作与应用系统**，涵盖数据处理、合成、评测及自动化工作流等多个方向。
+
+📌 **精选项目列表**：
+[[Awesome Work Using DataFlow](./awesome_dataflow.md)]
+
+我们非常欢迎社区通过 **Pull Request** 的方式提交新的优秀项目，共同丰富 DataFlow 生态。🙌
+如果你希望基于 DataFlow 构建一个独立的生态项目，可参考文档中的详细指引：
+👉 [DataFlow 生态项目开发指南](https://opendcai.github.io/DataFlow-Doc/en/guide/df_ecosystem/)
+
+
+
+## 🤝 11. 社区与支持
 
 欢迎加入 DataFlow 开源社区，提出问题、分享想法、与其他开发者一起共建项目！
 
@@ -378,7 +394,7 @@ For Detailed Experiments setting, please visit our [DataFlow Technical Report](h
 </div>
 
 
-## 📜 11. 引用
+## 📜 12. 引用
 
 如果 DataFlow 对你的研究或项目有帮助，欢迎引用支持我们：
 
@@ -391,7 +407,7 @@ For Detailed Experiments setting, please visit our [DataFlow Technical Report](h
 }
 ```
 
-## 📊 12. 统计信息
+## 📊 13. 统计信息
 <div align="center">
   <a href="https://star-history.com/#OpenDCAI/DataFlow&Date">
     <picture>
