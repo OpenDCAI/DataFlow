@@ -7,6 +7,8 @@ from pathlib import Path
 from typing import Optional, Tuple
 import webbrowser
 import requests
+import threading
+import time
 
 from dataflow.cli_funcs.utils import _echo
 
@@ -26,7 +28,8 @@ def _ask_yes(prompt: str, default_no: bool = True) -> bool:
 
 def _confirm_yes() -> None:
     _echo(f"This will run DataFlow-WebUI ({REPO_URL}) by using a GitHub Release zip.", "yellow")
-    if input("Type 'yes' to continue: ").strip().lower() != "yes":
+    # if input("Type 'yes' to continue: ").strip().lower() != "yes":
+    if not _ask_yes("Do you confirm to continue?", default_no=False):
         raise SystemExit(0)
 
 
@@ -54,6 +57,44 @@ def _open_browser(url: str) -> None:
             _echo(f"Please open in browser: {url}", "cyan")
     except Exception:
         _echo(f"Please open in browser: {url}", "cyan")
+
+def _wait_open_browser_async(host: str, port: int, path: str = "/ui/", timeout_s: int = 60) -> None:
+    """
+    Start a daemon thread:
+      - poll http://{host}:{port}{path} every 1s
+      - within timeout_s, once any HTTP response is received, open browser and report to stdout
+      - if timeout, report startup failure (cannot stop uvicorn because we use os.system)
+    """
+    # 0.0.0.0 只能 bind，不能用于本机访问；本机访问用 127.0.0.1
+    visit_host = "127.0.0.1" if host in {"0.0.0.0", "0.0.0.0/0"} else host
+    url = f"http://{visit_host}:{port}"
+    ui_url = f"{url}/ui/"
+    if not url.endswith("/"):
+        url += "/"
+
+    def _worker() -> None:
+        _echo(f"[webui] Waiting for server... {url} (timeout={timeout_s}s)", "cyan")
+        start = time.time()
+        while time.time() - start < timeout_s:
+            try:
+                # 只要能建立连接并拿到任意 HTTP 响应就算 ready
+                r = requests.get(url, timeout=0.8)
+                _echo(f"[webui] Server is up ({r.status_code}). Opening browser: {url}", "green")
+                try:
+                    webbrowser.open(ui_url, new=2)
+                except Exception as e:
+                    _echo(f"[webui] Failed to open browser automatically: {e}", "yellow")
+                    _echo(f"[webui] Please open manually: {url}", "cyan")
+                return
+            except Exception:
+                time.sleep(1)
+
+        _echo(f"[webui] Timeout after {timeout_s}s — server did not respond at {url}", "red")
+        _echo("[webui] Startup may have failed (or is still starting). Check terminal logs above.", "yellow")
+
+    t = threading.Thread(target=_worker, daemon=True)
+    t.start()
+
 
 def _download_with_progress(url: str, dst: Path) -> None:
     try:
@@ -176,7 +217,7 @@ def cli_webui(
     os.system(f"cd '{backend}' && python -m pip install -r requirements.txt")
 
     _echo(f"Starting WebUI at http://{host}:{port}/ui/", "green")
-    _open_browser(f"http://{host}:{port}/ui/")
+    _wait_open_browser_async(host, port, path="/ui/", timeout_s=60)
     os.system(
         f"cd '{backend}' && "
         f"python -m uvicorn app.main:app "
