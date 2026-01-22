@@ -27,9 +27,6 @@ PYPI_API = "https://pypi.org/pypi/open-dataflow/json"
 ADAPTER_FILES = {"adapter_config.json", "adapter_model.bin", "adapter_model.safetensors"}
 BASE_MODEL_FILES = {"config.json", "pytorch_model.bin", "model.safetensors", "tokenizer.json", "tokenizer_config.json"}
 
-
-
-
 def check_updates() -> None:
     """Print version and try to query PyPI for newer version (best-effort)."""
     cols = 80
@@ -380,13 +377,19 @@ def text2model_train(input_dir: Path = typer.Argument(Path("."), help="Input dir
 
 
 @app.command()
-def webui(mode: str = typer.Option("operators", help="operators | agent | pdf")):
-    """Launch (placeholder) WebUI modes."""
-    if mode in {"operators", "pdf"}:
-        _echo("WebUI is under maintenance; check back later.", "yellow")
-    else:
-        _echo("Agent UI deprecated; see DataFlow-Agent repo.", "yellow")
-
-
+def webui(
+    zippath: Optional[Path] = typer.Option(None, "--zippath", help="Use a local release zip instead of downloading."),
+    host: str = typer.Option("0.0.0.0", "--host", help="Host to bind (default: 0.0.0.0)"),
+    port: int = typer.Option(8000, "--port", help="Port to bind (default: 8000)"),
+):
+    """Download latest WebUI release zip and run it."""
+    try:
+        from dataflow.cli_funcs.cli_webui import cli_webui  # type: ignore
+        cli_webui(zippath=zippath, host=host, port=port)
+    except SystemExit:
+        raise typer.Exit(code=0)
+    except Exception as e:
+        _echo(f"webui error: {e}", "red")
+        raise typer.Exit(code=1)
 if __name__ == "__main__":
     app()
