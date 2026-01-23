@@ -133,6 +133,13 @@ def _download_with_progress(url: str, dst: Path) -> None:
             dst.unlink(missing_ok=True)
         raise RuntimeError(f"Download failed: {e}, please mannually fetch it from {url}") from e
 
+def _run_in_dir(workdir: Path, cmd: str) -> int:
+    old = Path.cwd()
+    try:
+        os.chdir(workdir)
+        return os.system(cmd)
+    finally:
+        os.chdir(old)
 
 def cli_webui(
     zippath: Optional[Path] = None,
@@ -214,13 +221,15 @@ def cli_webui(
 
     # 5) 安装依赖（当前环境） + 运行
     _echo("Installing backend requirements into current Python environment...", "cyan")
-    os.system(f"cd '{backend}' && python -m pip install -r requirements.txt")
+    _rc = _run_in_dir(backend, "python -m pip install -r requirements.txt")
+    if _rc != 0:
+        raise RuntimeError("pip install failed (see logs above).")
 
     _echo(f"Starting WebUI at http://{host}:{port}/ui/", "green")
     _wait_open_browser_async(host, port, path="/ui/", timeout_s=60)
-    os.system(
-        f"cd '{backend}' && "
-        f"python -m uvicorn app.main:app "
-        f"--reload --reload-dir app "
-        f"--host {host} --port {port}"
+    _rc = _run_in_dir(
+        backend,
+        f"python -m uvicorn app.main:app --reload --reload-dir app --host {host} --port {port}",
     )
+    if _rc != 0:
+        raise RuntimeError("uvicorn exited with error (see logs above).")
