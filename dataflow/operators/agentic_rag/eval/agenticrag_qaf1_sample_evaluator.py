@@ -19,7 +19,25 @@ class AgenticRAGQAF1SampleEvaluator(OperatorABC):
 
     @staticmethod
     def get_desc(lang: str = "zh"):
-        return "用于评估预测答案与多个参考答案之间的 F1 分数"
+        if lang == "zh":
+            return (
+                "该算子用于计算预测答案与参考答案（Ground Truth）之间的 F1 分数。它通过词袋模型（Token-based）评估文本相似度，支持答案归一化及多参考答案匹配。\n\n"
+                "输入参数：\n"
+                "- input_prediction_key: 预测答案字段名（默认值：\"refined_answer\"）\n"
+                "- input_ground_truth_key: 参考答案字段名，支持字符串或列表（默认值：\"golden_doc_answer\"）\n"
+                "- output_key: 输出 F1 分数字段名（默认值：\"F1Score\"）\n"
+            )
+        elif lang == "en":
+            return (
+                "This operator computes the F1 score between predicted answers and reference (ground truth) answers. "
+                "It evaluates text similarity based on tokens, supports answer normalization, and matches against multiple reference answers.\n\n"
+                "Input Parameters:\n"
+                "- input_prediction_key: Field name for the predicted answer (default: \"refined_answer\")\n"
+                "- input_ground_truth_key: Field name for the ground truth answer, supports string or list (default: \"golden_doc_answer\")\n"
+                "- output_key: Field name for the output F1 score (default: \"F1Score\")\n"
+            )
+        else:
+            return "AgenticRAGQAF1SampleEvaluator computes F1 scores for QA evaluation based on token overlap."
 
     def _validate_dataframe(self, dataframe: pd.DataFrame):
         required_keys = [self.prediction_key, self.ground_truth_key]
