@@ -6,12 +6,12 @@ from dataflow.utils.storage import BatchedFileStorage
 
 class AutoOPPipeline(BatchedPipelineABC):
     
-    def __init__(self):
+    def __init__(self, file_name_prefix="dataflow_cache_auto_run"):
         super().__init__()
         self.storage = BatchedFileStorage(
             first_entry_file_name="./dataflow/example/GeneralTextPipeline/pt_input.jsonl",
             cache_path="./cache_autoop",
-            file_name_prefix="dataflow_cache_auto_run",
+            file_name_prefix=file_name_prefix,
             cache_type="jsonl",
         )
         self.llm_serving1 = APILLMServing_request(
@@ -54,3 +54,7 @@ if __name__ == "__main__":
     pipeline.compile()
     pipeline.forward(batch_size=2, resume_from_last=True)
     pipeline.forward(batch_size=2, resume_from_last=False)  # should overwrite
+    
+    pipeline2 = AutoOPPipeline(file_name_prefix="new_prefix_auto_run")
+    pipeline2.compile()
+    pipeline2.forward(batch_size=2, resume_from_last=True) # should create new last_success_step.txt with new prefix
