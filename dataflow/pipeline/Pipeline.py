@@ -553,7 +553,7 @@ class BatchedPipelineABC(PipelineABC):
         resume_batch = 0
         
         if resume_from_last:
-            cache_path = os.path.join(self.op_nodes_list[1].storage.cache_path, self.op_nodes_list[1].storage.file_prefix, "last_success_step.txt")
+            cache_path = os.path.join(self.op_nodes_list[1].storage.cache_path, f"{self.op_nodes_list[1].storage.file_name_prefix}_last_success_step.txt")
             if not os.path.exists(cache_path):
                 resume_step = 0
                 resume_batch = 0
@@ -629,7 +629,7 @@ class StreamBatchedPipelineABC(BatchedPipelineABC):
         resume_batch = 0
         
         if resume_from_last:
-            cache_path = os.path.join(self.op_nodes_list[1].storage.cache_path, self.op_nodes_list[1].storage.file_prefix, "last_success_step.txt")
+            cache_path = os.path.join(self.op_nodes_list[1].storage.cache_path, f"{self.op_nodes_list[1].storage.file_name_prefix}_last_success_step.txt")
             if not os.path.exists(cache_path):
                 resume_step = 0
                 resume_batch = 0
