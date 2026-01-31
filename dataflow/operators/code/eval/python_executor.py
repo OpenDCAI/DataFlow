@@ -601,7 +601,7 @@ class PythonExecutor:
         timeout_cnt = 0
         consecutive_timeout_cnt = 0
         all_exec_results = []
-        MAX_CONSECUTIVE_TIMEOUTS = 3  # Restart worker after 3 consecutive timeouts
+        MAX_CONSECUTIVE_TIMEOUTS = 1  # Restart worker after 3 consecutive timeouts
 
         if len(all_code_snippets) > 100:
             progress_bar = tqdm(total=len(all_code_snippets), desc="Execute")
