@@ -21,12 +21,10 @@ class QAExtractor(OperatorABC):
 
     def __init__(
             self,
-            input_qa_key: str = "QA_pairs",
             output_json_file: Optional[str] = None,
             input_instruction: Optional[str] = "Please answer the following question based on the provided information."
     ):
         self.logger = get_logger()
-        self.qa_key = input_qa_key
         self.output_json_file = output_json_file
         self.instruction = input_instruction
 
@@ -40,10 +38,10 @@ class QAExtractor(OperatorABC):
                 "从结构化的QA对数据中提取问答内容，自动整合推理步骤和支持事实，\n"
                 "输出符合Stanford Alpaca标准的instruction-input-output格式。\n\n"
                 "初始化参数:\n"
-                "• input_qa_key: QA对的字段名 (默认: 'QA_pairs')\n"
                 "• output_json_file: 输出JSON文件路径 (可选，不指定则只更新DataFrame)\n"
                 "• input_instruction: 统一的指令前缀 (默认: 'Please answer the following question...')\n\n"
                 "运行参数 (input_key):\n"
+                "• input_qa_key: QA对的字段名 (默认: 'QA_pairs')\n"
                 "• instruction: 本次运行的具体指令内容 (若不填则使用默认指令)\n"
                 "输出字段:\n"
                 "• output_instruction_key: prompt对应的key (若不填则使用默认字段)\n"
@@ -60,10 +58,10 @@ class QAExtractor(OperatorABC):
                 "reasoning steps and supporting facts, output in Stanford Alpaca standard\n"
                 "instruction-input-output format.\n\n"
                 "Initialization Parameters:\n"
-                "• input_qa_key: Field name for QA pairs (default: 'QA_pairs')\n"
                 "• output_json_file: Output JSON path (optional, skip to only update DataFrame)\n"
                 "• input_instruction: Unified instruction prefix (default: 'Please answer...')\n\n"
                 "Runtime Parameters (input_key):\n"
+                "• input_qa_key: Field name for QA pairs (default: 'QA_pairs')\n"
                 "• instruction: Specific instruction for this run (uses default if not provided)\n"
                 "Output Fields:\n"
                 "• output_instruction_key: Question as instruction (optional, skip to only update DataFrame)\n"
@@ -171,6 +169,7 @@ class QAExtractor(OperatorABC):
     def run(
             self,
             storage: DataFlowStorage,
+            input_qa_key: str = "QA_pairs",
             output_instruction_key:Optional[str] = "instruction",
             output_question_key: Optional[str] = "input",
             output_answer_key: Optional[str] = "output"
@@ -178,6 +177,7 @@ class QAExtractor(OperatorABC):
         """提取QA对"""
         is_modified = False
         modified_details = []
+        self.qa_key = input_qa_key
         
         if output_question_key != "question":
             is_modified = True

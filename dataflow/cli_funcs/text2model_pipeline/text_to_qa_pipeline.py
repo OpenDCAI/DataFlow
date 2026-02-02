@@ -41,7 +41,6 @@ class Text2QAPipeline:
         )
 
         self.extract_format_qa = QAExtractor(
-            qa_key="qa_pairs",
             output_json_file="./.cache/data/qa.json",
         )
 
@@ -84,8 +83,10 @@ class Text2QAPipeline:
         print("🔄 Step 4: Extract and format QA...")
         self.extract_format_qa.run(
             storage=self.storage.step(),
-            input_key="question,reasoning_steps",
-            output_key="answer"
+            input_qa_key="qa_pairs",
+            output_instruction_key="instruction",
+            output_question_key="input",
+            output_answer_key="output"
         )
 
         print("Pipeline completed!")
