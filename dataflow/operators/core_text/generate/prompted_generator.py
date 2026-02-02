@@ -5,7 +5,9 @@ from dataflow import get_logger
 from dataflow.utils.storage import DataFlowStorage
 from dataflow.core import OperatorABC
 from dataflow.core import LLMServingABC
+from dataflow.utils.compatibility import auto_str_compat
 
+@auto_str_compat
 @OPERATOR_REGISTRY.register()
 class PromptedGenerator(OperatorABC):
     '''

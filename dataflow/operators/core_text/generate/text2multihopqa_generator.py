@@ -15,7 +15,9 @@ import re
 from dataflow.core.prompt import prompt_restrict, DIYPromptABC
 from typing import Union
 import re
+from dataflow.utils.compatibility import auto_str_compat
 
+@auto_str_compat
 @prompt_restrict(
     Text2MultiHopQAGeneratorPrompt       
 )
