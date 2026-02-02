@@ -147,26 +147,27 @@ class KCenterGreedyFilter(OperatorABC):
     def get_desc(lang: str = "zh"):
         if lang == "zh":
             return (
-                "该算子用于从大量的文档片段中选取部分文档片段，用于后续生成种子QA对\n\n"
+                "该算子利用 K-Center Greedy 算法从海量文档片段中挑选出具有代表性的样本（Coreset），常用于多样化种子 QA 对的生成。\n\n"
                 "输入参数:\n"
-                "- input_key: 包含文档片段的字段名\n"
-                "- embedding_model_path: 嵌入模型路径\n"
-                "- num_samples: 选取的文档片段数量\n"
-                "- method: 选择方法，随机或k-center-greedy\n\n"
+                "- input_key: 包含文档内容的字段名（默认 'content'）。\n"
+                "- embedding_serving: 嵌入模型服务实例，用于将文本转换为向量。\n"
+                "- num_samples: 最终需要保留的文档片段数量。\n\n"
+                "输出:\n"
+                "- 过滤后的数据集，仅包含被选中的代表性文档片段。"
             )
         elif lang == "en":
             return (
-                "This operator chooses document fragments for seed QA pairs.\n\n"
+                "This operator uses the K-Center Greedy algorithm to select representative samples (coreset) "
+                "from a large pool of document fragments, typically used for generating diverse seed QA pairs.\n\n"
                 "Input Parameters:\n"
-                "- input_key: Field name containing the content\n"
-                "- embedding_serving: Embedding serving\n"
-                "- num_samples: Number of document fragments to select\n"
-                "- method: Selection method, random or k-center-greedy\n\n"
-                "Output Parameters:\n"
-                "- Returns 1 for valid content, 0 otherwise"
+                "- input_key: Field name containing the document content (default: 'content').\n"
+                "- embedding_serving: Instance of embedding serving for text-to-vector conversion.\n"
+                "- num_samples: The target number of document fragments to select.\n\n"
+                "Output:\n"
+                "- A filtered dataset containing only the selected representative document fragments."
             )
         else:
-            return "ContentChooser chooses document fragments for seed QA pairs"
+            return "KCenterGreedyFilter selects representative document fragments using a greedy coreset strategy."
     
     def _validate_dataframe(self, dataframe: pd.DataFrame):
         required_keys = [self.input_key]
