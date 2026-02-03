@@ -5,21 +5,28 @@ from dataflow import get_logger
 
 logger = get_logger()
 
+
 def _normalize_val(v):
     """Normalize List/Dict to string."""
     if isinstance(v, list):
-        # List: merge to string
-        return "\n\n".join([str(x) for x in v if x])
+        # List: merge to string.
+        # We ensure the result is at least a space " " to avoid being skipped by falsy checks in operators.
+        res = "\n\n".join([str(x) for x in v if x])
+        return res if res else " "
     if isinstance(v, dict):
-        # Dict: try to extract common content fields, otherwise convert to string
+        # Dict: try to extract common content fields
         for k in ["content", "text", "raw_content", "cleaned_content", "raw_chunk", "cleaned_chunk"]:
             if k in v:
-                return str(v[k])
+                res = str(v[k])
+                return res if res else " "
+        # str({}) is "{}" which is truthy
         return str(v)
     return v
 
+
 class _CompatStorage:
     """Storage wrapper to auto-normalize specified columns on read."""
+
     def __init__(self, storage, target_keys):
         self._s = storage
         self._k = target_keys
@@ -39,12 +46,14 @@ class _CompatStorage:
                     if not non_null.empty:
                         sample = non_null.iloc[0]
                         if isinstance(sample, (list, dict)):
-                            logger.info(f"[_CompatStorage] Auto-normalizing column '{k}' (type: {type(sample).__name__}) to string")
+                            logger.info(
+                                f"[_CompatStorage] Auto-normalizing column '{k}' (type: {type(sample).__name__}) to string")
                             data[k] = data[k].apply(_normalize_val)
         return data
 
     def write(self, d):
         return self._s.write(d)
+
 
 def _create_run_wrapper(original_run, name):
     @functools.wraps(original_run)
@@ -54,7 +63,7 @@ def _create_run_wrapper(original_run, name):
             sig = inspect.signature(original_run)
             bound = sig.bind_partial(self, storage, *args, **kwargs)
             bound.apply_defaults()
-            
+
             target_keys = []
             for k, v in bound.arguments.items():
                 # Heuristic strategy: parameter name contains 'input', 'content', 'key' and value is string, regarded as column name
@@ -62,26 +71,28 @@ def _create_run_wrapper(original_run, name):
                     # Exclude output keys
                     if 'output' not in k:
                         target_keys.append(v)
-            
+
             # If target columns are found, use wrapped Storage
             if target_keys:
                 storage = _CompatStorage(storage, target_keys)
         except Exception as e:
             logger.warning(f"[auto_str_compat] Failed to wrap operator {name}: {e}")
-        
+
         return original_run(self, storage, *args, **kwargs)
+
     return new_run
+
 
 def auto_str_compat(func_or_class):
     """
     Decorator to automatically compatible with List/Dict inputs for operators.
     Can be applied to Operator class or its run method.
-    
+
     Usage:
         @auto_str_compat
         class MyOperator(OperatorABC):
             ...
-            
+
     Or:
         class MyOperator(OperatorABC):
             @auto_str_compat
