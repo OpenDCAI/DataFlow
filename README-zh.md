@@ -46,7 +46,10 @@
 
 * **[2026-02-02] 🖥️ DataFlow WebUI 正式发布！**
   通过一条命令 `dataflow webui` 即可启动可视化流水线构建器，在直观的网页界面中构建并运行 DataFlow 流水线。👉 [WebUI 文档](#54-webui)
-
+  <div style="display: flex; gap: 12px;">
+    <img src="https://github.com/user-attachments/assets/b4f172d6-7753-4121-b981-55046a7a9e43" width="45%" />
+    <img src="https://github.com/user-attachments/assets/b2147987-3b1e-4f56-9818-3d5e7440fa58" width="45%" />
+  </div>
 * **[2026-01-20] 🌟 DataFlow Awesome Works 上线！**
   新增板块用于展示基于 DataFlow 的开源项目与研究工作，欢迎提交 Pull Request 分享你的成果！👉 [Awesome Works](#awesome-dataflow)
 
@@ -212,6 +215,10 @@ dataflow -v
 ### 🖥️ 5.4 WebUI
 
 DataFlow 提供了一个 **基于网页的可视化界面（WebUI）**，用于直观地构建和执行 DataFlow 流水线。
+<div style="display: flex; gap: 12px;">
+  <img src="https://github.com/user-attachments/assets/b4f172d6-7753-4121-b981-55046a7a9e43" width="45%" />
+  <img src="https://github.com/user-attachments/assets/b2147987-3b1e-4f56-9818-3d5e7440fa58" width="45%" />
+</div>
 
 在完成 DataFlow 主仓库的安装后，只需执行：
 
