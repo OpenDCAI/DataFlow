@@ -51,7 +51,10 @@
 
 * **[2026-02-02] 🖥️ DataFlow WebUI is now available!**
   Launch the visual pipeline builder with a single command: `dataflow webui`. Build and run DataFlow pipelines through an intuitive web interface. 👉 [WebUI Docs](#54-webui)
-
+  <div style="display: flex; gap: 12px;">
+    <img src="https://github.com/user-attachments/assets/b4f172d6-7753-4121-b981-55046a7a9e43" width="45%" />
+    <img src="https://github.com/user-attachments/assets/b2147987-3b1e-4f56-9818-3d5e7440fa58" width="45%" />
+  </div>
 * **[2026-01-20] 🌟 Awesome Works Using DataFlow is now live!**
   A new section showcasing open-source projects and research built on DataFlow. Contributions are welcome! 👉 [Awesome Works](#awesome-dataflow)
 
@@ -235,6 +238,11 @@ For detailed **usage instructions** and **getting started guide**, please visit 
 ### 🖥️ 5.4 WebUI
 
 DataFlow provides a **Web-based UI (WebUI)** for visual pipeline construction and execution.
+<div style="display: flex; gap: 12px;">
+  <img src="https://github.com/user-attachments/assets/b4f172d6-7753-4121-b981-55046a7a9e43" width="45%" />
+  <img src="https://github.com/user-attachments/assets/b2147987-3b1e-4f56-9818-3d5e7440fa58" width="45%" />
+</div>
+
 
 After installing the DataFlow main repository, simply run:
 
