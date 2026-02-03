@@ -58,7 +58,7 @@ def _open_browser(url: str) -> None:
     except Exception:
         _echo(f"Please open in browser: {url}", "cyan")
 
-def _wait_open_browser_async(host: str, port: int, path: str = "/ui/", timeout_s: int = 60) -> None:
+def _wait_open_browser_async(host: str, port: int, path: str = "", timeout_s: int = 60) -> None:
     """
     Start a daemon thread:
       - poll http://{host}:{port}{path} every 1s
@@ -68,7 +68,7 @@ def _wait_open_browser_async(host: str, port: int, path: str = "/ui/", timeout_s
     # 0.0.0.0 只能 bind，不能用于本机访问；本机访问用 127.0.0.1
     visit_host = "127.0.0.1" if host in {"0.0.0.0", "0.0.0.0/0"} else host
     url = f"http://{visit_host}:{port}"
-    ui_url = f"{url}/ui/"
+    ui_url = f"{url}{path}"
     if not url.endswith("/"):
         url += "/"
 
@@ -225,8 +225,8 @@ def cli_webui(
     if _rc != 0:
         raise RuntimeError("pip install failed (see logs above).")
 
-    _echo(f"Starting WebUI at http://{host}:{port}/ui/", "green")
-    _wait_open_browser_async(host, port, path="/ui/", timeout_s=60)
+    _echo(f"Starting WebUI at http://{host}:{port}", "green")
+    _wait_open_browser_async(host, port, path="", timeout_s=60)
     _rc = _run_in_dir(
         backend,
         f"python -m uvicorn app.main:app --reload --reload-dir app --host {host} --port {port}",
