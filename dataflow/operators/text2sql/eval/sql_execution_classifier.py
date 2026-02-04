@@ -297,7 +297,6 @@ class SQLExecutionClassifier(OperatorABC):
 
         self.report_statistics(dataframe)
 
-        # 增加对列是否存在的判断
         if self.output_difficulty_key in dataframe.columns:
             difficulty_counts = dataframe[self.output_difficulty_key].value_counts()
             self.logger.info("\nDifficulty Distribution:")

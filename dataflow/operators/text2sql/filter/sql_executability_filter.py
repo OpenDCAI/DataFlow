@@ -1,6 +1,7 @@
 import re
 import os
 import pandas as pd
+import time
 from tqdm import tqdm
 from dataflow.utils.registry import OPERATOR_REGISTRY
 from dataflow import get_logger
@@ -10,29 +11,10 @@ from dataflow.utils.text2sql.database_manager import DatabaseManager
 
 
 @OPERATOR_REGISTRY.register()
-class SQLExecutionFilter(OperatorABC):
+class SQLExecutabilityFilter(OperatorABC):
     def __init__(self, database_manager: DatabaseManager):
         self.database_manager = database_manager
         self.logger = get_logger()
-
-    @staticmethod
-    def get_desc(lang):
-        if lang == "zh":
-            return (
-                "对条目进行过滤，在数据库中执行SQL，筛选掉不可执行的条目。\n\n"
-                "输入参数：\n"
-                "- input_sql_key: 输入SQL列名\n"
-                "- input_db_id_key: 输入数据库ID列名\n\n"
-            )
-        elif lang == "en":
-            return (
-                "This operator filters items based on whether the SQL can be executed in the database.\n\n"
-                "Input parameters:\n"
-                "- input_sql_key: The name of the input SQL column\n"
-                "- input_db_id_key: The name of the input database ID column\n\n"
-            )
-        else:
-            return "SQL execution filter for Text2SQL tasks."
 
     def filter_select_sql(self, sql):
         '''
@@ -62,6 +44,10 @@ class SQLExecutionFilter(OperatorABC):
         dataframe = storage.read("dataframe")
         self.check_column(dataframe)
         
+        # Record input data count
+        input_count = len(dataframe)
+        
+        # Phase 1: Database check
         db_id_need_to_check = dataframe[input_db_id_key].unique()
         for db_id in db_id_need_to_check:
             if not self.database_manager.database_exists(db_id):
@@ -70,27 +56,29 @@ class SQLExecutionFilter(OperatorABC):
         
         self.logger.info(f"Start to filter {len(dataframe)} SQLs")
 
-        self.logger.info("Filtering SQLs using select component")
-        phase1_passed_indices = []
-        for idx, row in dataframe.iterrows():
-            sql = row[input_sql_key]
-            if self.filter_select_sql(sql):
-                phase1_passed_indices.append(idx)
+        # Phase 2: SQL filtering
+        phase1_mask = dataframe[input_sql_key].apply(self.filter_select_sql)
+        phase1_df = dataframe[phase1_mask].copy()
 
-        self.logger.info(f"Phase 1 completed: {len(phase1_passed_indices)}/{len(dataframe)} SQLs passed initial filter")
+        self.logger.info(f"Phase 1 completed: {len(phase1_df)}/{len(dataframe)} SQLs passed initial filter")
 
-        phase1_df = dataframe.loc[phase1_passed_indices]
-        sql_triples = list(zip(phase1_df[input_db_id_key].tolist(), phase1_df[input_sql_key].tolist()))
-        execution_results = self.database_manager.batch_execute_queries(sql_triples)
+        if phase1_df.empty:
+            output_file = storage.write(phase1_df)
+            return []
 
-        final_indices = []
-        for idx, exec_result in enumerate(execution_results):
-            if exec_result.success:
-                final_indices.append(phase1_passed_indices[idx])
+        sql_triples = list(zip(phase1_df[input_db_id_key].tolist(),
+                            phase1_df[input_sql_key].tolist()))
 
-        self.logger.info(f"Filter completed, remaining {len(final_indices)} SQLs out of {len(dataframe)} original SQLs")
+        # Phase 3: SQL execution
+        exec_start = time.time()
+        execution_results = self.database_manager.batch_explain_queries(sql_triples)
 
-        result_df = dataframe.loc[final_indices]
-        
+        phase2_mask = [r.success for r in execution_results]
+        result_df = phase1_df[phase2_mask].copy()
+
+        self.logger.info(f"Filter completed, remaining {len(result_df)} SQLs out of {len(phase1_df)} (phase1)")
+
         output_file = storage.write(result_df)
+        output_count = len(result_df)
+        
         return []

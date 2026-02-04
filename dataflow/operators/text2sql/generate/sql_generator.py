@@ -31,7 +31,6 @@ class SQLGenerator(OperatorABC):
             self.prompt_template = SelectSQLGeneratorPrompt()
         else:
             self.prompt_template = prompt_template
-        random.seed(42)
 
     @staticmethod
     def get_desc(lang):
@@ -67,10 +66,12 @@ class SQLGenerator(OperatorABC):
 
     def run(self, storage: DataFlowStorage,
             output_sql_key: str = "SQL",
-            output_db_id_key: str = "db_id"
+            output_db_id_key: str = "db_id",
+            output_sql_complexity_key: str = "sql_complexity_type"
         ):
         self.output_sql_key = output_sql_key
         self.output_db_id_key = output_db_id_key
+        self.output_sql_complexity_key = output_sql_complexity_key
         raw_dataframe = storage.read("dataframe")
         
         db_names = self.database_manager.list_databases()
@@ -82,20 +83,21 @@ class SQLGenerator(OperatorABC):
             create_statements, insert_statements = self.database_manager.get_create_statements_and_insert_statements(db_name)
 
             for _ in range(sum_generate_num):
-                prompt = self.prompt_template.build_prompt(
+                prompt, sql_complexity_type = self.prompt_template.build_prompt(
                     insert_statements=insert_statements,
                     create_statements=create_statements,
                     db_engine=self.database_manager.db_type
                 )
-                prompts.append({"prompt": prompt, "db_id": db_name})
+                prompts.append({"prompt": prompt, "db_id": db_name, "sql_complexity_type": sql_complexity_type})
             
         if not prompts:
             self.logger.warning("No prompts generated, please check the database path and file")
-            return [self.output_sql_key, self.output_db_id_key]
+            return [self.output_sql_key, self.output_db_id_key, self.output_sql_complexity_key]
             
         db_ids = [data["db_id"] for data in prompts]
         prompt_list = [data["prompt"] for data in prompts]
-        
+        sql_complexity_types = [data["sql_complexity_type"] for data in prompts]
+
         try:
             responses = self.llm_serving.generate_from_input(prompt_list, "")
         except Exception as e:
@@ -105,10 +107,11 @@ class SQLGenerator(OperatorABC):
         results = [
             {
                 self.output_db_id_key: db_id,
-                self.output_sql_key: self.parse_response(response)
+                self.output_sql_key: self.parse_response(response),
+                self.output_sql_complexity_key: sql_complexity_type
             }
-            for db_id, response in zip(db_ids, responses)
+            for db_id, response, sql_complexity_type in zip(db_ids, responses, sql_complexity_types)
         ]
         
         output_file = storage.write(pd.DataFrame(results))
-        return [self.output_sql_key, self.output_db_id_key]
+        return [self.output_sql_key, self.output_db_id_key, self.output_sql_complexity_key]

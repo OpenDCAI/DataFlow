@@ -1,5 +1,6 @@
 import pandas as pd
 import re
+import time
 from tqdm import tqdm
 from typing import Dict, Optional, Union
 from dataflow.utils.registry import OPERATOR_REGISTRY
@@ -60,7 +61,6 @@ class Text2SQLPromptGenerator(OperatorABC):
             input_evidence_key: str = "evidence",
             output_prompt_key: str = "prompt"
         ):
-        
         self.input_question_key = input_question_key
         self.input_db_id_key = input_db_id_key
         self.input_evidence_key = input_evidence_key
@@ -80,15 +80,12 @@ class Text2SQLPromptGenerator(OperatorABC):
         for item in tqdm(items, desc="Generating prompts"):
             db_id = item[self.input_db_id_key]
             question = item[self.input_question_key]
-
-            if self.input_evidence_key in item:
-                evidence = item[self.input_evidence_key]
-            else:
-                evidence = ""
+            evidence = item.get(self.input_evidence_key, "")
         
-            db_id = re.sub(r'[^A-Za-z0-9_]', '', str(db_id).replace('\n', ''))
+            db_id = str(db_id).replace('\n', '').replace('\r', '').strip()
 
             db_details = self.database_manager.get_db_details(db_id)
+            
             prompt = self.prompt_template.build_prompt(
                 db_details=db_details, 
                 question=question,
@@ -105,7 +102,10 @@ class Text2SQLPromptGenerator(OperatorABC):
         if len(final_results) != len(items):
             self.logger.warning(f"Results count mismatch: expected {len(items)}, got {len(final_results)}")
         
-        output_file = storage.write(pd.DataFrame(final_results))
+        output_df = pd.DataFrame(final_results)
+        output_file = storage.write(output_df)
+        output_count = len(output_df)
+
         self.logger.info(f"Prompt generation completed, saved to {output_file}")
 
         return [self.output_prompt_key]

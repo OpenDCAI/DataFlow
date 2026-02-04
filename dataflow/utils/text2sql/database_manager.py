@@ -105,8 +105,9 @@ class DatabaseManager:
         self._embedding_cache: Dict[str, List[float]] = {}
 
         self.logger = get_logger()
-        self.max_connections_per_db = 100
-        self.max_workers = min(64, max(32, os.cpu_count()))
+        default_workers = 20
+        self.max_connections_per_db = 3
+        self.max_workers = 20
         self.query_timeout = 5
         
         if self.db_type not in self.CONNECTORS:
@@ -148,31 +149,6 @@ class DatabaseManager:
                     self.logger.error(f"Error closing connection: {e}")
     
     # ============== SQL Execution ==============
-
-    def execute_query(self, db_id: str, sql: str, params: Optional[Tuple] = None) -> QueryResult:
-        """Query execution with timeout control"""
-        if not sql or not sql.strip():
-            return QueryResult(success=False, error="Query cannot be empty")
-
-        try:
-            sql = self._preprocess_sql_for_execution(sql)
-        except Exception as exc:
-            return QueryResult(success=False, error=f"Preprocessing error: {exc}")
-
-        with ThreadPoolExecutor(max_workers=1) as executor:
-            future = executor.submit(self._execute_query_sync, db_id, sql, params)
-            try:
-                return future.result(timeout=self.query_timeout)
-            except TimeoutError:
-                return QueryResult(success=False, error=f"Query timeout after {self.query_timeout}s")
-
-    def _execute_query_sync(self, db_id: str, sql: str, params: Optional[Tuple] = None) -> QueryResult:
-        try:
-            with self.get_connection(db_id) as conn:
-                return self.connector.execute_query(conn, sql, params)
-        except Exception as e:
-            return QueryResult(success=False, error=str(e))
-    
     def batch_compare_queries(self, query_triples: List[Tuple[str, str, str]]) -> List[Dict[str, Any]]:
         """
         Compare multiple pairs of queries across different databases in parallel.
@@ -183,40 +159,23 @@ class DatabaseManager:
                 error_msg = f"Database '{db_id}' not found"
                 return [self._create_error_result(error_msg) for _ in query_triples]
         
-        # Flatten all queries for batch execution
         all_queries = []
-        query_indices = []
-        
         for idx, (db_id, gold_sql, pred_sql) in enumerate(query_triples):
             all_queries.extend([
                 (db_id, gold_sql),
                 (db_id, pred_sql)
             ])
-            query_indices.extend([idx, idx])
         
         # Batch execute all queries
         all_results = self.batch_execute_queries(all_queries)
         
         # Group results by comparison pairs
         comparisons = []
-        for i in range(0, len(query_triples)):
-            result1 = None
-            result2 = None
-            
-            for j in range(len(query_indices)):
-                if query_indices[j] == i:
-                    if result1 is None:
-                        result1 = all_results[j]
-                    else:
-                        result2 = all_results[j]
-                        break
-            
-            if result1 is not None and result2 is not None:
-                comparison = self.compare_results(result1, result2)
-                comparisons.append(comparison)
-            else:
-                comparisons.append(self._create_error_result("Internal error: failed to match query results"))
-        
+        for i in range(len(query_triples)):
+            result1 = all_results[2*i]
+            result2 = all_results[2*i + 1]
+            comparisons.append(self.compare_results(result1, result2))
+
         return comparisons
 
     def batch_execute_queries(self, queries: List[Tuple[str, str]]) -> List[QueryResult]:
@@ -224,10 +183,10 @@ class DatabaseManager:
 
         with ThreadPoolExecutor(max_workers=self.max_workers) as executor:
             futures = {}
-            semaphore = threading.Semaphore(self.max_connections_per_db)
+            semaphores = {db_id: threading.Semaphore(self.max_connections_per_db) for db_id, _ in set(queries)}
             
             def execute_with_limit(idx, db_id, sql):
-                with semaphore:
+                with semaphores[db_id]:
                     try:
                         with self.get_connection(db_id) as conn:
                             result = self.connector.execute_query(conn, sql)
@@ -252,6 +211,42 @@ class DatabaseManager:
                         future.result()
             except TimeoutError:
                 self.logger.warning("Batch execution timed out")
+
+        return results
+
+    def batch_explain_queries(self, queries: List[Tuple[str, str]]) -> List[QueryResult]:
+        results = [QueryResult(success=False, error="Not explained") for _ in queries]
+
+        with ThreadPoolExecutor(max_workers=self.max_workers) as executor:
+            futures = {}
+            semaphores = {db_id: threading.Semaphore(self.max_connections_per_db) for db_id, _ in set(queries)}
+
+            def explain_with_limit(idx, db_id, sql):
+                with semaphores[db_id]:
+                    try:
+                        with self.get_connection(db_id) as conn:
+                            result = self.connector.explain_query(conn, sql)
+                            results[idx] = result
+                    except Exception as e:
+                        results[idx] = QueryResult(
+                            success=False,
+                            error=f"{type(e).__name__}: {str(e)}"
+                        )
+
+            for idx, (db_id, sql) in enumerate(queries):
+                try:
+                    processed_sql = self._preprocess_sql_for_execution(sql)
+                except Exception as exc:
+                    results[idx] = QueryResult(success=False, error=f"Preprocessing error: {exc}")
+                    continue
+                futures[executor.submit(explain_with_limit, idx, db_id, processed_sql)] = idx
+
+            try:
+                if futures:
+                    for future in as_completed(futures, timeout=self.query_timeout*len(futures)):
+                        future.result()
+            except TimeoutError:
+                self.logger.warning("Batch explain timed out")
 
         return results
 
@@ -327,7 +322,7 @@ class DatabaseManager:
             return schema_cache
         
         with self.get_connection(db_id) as conn:
-            schema = self.connector.get_schema_info(conn)
+            schema = self.connector.get_schema_info(conn, db_id=db_id)
             self.cache.set(schema, 'schema', db_id)
             return schema
 
@@ -361,29 +356,13 @@ class DatabaseManager:
 
 
     # ============== Utility Methods ==============
-    
-    def list_databases(self) -> List[str]:
-        """List all available databases"""
-        return list(self.databases.keys())
-    
-    def get_database_info(self, db_id: str) -> Optional[DatabaseInfo]:
-        """Get database information"""
-        return self.databases.get(db_id)
-    
     def database_exists(self, db_id: str) -> bool:
         """Check if database exists"""
         return db_id in self.databases
-    
-    def get_table_names(self, db_id: str) -> List[str]:
-        """Get list of table names in database"""
-        schema = self.get_schema(db_id)
-        return list(schema.get('tables', {}).keys())
-    
-    def get_table_info(self, db_id: str, table_name: str) -> Optional[Dict[str, Any]]:
-        """Get information about a specific table"""
-        schema = self.get_schema(db_id)
-        return schema.get('tables', {}).get(table_name)
 
+    def list_databases(self) -> List[str]:
+        """List all available databases"""
+        return list(self.databases.keys())
 
     def _create_error_result(self, error_msg: str) -> Dict[str, Any]:
         """Create standardized error result"""
@@ -394,11 +373,6 @@ class DatabaseManager:
             'result2_success': False,
         }
     
-    def get_number_of_special_column(self, db_id):
-        """get the number of secial column"""
-        with self.get_connection(db_id) as conn:
-            return self.connector.get_number_of_special_column(conn)
-
     def _get_embedding_vector(self, text: str) -> List[float]:
         if text in self._embedding_cache:
             return self._embedding_cache[text]

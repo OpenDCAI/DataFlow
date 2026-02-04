@@ -8,10 +8,12 @@ from dataflow.operators.text2sql import (
     SQLByColumnGenerator,
     Text2SQLQuestionGenerator,
     Text2SQLPromptGenerator,
-    Text2SQLCoTGenerator
+    Text2SQLCoTGenerator,
+    Text2SQLCoTVotingGenerator
 )
 from dataflow.operators.text2sql import (
-    SQLExecutionFilter
+    SQLExecutabilityFilter,
+    Text2SQLCorrespondenceFilter
 )
 from dataflow.operators.text2sql import (
     SQLComponentClassifier,
@@ -21,7 +23,8 @@ from dataflow.prompts.text2sql import (
     Text2SQLCotGeneratorPrompt,
     SelectSQLGeneratorPrompt,
     Text2SQLQuestionGeneratorPrompt,
-    Text2SQLPromptGeneratorPrompt
+    Text2SQLPromptGeneratorPrompt,
+    Text2SQLCorrespondenceFilterPrompt
 )
 from dataflow.utils.storage import FileStorage
 from dataflow.serving import APILLMServing_request
@@ -93,14 +96,7 @@ class Text2SQLGeneration_APIPipeline():
             max_workers=100
         )
 
-        # It is recommended to use better LLMs for the generation of Chain-of-Thought (CoT) reasoning process.
-        cot_generation_api_llm_serving = APILLMServing_request(
-            api_url="https://api.openai.com/v1/chat/completions",
-            model_name="gpt-4o", # You can change to a more powerful model for CoT generation
-            max_workers=100
-        )
-
-        embedding_serving = APILLMServing_request(
+        self.embedding_serving = APILLMServing_request(
             api_url="https://api.openai.com/v1/embeddings",
             model_name="text-embedding-ada-002",
             max_workers=100
@@ -135,35 +131,45 @@ class Text2SQLGeneration_APIPipeline():
             prompt_template=SelectSQLGeneratorPrompt()
         )
 
-        self.sql_execution_filter_step2 = SQLExecutionFilter(
+        self.sql_executability_filter_step2 = SQLExecutabilityFilter(
             database_manager=database_manager
         )
 
         self.text2sql_question_generator_step3 = Text2SQLQuestionGenerator(
             llm_serving=self.llm_serving,
-            embedding_serving=embedding_serving,
+            embedding_serving=self.embedding_serving,
             database_manager=database_manager,
-            question_candidates_num=5,
+            question_candidates_num=3,
             prompt_template=Text2SQLQuestionGeneratorPrompt()
         )
 
-        self.text2sql_prompt_generator_step4 = Text2SQLPromptGenerator(
+        self.text2sql_correspondence_filter_step4 = Text2SQLCorrespondenceFilter(
+            llm_serving=self.llm_serving,
+            database_manager=database_manager,
+            prompt_template=Text2SQLCorrespondenceFilterPrompt()
+        )
+
+        self.text2sql_prompt_generator_step5 = Text2SQLPromptGenerator(
             database_manager=database_manager,
             prompt_template=Text2SQLPromptGeneratorPrompt()
         )
 
-        self.sql_cot_generator_step5 = Text2SQLCoTGenerator(
-            llm_serving=cot_generation_api_llm_serving,
+        self.sql_cot_generator_step6 = Text2SQLCoTGenerator(
+            llm_serving=self.llm_serving,
             database_manager=database_manager,
             prompt_template=Text2SQLCotGeneratorPrompt()
         )
 
-        self.sql_component_classifier_step6 = SQLComponentClassifier(
+        self.sql_cot_voting_generator_step7 = Text2SQLCoTVotingGenerator(
+            database_manager=database_manager
+        )
+
+        self.sql_component_classifier_step8 = SQLComponentClassifier(
             difficulty_thresholds=[2, 4, 6],
             difficulty_labels=['easy', 'medium', 'hard', 'extra']
         )
 
-        self.sql_execution_classifier_step7 = SQLExecutionClassifier(
+        self.sql_execution_classifier_step9 = SQLExecutionClassifier(
             llm_serving=self.llm_serving,
             database_manager=database_manager,
             num_generations=10,
@@ -181,10 +187,11 @@ class Text2SQLGeneration_APIPipeline():
         self.sql_generator_step1.run(
             storage=self.storage.step(),
             output_sql_key=sql_key,
-            output_db_id_key=db_id_key
+            output_db_id_key=db_id_key,
+            output_sql_complexity_key="sql_complexity_type"
         )
 
-        self.sql_execution_filter_step2.run(
+        self.sql_executability_filter_step2.run(
             storage=self.storage.step(),
             input_sql_key=sql_key,
             input_db_id_key=db_id_key
@@ -197,8 +204,16 @@ class Text2SQLGeneration_APIPipeline():
             output_question_key=question_key,
             output_evidence_key=evidence_key
         )
+        
+        self.text2sql_correspondence_filter_step4.run(
+            storage=self.storage.step(),
+            input_sql_key=sql_key,
+            input_db_id_key=db_id_key,
+            input_question_key=question_key,
+            input_evidence_key=evidence_key
+        )
 
-        self.text2sql_prompt_generator_step4.run(
+        self.text2sql_prompt_generator_step5.run(
             storage=self.storage.step(),
             input_question_key=question_key,
             input_db_id_key=db_id_key,
@@ -206,7 +221,7 @@ class Text2SQLGeneration_APIPipeline():
             output_prompt_key="prompt"
         )
 
-        self.sql_cot_generator_step5.run(
+        self.sql_cot_generator_step6.run(
             storage=self.storage.step(),
             input_sql_key=sql_key,
             input_question_key=question_key,
@@ -215,13 +230,20 @@ class Text2SQLGeneration_APIPipeline():
             output_cot_key="cot_reasoning"
         )
 
-        self.sql_component_classifier_step6.run(
+        self.sql_cot_voting_generator_step7.run(
+            storage=self.storage.step(),
+            input_cot_responses_key="cot_responses",
+            input_db_id_key=db_id_key,
+            output_cot_key="cot_reasoning"
+        )
+
+        self.sql_component_classifier_step8.run(
             storage=self.storage.step(),
             input_sql_key=sql_key,
             output_difficulty_key="sql_component_difficulty"
         )
 
-        self.sql_execution_classifier_step7.run(
+        self.sql_execution_classifier_step9.run(
             storage=self.storage.step(),
             input_sql_key=sql_key,
             input_db_id_key=db_id_key,

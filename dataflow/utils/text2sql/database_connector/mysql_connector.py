@@ -4,6 +4,7 @@ from ..base import DatabaseConnectorABC, DatabaseInfo, QueryResult
 import pymysql
 import pymysql.cursors
 import time
+import re
 
 class MySQLConnector(DatabaseConnectorABC):
     """MySQL database connector implementation with full schema support"""
@@ -69,8 +70,14 @@ class MySQLConnector(DatabaseConnectorABC):
         finally:
             if cursor:
                 cursor.close()
+
+    def explain_query(self, connection: pymysql.Connection, sql: str, params: Optional[Tuple] = None) -> QueryResult:
+        stripped = sql.lstrip()
+        if not re.match(r'(?i)^explain\b', stripped):
+            sql = f"EXPLAIN {sql}"
+        return self.execute_query(connection, sql, params)
     
-    def get_schema_info(self, connection: pymysql.Connection) -> Dict[str, Any]:
+    def get_schema_info(self, connection: pymysql.Connection, db_id: Optional[str] = None) -> Dict[str, Any]:
         """Get complete schema information with formatted DDL"""
         schema = {'tables': {}}
         

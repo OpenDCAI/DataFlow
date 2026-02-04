@@ -37,9 +37,14 @@ class DatabaseConnectorABC(ABC):
     def execute_query(self, connection: Any, sql: str, params: Optional[Tuple] = None) -> QueryResult:
         """Execute SQL query and return standardized result"""
         pass
+
+    @abstractmethod
+    def explain_query(self, connection: Any, sql: str, params: Optional[Tuple] = None) -> QueryResult:
+        """Explain SQL query without executing it"""
+        pass
     
     @abstractmethod
-    def get_schema_info(self, connection: Any) -> Dict[str, Any]:
+    def get_schema_info(self, connection: Any, db_id: Optional[str] = None) -> Dict[str, Any]:
         """Get complete database schema information"""
         pass
 

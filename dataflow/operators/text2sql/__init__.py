@@ -2,13 +2,15 @@ from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     # filter
-    from filter.sql_consistency_filter import SQLConsistencyFilter
+    from filter.sql_executability_filter import SQLExecutabilityFilter
     from filter.sql_execution_filter import SQLExecutionFilter
+    from filter.text2sql_correspondence_filter import Text2SQLCorrespondenceFilter
 
     # generate
     from generate.sql_generator import SQLGenerator
     from generate.sql_by_column_generator import SQLByColumnGenerator
     from generate.sql_variation_generator import SQLVariationGenerator
+    from generate.text2sql_cot_voting_generator import Text2SQLCoTVotingGenerator
     from generate.text2sql_cot_generator import Text2SQLCoTGenerator
     from generate.text2sql_prompt_generator import Text2SQLPromptGenerator
     from generate.text2sql_question_generator import Text2SQLQuestionGenerator

@@ -31,7 +31,6 @@ class SQLVariationGenerator(OperatorABC):
         else:
             self.prompt_template = prompt_template
         self.num_variations = num_variations
-        random.seed(42)
 
     @staticmethod
     def get_desc(lang):
@@ -53,6 +52,9 @@ class SQLVariationGenerator(OperatorABC):
             return "SQL variation generator for Text2SQL tasks."
 
     def parse_response(self, response):
+        if not isinstance(response, str):
+            self.logger.warning(f"Invalid response type: {type(response)}, expected str. Response: {response}")
+            return ""
         if not response:
             return ""
                 
@@ -74,69 +76,68 @@ class SQLVariationGenerator(OperatorABC):
 
     def run(self, storage: DataFlowStorage,
             input_sql_key: str = "SQL",
-            input_db_id_key: str = "db_id"
+            input_db_id_key: str = "db_id",
+            output_sql_variation_type_key: str = "sql_variation_type"
         ):
         self.input_sql_key = input_sql_key
         self.input_db_id_key = input_db_id_key
         
         dataframe = storage.read("dataframe")
         self.check_column(dataframe)
-        original_count = len(dataframe)
+        self.output_sql_variation_type_key = output_sql_variation_type_key
+
         prompts_and_metadata = []
-        original_row_indices = []
-        
-        for row_idx, row in tqdm(dataframe.iterrows(), total=len(dataframe), desc="Generating SQL Variations"):
+        # Phase 1: Prompt building
+        for _, row in tqdm(dataframe.iterrows(), total=len(dataframe), desc="Generating SQL Variations"):
             try:
                 create_statements, insert_statements = self.database_manager.get_create_statements_and_insert_statements(row[self.input_db_id_key])
                 original_sql = row[self.input_sql_key]
 
                 for _ in range(self.num_variations):
-                    prompt = self.prompt_template.build_prompt(
+                    prompt, variation_type = self.prompt_template.build_prompt(
                         original_sql=original_sql,
                         create_statements=create_statements,
                         insert_statements=insert_statements,
                         db_engine=self.database_manager.db_type
                     )
-                    
+
                     prompts_and_metadata.append((
                         prompt, 
-                        row[self.input_db_id_key]
+                        row[self.input_db_id_key],
+                        variation_type,
+                        row.to_dict()
                     ))
-                    original_row_indices.append(row_idx)
                     
             except Exception as e:
                 self.logger.error(f"Error processing database {row[self.input_db_id_key]}: {e}")
-                continue  
+                continue
         
+        new_rows = []
         if prompts_and_metadata:
             try:
-                prompts = [prompt for prompt, db_id in prompts_and_metadata]
+                prompts = [x[0] for x in prompts_and_metadata]
                 responses = self.llm_serving.generate_from_input(prompts, system_prompt="")
-                for i, ((prompt, db_id), response) in enumerate(zip(prompts_and_metadata, responses)):
+                
+                # Phase 2: Post-processing
+                for i, ((prompt, db_id, variation_type, original_row), response) in enumerate(zip(prompts_and_metadata, responses)):
                     sql = self.parse_response(response)
                     if sql:
-                        original_row_idx = original_row_indices[i]
-                        original_row = dataframe.iloc[original_row_idx]
-
                         new_row = {col: None for col in dataframe.columns}
 
                         new_row[self.input_db_id_key] = db_id
                         new_row[self.input_sql_key] = sql
+                        new_row[output_sql_variation_type_key] = variation_type
 
-                        for sys_field in RESERVED_SYS_FIELD_LIST:
-                            sys_col = f"{SYS_FIELD_PREFIX}{sys_field}"
-                            if sys_col in dataframe.columns and sys_col in original_row:
-                                new_row[sys_col] = original_row[sys_col]
-                        for user_field in RESERVED_USER_FIELD_LIST:
-                            user_col = f"{USER_FIELD_PREFIX}{user_field}"
-                            if user_col in dataframe.columns and user_col in original_row:
-                                new_row[user_col] = original_row[user_col]
-
-                        dataframe = pd.concat([dataframe, pd.DataFrame([new_row])], ignore_index=True)
-
+                        new_rows.append(new_row)
+                
             except Exception as e:
                 self.logger.error(f"Error generating SQL variations: {e}")
 
+        if new_rows:
+            dataframe = pd.DataFrame(new_rows)
+
         output_file = storage.write(dataframe)
-        self.logger.info(f"Generated {len(dataframe)} records (original: {original_count}, variations: {len(dataframe) - original_count})")
-        return []
+        output_count = len(dataframe)
+        
+        self.logger.info(f"Generated {output_count} records")
+        return [self.input_sql_key, self.input_db_id_key, self.output_sql_variation_type_key]

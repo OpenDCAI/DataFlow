@@ -34,7 +34,6 @@ class Text2SQLQuestionGenerator(OperatorABC):
             self.prompt_template = prompt_template
         self.logger = get_logger()
         self.question_candidates_num = question_candidates_num
-        random.seed(42)
 
     @staticmethod
     def get_desc(lang):
@@ -74,6 +73,11 @@ class Text2SQLQuestionGenerator(OperatorABC):
         return column_name2column_desc
 
     def parse_llm_response(self, response, style):
+        # 检查 response 是否为字符串类型
+        if not isinstance(response, str):
+            self.logger.warning(f"Invalid response type: {type(response)}, expected str. Response: {response}")
+            return None
+        
         explanation_pattern = re.compile(r'\[EXPLANATION-START\](.*?)\[EXPLANATION-END\]', re.DOTALL)
         question_pattern = re.compile(r'\[QUESTION-START\](.*?)\[QUESTION-END\]', re.DOTALL)
         external_knowledge_pattern = re.compile(r'\[EXTERNAL-KNOWLEDGE-START\](.*?)\[EXTERNAL-KNOWLEDGE-END\]', re.DOTALL)
@@ -133,6 +137,7 @@ class Text2SQLQuestionGenerator(OperatorABC):
         else:
             raw_data = [row.to_dict() for _, row in raw_dataframe.iterrows()]
         
+        # Phase 1: Database schema extraction
         db_ids = list(set([data[self.input_db_id_key] for data in raw_data]))
         db_id2column_info = dict()
         
@@ -140,26 +145,36 @@ class Text2SQLQuestionGenerator(OperatorABC):
             create_statements, _ = self.database_manager.get_create_statements_and_insert_statements(db_id)
             db_id2column_info[db_id] = self.extract_column_descriptions(create_statements)
         
+        # Phase 2: Prompt building
         self.logger.info("Generating question candidates...")
         prompts = []
-        prompt_data_mapping = []
         
         for data in tqdm(raw_data, desc="Preparing prompts"):
-            prompt = self.prompt_template.build_prompt(
+            prompt, question_type = self.prompt_template.build_prompt(
                 data[self.input_sql_key],
                 data[self.input_db_id_key],
                 db_id2column_info,
                 self.database_manager.db_type
             )
-            
+            data["question_type"] = question_type
             for _ in range(self.question_candidates_num):
                 prompts.append(prompt)
-                prompt_data_mapping.append({**data})
 
+        # Phase 3: LLM generation
         responses = self.llm_serving.generate_from_input(prompts, system_prompt="You are a helpful assistant.")
+        if len(responses) != len(prompts):
+            self.logger.warning(
+                f"LLM response count mismatch: prompts={len(prompts)}, responses={len(responses)}"
+            )
+            min_len = min(len(prompts), len(responses))
+            responses = responses[:min_len]
         
+        # Phase 4: Response parsing
         self.logger.info("Parsing responses and organizing candidates...")
-        grouped_responses = [responses[i:i+self.question_candidates_num] for i in range(0, len(responses), self.question_candidates_num)]
+        grouped_responses = [
+            responses[i:i + self.question_candidates_num]
+            for i in range(0, len(responses), self.question_candidates_num)
+        ]
 
         all_question_candidates = []
         question_groups = [] 
@@ -168,7 +183,7 @@ class Text2SQLQuestionGenerator(OperatorABC):
         for data, response_group in zip(raw_data, grouped_responses):
             question_candidates = []
             for response in response_group:
-                parsed_response = self.parse_llm_response(response, data.get("style", "Formal"))
+                parsed_response = self.parse_llm_response(response, data.get("question_type", "Formal"))
                 if parsed_response:
                     question_candidates.append(parsed_response)
                     text = parsed_response["external_knowledge"] + " " + parsed_response["question"]
@@ -177,12 +192,14 @@ class Text2SQLQuestionGenerator(OperatorABC):
             question_groups.append(question_candidates)
             all_question_candidates.extend(question_candidates)
         
+        # Phase 5: Embedding generation (tracked in embedding serving layer)
         self.logger.info("Generating embeddings for all question candidates...")
         if embedding_texts:
             embeddings = self.embedding_serving.generate_embedding_from_input(embedding_texts)
         else:
             embeddings = []
         
+        # Phase 6: Best question selection
         processed_results = []
         failed_data = []
         embedding_start_idx = 0
@@ -217,6 +234,7 @@ class Text2SQLQuestionGenerator(OperatorABC):
         
         final_df = pd.DataFrame(all_results)
         output_file = storage.write(final_df)
+        output_count = len(final_df)
         
         self.logger.info(f"Question generation results saved to {output_file}")
         self.logger.info(f"Successfully processed: {len(processed_results)}")

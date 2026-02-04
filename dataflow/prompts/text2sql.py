@@ -11,14 +11,14 @@ from dataflow.core.prompt import PromptABC
 
 
 @PROMPT_REGISTRY.register()
-class SQLConsistencyFilterPrompt(PromptABC):
+class Text2SQLCorrespondenceFilterPrompt(PromptABC):
     def __init__(self):
         pass
 
     def build_prompt(self, question: str, sql: str, db_details: str) -> str:
         prompt = f"""
         **Task Overview**
-        Determine if the SQL query correctly answers the given question based on the provided schema.
+        Determine if the SQL query is correctly answering the given question based on the provided schema.
 
         **Question**
         {question}
@@ -366,7 +366,6 @@ class SelectSQLGeneratorPrompt(PromptABC):
         )
 
     def build_prompt(self, insert_statements: List[str], create_statements: List[str], db_engine: str) -> str:
-        random.seed(42)
         complexity = random.sample(["Simple", "Moderate", "Complex", "Highly Complex"], 1)[0]
         if len(insert_statements) == 0:
             db_value_prompt = ""
@@ -397,7 +396,7 @@ class SelectSQLGeneratorPrompt(PromptABC):
             db_engine=db_engine,
             column_count=column_count
         )
-        return prompt
+        return prompt, complexity
 
 
 @PROMPT_REGISTRY.register()
@@ -712,17 +711,17 @@ class SelectVecSQLGeneratorPrompt(PromptABC):
         - For columns containing semantically meaningful data (e.g., descriptions), generate rich, contextually appropriate information. For columns without meaningful content (e.g., placeholder names), avoid creating semantically dense output to facilitate fuzzy matching operations.
         - For name_embedding: You should generate variationsof the original names (e.g., altered spellings, phonetic approximations, or intentionally obfuscated words/characters) to enable Subsequent fuzzy matching to identify semantically similar names. Importantly, never generate redundant information. For example, you can generate "Lige", but do not generate "Ligand Lige", "Ligand example name", "Ligand similar to Aspirin" and "Ligand name variation".
         Examples:
-        ✅ Correct:
+        Correct:
             name_embedding MATCH lembed('all-MiniLM-L6-v2', "Kri")
-        ❌ Wrong:
+        Wrong:
             name_embedding MATCH lembed('all-MiniLM-L6-v2', "A leading publisher based in Germany specializing in
         scientific journals and books.")
         - For text_embedding: Use ACTUAL and meaningful sentences (e.g. "Harper Lee's To Kill a Mockingbirdis a timeless exploration of racial injustice and moral growth, seen through the innocent yet perceptive eyes of Scout Finch. With its powerful themes, unforgettable characters like Atticus Finch, and Lee's poignant prose, the novel remains a searing critique of society's failures and a testament to the courage of standing for what's right.")
         - NEVER use vague words and generic phrases like "a book review"
         Examples:
-        ✅ Correct:
+        Correct:
             lembed('all-MiniLM-L6-v2', "To Kill a Mockingbird")
-        ❌ Wrong:
+        Wrong:
             lembed('all-MiniLM-L6-v2', "name of a famous book")
         7. When using MATCH, please fill in a vector using function lembed after MATCH that matches the column type (with the same dimension and type). Using details are in examples.
         8. The distance column is an implicitly generated metric that appears when performing vector similarity searches (using the MATCH operator) in SQLite vector extensions like sqlite-vec. If using JOIN operator, you have to clarify which table that distance belongs to.
@@ -732,7 +731,7 @@ class SelectVecSQLGeneratorPrompt(PromptABC):
         Key Points:
         --Vector search needs its own LIMIT/k - The outer LIMIT applies to the final filtered results, not the initial similarity search.
         --LIMIT operator should follow closely after "ORDER BY distance".
-        ❌ Wrong Example:
+        Wrong Example:
         ```sql
         SELECT a.codec_name
         FROM audio_codecs a
@@ -741,7 +740,7 @@ class SelectVecSQLGeneratorPrompt(PromptABC):
         AND q.quality_name = 'HighQuality'
         LIMIT 1;
         ```
-        ✅ Correct Example:
+        Correct Example:
         ```sql
         SELECT a.codec_name
         FROM audio_codecs a
@@ -750,7 +749,7 @@ class SelectVecSQLGeneratorPrompt(PromptABC):
         AND q.quality_name = 'HighQuality';
         ```
         --When using JOIN operations, you need to ensure that k does not cause ambiguity in the query. In most cases, the k parameter logically belongs to the same table as the column used in the MATCH clause. So, when the column referenced in the MATCH clause includes a table qualifier (e.g., table1.embedding), the k parameter must be explicitly bound to the same table.
-        ❌ Wrong Example:
+        Wrong Example:
         ```sql
         SELECT s.stock_id, s.symbol
         FROM stocks s
@@ -760,7 +759,7 @@ class SelectVecSQLGeneratorPrompt(PromptABC):
         AND k = 5
         ORDER BY s.stock_id;
         ```
-        ✅ Correct Example:
+        Correct Example:
         ```sql
         SELECT s.stock_id, s.symbol
         FROM stocks s
@@ -825,7 +824,6 @@ class SelectVecSQLGeneratorPrompt(PromptABC):
         )
     
     def build_prompt(self, insert_statements: List[str], create_statements: List[str], db_engine: str) -> tuple[str, str]:
-        random.seed(42)
         complexity = random.sample(list(self.complexity2criterion_vec.keys()), 1)[0]
 
         if len(insert_statements) == 0:
@@ -1019,7 +1017,6 @@ class Text2SQLQuestionGeneratorPrompt(PromptABC):
         )  
 
     def build_prompt(self, sql, db_id, db_id2column_info, db_type) -> str:
-        random.seed(42)
         styles = ["Formal", "Colloquial", "Imperative", "Interrogative", "Descriptive", "Concise", "Vague", "Metaphorical"]
         style_name = random.sample(styles, 1)[0]
         column_name2column_desc = db_id2column_info[db_id]
@@ -1051,7 +1048,7 @@ class Text2SQLQuestionGeneratorPrompt(PromptABC):
             instruction=instruction.strip()
         )
 
-        return prompt
+        return prompt, style_name
 
 
 @PROMPT_REGISTRY.register()
@@ -1331,7 +1328,6 @@ class Text2VecSQLQuestionGeneratorPrompt(PromptABC):
         )  
 
     def build_prompt(self, input_sql, input_db_id, db_id2column_info, db_type) -> str:
-        random.seed(42)
         styles = ["Formal", "Colloquial", "Imperative", "Interrogative", "Descriptive", "Concise", "Vague", "Metaphorical"]
         style_name = random.sample(styles, 1)[0]
         column_name2column_desc = db_id2column_info[input_db_id]
@@ -1467,8 +1463,7 @@ class SQLVariationGeneratorPrompt(PromptABC):
         )
 
 
-    def build_prompt(self, original_sql, create_statements, insert_statements, db_engine) -> str:
-        random.seed(42)
+    def build_prompt(self, original_sql, create_statements, insert_statements, db_engine) -> tuple[str, str]:
         if len(insert_statements) == 0:
             db_value_prompt = ""
         else:
@@ -1479,6 +1474,7 @@ class SQLVariationGeneratorPrompt(PromptABC):
             )
 
         variation_type = random.randint(0, 5)
+        variation_type_name = ["Data Value Transformations", "Query Structure Modifications", "Business Logic Changes", "Complexity Enhancements", "Advanced SQL Features", "Performance and Optimization"][variation_type]
         variation_prompt = self.variation_type_prompts[variation_type]
                     
         prompt = self._sql_variation_prompt(
@@ -1488,7 +1484,7 @@ class SQLVariationGeneratorPrompt(PromptABC):
             variation_prompt=variation_prompt.strip(),
             db_engine=db_engine
         )
-        return prompt
+        return prompt, variation_type_name
 
 
 @PROMPT_REGISTRY.register()
@@ -1497,37 +1493,33 @@ class Text2SQLPromptGeneratorPrompt(PromptABC):
         pass
 
     def build_prompt(self, db_details: str, question: str, evidence: str, db_engine: str) -> str:
-        if evidence:
-            question_and_evidence = f"{evidence}\n{question}"
-        else:
-            question_and_evidence = question
+        question_and_evidence = f"{evidence}\n{question}" if evidence else question
             
-        template = """Task Overview: 
-        You are a data science expert. Below, you are provided with a database schema and a natural language question. Your task is to understand the schema and generate a valid SQL query to answer the question.
+        template = """Task Overview:
+You are a data science expert. Below, you are provided with a database schema and a natural language question. Your task is to understand the schema and generate a valid SQL query to answer the question.
 
-        Database Engine:
-        {db_engine}
+Database Engine:
+{db_engine}
 
-        Database Schema:
-        {db_details}
-        This schema describes the database's structure, including tables, columns, primary keys, foreign keys, and any relevant relationships or constraints.
+Database Schema:
+{db_details}
+This schema describes the database's structure, including tables, columns, primary keys, foreign keys, any relevant relationships or constraints.
 
-        Question:
-        {question_and_evidence}
+Question:
+{question_and_evidence}
 
-        Instructions:
-        - Make sure you only output the information that is asked in the question. If the question asks for a specific column, make sure to only include that column in the SELECT clause, nothing more.
-        - The generated query should return all of the information asked in the question without any missing or extra information.
-        - Before generating the final SQL query, please think through the steps of how to write the query.
+Instructions:
+- Make sure you only output the information that is asked in the question. If the question asks for a specific column, make sure to only include that column in the SELECT clause, nothing more.
+- The generated query should return all of the information asked in the question without any missing or extra information.
+- Before generating the final SQL query, please think through the steps of how to write the query.
 
-        Output Format:
-        In your answer, please enclose the generated SQL query in a code block:
-        sql
-        -- Your SQL query
+Output Format:
+In your answer, please enclose the generated SQL query in a code block:
+```sql
+-- Your SQL query
+```
 
-
-        Take a deep breath and think step by step to find the correct SQL query.
-        """
+Take a deep breath and think step by step to find the correct SQL query."""
 
         prompt = template.format(db_details=db_details, question_and_evidence=question_and_evidence, db_engine=db_engine)
         return prompt

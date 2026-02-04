@@ -340,6 +340,39 @@ class SQLiteVecConnector(DatabaseConnectorABC):
                 except:
                     pass
 
+    def explain_query(self, connection: sqlite3.Connection, sql: str, params: Optional[Tuple] = None) -> QueryResult:
+        cursor = None
+        try:
+            cursor = connection.cursor()
+            stripped = sql.lstrip()
+            if not re.match(r'(?i)^explain(\s+query\s+plan)?\b', stripped):
+                sql = f"EXPLAIN QUERY PLAN {sql}"
+            if params:
+                cursor.execute(sql, params)
+            else:
+                cursor.execute(sql)
+            rows = cursor.fetchall()
+            columns = [desc[0] for desc in cursor.description] if cursor.description else []
+            data = [dict(zip(columns, row)) for row in rows] if columns else []
+            return QueryResult(
+                success=True,
+                data=data,
+                columns=columns,
+                row_count=len(data)
+            )
+        except Exception as e:
+            self.logger.debug(f"Query explain error: {e}")
+            return QueryResult(
+                success=False,
+                error=str(e)
+            )
+        finally:
+            if cursor:
+                try:
+                    cursor.close()
+                except:
+                    pass
+
     def _get_db_details(self, schema: Dict[str, Any]) -> str:
         db_details = []
         
@@ -390,7 +423,7 @@ class SQLiteVecConnector(DatabaseConnectorABC):
         
         return "\n\n".join(db_details)
 
-    def get_schema_info(self, connection: sqlite3.Connection) -> Dict[str, Any]:
+    def get_schema_info(self, connection: sqlite3.Connection, db_id: Optional[str] = None) -> Dict[str, Any]:
         schema = {'tables': {}}
         
         result = self.execute_query(

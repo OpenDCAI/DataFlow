@@ -32,7 +32,6 @@ class SQLByColumnGenerator(OperatorABC):
             self.prompt_template = SelectSQLGeneratorPrompt()
         else:
             self.prompt_template = prompt_template
-        random.seed(42)
 
     @staticmethod
     def get_desc(lang):
