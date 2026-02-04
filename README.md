@@ -440,6 +440,7 @@ We are honored to have received **first-place awards** in two major internationa
 We sincerely thank [MinerU](https://github.com/opendatalab/MinerU) for their outstanding work, whose powerful PDF/document text extraction capabilities provided essential support for our data loading process.
 We also thank [LLaMA-Factory](https://github.com/hiyouga/LLaMA-Factory) for offering an efficient and user-friendly framework for large model fine-tuning, which greatly facilitated rapid iteration in our training and experimentation workflows.
 Our gratitude extends to all contributors in the open-source community—their efforts collectively drive the development of DataFlow.
+We thank Zhongguancun Academy for their API and GPU support.
 
 
 <a id="awesome-dataflow"></a>
