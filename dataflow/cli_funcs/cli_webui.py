@@ -140,86 +140,175 @@ def _run_in_dir(workdir: Path, cmd: str) -> int:
         return os.system(cmd)
     finally:
         os.chdir(old)
+def _resolve_backend_dir(webui_path: Path) -> Path:
+    """
+    webui_path 可以是：
+    - 直接指向 backend/ 目录
+    - 指向解压根目录（里面有 backend/）
+    """
+    p = Path(webui_path).expanduser().resolve()
+    if not p.exists() or not p.is_dir():
+        raise RuntimeError(f"webui-path not found or not a directory: {p}")
+
+    # 如果直接就是 backend
+    if (p / "requirements.txt").is_file() and (p / "app").is_dir():
+        return p
+
+    # 如果是上层目录，尝试找 backend/
+    backend = p / "backend"
+    if (backend / "requirements.txt").is_file() and (backend / "app").is_dir():
+        return backend
+
+    raise RuntimeError(
+        f"Cannot locate backend directory from webui-path: {p}\n"
+        "Expected either:\n"
+        "  - <path>/requirements.txt and <path>/app/\n"
+        "  - <path>/backend/requirements.txt and <path>/backend/app/"
+    )
+
+
+def _load_latest_release() -> Tuple[str, str, str]:
+    """
+    返回 (tag, name, url)
+    """
+    _echo("loading version info from Github Release...", "cyan")
+    r = requests.get(
+        LATEST_API,
+        headers={"Accept": "application/vnd.github+json"},
+        timeout=20,
+    )
+    r.raise_for_status()
+    release = r.json()
+
+    # 打印 Release 页面路径
+    html_url = release.get("html_url")
+    if html_url:
+        _echo(f"Latest release page: {html_url}", "green")
+
+
+    tag, name, url = _pick_zip(release)
+    return tag, name, url
+
 
 def cli_webui(
-    zippath: Optional[Path] = None,
+    zip_path: Optional[Path] = None,
+    webui_path: Optional[Path] = None,
     host: str = "0.0.0.0",
     port: int = 8000,
 ) -> None:
     _confirm_yes()
 
-    # 1) 选择 base dir（默认 cwd/dataflow_webui）
-    base_dir = _ask_base_dir(Path.cwd() / "dataflow_webui")
-    downloads = base_dir / "downloads"
-    releases = base_dir / "releases"
-    downloads.mkdir(parents=True, exist_ok=True)
-    releases.mkdir(parents=True, exist_ok=True)
-
-    _echo(f"Base directory: {base_dir}", "green")
-
-    # 2) 确定 zip（本地 or 最新 release）
-    if zippath:
-        zip_path = Path(zippath).expanduser().resolve()
+    # 优先级：zip_path > webui_path > 云端下载交互
+    if zip_path is not None:
+        # ---- Case A: 本地 zip（自动解压并运行）----
+        zip_path = Path(zip_path).expanduser().resolve()
         if not zip_path.is_file():
-            raise RuntimeError(f"zippath not found: {zip_path}")
-        tag = "local"
+            raise RuntimeError(f"zip-path not found: {zip_path}")
+
         _echo(f"Using local zip: {zip_path}", "green")
-    else:
-        r = requests.get(LATEST_API, headers={"Accept": "application/vnd.github+json"}, timeout=20)
-        r.raise_for_status()
-        release = r.json()
-        tag, name, url = _pick_zip(release)
-        zip_path = downloads / name
 
-        # 2.1 先检测是否存在，再决定要不要下载
-        if zip_path.exists() and zip_path.stat().st_size > 0:
-            _echo(f"Found existing zip: {zip_path}", "yellow")
-            if _ask_yes("Overwrite and re-download this zip?", default_no=True):
-                _echo(f"Re-downloading → {zip_path}", "cyan")
-                zip_path.unlink(missing_ok=True)
-                _echo(f"Downloading: {name}", "cyan")
-                _download_with_progress(url, zip_path)
+        # 选择 base dir（用于解压目录）
+        base_dir = _ask_base_dir(Path.cwd() / "dataflow_webui")
+        downloads = base_dir / "downloads"
+        releases = base_dir / "releases"
+        downloads.mkdir(parents=True, exist_ok=True)
+        releases.mkdir(parents=True, exist_ok=True)
+        _echo(f"Base directory: {base_dir}", "green")
 
+        tag = "local"
+        extract_dir = releases / tag
+
+        # 解压：若已存在则询问是否覆盖提取
+        if extract_dir.exists():
+            _echo(f"Found existing extracted dir: {extract_dir}", "yellow")
+            if _ask_yes("Overwrite and re-extract?", default_no=True):
+                shutil.rmtree(extract_dir)
+                _echo(f"Extracting → {extract_dir}", "cyan")
+                extract_dir.mkdir(parents=True, exist_ok=True)
+                with zipfile.ZipFile(zip_path, "r") as zf:
+                    zf.extractall(extract_dir)
             else:
-                _echo("Using existing zip (skip download).", "green")
+                _echo("Using existing extracted files (skip extract).", "green")
         else:
-            _echo(f"Will download: {name}", "cyan")
-            _echo(f"Download to : {zip_path}", "cyan")
-            with requests.get(url, stream=True, timeout=120) as rr:
-                rr.raise_for_status()
-                with open(zip_path, "wb") as f:
-                    for chunk in rr.iter_content(1024 * 1024):
-                        if chunk:
-                            f.write(chunk)
-
-    # 3) 解压（同样：先检测是否存在，再问是否覆盖）
-    extract_dir = releases / tag
-    if extract_dir.exists():
-        _echo(f"Found existing extracted dir: {extract_dir}", "yellow")
-        if _ask_yes("Overwrite and re-extract?", default_no=True):
-            shutil.rmtree(extract_dir)
             _echo(f"Extracting → {extract_dir}", "cyan")
             extract_dir.mkdir(parents=True, exist_ok=True)
             with zipfile.ZipFile(zip_path, "r") as zf:
                 zf.extractall(extract_dir)
-        else:
-            _echo("Using existing extracted files (skip extract).", "green")
+
+        # 定位 backend
+        dirs = [p for p in extract_dir.iterdir() if p.is_dir()]
+        root = dirs[0] if len(dirs) == 1 else extract_dir
+        backend = root / "backend"
+        if not backend.exists():
+            raise RuntimeError("backend/ directory not found after extraction.")
+
+    elif webui_path is not None:
+        # ---- Case B: 直接传已解压的后端目录（直接运行）----
+        backend = _resolve_backend_dir(Path(webui_path))
+        _echo(f"Using existing backend directory: {backend}", "green")
+
     else:
-        _echo(f"Extracting → {extract_dir}", "cyan")
-        extract_dir.mkdir(parents=True, exist_ok=True)
-        with zipfile.ZipFile(zip_path, "r") as zf:
-            zf.extractall(extract_dir)
+        # ---- Case C: 两者都 None：先加载云端版本 -> 询问是否下载最新 -> 确认下载路径 -> 覆盖询问 ----
+        tag, name, url = _load_latest_release()
+        _echo(f"Latest release: {tag} ({name})", "green")
 
-    # 4) 定位 backend
-    dirs = [p for p in extract_dir.iterdir() if p.is_dir()]
-    root = dirs[0] if len(dirs) == 1 else extract_dir
-    backend = root / "backend"
-    if not backend.exists():
-        raise RuntimeError("backend/ directory not found after extraction.")
+        if not _ask_yes(f"Download latest release {tag} now?", default_no=True):
+            _echo("Cancelled. No zip-path/webui-path provided and you chose not to download.", "yellow")
+            return
 
+        # 确认下载路径（base dir）
+        base_dir = _ask_base_dir(Path.cwd() / "dataflow_webui")
+        downloads = base_dir / "downloads"
+        releases = base_dir / "releases"
+        downloads.mkdir(parents=True, exist_ok=True)
+        releases.mkdir(parents=True, exist_ok=True)
+        _echo(f"Base directory: {base_dir}", "green")
+
+        zip_path = downloads / name
+        _echo(f"Download to : {zip_path}", "cyan")
+
+        # 若 zip 已存在：询问 overwrite download
+        if zip_path.exists() and zip_path.stat().st_size > 0:
+            _echo(f"Found existing zip: {zip_path}", "yellow")
+            if _ask_yes("Overwrite and re-download this zip?", default_no=True):
+                zip_path.unlink(missing_ok=True)
+                _echo(f"Re-downloading → {zip_path}", "cyan")
+                _download_with_progress(url, zip_path)
+            else:
+                _echo("Using existing zip (skip download).", "green")
+        else:
+            _echo(f"Downloading: {name}", "cyan")
+            _download_with_progress(url, zip_path)
+
+        # 解压目录：releases/tag
+        extract_dir = releases / tag
+
+        # 若解压目录存在：询问是否覆盖提取
+        if extract_dir.exists():
+            _echo(f"Found existing extracted dir: {extract_dir}", "yellow")
+            if _ask_yes("Overwrite and re-extract?", default_no=True):
+                shutil.rmtree(extract_dir)
+                _echo(f"Extracting → {extract_dir}", "cyan")
+                extract_dir.mkdir(parents=True, exist_ok=True)
+                with zipfile.ZipFile(zip_path, "r") as zf:
+                    zf.extractall(extract_dir)
+            else:
+                _echo("Using existing extracted files (skip extract).", "green")
+        else:
+            _echo(f"Extracting → {extract_dir}", "cyan")
+            extract_dir.mkdir(parents=True, exist_ok=True)
+            with zipfile.ZipFile(zip_path, "r") as zf:
+                zf.extractall(extract_dir)
+
+        # 定位 backend
+        dirs = [p for p in extract_dir.iterdir() if p.is_dir()]
+        root = dirs[0] if len(dirs) == 1 else extract_dir
+        backend = root / "backend"
+        if not backend.exists():
+            raise RuntimeError("backend/ directory not found after extraction.")
+
+    # 统一：安装依赖 + 运行（保留 host/port）
     _echo(f"Backend directory: {backend}", "green")
-
-    # 5) 安装依赖（当前环境） + 运行
     _echo("Installing backend requirements into current Python environment...", "cyan")
     _rc = _run_in_dir(backend, "python -m pip install -r requirements.txt")
     if _rc != 0:

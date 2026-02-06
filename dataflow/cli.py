@@ -378,18 +378,24 @@ def text2model_train(input_dir: Path = typer.Argument(Path("."), help="Input dir
 
 @app.command()
 def webui(
-    zippath: Optional[Path] = typer.Option(None, "--zippath", help="Use a local release zip instead of downloading."),
+    zip_path: Optional[Path] = typer.Option(
+        None, "--zip-path", help="Use a local release zip (auto extract & run) from https://github.com/OpenDCAI/DataFlow-WebUI/releases."
+    ),
+    webui_path: Optional[Path] = typer.Option(
+        None, "--webui-path", help="Use an existing extracted backend dir from the zip mentioned above (or a dir containing backend/)."
+    ),
     host: str = typer.Option("0.0.0.0", "--host", help="Host to bind (default: 0.0.0.0)"),
     port: int = typer.Option(8000, "--port", help="Port to bind (default: 8000)"),
 ):
-    """Download latest WebUI release zip and run it."""
+    """Download latest WebUI release zip and run it, or run from local zip/extracted backend."""
     try:
         from dataflow.cli_funcs.cli_webui import cli_webui  # type: ignore
-        cli_webui(zippath=zippath, host=host, port=port)
+        cli_webui(zip_path=zip_path, webui_path=webui_path, host=host, port=port)
     except SystemExit:
         raise typer.Exit(code=0)
     except Exception as e:
         _echo(f"webui error: {e}", "red")
         raise typer.Exit(code=1)
+
 if __name__ == "__main__":
     app()
