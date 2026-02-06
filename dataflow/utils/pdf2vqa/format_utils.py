@@ -18,16 +18,26 @@ def refine_title(title: str, strict_title_match=False):
         title = new_title
     return title
 
-def merge_qa_pair(question_jsonl, answer_jsonl, output_jsonl, strict_title_match=False):
+def merge_qa_pair(vqa_jsonl, output_jsonl, strict_title_match=False):
     already_complete_count = 0
-    with open(question_jsonl, 'r', encoding='utf-8') as q_file, open(answer_jsonl, 'r', encoding='utf-8') as a_file, open(output_jsonl, 'w', encoding='utf-8') as out_file:
+    question_list = []
+    answer_list = []
+    with open(vqa_jsonl, 'r', encoding='utf-8') as vqa_file:
+        for line in vqa_file:
+            data = json.loads(line)
+            if data["question"] != "":
+                question_list.append(data)
+            else:
+                # 用于支持题目在前面，答案在后面的pdf
+                answer_list.append(data)
+
+    with open(output_jsonl, 'w', encoding='utf-8') as out_file:
         chapter_id = 0
         chapter_title = ""
         label = float('inf')
         questions = {}
         answers = {}
-        for line in q_file:
-            data = json.loads(line)
+        for data in question_list:
             label_match = re.search(r'\d+', data["label"])
             if label_match:
                 data["label"] = label_match.group()
@@ -68,8 +78,7 @@ def merge_qa_pair(question_jsonl, answer_jsonl, output_jsonl, strict_title_match
         chapter_id = 0
         chapter_title = ""
         label = float('inf')
-        for line in a_file:
-            data = json.loads(line)
+        for data in answer_list:
             label_match = re.search(r'\d+', data["label"])
             if label_match:
                 data["label"] = label_match.group()

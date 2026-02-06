@@ -27,8 +27,7 @@ class QA_Merger(OperatorABC):
             )
     
     def run(self, storage: DataFlowStorage,
-            input_question_qalist_path_key,
-            input_answer_qalist_path_key,
+            input_qalist_path_key,
             input_name_key,
             output_merged_qalist_path_key,
             output_merged_md_path_key,
@@ -41,12 +40,11 @@ class QA_Merger(OperatorABC):
         dataframe[output_qa_item_key] = dataframe[output_qa_item_key].astype(object)
 
         for idx, row in dataframe.iterrows():
-            question_qalist_path = row[input_question_qalist_path_key]
-            answer_qalist_path = row[input_answer_qalist_path_key]
+            qa_list_path = row[input_qalist_path_key]
             name = row[input_name_key]
             
             output_merged_qalist_path = os.path.join(self.output_dir, name, "merged_qa_pairs.jsonl")
-            merge_qa_pair(question_qalist_path, answer_qalist_path, output_merged_qalist_path, strict_title_match=self.strict_title_match)
+            merge_qa_pair(qa_list_path, output_merged_qalist_path, strict_title_match=self.strict_title_match)
             
             output_merged_md_path = os.path.join(self.output_dir, name, "merged_qa_pairs.md")
             jsonl_to_md(output_merged_qalist_path, output_merged_md_path)
