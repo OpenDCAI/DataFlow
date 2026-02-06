@@ -1,2 +1,2 @@
-{"question_pdf_path": "./example_data/PDF2VQAPipeline/questionextract_test.pdf", "answer_pdf_path": "./example_data/PDF2VQAPipeline/questionextract_test.pdf", "name": "math1"}
-{"question_pdf_path": "./example_data/PDF2VQAPipeline/math_question.pdf", "answer_pdf_path": "./example_data/PDF2VQAPipeline/math_answer.pdf", "name": "math2"}
+{"input_pdf_paths": "./example_data/PDF2VQAPipeline/questionextract_test.pdf", "name": "math1"}
+{"input_pdf_paths": ["./example_data/PDF2VQAPipeline/math_question.pdf", "./example_data/PDF2VQAPipeline/math_answer.pdf"], "name": "math2"}
