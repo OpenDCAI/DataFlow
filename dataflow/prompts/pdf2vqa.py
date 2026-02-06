@@ -111,7 +111,7 @@ Strict extraction rules:
 - If there are multiple sub-questions (such as "(1)", "(a)") under one main question, always put them together in the same `<qa_pair>`…`</qa_pair>` block.
 - If a question and its answer/solution are contiguous, wrap them together as a single `<qa_pair>`…`</qa_pair>` block, e.g.:
   `<qa_pair><label>1</label><question>…</question><answer>…</answer><solution>…</solution></qa_pair>`
-- If only questions or only answers/solutions appear, wrap each question or answer/solution in a `<qa_pair>`…`</qa_pair>` block with the missing part left empty. For example, if only questions appear:
+- If a question and its answer/solution are NOT contiguous (e.g. only question; only answer and/or solution; all questions at the front and all answers/solutions at the back), wrap each question or answer/solution in a `<qa_pair>`…`</qa_pair>` block with the missing part left empty. For example, if only questions appear:
   `<qa_pair><label>1</label><question>…</question><answer></answer><solution></solution></qa_pair>`
 - In total, there are 7 possibilities: only question, only answer, only solution, question with answer, question with solution, answer with solution, full question and answer and solution. 
 - If multiple qa pairs appear, wrap each qa pair in its own `<qa_pair>`…`</qa_pair>` block.
