@@ -105,6 +105,7 @@ class CodeSandboxSampleEvaluator(OperatorABC):
     def _execute_code_batch(self, code_list: List[str]) -> List[Tuple[str, str]]:
         """
         Execute a batch of code snippets using the PythonExecutor.
+        Each code snippet is executed in a fresh interpreter environment.
         
         Args:
             code_list: A list of strings, where each string is a code snippet.
@@ -113,9 +114,13 @@ class CodeSandboxSampleEvaluator(OperatorABC):
             A list of tuples, where each tuple contains (status, log).
             Status can be 'PASS' or 'FAIL', log contains execution output or error message.
         """
+        # Reset the interpreter before starting batch execution to ensure clean state
+        self.executor.reset(messages=[])
+        
         # The executor's batch_apply takes a list of code strings and a 'messages' context.
         # For our simple validation, the context can be an empty list.
-        results_with_reports = self.executor.batch_apply(code_list, messages=[])
+        # Set reset_interval=1 to reset the interpreter before each code execution
+        results_with_reports = self.executor.batch_apply(code_list, messages=[], reset_interval=1)
         
         processed_results = []
         for (result, report) in results_with_reports:
