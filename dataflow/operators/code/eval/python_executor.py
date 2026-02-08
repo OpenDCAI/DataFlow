@@ -347,10 +347,6 @@ class GenericRuntime:
             self.exec_code(c)
 
     def exec_code(self, code_piece: str) -> None:
-        # Security check
-        if regex.search(r"(\s|^)?(input|os\.system|subprocess)\(", code_piece):
-            raise RuntimeError("Forbidden function calls detected")
-        
         # Detect and modify plt.show() calls
         if "plt.show()" in code_piece and MATPLOTLIB_AVAILABLE:
             modified_code = code_piece.replace("plt.show()", """
@@ -586,22 +582,17 @@ class PythonExecutor:
                 s = s[:half] + "..." + s[-half:]
             return s
 
-    def batch_apply(self, batch_code, messages, reset_interval=500):
+    def batch_apply(self, batch_code, messages):
         """
         Execute a batch of code snippets.
         
         Args:
             batch_code: List of code strings to execute
             messages: Context messages for execution
-            reset_interval: Reset runtime every N executions to prevent state accumulation.
-                           Set to None to disable periodic resets.
         """
         all_code_snippets = self.process_generation_to_code(batch_code)
 
-        timeout_cnt = 0
-        consecutive_timeout_cnt = 0
         all_exec_results = []
-        MAX_CONSECUTIVE_TIMEOUTS = 1  # Restart worker after 3 consecutive timeouts
 
         if len(all_code_snippets) > 100:
             progress_bar = tqdm(total=len(all_code_snippets), desc="Execute")
@@ -609,22 +600,6 @@ class PythonExecutor:
             progress_bar = None
 
         for idx, code in enumerate(all_code_snippets):
-            # Periodically reset runtime to prevent state accumulation
-            # This helps avoid slowdowns and timeouts when processing large batches
-            if reset_interval and idx > 0 and idx % reset_interval == 0:
-                if self.use_process_isolation and self.persistent_worker:
-                    try:
-                        self.reset(messages)
-                    except Exception as reset_error:
-                        # Log but don't fail - continue execution
-                        if progress_bar:
-                            progress_bar.write(f"Warning: Runtime reset failed at index {idx}: {reset_error}")
-                        # If reset fails, restart worker
-                        try:
-                            self._restart_worker()
-                        except:
-                            pass
-            
             try:
                 result = self.execute(
                     code,
@@ -634,58 +609,28 @@ class PythonExecutor:
                     answer_symbol=self.answer_symbol,
                     answer_expr=self.answer_expr,
                 )
-                # Check if result indicates timeout or error
-                if isinstance(result, tuple) and len(result) == 2:
-                    res, report = result
-                    if report == "Timeout Error" or (isinstance(res, dict) and 'error' in res and 'timeout' in str(res.get('error', '')).lower()):
-                        consecutive_timeout_cnt += 1
-                        timeout_cnt += 1
-                        # If too many consecutive timeouts, restart worker
-                        if consecutive_timeout_cnt >= MAX_CONSECUTIVE_TIMEOUTS:
-                            if progress_bar:
-                                progress_bar.write(f"Warning: {MAX_CONSECUTIVE_TIMEOUTS} consecutive timeouts detected. Restarting worker...")
-                            try:
-                                self._restart_worker()
-                                consecutive_timeout_cnt = 0
-                            except Exception as restart_error:
-                                if progress_bar:
-                                    progress_bar.write(f"Error restarting worker: {restart_error}")
-                    else:
-                        consecutive_timeout_cnt = 0  # Reset counter on success
+                self._restart_worker()
                 
                 all_exec_results.append(result)
             except TimeoutError as error:
                 print(error)
                 all_exec_results.append(("", "Timeout Error"))
-                timeout_cnt += 1
-                consecutive_timeout_cnt += 1
+                self._restart_worker()
                 
-                # If too many consecutive timeouts, restart worker
-                if consecutive_timeout_cnt >= MAX_CONSECUTIVE_TIMEOUTS:
-                    if progress_bar:
-                        progress_bar.write(f"Warning: {MAX_CONSECUTIVE_TIMEOUTS} consecutive timeouts detected. Restarting worker...")
+                # If timeout occurs, try resetting runtime to recover
+                if self.use_process_isolation and self.persistent_worker:
                     try:
-                        self._restart_worker()
-                        consecutive_timeout_cnt = 0
-                    except Exception as restart_error:
-                        if progress_bar:
-                            progress_bar.write(f"Error restarting worker: {restart_error}")
-                else:
-                    # If timeout occurs, try resetting runtime to recover
-                    if self.use_process_isolation and self.persistent_worker:
+                        self.reset(messages)
+                    except Exception:
+                        # If reset fails, try restarting worker
                         try:
-                            self.reset(messages)
-                        except Exception:
-                            # If reset fails, try restarting worker
-                            try:
-                                self._restart_worker()
-                                consecutive_timeout_cnt = 0
-                            except:
-                                pass
+                            self._restart_worker()
+                        except:
+                            pass
             except Exception as error:
                 print(f"Error in batch_apply: {error}")
                 all_exec_results.append(("", f"Error: {str(error)}"))
-                consecutive_timeout_cnt = 0  # Reset on non-timeout errors
+                self._restart_worker()
             
             if progress_bar is not None:
                 progress_bar.update(1)
