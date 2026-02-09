@@ -52,7 +52,7 @@ dependencies = {file = "requirements.txt"}
 
 
 [project.optional-dependencies]
-test = ["flask"]
+test = ["flask", "setuptools<=81.0.0"] # https://setuptools.pypa.io/en/latest/pkg_resources.html & https://github.com/dgtlmoon/changedetection.io/pull/2424
 vllm =["vllm>=0.7.0,<=0.9.2", "numpy<2.0.0"]
 vllm07 = ["vllm<0.8", "numpy<2.0.0"]
 vllm08 = ["vllm<0.9"]
