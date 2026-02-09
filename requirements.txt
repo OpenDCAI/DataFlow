@@ -31,8 +31,11 @@ cookiecutter # auto template gen from CLI
 func_timeout
 sqlglot
 pymysql
+
 # general text
-fasttext-wheel
+fasttext; python_version >= "3.13" # https://github.com/OpenDCAI/DataFlow/pull/470
+fasttext-wheel; python_version < "3.13" # https://github.com/OpenDCAI/DataFlow/pull/470
+
 langkit
 openai
 sentencepiece
