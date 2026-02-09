@@ -32,7 +32,8 @@ func_timeout
 sqlglot
 pymysql
 # general text
-fasttext-wheel
+fasttext; python_version >= "3.13"
+fasttext-wheel; python_version < "3.13"
 langkit
 openai
 sentencepiece
