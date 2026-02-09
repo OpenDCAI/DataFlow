@@ -56,10 +56,10 @@ jobs:
           enable-cache: true  # 远端缓存 uv 自身（对磁盘占用很小）
 
       # 用系统 Python 安装依赖，禁用缓存，避免写入大体积 wheel 缓存
-      - name: Install dependencies
+      - name: Install dependencies (system)
         run: |
-          uv pip install --no-cache -r requirements.txt
-          uv pip install -e .[test]
+          uv pip install --system --python "${{ steps.py.outputs.python-path }}" --no-cache -r requirements.txt
+          uv pip install --system --python "${{ steps.py.outputs.python-path }}" -e ".[test]"
 
       - name: Run tests on Windows
         if: startsWith(matrix.os, 'windows')
