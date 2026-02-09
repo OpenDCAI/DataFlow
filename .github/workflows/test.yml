@@ -57,8 +57,6 @@ jobs:
 
       # 用系统 Python 安装依赖，禁用缓存，避免写入大体积 wheel 缓存
       - name: Install dependencies
-        env:
-          UV_SYSTEM_PYTHON: "1"
         run: |
           uv pip install --no-cache -r requirements.txt
           uv pip install -e .[test]
