@@ -7,7 +7,6 @@ on:
       - "**/*.py"
       - "requirements*.txt"
       - ".github/workflows/*.yml"
-      - "pyproject.toml"
   pull_request:
     branches: [ "main" ]
     paths:
