@@ -29,8 +29,8 @@ def _ask_yes(prompt: str, default_no: bool = True) -> bool:
 def _confirm_yes() -> None:
     _echo(f"This will run DataFlow-WebUI ({REPO_URL}) by using a GitHub Release zip.", "yellow")
     # if input("Type 'yes' to continue: ").strip().lower() != "yes":
-    if not _ask_yes("Do you confirm to continue?", default_no=False):
-        raise SystemExit(0)
+    # if not _ask_yes("Do you confirm to continue?", default_no=False):
+        # raise SystemExit(0)
 
 
 def _pick_zip(release: dict) -> Tuple[str, str, str]:
