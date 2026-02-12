@@ -75,7 +75,7 @@ DataFlow 是一个数据准备系统，旨在从噪声数据源（PDF、纯文�
 
 ### 🔧 3.1 算子工作机制
 
-DataFlow采用模块化的算子设计理念，通过组合不同类型的算子来构建灵活的数据处理流水线。算子作为数据处理的基本单元，能够接收结构化数据输入（如json/jsonl/csv格式），经过智能处理后输出高质量的数据结果。详细的算子使用指南请参考：[项目文档](https://opendcai.github.io/DataFlow-Doc/zh/guide/text_evaluation_operators/)
+DataFlow采用模块化的算子设计理念，通过组合不同类型的算子来构建灵活的数据处理流水线。算子作为数据处理的基本单元，能够接收结构化数据输入（如json/jsonl/csv格式），经过智能处理后输出高质量的数据结果。详细的算子使用指南请参考：[项目文档](https://opendcai.github.io/DataFlow-Doc/zh/api/home/)
 
 ![dataflow_operator](https://github.com/user-attachments/assets/d79a0d8b-09ef-457e-af8b-85af0d03b73d)
 
