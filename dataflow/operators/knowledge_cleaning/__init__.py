@@ -5,8 +5,9 @@ if TYPE_CHECKING:
     from .generate.kbc_chunk_generator import KBCChunkGenerator
     from .generate.kbc_chunk_generator_batch import KBCChunkGeneratorBatch
     # from .generate.file_or_url_to_markdown_converter import FileOrURLToMarkdownConverter
-    from .generate.file_or_url_to_markdown_converter_batch import FileOrURLToMarkdownConverterBatch
-    from .generate.file_or_url_to_markdown_converter_api import FileOrURLToMarkdownConverterAPI
+    from .generate.mineru_operators import FileOrURLToMarkdownConverterBatch
+    from .generate.mineru_operators import FileOrURLToMarkdownConverterAPI
+    from .generate.mineru_operators import FileOrURLToMarkdownConverterFlash
     from .generate.kbc_text_cleaner import KBCTextCleaner
     from .generate.kbc_text_cleaner_batch import KBCTextCleanerBatch
     from .generate.mathbook_question_extract import MathBookQuestionExtract
