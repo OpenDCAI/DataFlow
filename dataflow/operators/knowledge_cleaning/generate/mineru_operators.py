@@ -10,7 +10,6 @@ from dataflow.utils.storage import DataFlowStorage
 from dataflow.core import OperatorABC
 from pathlib import Path
 from abc import abstractmethod
-from flash_mineru import MineruEngine
 
 def is_url(string):
     try:
@@ -439,6 +438,8 @@ class FileOrURLToMarkdownConverterBatch(MinerUABC):
 class FileOrURLToMarkdownConverterFlash(MinerUABC):
 
     def __init__(self, intermediate_dir: str = "intermediate", model_path=None, batch_size:int = 4, replicas:int = 1, num_gpus_per_replica:float = 1, engine_gpu_util_rate_to_ray_cap:float = 0.9):
+        from flash_mineru import MineruEngine
+        
         super().__init__(intermediate_dir, mineru_backend="vlm")
         if model_path is None:
             raise ValueError("Please provide the model_path for MinerUEngine. You can download the model from https://huggingface.co/opendatalab/MinerU2.5-2509-1.2B.")
