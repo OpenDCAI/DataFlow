@@ -216,35 +216,47 @@ class FileOrURLToMarkdownConverterAPI(MinerUABC):
 
     @staticmethod
     def get_desc(lang: str = "zh"):
-        """
-        返回算子功能描述 (根据run()函数的功能实现)
-        """
         if lang == "zh":
             return (
-                "知识提取算子：支持从多种文件格式中提取结构化内容并转换为标准Markdown\n"
-                "核心功能：\n"
-                "1. PDF文件：使用MinerU解析引擎提取文本/表格/公式，保留原始布局\n"
-                "2. Office文档(DOC/PPT等)：通过DocConverter转换为Markdown格式\n"
-                "3. 网页内容(HTML/XML)：使用trafilatura提取正文并转为Markdown\n"
-                "4. 纯文本(TXT/MD)：直接透传不做处理\n"
-                "特殊处理：\n"
-                "- 自动识别中英文文档(lang参数)\n"
-                "- 支持本地文件路径和URL输入\n"
-                "- 生成中间文件到指定目录(intermediate_dir)"
+                "文件/URL 转 Markdown（MinerU API 版）：批量将输入源转换为 Markdown，并把生成的 Markdown 路径回写到 DataFrame。\n\n"
+                "功能说明：\n"
+                "1) 自动识别输入类型（本地路径或 URL）：\n"
+                "   - URL：若为 PDF（Content-Type=application/pdf）会先下载到 raw/crawled/ 下再解析；否则按网页(HTML/XML)抓取正文转 Markdown。\n"
+                "   - 本地文件：支持 PDF/图片(png/jpg/jpeg/webp/gif)、HTML/XML、TXT/MD；TXT/MD 直接透传。\n"
+                "2) PDF/图片：通过 MinerU 官方 API 批量解析，输出 Markdown 到 intermediate_dir。\n"
+                "3) HTML/XML：使用 trafilatura 抽取正文并输出 Markdown 到 intermediate_dir。\n\n"
+                "初始化参数（__init__）：\n"
+                "- intermediate_dir: 中间产物目录，保存生成的 Markdown（默认 intermediate）\n"
+                "- mineru_backend: MinerU API 的 model_version（默认 vlm；可按后端/版本配置）\n"
+                "- api_key: MinerU API Key；不传则读取环境变量 MINERU_API_KEY\n\n"
+                "运行参数（run）：\n"
+                "- storage: DataFlowStorage，需包含 dataframe\n"
+                "- input_key: 输入字段名，单元格为本地路径或 URL（默认 source）\n"
+                "- output_key: 输出字段名，写入对应行的 Markdown 文件路径（默认 text_path）\n\n"
+                "输出：\n"
+                "- 返回 storage.write(...) 的结果路径；并在 dataframe[output_key] 写入解析后的 Markdown 路径（失败为空字符串）。"
             )
-        else:  # 默认英文
+        else:
             return (
-                "Knowledge Extractor: Converts multiple file formats to structured Markdown\n"
-                "Key Features:\n"
-                "1. PDF: Uses MinerU engine to extract text/tables/formulas with layout preservation\n"
-                "2. Office(DOC/PPT): Converts to Markdown via DocConverter\n"
-                "3. Web(HTML/XML): Extracts main content using trafilatura\n"
-                "4. Plaintext(TXT/MD): Directly passes through without conversion\n"
-                "Special Handling:\n"
-                "- Auto-detects Chinese/English documents(lang param)\n"
-                "- Supports both local files and URLs\n"
-                "- Generates intermediate files to specified directory(intermediate_dir)"
+                "File/URL to Markdown (MinerU API): batch converts sources to Markdown and writes Markdown paths back to the DataFrame.\n\n"
+                "What it does:\n"
+                "1) Auto-detects input type (local path or URL).\n"
+                "   - URL: if it is a PDF (Content-Type=application/pdf), it downloads to raw/crawled/ then parses; otherwise treats it as HTML/XML and extracts main content.\n"
+                "   - Local: supports PDF/images (png/jpg/jpeg/webp/gif), HTML/XML, TXT/MD; TXT/MD is passed through.\n"
+                "2) PDF/images: parsed in batch via MinerU official API, Markdown saved under intermediate_dir.\n"
+                "3) HTML/XML: main content extracted by trafilatura and saved as Markdown under intermediate_dir.\n\n"
+                "__init__ params:\n"
+                "- intermediate_dir: directory to store generated Markdown\n"
+                "- mineru_backend: MinerU API model_version\n"
+                "- api_key: MinerU API key (fallback to env MINERU_API_KEY)\n\n"
+                "run params:\n"
+                "- storage: DataFlowStorage containing a dataframe\n"
+                "- input_key: column holding local paths or URLs (default: source)\n"
+                "- output_key: column to store generated Markdown file paths (default: text_path)\n\n"
+                "Output:\n"
+                "- Returns the written dataframe path; dataframe[output_key] contains Markdown paths (empty on failure)."
             )
+
             
     def _batch_parse_pdf_with_mineru(self, pdf_files: list):
         """
@@ -318,39 +330,83 @@ class FileOrURLToMarkdownConverterBatch(MinerUABC):
     Choose the appropriate backend based on your needs.  Defaults to "vlm-sglang-engine".
     For more details, refer to the MinerU GitHub: https://github.com/opendatalab/MinerU.
     """
-    def __init__(self, intermediate_dir: str = "intermediate", mineru_backend: str = "vlm"):
+    def __init__(self, 
+                 intermediate_dir: str = "intermediate", 
+                 mineru_backend: str = "vlm-auto-engine",
+                 mineru_source: str = "local",
+                 mienru_model_path:str = None,
+                 mineru_download_model_type:str = "vlm"
+                 ):
+        """
+        For mineru_* configeration, please refer to official https://opendatalab.github.io/MinerU/usage/model_source/
+            - mineru_backend: backend type. check the `-b` section with `mineru --help` 
+            - mineru_source: source type. check `--source` section with `mineru --help` 
+            - mineru_model_path: where you put mineru model. check https://opendatalab.github.io/MinerU/usage/model_source/#1-download-models-to-local-storage
+            - mineru_download_model_type: which type of mineru you need to download. check `mineru-models-download --help`
+        """
         super().__init__(intermediate_dir, mineru_backend)
+        self.mineru_source = mineru_source
+        self.mienru_model_path = mienru_model_path
+        self.mineru_download_model_type = mineru_download_model_type
 
     @staticmethod
     def get_desc(lang: str = "zh"):
         """
         返回算子功能描述 (根据run()函数的功能实现)
         """
+    @staticmethod
+    def get_desc(lang: str = "zh"):
         if lang == "zh":
             return (
-                "知识提取算子：支持从多种文件格式中提取结构化内容并转换为标准Markdown\n"
-                "核心功能：\n"
-                "1. PDF文件：使用MinerU解析引擎提取文本/表格/公式，保留原始布局\n"
-                "2. Office文档(DOC/PPT等)：通过DocConverter转换为Markdown格式\n"
-                "3. 网页内容(HTML/XML)：使用trafilatura提取正文并转为Markdown\n"
-                "4. 纯文本(TXT/MD)：直接透传不做处理\n"
-                "特殊处理：\n"
-                "- 自动识别中英文文档(lang参数)\n"
-                "- 支持本地文件路径和URL输入\n"
-                "- 生成中间文件到指定目录(intermediate_dir)"
+                "文件/URL 转 Markdown（MinerU 本地批处理版）：批量将输入源转换为 Markdown，并把生成的 Markdown 路径回写到 DataFrame。\n\n"
+                "功能说明：\n"
+                "1) 自动识别输入类型（本地路径或 URL）：\n"
+                "   - URL：若为 PDF（Content-Type=application/pdf）会先下载到 raw/crawled/ 下再解析；否则按网页(HTML/XML)抓取正文转 Markdown。\n"
+                "   - 本地文件：支持 PDF/图片(png/jpg/jpeg/webp/gif)、HTML/XML、TXT/MD；TXT/MD 直接透传。\n"
+                "2) PDF/图片：通过本地 MinerU CLI（subprocess 调用 `mineru`）逐文件解析。\n"
+                "   - 输出目录结构：{intermediate_dir}/{pdf_name}/{mineru_backend}/\n"
+                "   - 默认 Markdown 路径：{intermediate_dir}/{pdf_name}/{mineru_backend}/{pdf_name}.md\n"
+                "3) HTML/XML：使用 trafilatura 抽取正文并输出 Markdown 到 intermediate_dir。\n\n"
+                "初始化参数（__init__）：\n"
+                "- intermediate_dir: 中间产物目录（默认 intermediate）\n"
+                "- mineru_backend: MinerU CLI 后端（默认 vlm-auto-engine；也可 pipeline / vlm-sglang-engine 等）\n"
+                "- mineru_source: 模型来源（默认 local；对应 MINERU_MODEL_SOURCE）\n"
+                "- mienru_model_path: 本地模型目录；提供则会调用 configure_model 配置模型\n"
+                "- mineru_download_model_type: 配置模型类型（默认 vlm）\n\n"
+                "运行参数（run）：\n"
+                "- storage: DataFlowStorage，需包含 dataframe\n"
+                "- input_key: 输入字段名（默认 source），值为本地路径或 URL\n"
+                "- output_key: 输出字段名（默认 text_path），写入对应行的 Markdown 文件路径\n\n"
+                "环境依赖：\n"
+                "- 需安装 mineru 并具备可用的运行环境（通常需要 GPU/模型文件）；未安装会直接抛错。\n\n"
+                "输出：\n"
+                "- 返回 storage.write(...) 的结果路径；并在 dataframe[output_key] 写入解析后的 Markdown 路径（失败为空字符串）。"
             )
-        else:  # 默认英文
+        else:
             return (
-                "Knowledge Extractor: Converts multiple file formats to structured Markdown\n"
-                "Key Features:\n"
-                "1. PDF: Uses MinerU engine to extract text/tables/formulas with layout preservation\n"
-                "2. Office(DOC/PPT): Converts to Markdown via DocConverter\n"
-                "3. Web(HTML/XML): Extracts main content using trafilatura\n"
-                "4. Plaintext(TXT/MD): Directly passes through without conversion\n"
-                "Special Handling:\n"
-                "- Auto-detects Chinese/English documents(lang param)\n"
-                "- Supports both local files and URLs\n"
-                "- Generates intermediate files to specified directory(intermediate_dir)"
+                "File/URL to Markdown (MinerU Local Batch): batch converts sources to Markdown and writes Markdown paths back to the DataFrame.\n\n"
+                "What it does:\n"
+                "1) Auto-detects input type (local path or URL).\n"
+                "   - URL: if it is a PDF (Content-Type=application/pdf), it downloads to raw/crawled/ then parses; otherwise treats it as HTML/XML.\n"
+                "   - Local: supports PDF/images, HTML/XML, TXT/MD; TXT/MD is passed through.\n"
+                "2) PDF/images: parsed via local MinerU CLI (`mineru`) per file.\n"
+                "   - Output layout: {intermediate_dir}/{pdf_name}/{mineru_backend}/\n"
+                "   - Default Markdown: {intermediate_dir}/{pdf_name}/{mineru_backend}/{pdf_name}.md\n"
+                "3) HTML/XML: extracted by trafilatura and saved as Markdown under intermediate_dir.\n\n"
+                "__init__ params:\n"
+                "- intermediate_dir: directory to store generated artifacts\n"
+                "- mineru_backend: MinerU CLI backend (e.g., vlm-auto-engine / pipeline / vlm-sglang-engine)\n"
+                "- mineru_source: model source (default local)\n"
+                "- mienru_model_path: local model path; if provided, configures models via configure_model\n"
+                "- mineru_download_model_type: model type for configuration\n\n"
+                "run params:\n"
+                "- storage: DataFlowStorage containing a dataframe\n"
+                "- input_key: column holding local paths or URLs\n"
+                "- output_key: column to store Markdown file paths\n\n"
+                "Dependencies:\n"
+                "- Requires MinerU installed and properly configured (often GPU/models).\n\n"
+                "Output:\n"
+                "- Returns the written dataframe path; dataframe[output_key] contains Markdown paths (empty on failure)."
             )
 
     def _batch_parse_pdf_with_mineru(self, pdf_files: list):
@@ -386,19 +442,18 @@ class FileOrURLToMarkdownConverterBatch(MinerUABC):
                 Please make sure you have GPU on your machine.
                 """
             )
-
         logger=get_logger()
-        
-        os.environ['MINERU_MODEL_SOURCE'] = "local"  # 可选：从本地加载模型
+        from mineru.cli.models_download import configure_model
 
-        # pipeline|vlm-transformers|vlm-vllm-engine|vlm-http-client
-        MinerU_Version = {"pipeline": "auto", "vlm-transformers": "vlm", 'vlm-vllm-engine': 'vlm', 'vlm-http-client': 'vlm'}
-        
+        os.environ.setdefault("MINERU_MODEL_SOURCE", self.mineru_source)
+
+        # load local model and config corresponding files https://github.com/opendatalab/MinerU/blob/a12610fb3e9e24488fe3e76cd233ba88ec64bbaf/mineru/cli/models_download.py#L19
+        if self.mienru_model_path != None:
+            configure_model(self.mienru_model_path, self.mineru_download_model_type)
+
         parsed_results = {}
-        
         for item in pdf_files:
             raw_file = Path(item["raw_path"])
-            # import pdb; pdb.set_trace()
             pdf_name = Path(raw_file).stem
             intermediate_dir = self.intermediate_dir
             
@@ -437,15 +492,27 @@ class FileOrURLToMarkdownConverterBatch(MinerUABC):
 @OPERATOR_REGISTRY.register()
 class FileOrURLToMarkdownConverterFlash(MinerUABC):
 
-    def __init__(self, intermediate_dir: str = "intermediate", model_path=None, batch_size:int = 4, replicas:int = 1, num_gpus_per_replica:float = 1, engine_gpu_util_rate_to_ray_cap:float = 0.9):
-        from flash_mineru import MineruEngine
-        
+    def __init__(self, intermediate_dir: str = "intermediate", mineru_model_path=None, batch_size:int = 4, replicas:int = 1, num_gpus_per_replica:float = 1, engine_gpu_util_rate_to_ray_cap:float = 0.9):
+        try:
+            from flash_mineru import MineruEngine
+        except ImportError:
+            raise Exception(
+                """
+                FlashMinerU is not installed in this environment yet.
+                Please refer to https://github.com/OpenDCAI/Flash-MinerU to install.
+                Or you can just execute 'pip install flash_mineru'.
+                Please make sure you have GPU on your machine.
+                """
+            )
+        except Exception as e:
+            raise RuntimeError(f"Failed to import MineruEngine: {e}") from e
+
         super().__init__(intermediate_dir, mineru_backend="vlm")
-        if model_path is None:
+        if mineru_model_path is None:
             raise ValueError("Please provide the model_path for MinerUEngine. You can download the model from https://huggingface.co/opendatalab/MinerU2.5-2509-1.2B.")
         
         self.flash_mineru_engine = MineruEngine(
-            model=model_path, 
+            model=mineru_model_path, 
             save_dir=intermediate_dir, 
             batch_size=batch_size, 
             replicas=replicas, 
@@ -454,34 +521,54 @@ class FileOrURLToMarkdownConverterFlash(MinerUABC):
 
     @staticmethod
     def get_desc(lang: str = "zh"):
-        """
-        返回算子功能描述 (根据run()函数的功能实现)
-        """
         if lang == "zh":
             return (
-                "知识提取算子：支持从多种文件格式中提取结构化内容并转换为标准Markdown\n"
-                "核心功能：\n"
-                "1. PDF文件：使用MinerU解析引擎提取文本/表格/公式，保留原始布局\n"
-                "2. Office文档(DOC/PPT等)：通过DocConverter转换为Markdown格式\n"
-                "3. 网页内容(HTML/XML)：使用trafilatura提取正文并转为Markdown\n"
-                "4. 纯文本(TXT/MD)：直接透传不做处理\n"
-                "特殊处理：\n"
-                "- 自动识别中英文文档(lang参数)\n"
-                "- 支持本地文件路径和URL输入\n"
-                "- 生成中间文件到指定目录(intermediate_dir)"
+                "文件/URL 转 Markdown（FlashMinerU 加速版）：使用 FlashMinerU 引擎批量解析 PDF/图片为 Markdown，并把生成的 Markdown 路径回写到 DataFrame。\n\n"
+                "功能说明：\n"
+                "1) 自动识别输入类型（本地路径或 URL）：\n"
+                "   - URL：若为 PDF（Content-Type=application/pdf）会先下载到 raw/crawled/ 下再解析；否则按网页(HTML/XML)抓取正文转 Markdown。\n"
+                "   - 本地文件：支持 PDF/图片(png/jpg/jpeg/webp/gif)、HTML/XML、TXT/MD；TXT/MD 直接透传。\n"
+                "2) PDF/图片：调用 FlashMinerU 的 MineruEngine 批量运行解析。\n"
+                "   - 解析后 Markdown 统一落盘到 intermediate_dir，并按 FlashMinerU 的目录结构组织。\n"
+                "   - 本实现会将引擎返回的 md 文件名映射回对应 dataframe 行，并构造最终 md 绝对路径。\n"
+                "3) HTML/XML：使用 trafilatura 抽取正文并输出 Markdown 到 intermediate_dir。\n\n"
+                "初始化参数（__init__）：\n"
+                "- intermediate_dir: 中间产物目录（默认 intermediate）\n"
+                "- mineru_model_path: FlashMinerU 使用的模型路径（必填；如 MinerU2.5-xxx 权重目录）\n"
+                "- batch_size: 批处理大小（默认 4）\n"
+                "- replicas: 引擎副本数（默认 1）\n"
+                "- num_gpus_per_replica: 每个副本占用 GPU 数（默认 1）\n"
+                "- engine_gpu_util_rate_to_ray_cap: Ray 资源利用率上限系数（默认 0.9）\n\n"
+                "运行参数（run）：\n"
+                "- storage: DataFlowStorage，需包含 dataframe\n"
+                "- input_key: 输入字段名（默认 source），值为本地路径或 URL\n"
+                "- output_key: 输出字段名（默认 text_path），写入对应行的 Markdown 文件路径\n\n"
+                "环境依赖：\n"
+                "- 需安装 flash_mineru 并具备可用 GPU/模型文件；未安装会直接抛错。\n\n"
+                "输出：\n"
+                "- 返回 storage.write(...) 的结果路径；并在 dataframe[output_key] 写入解析后的 Markdown 路径（失败为空字符串）。"
             )
-        else:  # 默认英文
+        else:
             return (
-                "Knowledge Extractor: Converts multiple file formats to structured Markdown\n"
-                "Key Features:\n"
-                "1. PDF: Uses MinerU engine to extract text/tables/formulas with layout preservation\n"
-                "2. Office(DOC/PPT): Converts to Markdown via DocConverter\n"
-                "3. Web(HTML/XML): Extracts main content using trafilatura\n"
-                "4. Plaintext(TXT/MD): Directly passes through without conversion\n"
-                "Special Handling:\n"
-                "- Auto-detects Chinese/English documents(lang param)\n"
-                "- Supports both local files and URLs\n"
-                "- Generates intermediate files to specified directory(intermediate_dir)"
+                "File/URL to Markdown (FlashMinerU): uses FlashMinerU to batch-parse PDF/images into Markdown and writes Markdown paths back to the DataFrame.\n\n"
+                "What it does:\n"
+                "1) Auto-detects input type (local path or URL).\n"
+                "   - URL: if it is a PDF, downloads then parses; otherwise treats it as HTML/XML.\n"
+                "   - Local: supports PDF/images, HTML/XML, TXT/MD; TXT/MD is passed through.\n"
+                "2) PDF/images: runs FlashMinerU MineruEngine in batch and maps produced Markdown back to dataframe rows.\n"
+                "3) HTML/XML: extracted by trafilatura and saved as Markdown under intermediate_dir.\n\n"
+                "__init__ params:\n"
+                "- intermediate_dir: directory to store generated artifacts\n"
+                "- mineru_model_path: model path for FlashMinerU (required)\n"
+                "- batch_size, replicas, num_gpus_per_replica, engine_gpu_util_rate_to_ray_cap: engine tuning params\n\n"
+                "run params:\n"
+                "- storage: DataFlowStorage containing a dataframe\n"
+                "- input_key: column holding local paths or URLs\n"
+                "- output_key: column to store Markdown file paths\n\n"
+                "Dependencies:\n"
+                "- Requires flash_mineru installed and GPU/models available.\n\n"
+                "Output:\n"
+                "- Returns the written dataframe path; dataframe[output_key] contains Markdown paths (empty on failure)."
             )
 
     def _batch_parse_pdf_with_mineru(self, pdf_files: list):
@@ -523,10 +610,14 @@ class FileOrURLToMarkdownConverterFlash(MinerUABC):
         index_name_dict = {Path(item["raw_path"]).stem: item["index"] for item in pdf_files}
         logger.info(f"Running FlashMinerU on {len(pdf_path_list)} files...")
         results = self.flash_mineru_engine.run(pdf_path_list)
-        results = [res[0]  for res_list in results for res in res_list]  # flatten [[res]] -> [res]
-        parsed_results = {}
-        print(results)
+        final_results = []
+        # [['bitter_lesson.md', 'crawled_2.md', 'crawled_3.md'], [xxx]] to ['bitter_lesson.md', 'crawled_2.md', 'crawled_3.md']
         for res in results:
+            final_results.extend(res)
+        # results = [res[0]  for res_list in results for res in res_list]  # flatten [[res]] -> [res]
+        parsed_results = {}
+        print(final_results)
+        for res in final_results:
             md_path = Path(res)
             md_path = os.path.abspath(os.path.join(self.intermediate_dir, md_path.stem, 'vlm', md_path.name))
             parsed_results[index_name_dict[Path(md_path).stem]] = md_path
