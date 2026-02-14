@@ -206,11 +206,11 @@ class FileOrURLToMarkdownConverterAPI(MinerUABC):
     """
     def __init__(self, intermediate_dir: str = "intermediate", mineru_backend: str = "vlm", api_key:str = None):
         super().__init__(intermediate_dir, mineru_backend)
-        if api_key is None:
+        if api_key is None or api_key.strip() == "":
             try:
                 api_key = os.environ["MINERU_API_KEY"]
             except KeyError:
-                raise ValueError("MinerU API key not provided. Please set the MINERU_API_KEY environment variable or pass the api_key parameter.")
+                raise ValueError("MinerU API key not provided. Please set the MINERU_API_KEY environment variable or pass the api_key parameter. To get a MinerU API key, visit https://mineru.net/apiManage/docs .")
             
         self.api_key = api_key
 
@@ -322,7 +322,7 @@ class FileOrURLToMarkdownConverterAPI(MinerUABC):
         return parsed_results
 
 @OPERATOR_REGISTRY.register()
-class FileOrURLToMarkdownConverterBatch(MinerUABC):
+class FileOrURLToMarkdownConverterLocal(MinerUABC):
     """
     mineru_backend sets the backend engine for MinerU. Options include:
     - "pipeline": Traditional pipeline processing (MinerU1)

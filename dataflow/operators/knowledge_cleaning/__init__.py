@@ -5,7 +5,7 @@ if TYPE_CHECKING:
     from .generate.kbc_chunk_generator import KBCChunkGenerator
     from .generate.kbc_chunk_generator_batch import KBCChunkGeneratorBatch
     # from .generate.file_or_url_to_markdown_converter import FileOrURLToMarkdownConverter
-    from .generate.mineru_operators import FileOrURLToMarkdownConverterBatch
+    from .generate.mineru_operators import FileOrURLToMarkdownConverterLocal
     from .generate.mineru_operators import FileOrURLToMarkdownConverterAPI
     from .generate.mineru_operators import FileOrURLToMarkdownConverterFlash
     from .generate.kbc_text_cleaner import KBCTextCleaner

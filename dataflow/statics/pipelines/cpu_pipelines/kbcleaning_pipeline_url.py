@@ -1,6 +1,6 @@
 from dataflow.operators.knowledge_cleaning import (
     KBCChunkGenerator,
-    FileOrURLToMarkdownConverterBatch
+    FileOrURLToMarkdownConverterAPI
 )
 from dataflow.utils.storage import FileStorage
 class KBCleaning_CPUPipeline():
@@ -13,7 +13,7 @@ class KBCleaning_CPUPipeline():
             cache_type="json",
         )
 
-        self.knowledge_cleaning_step1 = FileOrURLToMarkdownConverterBatch(
+        self.knowledge_cleaning_step1 = FileOrURLToMarkdownConverterAPI(
             intermediate_dir="../example_data/KBCleaningPipeline/raw/",
             mineru_backend="pipeline",
         )
