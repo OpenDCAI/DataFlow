@@ -12,12 +12,10 @@ from dataflow import get_logger
 @OPERATOR_REGISTRY.register()
 class LLMOutputParser(OperatorABC):
     def __init__(self, 
-                 mode: Literal['question', 'answer'],
                  output_dir,
                  intermediate_dir: str = "intermediate",
                  ):
         self.logger = get_logger()
-        self.mode = mode
         self.output_dir = output_dir
         self.intermediate_dir = intermediate_dir
         
@@ -114,9 +112,9 @@ class LLMOutputParser(OperatorABC):
             response = Path(row[input_response_path_key]).read_text(encoding='utf-8')
             name = row[input_name_key]
             
-            image_prefix = os.path.join(name, f"{self.mode}_images")
+            image_prefix = os.path.join(name, f"vqa_images")
             qa_list = self._convert_response(response, converted_json_path, image_prefix)
-            output_qalist_path = os.path.join(self.output_dir, name, f"extracted_{self.mode}s.jsonl")
+            output_qalist_path = os.path.join(self.output_dir, name, f"extracted_vqa.jsonl")
             os.makedirs(os.path.dirname(output_qalist_path), exist_ok=True)
             with open(output_qalist_path, 'w') as outfile:
                 for qa in qa_list:
@@ -124,8 +122,12 @@ class LLMOutputParser(OperatorABC):
                     outfile.write('\n')
             
             # 复制图片
-            src_dir = os.path.join(self.intermediate_dir, 'mineru', Path(converted_json_path).stem).replace('_content_list_converted','')
+            src_dir = converted_json_path.rpartition('/')[0]
             src_images = os.path.join(src_dir, 'vlm', 'images')
+            if not os.path.exists(src_images):
+                src_images = os.path.join(src_dir, 'images')
+            if not os.path.exists(src_images):
+                raise ValueError("Images directory not found! There might be a change in Mineru API!")
             dst_images = os.path.join(self.output_dir, image_prefix)
             
             try:
