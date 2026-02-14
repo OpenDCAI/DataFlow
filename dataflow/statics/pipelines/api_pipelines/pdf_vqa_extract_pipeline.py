@@ -1,4 +1,4 @@
-from dataflow.operators.knowledge_cleaning import FileOrURLToMarkdownConverterBatch
+from dataflow.operators.knowledge_cleaning import FileOrURLToMarkdownConverterFlash
 
 from dataflow.serving import APILLMServing_request
 from dataflow.utils.storage import FileStorage
@@ -27,7 +27,7 @@ class PDF_VQA_extract_optimized_pipeline(PipelineABC):
         
         self.vqa_extract_prompt = QAExtractPrompt()
         
-        self.mineru_executor = FileOrURLToMarkdownConverterBatch(intermediate_dir = "intermediate", mineru_backend="vlm-vllm-engine")
+        self.mineru_executor = FileOrURLToMarkdownConverterFlash(intermediate_dir = "intermediate", mineru_backend="vlm-vllm-engine")
         self.input_formatter = MinerU2LLMInputOperator()
         self.vqa_extractor = ChunkedPromptedGenerator(
             llm_serving=self.llm_serving,

@@ -5,7 +5,7 @@ import os
 from pathlib import Path
 from dataflow.operators.knowledge_cleaning import (
     KBCChunkGeneratorBatch,
-    FileOrURLToMarkdownConverterBatch,
+    FileOrURLToMarkdownConverterFlash,
     KBCTextCleanerBatch,
     KBCMultiHopQAGeneratorBatch,
     QAExtractor
@@ -29,7 +29,7 @@ class KBCleaning_batchvllm_GPUPipeline():
             cache_type="json",
         )
 
-        self.knowledge_cleaning_step1 = FileOrURLToMarkdownConverterBatch(
+        self.knowledge_cleaning_step1 = FileOrURLToMarkdownConverterFlash(
             intermediate_dir=str(cache_path / ".cache"),
             mineru_backend="vlm-vllm-engine",  # 可选 pipeline, vlm-vllm-engine, vlm-vllm-transformer, vlm-http-client
         )
