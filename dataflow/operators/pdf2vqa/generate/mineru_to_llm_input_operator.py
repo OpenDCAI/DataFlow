@@ -3,6 +3,8 @@ from dataflow.core import OperatorABC
 from dataflow.utils.registry import OPERATOR_REGISTRY
 from dataflow.utils.storage import DataFlowStorage
 
+from pathlib import Path
+
 @OPERATOR_REGISTRY.register()
 class MinerU2LLMInputOperator(OperatorABC):
     def __init__(self):
@@ -57,8 +59,13 @@ class MinerU2LLMInputOperator(OperatorABC):
         dataframe = storage.read("dataframe")
     
         for index, row in dataframe.iterrows():
-            input_json_path = row[input_markdown_path_key].replace('.md', '_content_list.json')
-            converted_path = input_json_path.replace('.json', '_converted.json')
+            md_path = Path(row[input_markdown_path_key])
+            try:
+                input_json_path = list(md_path.parent.glob("*_content_list.json"))[0]
+            except:
+                raise ValueError("No _content_list.json file found in the api result. There might be an error with the Mineru api.")
+            
+            converted_path = str(input_json_path).replace('.json', '_converted.json')
             self._convert_json(input_json_path, converted_path)
             dataframe.at[index, output_converted_layout_key] = converted_path
             

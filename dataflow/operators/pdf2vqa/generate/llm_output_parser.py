@@ -122,8 +122,12 @@ class LLMOutputParser(OperatorABC):
                     outfile.write('\n')
             
             # 复制图片
-            src_dir = os.path.join(self.intermediate_dir, 'mineru', Path(converted_json_path).stem).replace('_content_list_converted','')
+            src_dir = converted_json_path.rpartition('/')[0]
             src_images = os.path.join(src_dir, 'vlm', 'images')
+            if not os.path.exists(src_images):
+                src_images = os.path.join(src_dir, 'images')
+            if not os.path.exists(src_images):
+                raise ValueError("Images directory not found! There might be a change in Mineru API!")
             dst_images = os.path.join(self.output_dir, image_prefix)
             
             try:

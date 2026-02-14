@@ -1,4 +1,4 @@
-from dataflow.operators.knowledge_cleaning import FileOrURLToMarkdownConverterFlash
+from dataflow.operators.knowledge_cleaning import FileOrURLToMarkdownConverterFlash, FileOrURLToMarkdownConverterLocal, FileOrURLToMarkdownConverterAPI
 
 from dataflow.serving import APILLMServing_request
 from dataflow.utils.storage import FileStorage
@@ -30,7 +30,7 @@ class PDF_VQA_extract_optimized_pipeline(PipelineABC):
         self.vqa_extract_prompt = QAExtractPrompt()
         
         self.pdf_merger = PDF_Merger(output_dir="./cache")
-        self.mineru_executor = FileOrURLToMarkdownConverterBatch(intermediate_dir = "intermediate", mineru_backend="vlm-vllm-engine")
+        self.mineru_executor = FileOrURLToMarkdownConverterAPI(intermediate_dir = "intermediate")
         self.input_formatter = MinerU2LLMInputOperator()
         self.vqa_extractor = ChunkedPromptedGenerator(
             llm_serving=self.llm_serving,
@@ -42,9 +42,9 @@ class PDF_VQA_extract_optimized_pipeline(PipelineABC):
     def forward(self):
         self.pdf_merger.run(
             storage=self.storage.step(),
-            input_pdf_path_key="input_pdf_paths",
+            input_pdf_list_key="input_pdf_paths",
             input_name_key="name",
-            output_merged_pdf_path_key="merged_pdf_path",
+            output_pdf_path_key="merged_pdf_path",
         )
         self.mineru_executor.run(
             storage=self.storage.step(),
