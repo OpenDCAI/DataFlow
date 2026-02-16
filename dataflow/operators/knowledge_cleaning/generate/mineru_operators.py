@@ -334,7 +334,7 @@ class FileOrURLToMarkdownConverterLocal(MinerUABC):
                  intermediate_dir: str = "intermediate", 
                  mineru_backend: str = "vlm-auto-engine",
                  mineru_source: str = "local",
-                 mienru_model_path:str = None,
+                 mineru_model_path:str = None,
                  mineru_download_model_type:str = "vlm"
                  ):
         """
@@ -346,7 +346,7 @@ class FileOrURLToMarkdownConverterLocal(MinerUABC):
         """
         super().__init__(intermediate_dir, mineru_backend)
         self.mineru_source = mineru_source
-        self.mienru_model_path = mienru_model_path
+        self.mineru_model_path = mineru_model_path
         self.mineru_download_model_type = mineru_download_model_type
 
     @staticmethod
@@ -371,7 +371,7 @@ class FileOrURLToMarkdownConverterLocal(MinerUABC):
                 "- intermediate_dir: 中间产物目录（默认 intermediate）\n"
                 "- mineru_backend: MinerU CLI 后端（默认 vlm-auto-engine；也可 pipeline / vlm-sglang-engine 等）\n"
                 "- mineru_source: 模型来源（默认 local；对应 MINERU_MODEL_SOURCE）\n"
-                "- mienru_model_path: 本地模型目录；提供则会调用 configure_model 配置模型\n"
+                "- mineru_model_path: 本地模型目录；提供则会调用 configure_model 配置模型\n"
                 "- mineru_download_model_type: 配置模型类型（默认 vlm）\n\n"
                 "运行参数（run）：\n"
                 "- storage: DataFlowStorage，需包含 dataframe\n"
@@ -448,8 +448,8 @@ class FileOrURLToMarkdownConverterLocal(MinerUABC):
         os.environ.setdefault("MINERU_MODEL_SOURCE", self.mineru_source)
 
         # load local model and config corresponding files https://github.com/opendatalab/MinerU/blob/a12610fb3e9e24488fe3e76cd233ba88ec64bbaf/mineru/cli/models_download.py#L19
-        if self.mienru_model_path != None:
-            configure_model(self.mienru_model_path, self.mineru_download_model_type)
+        if self.mineru_model_path != None:
+            configure_model(self.mineru_model_path, self.mineru_download_model_type)
 
         parsed_results = {}
         for item in pdf_files:
