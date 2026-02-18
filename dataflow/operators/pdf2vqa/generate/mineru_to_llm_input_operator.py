@@ -3,6 +3,8 @@ from dataflow.core import OperatorABC
 from dataflow.utils.registry import OPERATOR_REGISTRY
 from dataflow.utils.storage import DataFlowStorage
 
+from pathlib import Path
+
 @OPERATOR_REGISTRY.register()
 class MinerU2LLMInputOperator(OperatorABC):
     def __init__(self):
@@ -24,7 +26,7 @@ class MinerU2LLMInputOperator(OperatorABC):
             )
 
     def _convert_json(self, input_file, output_file):
-        with open(input_file, 'r') as infile:
+        with open(input_file, 'r', encoding="utf-8") as infile:
             data = list(json.load(infile))
         
         new_data = []
@@ -47,7 +49,7 @@ class MinerU2LLMInputOperator(OperatorABC):
                 new_data.append(item)
                 id += 1
         
-        with open(output_file, 'w') as outfile:
+        with open(output_file, 'w', encoding='utf-8') as outfile:
             json.dump(new_data, outfile, ensure_ascii=False)
     
     def run(self, storage: DataFlowStorage,
@@ -57,12 +59,17 @@ class MinerU2LLMInputOperator(OperatorABC):
         dataframe = storage.read("dataframe")
     
         for index, row in dataframe.iterrows():
-            input_json_path = row[input_markdown_path_key].replace('.md', '_content_list.json')
-            converted_path = input_json_path.replace('.json', '_converted.json')
+            md_path = Path(row[input_markdown_path_key])
+            try:
+                input_json_path = list(md_path.parent.glob("*_content_list.json"))[0]
+            except:
+                raise ValueError("No _content_list.json file found in the api result. There might be an error with the Mineru api.")
+            
+            converted_path = str(input_json_path).replace('.json', '_converted.json')
             self._convert_json(input_json_path, converted_path)
             dataframe.at[index, output_converted_layout_key] = converted_path
             
-            with open(converted_path, 'r') as infile:
+            with open(converted_path, 'r', encoding='utf-8') as infile:
                 data = json.load(infile)
                 assert isinstance(data, list), f"Expected list, got {type(data)} for {input_json_path}"
                 
