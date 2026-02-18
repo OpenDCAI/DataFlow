@@ -26,7 +26,7 @@ class MinerU2LLMInputOperator(OperatorABC):
             )
 
     def _convert_json(self, input_file, output_file):
-        with open(input_file, 'r') as infile:
+        with open(input_file, 'r', encoding="utf-8") as infile:
             data = list(json.load(infile))
         
         new_data = []
@@ -49,7 +49,7 @@ class MinerU2LLMInputOperator(OperatorABC):
                 new_data.append(item)
                 id += 1
         
-        with open(output_file, 'w') as outfile:
+        with open(output_file, 'w', encoding='utf-8') as outfile:
             json.dump(new_data, outfile, ensure_ascii=False)
     
     def run(self, storage: DataFlowStorage,
@@ -69,7 +69,7 @@ class MinerU2LLMInputOperator(OperatorABC):
             self._convert_json(input_json_path, converted_path)
             dataframe.at[index, output_converted_layout_key] = converted_path
             
-            with open(converted_path, 'r') as infile:
+            with open(converted_path, 'r', encoding='utf-8') as infile:
                 data = json.load(infile)
                 assert isinstance(data, list), f"Expected list, got {type(data)} for {input_json_path}"
                 

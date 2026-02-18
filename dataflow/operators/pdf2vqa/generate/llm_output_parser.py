@@ -67,7 +67,7 @@ class LLMOutputParser(OperatorABC):
     
     def _convert_response(self, input_response, input_json_path, image_prefix="images"):
         qa_list = []
-        with open(input_json_path, 'r') as infile:
+        with open(input_json_path, 'r', encoding='utf-8') as infile:
             input_json = list(json.load(infile))
         # 提取title
         for chapter_block in re.findall(r'<chapter>(.*?)</chapter>', input_response, flags=re.DOTALL):
@@ -116,18 +116,18 @@ class LLMOutputParser(OperatorABC):
             qa_list = self._convert_response(response, converted_json_path, image_prefix)
             output_qalist_path = os.path.join(self.output_dir, name, f"extracted_vqa.jsonl")
             os.makedirs(os.path.dirname(output_qalist_path), exist_ok=True)
-            with open(output_qalist_path, 'w') as outfile:
+            with open(output_qalist_path, 'w', encoding='utf-8') as outfile:
                 for qa in qa_list:
                     json.dump(qa, outfile, ensure_ascii=False)
                     outfile.write('\n')
             
             # 复制图片
-            src_dir = converted_json_path.rpartition('/')[0]
+            src_dir = os.path.dirname(converted_json_path)
             src_images = os.path.join(src_dir, 'vlm', 'images')
             if not os.path.exists(src_images):
                 src_images = os.path.join(src_dir, 'images')
             if not os.path.exists(src_images):
-                raise ValueError("Images directory not found! There might be a change in Mineru API!")
+                raise ValueError(f"Images directory {src_images} not found! There might be a change in Mineru API!")
             dst_images = os.path.join(self.output_dir, image_prefix)
             
             try:
