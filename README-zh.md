@@ -360,6 +360,7 @@ For Detailed Experiments setting, please visit our [DataFlow Technical Report](h
 
 | 论文标题 | DataFlow组件 | 会议 | 年份 |
 |---------|-------------|:------:|------|
+| [Text2SQL-Flow: A Robust SQL-Aware Data Augmentation Framework for Text-to-SQL](https://arxiv.org/abs/2505.13903)  | Text2SQL Data Augmentation   | ICDE   | 2026 |
 | [Let's Verify Math Questions Step by Step](https://arxiv.org/abs/2505.13903) | Math question quality evaluation | KDD | 2026 |
 | [MM-Verify: Enhancing Multimodal Reasoning with Chain-of-Thought Verification](https://arxiv.org/pdf/2502.13383) | 多模态推理验证框架，用于数据处理和评估 | ACL | 2025 |
 | [Efficient Pretraining Data Selection for Language Models via Multi-Actor Collaboration](https://arxiv.org/pdf/2410.08102) | 多智能体协作数据选择机制，增强数据筛选和处理能力 | ACL | 2025 |
