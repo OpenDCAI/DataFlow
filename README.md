@@ -485,20 +485,6 @@ If you use DataFlow in your research, feel free to give us a cite.
 }
 ```
 
-## 📊 13. Statistics
-
-<div align="center">
-  <a href="https://star-history.com/#OpenDCAI/DataFlow&Date">
-    <picture>
-      <source media="(prefers-color-scheme: dark)" srcset="https://api.star-history.com/svg?repos=OpenDCAI/DataFlow&type=Date&theme=dark" />
-      <source media="(prefers-color-scheme: light)" srcset="https://api.star-history.com/svg?repos=OpenDCAI/DataFlow&type=Date" />
-      <img alt="Star History Chart" src="https://api.star-history.com/svg?repos=OpenDCAI/DataFlow&type=Date" style="width:50%;" />
-    </picture>
-  </a>
-
-</div>
-
----
 
 <div align="center">
   <sub>
