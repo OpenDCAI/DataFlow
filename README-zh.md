@@ -449,20 +449,6 @@ For Detailed Experiments setting, please visit our [DataFlow Technical Report](h
 }
 ```
 
-## 📊 13. 统计信息
-<div align="center">
-  <a href="https://star-history.com/#OpenDCAI/DataFlow&Date">
-    <picture>
-      <source media="(prefers-color-scheme: dark)" srcset="https://api.star-history.com/svg?repos=OpenDCAI/DataFlow&type=Date&theme=dark" />
-      <source media="(prefers-color-scheme: light)" srcset="https://api.star-history.com/svg?repos=OpenDCAI/DataFlow&type=Date" />
-      <img alt="Star History Chart" src="https://api.star-history.com/svg?repos=OpenDCAI/DataFlow&type=Date" style="width:50%;" />
-    </picture>
-  </a>
-  
-</div>
-
----
-
 <div align="center">
   <sub>
     想了解更多？欢迎关注我们
