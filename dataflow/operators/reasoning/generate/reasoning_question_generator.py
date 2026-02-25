@@ -117,7 +117,7 @@ class ReasoningQuestionGenerator(OperatorABC):
                     try:
                         used_prompt = self.prompts.build_prompt(question=question)
                         formatted_prompts.append(used_prompt.strip())
-                    except:
+                    except Exception:
                         self.logger.debug(f"Please check if the symbol {{question}} in prompt is missing.")
 
         return formatted_prompts

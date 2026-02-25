@@ -61,10 +61,10 @@ class BenchDatasetEvaluatorQuestion(OperatorABC):
     def math_verify_compare(self, answer, ground_truth):
         try:
             return verify(parse(str(ground_truth)), parse(str(answer)))
-        except:
+        except Exception:
             try:
                 return verify(parse(ground_truth), parse(answer))
-            except:
+            except Exception:
                 return False
 
     def ResolveResponse(self, response):

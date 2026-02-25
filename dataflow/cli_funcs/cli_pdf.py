@@ -61,7 +61,7 @@ def get_dataflow_script_path(script_name: str) -> Path:
                 return script_path
 
         return None
-    except:
+    except Exception:
         return None
 
 
@@ -400,7 +400,7 @@ def cli_pdf2model_train(lf_yaml: str = ".cache/train_config.yaml", cache_path: s
             with open(config_path_obj, 'r', encoding='utf-8') as f:
                 config = yaml.safe_load(f)
                 actual_output_dir = config.get('output_dir', 'unknown')
-        except:
+        except Exception:
             actual_output_dir = 'unknown'
 
         print("Training completed successfully!")

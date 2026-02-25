@@ -271,7 +271,7 @@ class EvalHardness:
             try:
                 val = float(toks[idx])  
                 idx += 1
-            except:
+            except Exception:
                 end_idx = idx
                 while end_idx < len_ and toks[end_idx] not in (',', ')', 'and', *self.CLAUSE_KEYWORDS, *self.JOIN_KEYWORDS):
                     end_idx += 1

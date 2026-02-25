@@ -175,7 +175,7 @@ class LocalModelLALMServing_vllm(LLMServingABC):
         # vLLM requires the multiprocessing method to be set to spawn
         try:
             from vllm import LLM,SamplingParams
-        except:
+        except Exception:
             raise ImportError("please install vllm first like 'pip install open-dataflow[vllm]'")
         # Set the environment variable for vllm to use spawn method for multiprocessing
         # See https://docs.vllm.ai/en/v0.7.1/design/multiprocessing.html 

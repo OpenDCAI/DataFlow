@@ -48,7 +48,7 @@ def _clean_json_block(item: Any) -> str:
 def safe_parse_json(text: Any) -> Any:
     try:
         return json.loads(_clean_json_block(text))
-    except:
+    except Exception:
         return {} 
 
 def normalize_answer(s: str) -> str:

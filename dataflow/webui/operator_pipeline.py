@@ -469,7 +469,7 @@ def gradio_run_pipeline(
                 preview = df.head(5).to_html(index=False, escape=True)
                 wrapped = "<style>table{table-layout:fixed;width:100%;}td,th{white-space:pre-wrap;}</style>" + preview
                 return summary, wrapped
-            except:
+            except Exception:
                 return f"**Pipeline执行完成** 输出文件: {out_fn}", "<pre>无法预览结果</pre>"
         else:
             return "**Pipeline执行完成** 但未找到输出文件", "<pre></pre>"

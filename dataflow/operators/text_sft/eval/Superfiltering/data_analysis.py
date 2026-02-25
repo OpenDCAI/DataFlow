@@ -49,5 +49,5 @@ def get_perplexity_and_embedding_part_text(tokenizer, model, text, target_span, 
 
         return perplexity.to('cpu').item(), loss.to('cpu').item()
     
-    except:
+    except Exception:
         return 0, 0

@@ -325,7 +325,7 @@ class LazyFileStorage(DataFlowStorage):
             else:
                 try:
                     return clean_surrogates(str(obj))
-                except:
+                except Exception:
                     return obj
 
         if isinstance(data, list):
@@ -649,7 +649,7 @@ class FileStorage(DataFlowStorage):
                 # 其他类型（如自定义对象）尝试转为字符串处理
                 try:
                     return clean_surrogates(str(obj))
-                except:
+                except Exception:
                     # 如果转换失败，返回原对象或空字符串（根据需求选择）
                     return obj
 
@@ -1042,7 +1042,7 @@ class BatchedFileStorage(FileStorage):
                 # 其他类型（如自定义对象）尝试转为字符串处理
                 try:
                     return clean_surrogates(str(obj))
-                except:
+                except Exception:
                     # 如果转换失败，返回原对象或空字符串（根据需求选择）
                     return obj
 

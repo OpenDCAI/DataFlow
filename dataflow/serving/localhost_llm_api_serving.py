@@ -153,7 +153,7 @@ class LocalHostLLMAPIServing_vllm(LLMServingABC):
         
         try:
             reasoning_content = response['choices'][0]["message"]["reasoning_content"]
-        except:
+        except Exception:
             reasoning_content = ""
         
         if reasoning_content != "":
