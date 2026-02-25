@@ -61,7 +61,7 @@ def get_dataflow_script_path(script_name: str) -> Path:
                 return script_path
 
         return None
-    except:
+    except Exception:
         return None
 
 
@@ -448,7 +448,7 @@ def cli_text2model_train(input_keys: str = None, lf_yaml: str = "./.cache/train_
             file_size = qa_file.stat().st_size
             print(
                 f"{Fore.GREEN}✅ Step 3 completed: {sample_count} training samples ({file_size} bytes){Style.RESET_ALL}")
-        except:
+        except Exception:
             print(f"{Fore.GREEN}✅ Step 3 completed{Style.RESET_ALL}")
 
         # Step 4: Training
@@ -506,7 +506,7 @@ def _run_text2qa_workflow(current_dir: Path, cache_path_obj: Path, config_path_o
         with open(config_path_obj, 'r', encoding='utf-8') as f:
             config = yaml.safe_load(f)
             actual_output_dir = config.get('output_dir', 'unknown')
-    except:
+    except Exception:
         actual_output_dir = 'unknown'
 
     print("Text2QA training completed successfully!")
@@ -552,7 +552,7 @@ def _run_text2qa_workflow(current_dir: Path, cache_path_obj: Path, config_path_o
 #         with open(config_path_obj, 'r', encoding='utf-8') as f:
 #             config = yaml.safe_load(f)
 #             actual_output_dir = config.get('output_dir', 'unknown')
-#     except:
+#     except Exception:
 #         actual_output_dir = 'unknown'
 
 #     print("Text2QA training completed successfully!")

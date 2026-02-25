@@ -45,7 +45,7 @@ class StringProcessor:
             a, b = int(a) if "sqrt" not in a else a, int(b) if "sqrt" not in b else b
             assert string == f"{a}/{b}"
             return f"\\frac{{{a}}}{{{b}}}"
-        except:
+        except Exception:
             return string
 
     @staticmethod
@@ -62,7 +62,7 @@ class StringProcessor:
         """
         try:
             return str(w2n.word_to_num(text))
-        except:
+        except Exception:
             return text
 
 

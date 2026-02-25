@@ -13,7 +13,7 @@ def refine_title(title: str, strict_title_match=False):
             try:
                 # 其次提取中文数字章节编号（如六、二十四等）
                 new_title = re.search(r'[一二三四五六七八九零十百]+', title).group()   
-            except:
+            except Exception:
                 new_title = title
         title = new_title
     return title
@@ -46,7 +46,7 @@ def merge_qa_pair(vqa_jsonl, output_jsonl, strict_title_match=False):
             
             try:
                 data["label"] = int(data["label"])
-            except:
+            except Exception:
                 continue
             
             if data["chapter_title"] != "" and data["chapter_title"] != chapter_title:
@@ -87,7 +87,7 @@ def merge_qa_pair(vqa_jsonl, output_jsonl, strict_title_match=False):
                 
             try:
                 data["label"] = int(data["label"])
-            except:
+            except Exception:
                 continue
             
             if data["chapter_title"] != "" and data["chapter_title"] != chapter_title:

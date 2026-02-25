@@ -337,7 +337,7 @@ class SQLiteVecConnector(DatabaseConnectorABC):
             if cursor:
                 try:
                     cursor.close()
-                except:
+                except Exception:
                     pass
 
     def explain_query(self, connection: sqlite3.Connection, sql: str, params: Optional[Tuple] = None) -> QueryResult:
@@ -370,7 +370,7 @@ class SQLiteVecConnector(DatabaseConnectorABC):
             if cursor:
                 try:
                     cursor.close()
-                except:
+                except Exception:
                     pass
 
     def _get_db_details(self, schema: Dict[str, Any]) -> str:

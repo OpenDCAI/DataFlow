@@ -40,12 +40,12 @@ class LLMOutputParser(OperatorABC):
         for id in id_list:
             try: 
                 int(id)
-            except:
+            except Exception:
                 continue
             if int(id) < len(input_json):
                 try:
                     item = input_json[int(id)]
-                except:
+                except Exception:
                     continue
                 if 'text' in item:
                     texts.append(item['text'])
@@ -55,13 +55,13 @@ class LLMOutputParser(OperatorABC):
                         img_name = os.path.basename(img_path)
                         new_path = f"{image_prefix}/{img_name}"
                         texts.append(f"![{' '.join(item.get('image_caption','image'))}]({new_path})")
-                    except:
+                    except Exception:
                         pass
                 elif item.get('type','') == 'list':
                     if item['sub_type'] == 'text':
                         try:
                             texts.append(input_json[int(id)]['list_items'].pop(0))
-                        except:
+                        except Exception:
                             pass
         return '\n'.join(texts)
     

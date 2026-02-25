@@ -62,7 +62,7 @@ class MinerU2LLMInputOperator(OperatorABC):
             md_path = Path(row[input_markdown_path_key])
             try:
                 input_json_path = list(md_path.parent.glob("*_content_list.json"))[0]
-            except:
+            except Exception:
                 raise ValueError("No _content_list.json file found in the api result. There might be an error with the Mineru api.")
             
             converted_path = str(input_json_path).replace('.json', '_converted.json')

@@ -213,7 +213,7 @@ class PipelineABC(ABC):
 
         try:
             import networkx
-        except:
+        except Exception:
             raise ImportError("Please install networkx to draw graph. Please run `pip install networkx[default]`.")
         import matplotlib.pyplot as plt
         G = networkx.DiGraph()

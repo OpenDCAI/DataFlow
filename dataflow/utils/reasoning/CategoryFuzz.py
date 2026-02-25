@@ -138,7 +138,7 @@ class CategoryUtils:
             k = self.primary_categories.index(primary)
             m = self.secondary_categories[primary].index(secondary)
             return k * 8 + m
-        except:
+        except Exception:
             return 170
 
     def category_hasher_reverse(self,hash: float) -> tuple[str, str]:

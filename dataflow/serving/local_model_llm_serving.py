@@ -152,7 +152,7 @@ class LocalModelLLMServing_vllm(LLMServingABC):
             try:
                 from vllm import SamplingParams
                 from vllm.sampling_params import GuidedDecodingParams
-            except:
+            except Exception:
                 raise ImportError("please install vllm first like 'pip install open-dataflow[vllm]'")
             
             guided_decoding_params = GuidedDecodingParams(
