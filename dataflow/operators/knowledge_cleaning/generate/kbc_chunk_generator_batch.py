@@ -72,7 +72,6 @@ class KBCChunkGeneratorBatch(OperatorABC):
         elif self.split_method == "recursive":
             return RecursiveChunker(
                 chunk_size=self.chunk_size,
-                chunk_overlap=self.chunk_overlap
             )
         else:
             raise ValueError(f"Unsupported split method: {self.split_method}")
