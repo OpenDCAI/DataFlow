@@ -29,22 +29,22 @@ class KBCleaningPDF_APIPipeline():
         # ------------case1: use MinerU official API (by default) ------------
         # by default we use API provided by MinerU official
         # https://mineru.net/apiManage/docs
-        # self.knowledge_cleaning_step1 = FileOrURLToMarkdownConverterAPI(
-        #     intermediate_dir="../example_data/KBCleaningPipeline/API/",
-        #     mineru_backend="vlm",  # vlm or pipeline
-        #     api_key=None  # !!! place your api key here or set environment variable MINERU_API_KEY!!!
-        # )
+        self.knowledge_cleaning_step1 = FileOrURLToMarkdownConverterAPI(
+            intermediate_dir="../example_data/KBCleaningPipeline/API/",
+            mineru_backend="vlm",  # vlm or pipeline
+            api_key=None  # !!! place your api key here or set environment variable MINERU_API_KEY!!!
+        )
         # ------------case2: use Flash-MinerU inference locally with GPU ------------
         # https://github.com/OpenDCAI/Flash-MinerU
-        self.knowledge_cleaning_step1 = FileOrURLToMarkdownConverterFlash(
-            intermediate_dir="../example_data/KBCleaningPipeline/flash/",
-            mineru_model_path="<your Model Path>/MinerU2.5-2509-1.2B",  # !!! place your local model path here !!!
-            # https://huggingface.co/opendatalab/MinerU2.5-2509-1.2B.
-            batch_size=4, # batchsize per vllm worker
-            replicas=1,   # num of vllm workers
-            num_gpus_per_replica=0.5, # for ray to schedule vllm workers to GPU, can be float, e.g. 0.5 means each worker uses half GPU, 1 means each worker uses whole GPU
-            engine_gpu_util_rate_to_ray_cap=0.9 # actuall GPU utilization for each worker; acturall memory per worker= num_gpus_per_replica * engine_gpu_util_rate_to_ray_cap; this is to avoid OOM, you can set it to 0.9 or 0.8 to leave some buffer for other processes on GPU
-        )
+        # self.knowledge_cleaning_step1 = FileOrURLToMarkdownConverterFlash(
+        #     intermediate_dir="../example_data/KBCleaningPipeline/flash/",
+        #     mineru_model_path="<your Model Path>/MinerU2.5-2509-1.2B",  # !!! place your local model path here !!!
+        #     # https://huggingface.co/opendatalab/MinerU2.5-2509-1.2B.
+        #     batch_size=4, # batchsize per vllm worker
+        #     replicas=1,   # num of vllm workers
+        #     num_gpus_per_replica=0.5, # for ray to schedule vllm workers to GPU, can be float, e.g. 0.5 means each worker uses half GPU, 1 means each worker uses whole GPU
+        #     engine_gpu_util_rate_to_ray_cap=0.9 # actuall GPU utilization for each worker; acturall memory per worker= num_gpus_per_replica * engine_gpu_util_rate_to_ray_cap; this is to avoid OOM, you can set it to 0.9 or 0.8 to leave some buffer for other processes on GPU
+        # )
 
         # ------------case3: use MinerU official inference locally (much slower than other two) ------------
         # self.knowledge_cleaning_step1 = FileOrURLToMarkdownConverterLocal(
