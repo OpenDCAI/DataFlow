@@ -1,6 +1,11 @@
 __version__ = '1.0.8'
 short_version = __version__
 
+
+def get_version():
+    """Return the DataFlow version string."""
+    return __version__
+
 def parse_version_info(version_str):
     """Parse a version string into a tuple.
 
