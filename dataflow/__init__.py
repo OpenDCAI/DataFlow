@@ -10,6 +10,10 @@ __all__ = [
 ]
 
 
+def get_version():
+    """Return the package version string."""
+    return __version__
+
 
 def hello():
     return "Hello from open-dataflow!"
