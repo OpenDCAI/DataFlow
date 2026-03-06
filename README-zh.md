@@ -102,6 +102,7 @@ from dataflow.serving import APILLMServing_request
 storage = FileStorage(first_entry_file_name="./input.json",)
 
 # 配置 LLM 服务（例如 OpenAI API）
+# API 密钥需要通过 `export DF_API_KEY=sk-xxx` 设置为环境变量
 llm_serving = APILLMServing_request(
     api_url="https://api.openai.com/v1/chat/completions",
 )
