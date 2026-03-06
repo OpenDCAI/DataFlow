@@ -95,6 +95,54 @@ DataFlow adopts a modular operator design philosophy, building flexible data pro
 
 ![dataflow_operator](https://github.com/user-attachments/assets/d79a0d8b-09ef-457e-af8b-85af0d03b73d)
 
+The design of DataFlow operators follows a PyTorch-like style, making them easy to understand and use. The code block below shows a minimal invocation example of `PromptedGenerator`:
+
+Example input data (json/jsonl-style):
+
+```json
+// input.json
+[
+  {"problem": "What is 17 + 25?"},
+  {"problem": "If x = 3, compute 2x^2 + 1."}
+]
+```
+
+Operator invocation code:
+
+```python
+from dataflow.operators.core_text import PromptedGenerator
+from dataflow.utils.storage import FileStorage
+from dataflow.serving import APILLMServing_request
+
+# set input file to global storage class
+storage = FileStorage(first_entry_file_name="./input.json",)
+
+# configure LLM serving (e.g., OpenAI API)
+llm_serving = APILLMServing_request(
+    api_url="https://api.openai.com/v1/chat/completions",
+)
+
+prompted_generator = PromptedGenerator(
+    llm_serving=llm_serving,  # pre-configured LLM backend
+    system_prompt="Please solve this math problem."
+)
+
+prompted_generator.run(
+    storage=self.storage.step(),  # data management (details omitted)
+    input_key="problem",          # read from this column
+    output_key="solution"         # write to this column
+)
+```
+After running, the operator will append the generated results into output_key. For example, the output data (json/jsonl-style) becomes:
+
+```json
+// dataflow_step1.json
+[
+    {"problem":"What is 17 + 25?","solution":"42"},
+    {"problem":"If x = 3, compute 2x^2 + 1.","solution":"19"}
+]
+```
+
 ### 📊 3.2 Operator Classification System
 
 In the DataFlow framework, operators are divided into three core categories based on their functional characteristics:
@@ -144,23 +192,25 @@ In this framework, operators are categorized into Fundamental Operators, Generic
 ## ⚡ 5. Quick Start
 
 ### 🛠️ 5.1 Environment Setup and Installation
+> DataFlow supports Python>=3.10 environments, tested passed on Windows, Linux, and MacOS with Python 3.10, 3.11, and 3.12.
 
 Please use the following commands for environment setup and installation👇
 
-```shell
-conda create -n dataflow python=3.10 
-conda activate dataflow
+We recommend use [uv](https://docs.astral.sh/uv/) to install DataFlow for speed up.
 
-pip install open-dataflow
+```shell
+pip install uv
+uv pip install open-dataflow
 ```
 
 If you want to use your own GPU for local inference, please use:
 
 ```shell
-pip install open-dataflow[vllm]
+pip install uv
+uv pip install open-dataflow[vllm]
 ```
 
-> DataFlow supports Python>=3.10 environments
+
 
 After installation, you can use the following command to check if dataflow has been installed correctly:
 
