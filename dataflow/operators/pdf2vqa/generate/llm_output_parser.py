@@ -111,8 +111,12 @@ class LLMOutputParser(OperatorABC):
             converted_json_path = row[input_converted_layout_path_key]
             response = Path(row[input_response_path_key]).read_text(encoding='utf-8')
             name = row[input_name_key]
-            
-            image_prefix = os.path.join(name, f"vqa_images")
+
+            # 🚨 罪魁祸首在这里：它把 name（比如 math1）强行拼到了前缀里
+            # image_prefix = os.path.join(name, f"vqa_images")
+            # ✅ 修复 1：Markdown 的相对路径只需要文件夹名即可
+            image_prefix = "vqa_images"
+            # 这里把错误的带 math1/ 的前缀传给了内容解析器，写进了 JSON 和 MD 里
             qa_list = self._convert_response(response, converted_json_path, image_prefix)
             output_qalist_path = os.path.join(self.output_dir, name, f"extracted_vqa.jsonl")
             os.makedirs(os.path.dirname(output_qalist_path), exist_ok=True)
@@ -128,8 +132,10 @@ class LLMOutputParser(OperatorABC):
                 src_images = os.path.join(src_dir, 'images')
             if not os.path.exists(src_images):
                 raise ValueError(f"Images directory {src_images} not found! There might be a change in Mineru API!")
-            dst_images = os.path.join(self.output_dir, image_prefix)
-            
+            # 下面是物理复制图片的路径，这里用刚才的 image_prefix 拼凑刚好能拼对路径 (cache/math1/vqa_images)
+            # dst_images = os.path.join(self.output_dir, image_prefix)
+            # ✅ 修复 2：物理复制路径必须加上 name，保证存到 cache/math1/vqa_images 里
+            dst_images = os.path.join(self.output_dir, name, image_prefix)
             try:
                 if os.path.exists(src_images):
                     shutil.copytree(src_images, dst_images)
