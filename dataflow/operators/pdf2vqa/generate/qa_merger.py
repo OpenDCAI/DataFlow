@@ -5,6 +5,8 @@ from dataflow.utils.registry import OPERATOR_REGISTRY
 from dataflow.utils.storage import DataFlowStorage
 from dataflow.utils.pdf2vqa.format_utils import merge_qa_pair, jsonl_to_md
 
+import re
+
 @OPERATOR_REGISTRY.register()
 class QA_Merger(OperatorABC):
     def __init__(self, output_dir, strict_title_match=False):
@@ -60,5 +62,23 @@ class QA_Merger(OperatorABC):
             dataframe.loc[idx, output_merged_md_path_key] = output_merged_md_path
             
         dataframe = dataframe.explode(output_qa_item_key).reset_index(drop=True)
+
+        # 汇总jsonl中的图片路径需要将 ![alt](path) 中的 path 替换为 name/path
+        def fix_image_paths(row):
+            qa_item = row[output_qa_item_key]
+            name_val = str(row[input_name_key])
+            
+            if isinstance(qa_item, dict):
+                keys_to_check = ["question", "answer", "solution"]
+                for key in keys_to_check:
+                    if key in qa_item and isinstance(qa_item[key], str):
+                        qa_item[key] = re.sub(
+                            r'!\[(.*?)\]\((.*?)\)',
+                            lambda m: f"![{m.group(1)}]({os.path.join(name_val, m.group(2))})",
+                            qa_item[key]
+                        )
+            return qa_item
+
+        dataframe[output_qa_item_key] = dataframe.apply(fix_image_paths, axis=1)
 
         storage.write(dataframe)
