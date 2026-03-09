@@ -5,6 +5,7 @@ if TYPE_CHECKING:
     from .generate.llm_output_parser import LLMOutputParser
     from .generate.qa_merger import QA_Merger
     from .generate.pdf_merger import PDF_Merger
+    from .generate.vqa_formatter import VQAFormatter
 
 
 else:

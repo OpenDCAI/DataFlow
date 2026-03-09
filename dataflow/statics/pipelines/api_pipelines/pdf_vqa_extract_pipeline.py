@@ -1,8 +1,8 @@
-from dataflow.operators.knowledge_cleaning import FileOrURLToMarkdownConverterAPI
+from dataflow.operators.knowledge_cleaning import FileOrURLToMarkdownConverterFlash, FileOrURLToMarkdownConverterAPI
 
 from dataflow.serving import APILLMServing_request
 from dataflow.utils.storage import FileStorage
-from dataflow.operators.pdf2vqa import MinerU2LLMInputOperator, LLMOutputParser, QA_Merger, PDF_Merger
+from dataflow.operators.pdf2vqa import MinerU2LLMInputOperator, LLMOutputParser, QA_Merger, PDF_Merger, VQAFormatter
 from dataflow.operators.core_text import ChunkedPromptedGenerator
 
 from dataflow.pipeline import PipelineABC
@@ -30,7 +30,20 @@ class PDF_VQA_extract_optimized_pipeline(PipelineABC):
         self.vqa_extract_prompt = QAExtractPrompt()
         
         self.pdf_merger = PDF_Merger(output_dir="./cache")
-        self.mineru_executor = FileOrURLToMarkdownConverterAPI(intermediate_dir = "intermediate")
+        
+        # self.mineru_executor = FileOrURLToMarkdownConverterAPI(intermediate_dir = "intermediate")
+
+        # Faster backend by Flash-MinerU
+        self.mineru_executor = FileOrURLToMarkdownConverterFlash(
+            intermediate_dir="../example_data/PDF2VQAPipeline/flash/",
+            mineru_model_path="<your Model Path>/MinerU2.5-2509-1.2B",  # !!! place your local model path here !!!
+            # https://huggingface.co/opendatalab/MinerU2.5-2509-1.2B.
+            batch_size=4, # batchsize per vllm worker
+            replicas=1,   # num of vllm workers
+            num_gpus_per_replica=0.5, # for ray to schedule vllm workers to GPU, can be float, e.g. 0.5 means each worker uses half GPU, 1 means each worker uses whole GPU
+            engine_gpu_util_rate_to_ray_cap=0.9 # actuall GPU utilization for each worker; acturall memory per worker= num_gpus_per_replica * engine_gpu_util_rate_to_ray_cap; this is to avoid OOM, you can set it to 0.9 or 0.8 to leave some buffer for other processes on
+        )
+
         self.input_formatter = MinerU2LLMInputOperator()
         self.vqa_extractor = ChunkedPromptedGenerator(
             llm_serving=self.llm_serving,
@@ -39,6 +52,9 @@ class PDF_VQA_extract_optimized_pipeline(PipelineABC):
         )
         self.llm_output_parser = LLMOutputParser(output_dir="./cache", intermediate_dir="intermediate")
         self.qa_merger = QA_Merger(output_dir="./cache", strict_title_match=False)
+
+        self.vqa_format_converter = VQAFormatter(output_json_file="./.cache/data/qa.json",)
+
     def forward(self):
         self.pdf_merger.run(
             storage=self.storage.step(),
@@ -75,6 +91,12 @@ class PDF_VQA_extract_optimized_pipeline(PipelineABC):
             output_merged_qalist_path_key="output_merged_vqalist_path",
             output_merged_md_path_key="output_merged_md_path",
             output_qa_item_key="vqa_pair",
+        )
+        self.vqa_format_converter.run(
+            storage=self.storage.step(),
+            input_qa_item_key="vqa_pair",
+            output_messages_key="messages",
+            output_images_key="images",
         )
 
 

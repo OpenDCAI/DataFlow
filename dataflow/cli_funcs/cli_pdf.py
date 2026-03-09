@@ -7,6 +7,7 @@ PDF to Model training pipeline with init/train/chat commands
 import subprocess
 import sys
 import yaml
+import re
 import json
 import os
 import datetime
@@ -14,6 +15,7 @@ from pathlib import Path
 from colorama import Fore, Style
 from dataflow import get_logger
 from .paths import DataFlowPath
+from transformers import AutoConfig
 
 logger = get_logger()
 
@@ -44,15 +46,20 @@ def get_dataflow_script_path(script_name: str) -> Path:
         import dataflow
         dataflow_path = Path(dataflow.__file__).parent
 
-        # PDF2Model 脚本在 dataflow/cli_funcs/pdf2model_pipeline/ 目录下
-        pdf2model_path = dataflow_path / "cli_funcs" / "pdf2model_pipeline" / script_name
-        if pdf2model_path.exists():
-            return pdf2model_path
+        pdf2model_supportive_kbc_path = dataflow_path / "statics" / "pipelines" / "gpu_pipelines" / "kbcleaning" / script_name
+        if pdf2model_supportive_kbc_path.exists():
+            return pdf2model_supportive_kbc_path
+        
+        pdf2model_supportive_vqa_path = dataflow_path / "statics" / "pipelines" / "api_pipelines" / script_name
+        if pdf2model_supportive_vqa_path.exists():
+            return pdf2model_supportive_vqa_path
 
         # 检查其他可能的路径
         possible_dirs = [
             dataflow_path / "templates" / "pdf2model_pipeline",
-            dataflow_path / "pipeline_templates"
+            dataflow_path / "pipeline_templates",
+            dataflow_path / "cli_funcs" / "pdf2model_pipeline",
+            "./"
         ]
 
         for dir_path in possible_dirs:
@@ -65,17 +72,18 @@ def get_dataflow_script_path(script_name: str) -> Path:
         return None
 
 
-def copy_customizable_scripts():
+def copy_customizable_scripts(qa_type: str) -> bool:
     """Only copy scripts that users might want to customize"""
     print("Step 0: Copying customizable pipeline script...")
 
     current_dir = Path(os.getcwd())
+    target_name = "pdf_to_model_pipeline.py"
 
     try:
-        # 只复制用户可能需要自定义的脚本
-        scripts_to_copy = [
-            "pdf_to_qa_pipeline.py"  # 用户可能需要修改 vLLM/sglang 配置
-        ]
+        if qa_type == "vqa":
+            scripts_to_copy = ["pdf_vqa_extract_pipeline.py"]
+        else:  # 默认是kbc
+            scripts_to_copy = ["kbcleaning_pipeline_vllm.py"]
 
         import shutil
         copied_files = []
@@ -86,15 +94,14 @@ def copy_customizable_scripts():
                 print(f"Warning: Template not found: {script_name}")
                 continue
 
-            target_file = current_dir / script_name
+            target_path = current_dir / target_name
 
-            shutil.copy2(source_path, target_file)
+            shutil.copy2(source_path, target_path)
             copied_files.append(script_name)
             print(f"Copied: {script_name}")
 
         if copied_files:
             print(f"Successfully copied {len(copied_files)} customizable script(s)")
-            print("You can now modify these files (e.g., switch vLLM/sglang in pdf_to_qa_pipeline.py)")
             return True
         else:
             print("No customizable scripts were copied")
@@ -105,7 +112,7 @@ def copy_customizable_scripts():
         return False
 
 
-def create_train_config_yaml(cache_path="./", model_name_or_path="Qwen/Qwen2.5-7B-Instruct"):
+def create_train_config_yaml(cache_path="./", model_name_or_path="Qwen/Qwen2.5-7B-Instruct", qa_type="kbc"):
     """Create train_config.yaml file using built-in LlamaFactory configuration"""
     cache_path_obj = Path(cache_path)
     if not cache_path_obj.is_absolute():
@@ -135,21 +142,24 @@ def create_train_config_yaml(cache_path="./", model_name_or_path="Qwen/Qwen2.5-7
         # 创建trainer实例并获取默认配置
         trainer = llamafactory_module.LlamaFactoryTrainer(str(config_file), str(cache_path_obj))
         config = trainer.get_default_config()
-
         # 只更新必要的动态参数
         config["model_name_or_path"] = model_name_or_path
         config["output_dir"] = str(cache_path_obj / ".cache" / "saves" / model_dir_name)
-        config["dataset_dir"] = str(cache_path_obj / ".cache" / "data")
+        config["dataset_dir"] = str(cache_path_obj / ".cache" / "data") 
+        config["template"] = infer_llama_factory_template(model_name_or_path)
+        if qa_type == "vqa":
+            dataset_name = "pdf_vqa_dataset"
+        else:
+            dataset_name = "pdf_kbc_dataset"
+        config["dataset"] = dataset_name
 
-        # 根据模型类型设置模板
-        if "qwen" in model_name_or_path.lower():
-            config["template"] = "qwen"
-        elif "llama" in model_name_or_path.lower():
-            config["template"] = "llama3"
-        elif "chatglm" in model_name_or_path.lower():
-            config["template"] = "chatglm3"
-        elif "baichuan" in model_name_or_path.lower():
-            config["template"] = "baichuan2"
+        pdf2model_state = {
+            "qa": qa_type,
+            "model": model_name_or_path,
+            "timestamp": timestamp
+        }
+        with open(cache_dir / "pdf2model_state.json", 'w') as f:
+            json.dump(pdf2model_state, f, indent=2)
 
         # 保存配置
         with open(config_file, 'w', encoding='utf-8') as f:
@@ -167,6 +177,112 @@ def create_train_config_yaml(cache_path="./", model_name_or_path="Qwen/Qwen2.5-7
         print(f"Failed to create train_config.yaml: {e}")
         return None
 
+def generate_dataset_info(cache_path_obj, dataset_name, qa_type):
+    """Create dataset_info.json configuration automatically"""
+    dataset_info_path = cache_path_obj / ".cache" / "data" / "dataset_info.json"
+    dataset_info_path.parent.mkdir(parents=True, exist_ok=True)
+
+    if qa_type == "vqa":
+        config_entry = {
+            "file_name": "qa.json",
+            "formatting": "sharegpt",
+            "columns": {
+                "messages": "messages", 
+                "images": "images"       
+            },
+            "tags": {
+                "role_tag": "role",
+                "content_tag": "content",
+                "user_tag": "user",
+                "assistant_tag": "assistant"
+            }            
+        }
+    else:
+        config_entry = {
+            "file_name": "qa.json",
+            "formatting": "alpaca",
+            "columns": {
+                "prompt": "instruction",
+                "query": "input",
+                "response": "output"
+            }
+        }
+
+    dataset_info = {dataset_name: config_entry}
+
+    try:
+        with open(dataset_info_path, 'w', encoding='utf-8') as f:
+            json.dump(dataset_info, f, indent=2, ensure_ascii=False)
+        print(f"✅ Dataset info registered as '{dataset_name}' with {qa_type} format.")
+        return True
+    except Exception as e:
+        print(f"❌ Failed to write dataset_info.json: {e}")
+        return False
+
+# 注册templates从这里获取 python -c "from llamafactory.data.template import TEMPLATES; print(list(TEMPLATES.keys()))"
+def infer_llama_factory_template(model_name_or_path: str) -> str:
+    """Infer llama factory model chat template through model name or path automatically"""
+    SPECIAL_MAP = {
+        "llama_3_2_vision": "mllama",
+        "llama_3_1_vision": "mllama",
+        "qwen2_5_vl": "qwen2_vl",
+        "qwen2_5_omni": "qwen2_omni",
+        "qwen_2": "qwen",
+        "chatglm_3": "chatglm3",
+        "chatglm_2": "chatglm2",
+        "codegeex_4": "codegeex4",
+        "deepseek_v3": "deepseek3",
+        "deepseek_r1": "deepseekr1",
+        "deepseek_coder": "deepseekcoder",
+        "glm_z1": "glmz1",
+        "internvl_2": "intern_vl",
+        "internlm_2": "intern2",
+        "paligemma_2": "paligemma",
+        "paligemma_chat": "paligemma_chat",
+    }
+
+    SUPPORTED = [
+        'alpaca', 'aquila', 'atom', 'baichuan', 'baichuan2', 'bailing', 'belle', 'bluelm', 'breeze', 'chatglm2', 'chatglm3', 
+        'chatml', 'chatml_de', 'codegeex2', 'codegeex4', 'cohere', 'cpm', 'cpm3', 'cpm4', 'dbrx', 'deepseek', 'deepseek3', 
+        'deepseekr1', 'deepseekcoder', 'default', 'empty', 'exaone', 'falcon', 'fewshot', 'gemma', 'gemma3', 'glm4', 'glmz1', 
+        'granite3', 'granite3_vision', 'index', 'hunyuan', 'intern', 'intern2', 'intern_vl', 'kimi_vl', 'llama2', 'llama2_zh', 
+        'llama3', 'llama4', 'mllama', 'moonlight', 'llava', 'llava_next', 'llava_next_llama3', 'llava_next_mistral', 
+        'llava_next_qwen', 'llava_next_yi', 'llava_next_video', 'llava_next_video_mistral', 'llava_next_video_yi', 'marco', 
+        'mimo', 'mimo_vl', 'minicpm_v', 'minicpm_o', 'ministral', 'mistral', 'mistral_small', 'olmo', 'openchat', 'openchat-3.6', 
+        'opencoder', 'orion', 'paligemma', 'paligemma_chat', 'phi', 'phi_small', 'phi4', 'pixtral', 'qwen', 'qwen3', 'qwen2_audio', 
+        'qwen2_omni', 'qwen2_vl', 'sailor', 'seed_coder', 'skywork_o1', 'smollm', 'smollm2', 'solar', 'starchat', 'telechat', 
+        'telechat2', 'vicuna', 'video_llava', 'xuanyuan', 'xverse', 'yayi', 'yi', 'yi_vl', 'yuan', 'zephyr', 'ziya'
+    ]
+
+    name = model_name_or_path.split('/')[-1].lower().replace("-", "_").replace(".", "_")
+
+    for key, template in SPECIAL_MAP.items():
+        if key in name:
+            return template
+
+    VARIANTS = ['vl', 'omni', 'audio', 'v', 'video', 'r1', 'coder']
+    found_in_name = [v for v in VARIANTS if f"_{v}" in f"_{name}" or f"{v}_" in f"{name}_"]
+
+    candidates = []
+    for t in SUPPORTED:
+        base_word = t.split('_')[0]
+        if re.search(r'\b' + re.escape(base_word) + r'\b', name.replace('_', ' ')):
+            candidates.append(t)
+
+    if not candidates:
+        return "default"
+
+    if found_in_name:
+        for v in found_in_name:
+            v_matches = [c for c in candidates if v in c]
+            if v_matches:
+                return max(v_matches, key=len)
+
+    pure_matches = [c for c in candidates if not any(v in c for v in VARIANTS)]
+    if pure_matches:
+        return max(pure_matches, key=len)
+
+    return max(candidates, key=len)
 
 def verify_environment():
     """Verify runtime environment"""
@@ -217,18 +333,18 @@ def check_required_files():
 
     # 检查用户目录下是否有可自定义的脚本
     current_dir = Path(os.getcwd())
-    customizable_script = current_dir / "pdf_to_qa_pipeline.py"
+    customizable_script = current_dir / "pdf_to_model_pipeline.py"
     if customizable_script.exists():
-        print("✅ Found customizable script: pdf_to_qa_pipeline.py")
+        print("✅ Found customizable script: pdf_to_model_pipeline.py")
     else:
-        print("❌ Missing customizable script: pdf_to_qa_pipeline.py")
+        print("❌ Missing customizable script: pdf_to_model_pipeline.py")
         print("Run 'dataflow pdf2model init' first")
         return False
 
     return True
 
 
-def cli_pdf2model_init(cache_path: str = "./", model_name: str = "Qwen/Qwen2.5-7B-Instruct") -> bool:
+def cli_pdf2model_init(cache_path: str = "./", model_name: str = "Qwen/Qwen2.5-7B-Instruct", qa_type: str = "kbc") -> bool:
     """
     PDF2Model initialization:
     0. Copy only customizable scripts to current directory
@@ -245,12 +361,12 @@ def cli_pdf2model_init(cache_path: str = "./", model_name: str = "Qwen/Qwen2.5-7
 
     try:
         # Step 0: Copy only customizable scripts
-        if not copy_customizable_scripts():
+        if not copy_customizable_scripts(qa_type):
             return False
 
         # Step 1: Create training configuration
         print("Step 1: Creating training configuration...")
-        config_file = create_train_config_yaml(cache_path, model_name)
+        config_file = create_train_config_yaml(cache_path, model_name, qa_type)
 
         if config_file:
             print("PDF2Model initialization completed!")
@@ -317,17 +433,37 @@ def cli_pdf2model_train(lf_yaml: str = ".cache/train_config.yaml", cache_path: s
         print(f"{Style.BRIGHT}Run 'dataflow pdf2model init' first")
         return False
 
+    try:
+        with open(config_path_obj, 'r', encoding='utf-8') as f:
+            train_config = yaml.safe_load(f) or {}
+    except Exception as e:
+        print(f"[ERROR] Could not read train_config.yaml: {e}")
+        return False
+
+    pdf2model_state_path = cache_path_obj / ".cache" / "pdf2model_state.json"
+    try:
+        with open(pdf2model_state_path, 'r', encoding='utf-8') as f:
+            pdf2model_state = json.load(f)
+            print(f"Loaded pipeline state from {pdf2model_state_path}")
+    except Exception as e:
+            print(f"Warning: State file not found at {pdf2model_state_path}, using defaults.")
+            pdf2model_state = {}
+
+    qa_type = pdf2model_state.get("qa")
+    # pdf2model_model_path = pdf2model_state.get("model")
+
     print("-" * 60)
 
     try:
         # Step 1: PDF Detection
         script1_path = get_dataflow_script_path("path_to_jsonl_script.py")
-        args1 = ["./", "--output", str(cache_path_obj / ".cache" / "gpu" / "pdf_list.jsonl")]
+        args1 = ["./", "--output", str(cache_path_obj / ".cache" / "pdf_list.jsonl"), "--qa_type", str(qa_type)]
         if not run_script_with_args(script1_path, "Step 1: PDF Detection", args1, cwd=str(current_dir)):
             return False
 
         # Step 2: Data Processing
-        script2 = current_dir / "pdf_to_qa_pipeline.py"
+        target_script_name = "pdf_to_model_pipeline.py"
+        script2 = current_dir / target_script_name
         args2 = ["--cache", cache_path]
         if not run_script_with_args(script2, "Step 2: Data Processing", args2, cwd=str(current_dir)):
             return False
@@ -335,48 +471,20 @@ def cli_pdf2model_train(lf_yaml: str = ".cache/train_config.yaml", cache_path: s
         # Step 2.5: Create dataset_info.json (dynamically)
         print(f"\n{Fore.BLUE}Step 2.5: Creating dataset_info.json{Style.RESET_ALL}")
 
-        # 读取训练配置，获取数据集名称
-        try:
-            with open(config_path_obj, 'r', encoding='utf-8') as f:
-                train_config = yaml.safe_load(f)
+        # 获取数据集名称
+        dataset_name = train_config.get('dataset')
+        if isinstance(dataset_name, list):
+            dataset_name = dataset_name[0]  # 如果是列表，取第一个
             
-            # 获取数据集名称
-            dataset_name = train_config.get('dataset')
-            if isinstance(dataset_name, list):
-                dataset_name = dataset_name[0]  # 如果是列表，取第一个
-            
-            if not dataset_name:
-                print("Warning: No dataset name found in train_config.yaml, using default 'kb_qa'")
-                dataset_name = 'kb_qa'
-            
-            print(f"Dataset name from config: {dataset_name}")
-            
-        except Exception as e:
-            print(f"Warning: Could not read train_config.yaml: {e}")
-            print("Using default dataset name: kb_qa")
+        if not dataset_name:
+            print("Warning: No dataset name found in train_config.yaml, using default 'kb_qa'")
             dataset_name = 'kb_qa'
+            
+        print(f"Dataset name from config: {dataset_name}")
 
-        # 创建 dataset_info.json
-        dataset_info_path = cache_path_obj / ".cache" / "data" / "dataset_info.json"
-        dataset_info_path.parent.mkdir(parents=True, exist_ok=True)
+        if not generate_dataset_info(cache_path_obj, dataset_name, qa_type):
+            return False
 
-        dataset_info = {
-            dataset_name: {  # ← 使用从配置读取的名称
-                "file_name": "qa.json",
-                "formatting": "alpaca",
-                "columns": {
-                    "prompt": "instruction",
-                    "query": "input",
-                    "response": "output"
-                }
-            }
-        }
-
-        with open(dataset_info_path, 'w', encoding='utf-8') as f:
-            json.dump(dataset_info, f, indent=2, ensure_ascii=False)
-
-        print(f"Created: {dataset_info_path}")
-        print(f"Dataset registered as: {dataset_name}")
         print(f"{Fore.GREEN}✅ Step 2.5: Creating dataset_info.json completed{Style.RESET_ALL}")
 
         # Step 3: Data Conversion - skip

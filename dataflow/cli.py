@@ -327,10 +327,17 @@ app.add_typer(pdf_app, name="pdf2model")
 
 
 @pdf_app.command("init")
-def pdf2model_init(cache: Path = typer.Option(Path("."), help="Cache dir")):
+def pdf2model_init(cache: Path = typer.Option(Path("."), 
+                   help = "Cache dir"),
+                   qa: str = typer.Option("kbc", help="Which pipeline to init (vqa or kbc)"),
+                   model: Optional[str] = typer.Option(None, help="Base model name or path")):
+    if qa not in ["vqa", "kbc"]:
+        _echo(f"Invalid qa type: {qa}. Must be 'vqa' or 'kbc'.", "red")
+        raise typer.Exit(code=1)
+    
     try:
         from dataflow.cli_funcs.cli_pdf import cli_pdf2model_init  # type: ignore
-        cli_pdf2model_init(cache_path=str(cache))
+        cli_pdf2model_init(cache_path=str(cache), qa_type=qa, model_name=model)
     except Exception as e:
         _echo(f"pdf2model init error: {e}", "red")
         raise typer.Exit(code=1)
@@ -338,7 +345,9 @@ def pdf2model_init(cache: Path = typer.Option(Path("."), help="Cache dir")):
 
 @pdf_app.command("train")
 def pdf2model_train(cache: Path = typer.Option(Path("."), help="Cache dir"),
-                    lf_yaml: Optional[Path] = typer.Option(None, help="LlamaFactory yaml")):
+                    lf_yaml: Optional[Path] = typer.Option(None, help="LlamaFactory yaml"),
+                    model: Optional[str] = typer.Option(None, help="Base model name or path")):
+    
     try:
         from dataflow.cli_funcs.cli_pdf import cli_pdf2model_train  # type: ignore
         lf = str(lf_yaml) if lf_yaml else f"{cache}/.cache/train_config.yaml"

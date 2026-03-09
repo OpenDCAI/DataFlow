@@ -2,6 +2,7 @@ from dataflow.operators.knowledge_cleaning import (
     KBCChunkGenerator,
     FileOrURLToMarkdownConverterFlash,
     KBCTextCleaner,
+    QAExtractor
     # KBCMultiHopQAGenerator,
 )
 from dataflow.operators.core_text import Text2MultiHopQAGenerator
@@ -18,6 +19,7 @@ class KBCleaning_PDFvllm_GPUPipeline():
             cache_type="json",
         )
 
+        # Faster backend by Flash-MinerU
         self.knowledge_cleaning_step1 = FileOrURLToMarkdownConverterFlash(
             intermediate_dir="../example_data/KBCleaningPipeline/flash/",
             mineru_model_path="<your Model Path>/MinerU2.5-2509-1.2B",  # !!! place your local model path here !!!
@@ -32,6 +34,10 @@ class KBCleaning_PDFvllm_GPUPipeline():
             split_method="token",
             chunk_size=512,
             tokenizer_name="Qwen/Qwen2.5-7B-Instruct",
+        )
+
+        self.extract_format_qa_step5 = QAExtractor(
+            output_json_file="./.cache/data/qa.json",
         )
 
     def forward(self):
@@ -76,7 +82,15 @@ class KBCleaning_PDFvllm_GPUPipeline():
             # input_key=
             # output_key=
         )
-        
+
+        self.extract_format_qa_step5.run(
+            storage=self.storage.step(),
+            input_qa_key="Qa_pairs",
+            output_instruction_key="instruction",
+            output_question_key="input",
+            output_answer_key="output"            
+        )
+
 if __name__ == "__main__":
     model = KBCleaning_PDFvllm_GPUPipeline()
     model.forward()

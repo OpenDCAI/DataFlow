@@ -255,13 +255,19 @@ class LlamaFactoryTrainer:
             # 检查第一个样本的格式
             if qa_data:
                 sample = qa_data[0]
-                required_keys = ["instruction", "input", "output"]
-                missing_keys = [key for key in required_keys if key not in sample]
-                if missing_keys:
-                    print(f"❌ Missing keys in QA sample: {missing_keys}")
-                    return False
+                if "messages" in sample:
+                    print("✅ Detected ShareGPT format")
+                    # 检查 messages 内部结构
+                    if not isinstance(sample["messages"], list) or len(sample["messages"]) == 0:
+                        print("❌ 'messages' field is empty or not a list")
+                        return False
                 else:
-                    print("✅ QA data format is correct")
+                    required_keys = ["instruction", "input", "output"]
+                    missing_keys = [key for key in required_keys if key not in sample]
+                    if missing_keys:
+                        print(f"❌ Missing keys in QA sample: {missing_keys} (Not ShareGPT or Alpaca)")
+                        return False
+                    print("✅ Detected Alpaca format")
 
         except Exception as e:
             print(f"❌ Error checking QA data: {e}")

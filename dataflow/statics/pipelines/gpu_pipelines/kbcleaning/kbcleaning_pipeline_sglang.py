@@ -2,6 +2,7 @@ from dataflow.operators.knowledge_cleaning import (
     KBCChunkGenerator,
     FileOrURLToMarkdownConverterFlash,
     KBCTextCleaner,
+    QAExtractor
     # KBCMultiHopQAGenerator,
 )
 from dataflow.operators.core_text import Text2MultiHopQAGenerator
@@ -31,6 +32,10 @@ class KBCleaning_PDFSglang_GPUPipeline():
             split_method="token",
             chunk_size=512,
             tokenizer_name="Qwen/Qwen2.5-7B-Instruct",
+        )
+
+        self.extract_format_qa_step5 = QAExtractor(
+            output_json_file="./.cache/data/qa.json",
         )
 
     def forward(self):
@@ -73,6 +78,14 @@ class KBCleaning_PDFSglang_GPUPipeline():
             storage=self.storage.step(),
             # input_key=
             # output_key=
+        )
+
+        self.extract_format_qa_step5.run(
+            storage=self.storage.step(),
+            input_qa_key="Qa_pairs",
+            output_instruction_key="instruction",
+            output_question_key="input",
+            output_answer_key="output"            
         )
         
 if __name__ == "__main__":

@@ -8,7 +8,7 @@ from typing import List, Union
 class PDFDetector:
     """PDF file detector for scanning directories and generating JSONL config files"""
 
-    def __init__(self, output_file: str = "./.cache/gpu/pdf_list.jsonl"):
+    def __init__(self, output_file: str = "./.cache/pdf_list.jsonl"):
         # Handle output path - based on caller's working directory
         output_path = Path(output_file)
         if not output_path.is_absolute():
@@ -118,7 +118,7 @@ class PDFDetector:
             print(f"PDF already exists: {file_path}")
             return False
 
-    def generate_jsonl(self, output_file: str = None) -> str:
+    def generate_jsonl(self, output_file: str = None, qa_type: str = 'kbc') -> str:
         """
         Generate JSONL config file
 
@@ -144,30 +144,49 @@ class PDFDetector:
 
         # Validate and process output file path
         output_path = Path(output_file)
-
-        # If output path is directory, auto-generate filename
-        if output_path.exists() and output_path.is_dir():
-            output_path = output_path / "pdf_list.jsonl"
-            output_file = str(output_path)
-            print(f"Warning: Output path is directory, auto-generating filename: {output_file}")
-        elif output_path.suffix == "":
-            # If no extension, add .jsonl
-            output_path = output_path.with_suffix(".jsonl")
-            output_file = str(output_path)
-            print(f"Warning: Auto-adding extension: {output_file}")
-
-        # Ensure output directory exists
         output_path.parent.mkdir(parents=True, exist_ok=True)
 
         with open(output_file, 'w', encoding='utf-8') as f:
-            for pdf_path in self.pdf_files:
-                # Write in JSONL format
-                json_line = {"raw_content": pdf_path}
+            for i, pdf_path in enumerate(self.pdf_files, 1):
+                if qa_type == 'vqa':
+                    json_line = {
+                        "input_pdf_paths": pdf_path,
+                        "name": f"vqa{i}"
+                    }
+                else:
+                    json_line = {
+                        "source": pdf_path
+                    }
+                
                 f.write(json.dumps(json_line, ensure_ascii=False) + '\n')
 
         print(f"Successfully generated JSONL file: {output_file}")
         print(f"Contains {len(self.pdf_files)} PDF files")
         return output_file
+
+        # # If output path is directory, auto-generate filename
+        # if output_path.exists() and output_path.is_dir():
+        #     output_path = output_path / "pdf_list.jsonl"
+        #     output_file = str(output_path)
+        #     print(f"Warning: Output path is directory, auto-generating filename: {output_file}")
+        # elif output_path.suffix == "":
+        #     # If no extension, add .jsonl
+        #     output_path = output_path.with_suffix(".jsonl")
+        #     output_file = str(output_path)
+        #     print(f"Warning: Auto-adding extension: {output_file}")
+
+        # # Ensure output directory exists
+        # output_path.parent.mkdir(parents=True, exist_ok=True)
+
+        # with open(output_file, 'w', encoding='utf-8') as f:
+        #     for pdf_path in self.pdf_files:
+        #         # Write in JSONL format
+        #         json_line = {"raw_content": pdf_path}
+        #         f.write(json.dumps(json_line, ensure_ascii=False) + '\n')
+
+        # print(f"Successfully generated JSONL file: {output_file}")
+        # print(f"Contains {len(self.pdf_files)} PDF files")
+        # return output_file
 
     def preview_results(self, max_items: int = 10):
         """Preview detection results"""
@@ -195,12 +214,15 @@ def main():
     parser = argparse.ArgumentParser(description='Detect PDF files and generate JSONL config file')
     parser.add_argument('input_dir', nargs='?', default='./input',
                         help='Input directory path to scan (default: ./input)')
-    parser.add_argument('-o', '--output', default='./.cache/gpu/pdf_list.jsonl',
-                        help='Output JSONL file path (default: ./.cache/gpu/pdf_list.jsonl)')
+    parser.add_argument('-o', '--output', default='./.cache/pdf_list.jsonl',
+                        help='Output JSONL file path (default: ./.cache/pdf_list.jsonl)')
+    parser.add_argument('--qa_type', type=str, default='kbc', help='Specify the QA extraction type (kbc or vqa)')
     parser.add_argument('-r', '--recursive', action='store_true', default=True, help='Scan subdirectories recursively')
     parser.add_argument('--no-recursive', action='store_false', dest='recursive', help='Do not scan subdirectories')
 
     args = parser.parse_args()
+
+    print(f"[*] Command line args parsed: qa_type={args.qa_type}, output={args.output}")
 
     # Validate input directory - handle relative paths
     input_path = Path(args.input_dir)
@@ -230,7 +252,7 @@ def main():
     detector.scan_directory(input_directory, args.recursive)
 
     # Generate JSONL file
-    detector.generate_jsonl(output_file=args.output)
+    detector.generate_jsonl(output_file=args.output, qa_type=args.qa_type)
 
 
 if __name__ == "__main__":
