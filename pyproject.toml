@@ -70,10 +70,13 @@ pdf2model =[
     "vllm>=0.7.0,<0.9.2", 
     "numpy>=1.24,<2.0.0",
     "mineru[pipeline]",
-    "mineru-vl-utils"
+    "mineru-vl-utils",
+    "flash-mineru"
 ]
 eval =[
     "vllm>=0.7.0,<0.9.2"
 ]
 rag = ["lightrag-hku", "asyncio"]
 pdf2vqa=["mineru[vlm]>=2.5.0,<2.7.0"]
+
+flash-mineru = ["flash-mineru"]
