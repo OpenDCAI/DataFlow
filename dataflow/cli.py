@@ -345,8 +345,7 @@ def pdf2model_init(cache: Path = typer.Option(Path("."),
 
 @pdf_app.command("train")
 def pdf2model_train(cache: Path = typer.Option(Path("."), help="Cache dir"),
-                    lf_yaml: Optional[Path] = typer.Option(None, help="LlamaFactory yaml"),
-                    model: Optional[str] = typer.Option(None, help="Base model name or path")):
+                    lf_yaml: Optional[Path] = typer.Option(None, help="LlamaFactory yaml")):
     
     try:
         from dataflow.cli_funcs.cli_pdf import cli_pdf2model_train  # type: ignore

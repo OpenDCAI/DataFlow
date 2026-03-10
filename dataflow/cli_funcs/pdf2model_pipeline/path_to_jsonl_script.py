@@ -217,7 +217,7 @@ def main():
     parser.add_argument('-o', '--output', default='./.cache/pdf_list.jsonl',
                         help='Output JSONL file path (default: ./.cache/pdf_list.jsonl)')
     parser.add_argument('--qa_type', type=str, default='kbc', help='Specify the QA extraction type (kbc or vqa)')
-    parser.add_argument('-r', '--recursive', action='store_true', default=True, help='Scan subdirectories recursively')
+    parser.add_argument('-r', '--recursive', action='store_true', help='Scan subdirectories recursively')
     parser.add_argument('--no-recursive', action='store_false', dest='recursive', help='Do not scan subdirectories')
 
     args = parser.parse_args()

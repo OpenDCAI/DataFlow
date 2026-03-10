@@ -146,7 +146,6 @@ def create_train_config_yaml(cache_path="./", model_name_or_path="Qwen/Qwen2.5-7
         config["model_name_or_path"] = model_name_or_path
         config["output_dir"] = str(cache_path_obj / ".cache" / "saves" / model_dir_name)
         config["dataset_dir"] = str(cache_path_obj / ".cache" / "data") 
-        config["template"] = infer_llama_factory_template(model_name_or_path)
         if qa_type == "vqa":
             dataset_name = "pdf_vqa_dataset"
         else:
@@ -155,7 +154,10 @@ def create_train_config_yaml(cache_path="./", model_name_or_path="Qwen/Qwen2.5-7
 
         pdf2model_state = {
             "qa": qa_type,
-            "model": model_name_or_path,
+            "train_config_file_dir": str(config_file),
+            "output_dir": str(cache_path_obj / ".cache" / "saves" / model_dir_name),
+            "dataset": dataset_name,
+            "dataset_dir": str(cache_path_obj / ".cache" / "data") ,
             "timestamp": timestamp
         }
         with open(cache_dir / "pdf2model_state.json", 'w') as f:
@@ -218,71 +220,6 @@ def generate_dataset_info(cache_path_obj, dataset_name, qa_type):
     except Exception as e:
         print(f"❌ Failed to write dataset_info.json: {e}")
         return False
-
-# 注册templates从这里获取 python -c "from llamafactory.data.template import TEMPLATES; print(list(TEMPLATES.keys()))"
-def infer_llama_factory_template(model_name_or_path: str) -> str:
-    """Infer llama factory model chat template through model name or path automatically"""
-    SPECIAL_MAP = {
-        "llama_3_2_vision": "mllama",
-        "llama_3_1_vision": "mllama",
-        "qwen2_5_vl": "qwen2_vl",
-        "qwen2_5_omni": "qwen2_omni",
-        "qwen_2": "qwen",
-        "chatglm_3": "chatglm3",
-        "chatglm_2": "chatglm2",
-        "codegeex_4": "codegeex4",
-        "deepseek_v3": "deepseek3",
-        "deepseek_r1": "deepseekr1",
-        "deepseek_coder": "deepseekcoder",
-        "glm_z1": "glmz1",
-        "internvl_2": "intern_vl",
-        "internlm_2": "intern2",
-        "paligemma_2": "paligemma",
-        "paligemma_chat": "paligemma_chat",
-    }
-
-    SUPPORTED = [
-        'alpaca', 'aquila', 'atom', 'baichuan', 'baichuan2', 'bailing', 'belle', 'bluelm', 'breeze', 'chatglm2', 'chatglm3', 
-        'chatml', 'chatml_de', 'codegeex2', 'codegeex4', 'cohere', 'cpm', 'cpm3', 'cpm4', 'dbrx', 'deepseek', 'deepseek3', 
-        'deepseekr1', 'deepseekcoder', 'default', 'empty', 'exaone', 'falcon', 'fewshot', 'gemma', 'gemma3', 'glm4', 'glmz1', 
-        'granite3', 'granite3_vision', 'index', 'hunyuan', 'intern', 'intern2', 'intern_vl', 'kimi_vl', 'llama2', 'llama2_zh', 
-        'llama3', 'llama4', 'mllama', 'moonlight', 'llava', 'llava_next', 'llava_next_llama3', 'llava_next_mistral', 
-        'llava_next_qwen', 'llava_next_yi', 'llava_next_video', 'llava_next_video_mistral', 'llava_next_video_yi', 'marco', 
-        'mimo', 'mimo_vl', 'minicpm_v', 'minicpm_o', 'ministral', 'mistral', 'mistral_small', 'olmo', 'openchat', 'openchat-3.6', 
-        'opencoder', 'orion', 'paligemma', 'paligemma_chat', 'phi', 'phi_small', 'phi4', 'pixtral', 'qwen', 'qwen3', 'qwen2_audio', 
-        'qwen2_omni', 'qwen2_vl', 'sailor', 'seed_coder', 'skywork_o1', 'smollm', 'smollm2', 'solar', 'starchat', 'telechat', 
-        'telechat2', 'vicuna', 'video_llava', 'xuanyuan', 'xverse', 'yayi', 'yi', 'yi_vl', 'yuan', 'zephyr', 'ziya'
-    ]
-
-    name = model_name_or_path.split('/')[-1].lower().replace("-", "_").replace(".", "_")
-
-    for key, template in SPECIAL_MAP.items():
-        if key in name:
-            return template
-
-    VARIANTS = ['vl', 'omni', 'audio', 'v', 'video', 'r1', 'coder']
-    found_in_name = [v for v in VARIANTS if f"_{v}" in f"_{name}" or f"{v}_" in f"{name}_"]
-
-    candidates = []
-    for t in SUPPORTED:
-        base_word = t.split('_')[0]
-        if re.search(r'\b' + re.escape(base_word) + r'\b', name.replace('_', ' ')):
-            candidates.append(t)
-
-    if not candidates:
-        return "default"
-
-    if found_in_name:
-        for v in found_in_name:
-            v_matches = [c for c in candidates if v in c]
-            if v_matches:
-                return max(v_matches, key=len)
-
-    pure_matches = [c for c in candidates if not any(v in c for v in VARIANTS)]
-    if pure_matches:
-        return max(pure_matches, key=len)
-
-    return max(candidates, key=len)
 
 def verify_environment():
     """Verify runtime environment"""
