@@ -1,6 +1,10 @@
 # DataFlow
 
+
 <div align="center">
+
+**Generate, Clean, and Prepare LLM Data, All-in-One**
+
   <img src="https://github.com/user-attachments/assets/3fe636ad-3026-4faf-aa44-c84b8f97a05d">
 
 <!-- [![](https://img.shields.io/github/forks/OpenDCAI/DataFlow?style=social)](https://github.com/OpenDCAI/DataFlow) -->
@@ -27,6 +31,8 @@
 
 [![Discord Online](https://img.shields.io/discord/1479323317096939551?logo=discord&label=discord&color=%235966F0)](https://discord.gg/e4mKEaFptu)
 [![wechat](https://img.shields.io/badge/wechat-brightgreen?logo=wechat&logoColor=white)](https://github.com/user-attachments/assets/3c2e5d4d-d1ea-4d8c-9146-ff14e657e857)
+
+
 
 <a href="https://trendshift.io/repositories/16045" target="_blank"><img src="https://trendshift.io/api/badge/repositories/16045" alt="OpenDCAI%2FDataFlow | Trendshift" style="width: 250px; height: 55px;" width="250" height="55"/></a>
 
@@ -116,7 +122,7 @@ Through an `operator-based` design, DataFlow turns the entire data cleaning work
 
 ### 🧠2.3  Reproducible, Reusable, and Shareable Data-Centric AI System
 - Data governance algorithms are encapsulated as operator pipelines, enabling reproducibility and fair comparison of different data governance strategies (❤️research-friendly)
-- Easily swap underlying large models to analyze the relationship between model performance and data quality quickly
+- Easily reuse swap underlying large models to analyze the relationship between model performance and data quality quickly
 - Built on Python and Git ecosystems for easy distribution, management, and traceability of high-quality, **user-defined** data governance operators and pipelines (❤️enterprise-friendly)
 
 
