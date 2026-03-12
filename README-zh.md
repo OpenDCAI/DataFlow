@@ -4,7 +4,7 @@
 
 **大模型数据生成、清洗与准备，一站式搞定**
 
-  <img src="https://github.com/user-attachments/assets/3fe636ad-3026-4faf-aa44-c84b8f97a05d">
+<img src="https://github.com/user-attachments/assets/a19865e5-221d-4c12-bb57-17421df87c8a">
 <!-- [![](https://img.shields.io/github/forks/OpenDCAI/DataFlow?style=social)](https://github.com/OpenDCAI/DataFlow) -->
 
 [![](https://img.shields.io/github/stars/OpenDCAI/DataFlow?style=social)](https://github.com/OpenDCAI/DataFlow)
@@ -44,7 +44,6 @@
 
 简体中文 | [English](./README.md)
 
-<img src="https://github.com/user-attachments/assets/6d8fd795-7f5b-4c45-b14d-5bbe6bf99766" />
 </div>
 
 ## 📰 1. 新闻
