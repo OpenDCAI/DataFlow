@@ -40,6 +40,7 @@
 <!--[![](https://img.shields.io/github/issues-raw/OpenDCAI/DataFlow)](https://github.com/OpenDCAI/DataFlow/issues) -->
 
 
+
 Visual, low-code pipelines with flexible orchestration across domains and use cases.💪
 Turn raw data into high-quality LLM training datasets.🔧
 🎉 Get smarter LLMs cheaply — give us a star ⭐ on GitHub for the latest update.
@@ -49,7 +50,10 @@ Turn raw data into high-quality LLM training datasets.🔧
 
 [简体中文](./README-zh.md) | English
 
+
+<img width="1568" height="688" alt="image" src="https://github.com/user-attachments/assets/6d8fd795-7f5b-4c45-b14d-5bbe6bf99766" />
 </div>
+
 
 ## 📰 1. News
 
@@ -565,7 +569,7 @@ Join the DataFlow open-source community to ask questions, share ideas, and colla
 •	💬 Join our community groups to connect with us and other contributors!
 
 <div align="center">
-  <img src="https://github.com/user-attachments/assets/8bc519c5-8ddb-4d34-b596-ae1b5c7cd20a" width="60%">
+  <img src="https://github.com/user-attachments/assets/52febf13-5288-4bcd-95e8-9126dffbc409" width="60%">
 </div>
 
 ## 📜 14. Citation
