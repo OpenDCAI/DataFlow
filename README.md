@@ -42,8 +42,11 @@
 
 
 Visual, low-code pipelines with flexible orchestration across domains and use cases.💪
+
 Turn raw data into high-quality LLM training datasets.🔧
+
 🎉 Get smarter LLMs cheaply — give us a star ⭐ on GitHub for the latest update.
+
 **Beginner-friendly learning resources (continuously updated)**: 
 [[🎬 Video Tutorials]](https://space.bilibili.com/3546929239689711?spm_id_from=333.337.0.0)
 [[📚 Written Tutorials]](https://wcny4qa9krto.feishu.cn/wiki/I9tbw2qnBi0lEakmmAGclTysnFd)
@@ -91,7 +94,7 @@ Through an `operator-based` design, DataFlow turns the entire data cleaning work
 <!-- Specifically, we are constructing diverse `operators` leveraging rule-based methods, deep learning models, LLMs, and LLM APIs. These operators are systematically integrated into distinct `pipelines`, collectively forming the comprehensive `DataFlow system`. Additionally, we develop an intelligent `DataFlow-agent` capable of dynamically assembling new `pipelines` by recombining existing `operators` on demand. -->
 ![df_overview_final_300](https://github.com/user-attachments/assets/57dd0838-6e24-4814-a89a-02ca0667bd5c)
 
-🔥 New: DataFlow WebUI is now available! Launch the visual pipeline builder with a single command: `dataflow webui`. Build and run DataFlow pipelines through an intuitive web interface. 👉 [DataFlow-WebUI](#54-webui)
+<!-- 🔥 New: DataFlow WebUI is now available! Launch the visual pipeline builder with a single command: `dataflow webui`. Build and run DataFlow pipelines through an intuitive web interface. 👉 [DataFlow-WebUI](#54-webui) -->
 
 ## 🔍2. Key Features
 
