@@ -1,4 +1,5 @@
 from .api_llm_serving_request import APILLMServing_request
+from .api_minimax_serving import APIMinimaxServing
 from .local_model_llm_serving import LocalModelLLMServing_vllm
 from .local_model_llm_serving import LocalModelLLMServing_sglang
 from .api_vlm_serving_openai import APIVLMServing_openai
@@ -18,6 +19,7 @@ from .local_model_vlm_serving import LocalVLMServing_vllm
 __all__ = [
     "APIGoogleVertexAIServing",
     "APILLMServing_request",
+    "APIMinimaxServing",
     "LocalModelLLMServing_vllm",
     "LocalModelLLMServing_sglang",
     "APIVLMServing_openai",

@@ -174,6 +174,17 @@ prompted_generator.run(
 
 ```
 
+你也可以使用其他 LLM 提供商。例如，使用 [MiniMax](https://platform.minimax.io)（204K 上下文窗口，性价比高）：
+
+```python
+from dataflow.serving import APIMinimaxServing
+
+# export MINIMAX_API_KEY=your-api-key
+llm_serving = APIMinimaxServing(
+    model_name="MiniMax-M2.5",  # 或 "MiniMax-M2.5-highspeed"
+)
+```
+
 运行后，算子会将生成的结果追加到 output_key 中。例如，输出数据 (json/jsonl 样式) 变为：
 
 ```json

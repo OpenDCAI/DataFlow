@@ -195,6 +195,17 @@ prompted_generator.run(
     output_key="solution"         # write to this column
 )
 ```
+You can also use other LLM providers. For example, to use [MiniMax](https://platform.minimax.io) (204K context, competitive pricing):
+
+```python
+from dataflow.serving import APIMinimaxServing
+
+# export MINIMAX_API_KEY=your-api-key
+llm_serving = APIMinimaxServing(
+    model_name="MiniMax-M2.5",  # or "MiniMax-M2.5-highspeed"
+)
+```
+
 After running, the operator will append the generated results into output_key. For example, the output data (json/jsonl-style) becomes:
 
 ```json
