@@ -49,7 +49,7 @@ class Text2QA_APIPipeline():
             input_key="text",
             input_question_num= 3,
             output_prompt_key="generated_prompt",
-            output_quesion_key="generated_question",
+            output_question_key="generated_question",
             output_answer_key="generated_answer"
         )
 

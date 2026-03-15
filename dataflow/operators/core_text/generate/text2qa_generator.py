@@ -37,7 +37,7 @@ class Text2QAGenerator:
                 "输入参数：\n"
                 "- input_key: 包含文档片段的字段名\n"
                 "- prompt_key: 包含提示词的字段名\n"
-                "- output_quesion_key: 包含生成问题的字段名\n"
+                "- output_question_key: 包含生成问题的字段名\n"
                 "- output_answer_key: 包含生成答案的字段名\n"
             )
         elif lang == "en":
@@ -46,7 +46,7 @@ class Text2QAGenerator:
                 "Input Parameters:\n"
                 "- input_key: Field name containing the content\n"
                 "- prompt_key: Field name containing the generated prompt\n"
-                "- output_quesion_key: Field name containing the generated question\n"
+                "- output_question_key: Field name containing the generated question\n"
                 "- output_answer_key: Field name containing the generated answer\n"
             )
         else:
@@ -95,14 +95,14 @@ class Text2QAGenerator:
         input_key:str = "text", 
         input_question_num:int = 1,
         output_prompt_key:str = "generated_prompt",
-        output_quesion_key:str = "generated_question",
+        output_question_key:str = "generated_question",
         output_answer_key:str = "generated_answer"
         ):
         '''
         Runs the QA generation process, reading from the input file and saving results to output.
         '''
 
-        self.input_key, self.input_question_num, self.output_prompt_key, self.output_question_key, self.output_answer_key = input_key, input_question_num, output_prompt_key, output_quesion_key, output_answer_key
+        self.input_key, self.input_question_num, self.output_prompt_key, self.output_question_key, self.output_answer_key = input_key, input_question_num, output_prompt_key, output_question_key, output_answer_key
 
         dataframe = storage.read("dataframe")
         self._validate_dataframe(dataframe)
