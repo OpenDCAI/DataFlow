@@ -67,7 +67,7 @@ Turn raw data into high-quality LLM training datasets.🔧
 ## 📰 0. News
 
 * **[2026-02-02] 🖥️ DataFlow WebUI is now available!**
-  Launch the visual pipeline builder with a single command: `dataflow webui`. Build and run DataFlow pipelines through an intuitive web interface. 👉 [WebUI Docs](#54-webui)
+  Launch the visual pipeline builder with a single command: `dataflow webui`. Build and run DataFlow pipelines through an intuitive web interface. 👉 [WebUI Docs](#dfwebui)
   <div style="display: flex; gap: 12px;">
     <img src="https://github.com/user-attachments/assets/b4f172d6-7753-4121-b981-55046a7a9e43" width="45%" />
     <img src="https://github.com/user-attachments/assets/b2147987-3b1e-4f56-9818-3d5e7440fa58" width="45%" />
@@ -129,7 +129,7 @@ Through an `operator-based` design, DataFlow turns the entire data cleaning work
 ## 🛠️ 3. DataFlow Suite 
 The DataFlow Suite provides the essential infrastructure to automate and scale LLM data preparation with DataFlow main repository. It comprises four tightly integrated layers:
 
-- [DataFlow-WebUI](#️54-webui) – An intuitive, visual interface for constructing and managing complex data pipelines through a drag-and-drop operator workflow.
+- [DataFlow-WebUI](#️dfwebui) – An intuitive, visual interface for constructing and managing complex data pipelines through a drag-and-drop operator workflow.
 
 - [DataFlow-Agent](https://github.com/OpenDCAI/DataFlow-Agent) – An AI-powered assistant that dynamically composes, executes, and optimizes operators and pipelines based on high-level user intent.
 
@@ -332,15 +332,15 @@ By following the provided guidelines, you can seamlessly scale from a simple tra
 👉 [Start DataFlow with Google Colab](https://colab.research.google.com/drive/1haosl2QS4N4HM7u7HvSsz_MnLabxexXl?usp=sharing)
 
 
-### 📖 7.3 Reference Project Documentation
+### 📖 7.4 Reference Project Documentation
 
 For detailed **usage instructions** and **getting started guide**, please visit our [DataFlow Documentation](https://OpenDCAI.github.io/DataFlow-Doc/).
 
 [![Documents](https://img.shields.io/badge/Documentation-Click_here-brightgreen?logo=read-the-docs)](https://OpenDCAI.github.io/DataFlow-Doc/)
 
-<a id="54-webui"></a>
+<a name="dfwebui"></a>
 
-### 🖥️ 7.4 DataFlow-WebUI
+### 🖥️ 7.5 DataFlow-WebUI
 DataFlow provides a **Web-based UI (WebUI)** for visual pipeline construction and execution.
 <div style="display: flex; gap: 12px;">
   <img src="https://github.com/user-attachments/assets/b4f172d6-7753-4121-b981-55046a7a9e43" width="45%" />
@@ -355,12 +355,12 @@ dataflow webui
 
 This will automatically download and launch the latest **DataFlow-WebUI** and open it in your browser (`http://localhost:8000/` if it does not open automatically).
 
-#### 📚 7.4.1 WebUI Documentation
+#### 📚 7.5.1 WebUI Documentation
 
 * Chinese: [DataFlow-WebUI Documentation: https://wcny4qa9krto.feishu.cn/wiki/F4PDw76uDiOG42k76gGc6FaBnod](https://wcny4qa9krto.feishu.cn/wiki/F4PDw76uDiOG42k76gGc6FaBnod)
 * English: [DataFlow-WebUI Documentation: https://wcny4qa9krto.feishu.cn/wiki/SYELwZhh9ixcNwkNRnhcLGmWnEg](https://wcny4qa9krto.feishu.cn/wiki/SYELwZhh9ixcNwkNRnhcLGmWnEg)
 
-#### 🛠️ 7.4.2 Development Repository
+#### 🛠️ 7.5.2 Development Repository
 
 * [https://github.com/OpenDCAI/DataFlow-webui](https://github.com/OpenDCAI/DataFlow-webui)
 
