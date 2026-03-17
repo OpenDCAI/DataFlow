@@ -129,7 +129,7 @@ Through an `operator-based` design, DataFlow turns the entire data cleaning work
 ## 🛠️ 3. DataFlow Suite 
 The DataFlow Suite provides the essential infrastructure to automate and scale LLM data preparation with DataFlow main repository. It comprises four tightly integrated layers:
 
-- [DataFlow-WebUI](#️dfwebui) – An intuitive, visual interface for constructing and managing complex data pipelines through a drag-and-drop operator workflow.
+- [DataFlow-WebUI](#dfwebui) – An intuitive, visual interface for constructing and managing complex data pipelines through a drag-and-drop operator workflow.
 
 - [DataFlow-Agent](https://github.com/OpenDCAI/DataFlow-Agent) – An AI-powered assistant that dynamically composes, executes, and optimizes operators and pipelines based on high-level user intent.
 
