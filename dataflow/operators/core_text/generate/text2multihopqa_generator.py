@@ -15,7 +15,9 @@ import re
 from dataflow.core.prompt import prompt_restrict, DIYPromptABC
 from typing import Union
 import re
+from dataflow.utils.compatibility import auto_str_compat
 
+@auto_str_compat
 @prompt_restrict(
     Text2MultiHopQAGeneratorPrompt       
 )
@@ -410,10 +412,17 @@ class ExampleConstructor:
                 premise, intermediate, conclusion, and related contexts.
         """
         # Split into sentences
-        if(self.lang=="en"):
-            sentences = [s.strip() for s in text.split('.') if s.strip()]
-        else:
-            sentences = [s.strip() for s in text.split('。') if s.strip()]
+        # if(self.lang=="en"):
+        #     sentences = [s.strip() for s in text.split('.') if s.strip()]
+        # else:
+        #     sentences = [s.strip() for s in text.split('。') if s.strip()]
+        import re
+        sentences = [s.strip() for s in re.split(r'[.!?。！？；;]+', text) if s.strip()]
+        
+        self.logger.info(f"Split text into {len(sentences)} sentences")
+        if len(sentences) < 3:
+            self.logger.warning(f"Text has only {len(sentences)} sentence(s), need at least 3 for info pair extraction.")
+            self.logger.warning(f"Text preview (first 500 chars): {text[:500]}")
 
         info_pairs = []
 
