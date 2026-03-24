@@ -39,7 +39,7 @@ class PandasOperator(OperatorABC):
         else:
             return "Applies a sequence of transformation functions to a DataFrame."
 
-    def run(self, storage: DataFlowStorage):
+    def run(self, storage: DataFlowStorage, output_key = None):
         df = storage.read("dataframe")
         for fn in self.process_fn:
             if not callable(fn):
