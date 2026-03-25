@@ -139,6 +139,16 @@ class Text2QAGenerator:
         dataframe[self.output_question_key] = questions
         dataframe[self.output_answer_key] = answers
 
+        # Filter out rows where QA generation failed (empty question or answer)
+        before_count = len(dataframe)
+        dataframe = dataframe[
+            (dataframe[self.output_question_key].str.strip() != '') &
+            (dataframe[self.output_answer_key].str.strip() != '')
+        ]
+        dropped = before_count - len(dataframe)
+        if dropped:
+            self.logger.warning(f"Dropped {dropped} rows with empty question or answer")
+
         output_file = storage.write(dataframe)
         self.logger.info(f"Results saved to {output_file}")
 

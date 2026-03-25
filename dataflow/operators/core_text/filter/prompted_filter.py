@@ -70,12 +70,18 @@ class PromptedFilter(OperatorABC):
         dataframe = storage.read('dataframe')
         self.logger.info(f"Loading, number of rows: {len(dataframe)}")
 
+        # Drop rows where input_key is empty/null before evaluation
+        valid_mask = dataframe[input_key].notna() & (dataframe[input_key].astype(str).str.strip() != '')
+        valid_dataframe = dataframe[valid_mask]
+        self.logger.info(f"Skipping {(~valid_mask).sum()} rows with empty '{input_key}'")
+
         # Create a list to hold all generated questions and answers
-        generated_outputs = self.prompted_evaluator.eval(dataframe, input_key)
+        generated_outputs = self.prompted_evaluator.eval(valid_dataframe, input_key)
 
         # Add the generated content back to the dataframe
-        dataframe[output_key] = generated_outputs
-        filtered_dataframe = dataframe[(dataframe[output_key] >= self.min_score) & (dataframe[output_key] <= self.max_score)]
+        valid_dataframe = valid_dataframe.copy()
+        valid_dataframe[output_key] = generated_outputs
+        filtered_dataframe = valid_dataframe[(valid_dataframe[output_key] >= self.min_score) & (valid_dataframe[output_key] <= self.max_score)]
         # Save the updated dataframe to the output file
         output_file = storage.write(filtered_dataframe)
         return output_key
