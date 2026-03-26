@@ -225,13 +225,23 @@ class Text2MultiHopQAGenerator(OperatorABC):
         dataframe = storage.read("dataframe")
         self._validate_dataframe(dataframe)
         texts = dataframe[self.input_key].tolist()
-        outputs=self.process_batch(texts)
-        dataframe[self.output_key] = [
+        outputs = self.process_batch(texts)
+        qa_pairs_column = [
             output['qa_pairs'][:self.num_q] if len(output['qa_pairs']) >= self.num_q else output['qa_pairs']
             for output in outputs
         ]
+        metadata_column = [output['metadata'] for output in outputs]
 
-        dataframe[self.output_meta_key] = [output['metadata'] for output in outputs]
+        dataframe = dataframe.copy()
+        dataframe[self.output_key] = qa_pairs_column
+        dataframe[self.output_meta_key] = metadata_column
+
+        valid_mask = dataframe[self.output_key].apply(lambda qa_pairs: isinstance(qa_pairs, list) and len(qa_pairs) > 0)
+        filtered_count = int((~valid_mask).sum())
+        if filtered_count:
+            self.logger.info(f"Filtering out {filtered_count} rows with empty '{self.output_key}'")
+        dataframe = dataframe[valid_mask].reset_index(drop=True)
+
         output_file = storage.write(dataframe)
         self.logger.info(f"Results saved to {output_file}")
 

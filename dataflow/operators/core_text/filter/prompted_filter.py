@@ -18,6 +18,21 @@ class PromptedFilter(OperatorABC):
         self.prompted_evaluator = PromptedEvaluator(llm_serving, system_prompt)
         self.min_score = min_score
         self.max_score = max_score
+
+    @staticmethod
+    def _has_valid_content(value) -> bool:
+        if value is None:
+            return False
+        if isinstance(value, str):
+            return value.strip() != ""
+        if isinstance(value, (list, tuple, set, dict)):
+            return len(value) > 0
+        try:
+            if pd.isna(value):
+                return False
+        except TypeError:
+            pass
+        return bool(value)
     
     @staticmethod
     def get_desc(lang: str = "zh"):
@@ -71,7 +86,7 @@ class PromptedFilter(OperatorABC):
         self.logger.info(f"Loading, number of rows: {len(dataframe)}")
 
         # Drop rows where input_key is empty/null before evaluation
-        valid_mask = dataframe[input_key].notna() & (dataframe[input_key].astype(str).str.strip() != '')
+        valid_mask = dataframe[input_key].apply(self._has_valid_content)
         valid_dataframe = dataframe[valid_mask]
         self.logger.info(f"Skipping {(~valid_mask).sum()} rows with empty '{input_key}'")
 
