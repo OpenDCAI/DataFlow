@@ -25,7 +25,7 @@ class ChunkedPromptedGenerator(OperatorABC):
         json_schema: dict = None,
         max_chunk_len: int = 128000,
         enc = tiktoken.get_encoding("cl100k_base"), # 支持len(enc.encode(text))的tokenizer都可以，比如tiktoken或HuggingFace的AutoTokenizer
-        seperator: str = "\n",
+        separator: str = "\n",
     ):
         self.logger = get_logger()
         self.llm_serving = llm_serving
@@ -33,7 +33,7 @@ class ChunkedPromptedGenerator(OperatorABC):
         self.json_schema = json_schema
         self.max_chunk_len = max_chunk_len
         self.enc = enc
-        self.separator = seperator
+        self.separator = separator
 
     @staticmethod
     def get_desc(lang: str = "zh"):
