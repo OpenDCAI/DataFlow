@@ -8,6 +8,7 @@ if TYPE_CHECKING:
     from .eval.rm_sample_evaluator import RMSampleEvaluator
     from .eval.superfiltering_sample_evaluator import SuperfilteringSampleEvaluator
     from .eval.treeinstruct_sample_evaluator import TreeinstructSampleEvaluator
+    from .eval.mmd_dataset_evaluator import MMDDatasetEvaluator
 
 
     from .filter.alpagasus_filter import AlpagasusFilter
