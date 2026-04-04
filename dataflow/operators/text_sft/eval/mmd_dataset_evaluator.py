@@ -17,8 +17,8 @@ class MMDDatasetEvaluator(OperatorABC):
         ref_frame: DataFlowStorage,
         *,
         # dataset config
-        ref_max_sample_num: int = 5000,
-        ref_shuffle_seed: int = 42,
+        max_sample_num: int = 5000,
+        shuffle_seed: int = 42,
         ref_instruction_key: str = "input",
         ref_output_key: str = "output",
         # kernel
@@ -50,12 +50,12 @@ class MMDDatasetEvaluator(OperatorABC):
         self.logger = get_logger()
         self.logger.info(f"Initializing {self.__class__.__name__}...")
 
-        self.ref_max_sample_num = ref_max_sample_num
-        self.ref_shuffle_seed = ref_shuffle_seed
+        self.max_sample_num = max_sample_num
+        self.shuffle_seed = shuffle_seed
         self.ref_data = self._sample_data_helper(
             data_frame=ref_frame,
-            max_sample_num=ref_max_sample_num,
-            shuffle_seed=ref_shuffle_seed,
+            max_sample_num=self.max_sample_num,
+            shuffle_seed=self.shuffle_seed,
             instruction_key=ref_instruction_key,
             output_key=ref_output_key,
         )
@@ -202,19 +202,11 @@ class MMDDatasetEvaluator(OperatorABC):
         storage: DataFlowStorage,
         input_instruction_key: str,
         input_output_key: str,
-        max_sample_num: int | None = None,
-        shuffle_seed: int | None = None,
     ) -> tuple[float, dict[str, Any]]:
-        max_sample_num = (
-            max_sample_num if max_sample_num is not None else self.ref_max_sample_num
-        )
-        shuffle_seed = (
-            shuffle_seed if shuffle_seed is not None else self.ref_shuffle_seed
-        )
         eval_data = self._sample_data_helper(
             data_frame=storage,
-            max_sample_num=max_sample_num,
-            shuffle_seed=shuffle_seed,
+            max_sample_num=self.max_sample_num,
+            shuffle_seed=self.shuffle_seed,
             instruction_key=input_instruction_key,
             output_key=input_output_key,
         )
