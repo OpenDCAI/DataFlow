@@ -88,3 +88,7 @@ db-dtypes
 google-cloud-bigquery-storage
 
 distflow
+
+# RayOrch for parallelization
+# https://github.com/OpenDCAI/RayOrch
+rayorch==0.0.1
