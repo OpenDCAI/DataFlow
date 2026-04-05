@@ -367,6 +367,87 @@ def test_ordering_many_replicas(ray_env, test_data):
 
 
 # =====================================================================
+# Pipeline: both operators are RayAcceleratedOperator (for auto-shutdown test)
+# =====================================================================
+class _AllRayPipeline(PipelineABC):
+    """Both stages are RayAcceleratedOperators."""
+
+    def __init__(self, input_file, cache_path, storage_cls, replicas=REPLICAS):
+        super().__init__()
+        self.storage = _make_storage(storage_cls, input_file, cache_path)
+        self.doubler = RayAcceleratedOperator(
+            DummyDoubleOp, replicas=replicas, num_gpus_per_replica=0.0,
+        ).op_cls_init()
+        self.incrementer = RayAcceleratedOperator(
+            DummyIncrementOp, replicas=replicas, num_gpus_per_replica=0.0,
+        ).op_cls_init()
+
+    def forward(self):
+        self.doubler.run(
+            storage=self.storage.step(),
+            input_key="value",
+            output_key="doubled",
+        )
+        self.incrementer.run(
+            storage=self.storage.step(),
+            input_key="doubled",
+            output_key="incremented",
+        )
+
+
+class _AllRayBatched(BatchedPipelineABC):
+    """Both stages are RayAcceleratedOperators (batched)."""
+
+    def __init__(self, input_file, cache_path, storage_cls, replicas=REPLICAS):
+        super().__init__()
+        self.storage = _make_storage(storage_cls, input_file, cache_path)
+        self.doubler = RayAcceleratedOperator(
+            DummyDoubleOp, replicas=replicas, num_gpus_per_replica=0.0,
+        ).op_cls_init()
+        self.incrementer = RayAcceleratedOperator(
+            DummyIncrementOp, replicas=replicas, num_gpus_per_replica=0.0,
+        ).op_cls_init()
+
+    def forward(self):
+        self.doubler.run(
+            storage=self.storage.step(),
+            input_key="value",
+            output_key="doubled",
+        )
+        self.incrementer.run(
+            storage=self.storage.step(),
+            input_key="doubled",
+            output_key="incremented",
+        )
+
+
+class _AllRayStreamBatched(StreamBatchedPipelineABC):
+    """Both stages are RayAcceleratedOperators (stream batched)."""
+
+    def __init__(self, input_file, cache_path, storage_cls, replicas=REPLICAS):
+        super().__init__()
+        self.storage = _make_storage(storage_cls, input_file, cache_path)
+        self.doubler = RayAcceleratedOperator(
+            DummyDoubleOp, replicas=replicas, num_gpus_per_replica=0.0,
+        ).op_cls_init()
+        self.incrementer = RayAcceleratedOperator(
+            DummyIncrementOp, replicas=replicas, num_gpus_per_replica=0.0,
+        ).op_cls_init()
+
+    def forward(self):
+        self.doubler.run(
+            storage=self.storage.step(),
+            input_key="value",
+            output_key="doubled",
+        )
+        self.incrementer.run(
+            storage=self.storage.step(),
+            input_key="doubled",
+            output_key="incremented",
+        )
+
+
+# =====================================================================
 # Tests — serial-then-ray ordering
 # =====================================================================
 class _SerialThenRayPipeline(PipelineABC):
@@ -419,3 +500,85 @@ def test_serial_then_ray(ray_env, test_data):
     _assert_content(ray_df)
     _assert_ordering(serial_df, ray_df)
     _shutdown_ray_actors(ray_pipe)
+
+
+# =====================================================================
+# Tests — auto-shutdown of RayAcceleratedOperator in _compiled_forward
+# =====================================================================
+def _get_ray_op_nodes(pipe) -> list:
+    """Return OperatorNode entries whose op_obj has a shutdown method
+    (i.e. is a RayAcceleratedOperator)."""
+    return [
+        n for n in getattr(pipe, "op_nodes_list", [])
+        if hasattr(getattr(n, "op_obj", None), "shutdown")
+    ]
+
+
+@pytest.mark.cpu
+def test_auto_shutdown_pipeline_abc(ray_env, test_data):
+    """PipelineABC with two RayAcceleratedOperators: verify actors are
+    automatically shut down after each stage and output is still correct."""
+    from dataflow.utils.storage import FileStorage
+
+    input_file, tmp_path = test_data
+
+    cache = str(tmp_path / "auto_sd_pipe")
+    os.makedirs(cache, exist_ok=True)
+    pipe = _AllRayPipeline(input_file, cache, FileStorage)
+    pipe.compile()
+    pipe.forward()
+
+    df = _read_final_output(cache)
+    _assert_content(df)
+    assert len(df) == N_ROWS
+
+    for node in _get_ray_op_nodes(pipe):
+        assert node.op_obj._module is None, (
+            f"{node.op_name} was not auto-shutdown after compiled forward"
+        )
+
+
+@pytest.mark.cpu
+def test_auto_shutdown_batched(ray_env, test_data):
+    """BatchedPipelineABC with two Ray stages: auto-shutdown after batches."""
+    from dataflow.utils.storage import BatchedFileStorage
+
+    input_file, tmp_path = test_data
+
+    cache = str(tmp_path / "auto_sd_batched")
+    os.makedirs(cache, exist_ok=True)
+    pipe = _AllRayBatched(input_file, cache, BatchedFileStorage)
+    pipe.compile()
+    pipe.forward(batch_size=30, resume_from_last=False)
+
+    df = _read_final_output(cache)
+    _assert_content(df)
+    assert len(df) == N_ROWS
+
+    for node in _get_ray_op_nodes(pipe):
+        assert node.op_obj._module is None, (
+            f"{node.op_name} was not auto-shutdown after compiled forward"
+        )
+
+
+@pytest.mark.cpu
+def test_auto_shutdown_stream_batched(ray_env, test_data):
+    """StreamBatchedPipelineABC with two Ray stages: auto-shutdown after stream batches."""
+    from dataflow.utils.storage import StreamBatchedFileStorage
+
+    input_file, tmp_path = test_data
+
+    cache = str(tmp_path / "auto_sd_stream")
+    os.makedirs(cache, exist_ok=True)
+    pipe = _AllRayStreamBatched(input_file, cache, StreamBatchedFileStorage)
+    pipe.compile()
+    pipe.forward(resume_from_last=False)
+
+    df = _read_final_output(cache)
+    _assert_content(df)
+    assert len(df) == N_ROWS
+
+    for node in _get_ray_op_nodes(pipe):
+        assert node.op_obj._module is None, (
+            f"{node.op_name} was not auto-shutdown after compiled forward"
+        )

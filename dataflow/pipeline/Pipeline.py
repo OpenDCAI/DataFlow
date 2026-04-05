@@ -526,6 +526,13 @@ class PipelineABC(ABC):
                     storage=op_node.storage,
                     **op_node.kwargs
                 )
+                # Auto-release actor resources (e.g. GPU memory) held by
+                # RayAcceleratedOperator after each compiled stage.  Data has
+                # already been persisted to storage inside run(), so it is safe
+                # to tear down the actors before the next stage starts.
+                if hasattr(op_node.op_obj, "shutdown"):
+                    self.logger.debug(f"Auto-shutting down {op_node.op_name} to release actor resources.")
+                    op_node.op_obj.shutdown()
             if op_node.llm_serving != None:
                 self.llm_serving_counter[self.active_llm_serving] -= 1
                 if self.llm_serving_counter[self.active_llm_serving] == 0:
@@ -599,6 +606,10 @@ class BatchedPipelineABC(PipelineABC):
                         resume_batch = op_node.storage.batch_step if batch_size is not None else 0
                         with open(cache_path, "w") as f:
                             f.write(f"{idx-1},{resume_batch}\n")
+                # Auto-release actor resources after all batches complete
+                if hasattr(op_node.op_obj, "shutdown"):
+                    self.logger.debug(f"Auto-shutting down {op_node.op_name} to release actor resources.")
+                    op_node.op_obj.shutdown()
             if resume_from_last:
                 resume_batch = 0 # reset for next op_node
                 with open(cache_path, "w") as f:
@@ -685,6 +696,10 @@ class StreamBatchedPipelineABC(BatchedPipelineABC):
                         resume_batch = op_node.storage.batch_step if batch_size is not None else 0
                         with open(cache_path, "w") as f:
                             f.write(f"{idx-1},{resume_batch}\n")
+                # Auto-release actor resources after all stream batches complete
+                if hasattr(op_node.op_obj, "shutdown"):
+                    self.logger.debug(f"Auto-shutting down {op_node.op_name} to release actor resources.")
+                    op_node.op_obj.shutdown()
             if resume_from_last:
                 resume_batch = 0 # reset for next op_node
                 with open(cache_path, "w") as f:

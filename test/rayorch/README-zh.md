@@ -32,25 +32,40 @@ scorer.run(
     input_output_key="output",
 )
 
-# 3. 用完释放资源
+# 3. 用完释放资源（见下方 shutdown 说明）
 scorer.shutdown()
 ```
 
 Actor 在首次 `run()` 时**懒加载**创建，pipeline compile 阶段不会触发模型加载。
 
+### 关于 `shutdown()`
+
+| 场景 | 是否必须调用 |
+|------|-------------|
+| 单算子 / 脚本结束退出 | **可选**。进程退出时 Ray 自动清理所有 actor。 |
+| 多个 `RayAcceleratedOperator` 串联且占 GPU | **必须**。前一个 stage 的 actor 虽然空闲但仍持有 GPU 资源预留，后续 stage 创建新 actor 时会因资源不足而**永久阻塞**。 |
+| `num_gpus_per_replica=0`（纯 CPU） | **可选**。CPU 资源充裕不会阻塞，但 actor 仍占用内存（已加载的模型权重等）。 |
+
+> **Note**: 使用 `PipelineABC.compile()` 时，`_compiled_forward` 会在每个 stage 结束后**自动调用** `shutdown()`，无需手动释放。
+
 ## 环境要求
 
-- Python 3.10+
-- Ray (`pip install ray`)
-- PyTorch、Transformers、Datasets
-- 国内网络需设置 HuggingFace 镜像：`export HF_ENDPOINT=https://hf-mirror.com`
-- GPU 数量 ≥ 最大 `--replicas` 值
+```bash
+# 以下二选一：
+# 在 DataFlow 目录下重新安装（已包含 rayorch 依赖）
+pip install -e .
+
+# 或仅额外安装 RayOrch
+pip install rayorch==0.0.1
+```
 
 ## 测试文件
 
 | 文件 | 说明 |
 |------|------|
+| `test_compile_cpu.py` | **CI 用例**（pytest, CPU）：三种 Pipeline 类型 × compile × 多算子链 × 顺序/内容校验 |
 | `test_accelerated_op.py` | Dummy sleep 算子——验证正确性和调度逻辑（仅需 CPU） |
+| `test_pipeline_compile.py` | 真实算子（Superfiltering）compile 路径集成测试（需 GPU） |
 | `test_real_operators.py` | 真实算子 benchmark，支持 argparse 传参，外层使用 `FileStorage` |
 
 ## 快速开始

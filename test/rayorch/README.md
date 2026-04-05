@@ -34,26 +34,41 @@ scorer.run(
     input_output_key="output",
 )
 
-# 3. Clean up when done
+# 3. Clean up when done (see shutdown notes below)
 scorer.shutdown()
 ```
 
 Actors are created **lazily** on the first `run()` call, so pipeline
 compilation does not trigger model loading.
 
+### About `shutdown()`
+
+| Scenario | Must call? |
+|----------|-----------|
+| Single operator / script exits normally | **Optional**. Ray cleans up all actors on process exit. |
+| Multiple `RayAcceleratedOperator` stages with GPUs | **Required**. Idle actors from earlier stages still hold GPU resource reservations — later stages will **hang indefinitely** waiting for resources. |
+| `num_gpus_per_replica=0` (CPU-only) | **Optional**. CPU resources are abundant so no hang, but actors still consume memory (loaded model weights, etc.). |
+
+> **Note**: When using `PipelineABC.compile()`, `_compiled_forward` **automatically** calls `shutdown()` after each stage completes — no manual cleanup is needed.
+
 ## Prerequisites
 
-- Python 3.10+
-- Ray (`pip install ray`)
-- PyTorch, Transformers, Datasets
-- For China-mainland networks: `export HF_ENDPOINT=https://hf-mirror.com`
-- Number of GPUs >= max `--replicas` value
+```bash
+# Pick one:
+# Re-install DataFlow (includes rayorch as a dependency)
+pip install -e .
+
+# Or install RayOrch separately
+pip install rayorch==0.0.1
+```
 
 ## Test Files
 
 | File | Description |
 |------|-------------|
+| `test_compile_cpu.py` | **CI suite** (pytest, CPU): all 3 Pipeline types × compile × multi-op chains × ordering/content checks |
 | `test_accelerated_op.py` | Dummy sleep operator — validates correctness & scheduling (CPU only) |
+| `test_pipeline_compile.py` | Real operator (Superfiltering) compile-path integration test (GPU required) |
 | `test_real_operators.py` | Real operator benchmark with argparse, using `FileStorage` externally |
 
 ## Quick Start
