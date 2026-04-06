@@ -510,10 +510,12 @@ Our team has published the following papers that form core components of the Dat
 
 | Paper Title                                                                                                             | DataFlow Component                                                                            | Venue | Year |
 | ----------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------- | ----- | ---- |
+| [AgenticRAGTracer: A Clear and Stepwise-Process Benchmark for Agentic RAG](https://arxiv.org/abs/2602.19127v1) | Agentic RAG Data Synthesis | ACL Findings  | 2026 |
 | [Text2SQL-Flow: A Robust SQL-Aware Data Augmentation Framework for Text-to-SQL](https://arxiv.org/abs/2505.13903)  | Text2SQL Data Augmentation   | ICDE   | 2026 |
 | [Let&#39;s Verify Math Questions Step by Step](https://arxiv.org/abs/2505.13903)                                           | Math question quality evaluation                                                              | KDD   | 2026 |
 | [MM-Verify: Enhancing Multimodal Reasoning with Chain-of-Thought Verification](https://arxiv.org/pdf/2502.13383)           | Multimodal reasoning verification framework for data processing and evaluation                | ACL   | 2025 |
 | [Efficient Pretraining Data Selection for Language Models via Multi-Actor Collaboration](https://arxiv.org/pdf/2410.08102) | Multi-actor collaborative data selection mechanism for enhanced data filtering and processing | ACL   | 2025 |
+
 
 **Contributing Institutions**:
 <img src="./static/logo/pku.png" alt="PKU" height="30"/>
