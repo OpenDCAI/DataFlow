@@ -495,6 +495,7 @@ dataflow webui
 
 | 论文题目 | DataFlow 组件 | 会议/期刊 | 年份 |
 | --- | --- | --- | --- |
+| [AgenticRAGTracer: A Clear and Stepwise-Process Benchmark for Agentic RAG](https://arxiv.org/abs/2602.19127v1) | Agentic RAG 数据合成 | ACL Findings  | 2026 |
 | [Text2SQL-Flow: A Robust SQL-Aware Data Augmentation Framework for Text-to-SQL](https://arxiv.org/abs/2505.13903) | Text2SQL 数据增强 | ICDE | 2026 |
 | [Let's Verify Math Questions Step by Step](https://arxiv.org/abs/2505.13903) | 数学问题质量评估 | KDD | 2026 |
 | [MM-Verify: Enhancing Multimodal Reasoning with Chain-of-Thought Verification](https://arxiv.org/pdf/2502.13383) | 用于数据处理和评估的多模态推理验证框架 | ACL | 2025 |
