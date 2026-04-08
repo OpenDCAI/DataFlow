@@ -11,8 +11,6 @@ import subprocess
 import sys
 from pathlib import Path
 
-_LAUNCH_SHIM = Path(__file__).resolve().parent / "dataflex_launch_shim.py"
-
 
 def verify_dataflex_available() -> bool:
     """Return True if ``dataflex.launcher`` imports in this Python environment."""
@@ -81,10 +79,9 @@ def _launcher_cli_overrides() -> list[str]:
 
 def _build_train_command(yaml_path: Path) -> list[str]:
     y = str(yaml_path)
-    shim = str(_LAUNCH_SHIM)
     tail = [y, *_launcher_cli_overrides()]
     if not _want_torchrun():
-        return [sys.executable, shim, *tail]
+        return [sys.executable, "-m", "dataflex.launcher", *tail]
 
     master_addr = os.environ.get("MASTER_ADDR", "127.0.0.1")
     master_port = os.environ.get("MASTER_PORT", str(random.randint(20001, 29999)))
@@ -95,14 +92,15 @@ def _build_train_command(yaml_path: Path) -> list[str]:
         f"--nproc_per_node={nproc}",
         f"--master_addr={master_addr}",
         f"--master_port={master_port}",
-        shim,
+        "--module",
+        "dataflex.launcher",
         *tail,
     ]
 
 
 def run_dataflex_train(yaml_path: Path, cwd: Path) -> bool:
     """
-    Run training via DataFlex (``dataflex.launcher``) with the Accelerate shim.
+    Run training via DataFlex (``dataflex.launcher``) directly.
 
     Default env: ``FORCE_TORCHRUN=1``, ``DISABLE_VERSION_CHECK=1``.
     ``cwd`` is the pdf2model project root (paths inside yaml are relative to it).

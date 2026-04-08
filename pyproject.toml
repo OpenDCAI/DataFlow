@@ -75,11 +75,11 @@ pdf2model =[
 ]
 # 为pdf2model接入dataflex所需的依赖配置
 pdf2model-dataflex =[
-    "gradio>=4.38.0",
-    "llamafactory[torch,metrics]>=0.9.3",
+    "gradio>=4.38.0,<=5.13.0",
+    "llamafactory[torch,metrics]>=0.9.4",
     "vllm>=0.8.0,<0.9.0",         
-    "transformers>=4.48.1,<=4.50.0", 
-    "tokenizers>=0.19.0,<=0.21.0",   
+    "transformers>=4.48.1,<=4.52.0", 
+    "tokenizers>=0.19.0,<=0.21.1",
     "datasets>=2.16.0,<=3.2.0",      
     "fsspec<=2024.9.0",              
     "numpy>=1.24,<2.0.0",
