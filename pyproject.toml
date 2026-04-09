@@ -80,3 +80,4 @@ rag = ["lightrag-hku", "asyncio"]
 pdf2vqa=["mineru[vlm]>=2.5.0,<2.7.0"]
 
 flash-mineru = ["flash-mineru"]
+ray = ["rayorch"] 
