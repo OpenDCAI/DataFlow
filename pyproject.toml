@@ -34,9 +34,9 @@ keywords = [
 dynamic = ["version", "dependencies"]
 
 [project.urls]
-Github = "https://github.com/Open-DataFlow/DataFlow"
-Documentation = "https://open-dataflow.github.io/DataFlow-Doc/"
-"Bug Reports" = "https://github.com/Open-DataFlow/DataFlow/issues"
+Github = "https://github.com/OpenDCAI/DataFlow"
+Documentation = "https://opendcai.github.io/DataFlow-Doc/"
+"Bug Reports" = "https://github.com/OpenDCAI/DataFlow/issues"
 
 [project.scripts]
 dataflow = "dataflow.cli:app"
