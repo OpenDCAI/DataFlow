@@ -184,10 +184,10 @@ Diagram: [Image: Diagram demo.jpg]
       return f"""
 {self.prompt_header}
 
+{output_requirement}
+
 待清洗内容：
 {raw_content}
-
-{output_requirement}
 """.strip()
 
    def _post_process(self, cleaned_text: str) -> str:

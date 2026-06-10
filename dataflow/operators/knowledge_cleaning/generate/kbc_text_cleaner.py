@@ -38,6 +38,23 @@ _PROCESSING_STEPS_WITHOUT_HEADER_RE = re.compile(
     r"5\.\s*\[Final Output\]\s*Generate cleaned text.*$",
     flags=re.IGNORECASE | re.DOTALL,
 )
+_ZH_PROCESSING_STEPS_RE = re.compile(
+    r"\s*(?:处理步骤|处理流程|治理步骤)[:：]\s*"
+    r"1[.、]\s*\[(?:标签分析|标记分析)\].*?"
+    r"2[.、]\s*\[(?:引用提取|参考提取)\].*?"
+    r"3[.、]\s*\[(?:字符审核|字符审计)\].*?"
+    r"4[.、]\s*\[(?:结构检查|结构校验)\].*?"
+    r"5[.、]\s*\[(?:最终输出|最终结果)\].*$",
+    flags=re.DOTALL,
+)
+_ZH_PROCESSING_STEPS_WITHOUT_HEADER_RE = re.compile(
+    r"\s*1[.、]\s*\[(?:标签分析|标记分析)\].*?"
+    r"2[.、]\s*\[(?:引用提取|参考提取)\].*?"
+    r"3[.、]\s*\[(?:字符审核|字符审计)\].*?"
+    r"4[.、]\s*\[(?:结构检查|结构校验)\].*?"
+    r"5[.、]\s*\[(?:最终输出|最终结果)\].*$",
+    flags=re.DOTALL,
+)
 
 
 def extract_cleaned_text(text, post_process=None) -> str:
@@ -55,6 +72,8 @@ def extract_cleaned_text(text, post_process=None) -> str:
 
     text = _PROCESSING_STEPS_RE.sub("", text)
     text = _PROCESSING_STEPS_WITHOUT_HEADER_RE.sub("", text)
+    text = _ZH_PROCESSING_STEPS_RE.sub("", text)
+    text = _ZH_PROCESSING_STEPS_WITHOUT_HEADER_RE.sub("", text)
     text = text.strip()
 
     if post_process:
