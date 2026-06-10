@@ -1,4 +1,5 @@
 from dataflow.prompts.kbcleaning import KnowledgeCleanerPrompt
+from dataflow.operators.knowledge_cleaning.generate.kbc_text_cleaner import extract_cleaned_text
 import pandas as pd
 from dataflow.utils.registry import OPERATOR_REGISTRY
 from dataflow import get_logger
@@ -125,11 +126,12 @@ class KBCTextCleanerBatch(OperatorABC):
                 raw_chunks, formatted_prompts = self._reformat_prompt_from_path(chunk_path)
                 cleaned = self.llm_serving.generate_from_input(formatted_prompts, "")
 
-                # for each in cleaned, only save the content in <cleaned_start> and <cleaned_end>
+                # Save only the final cleaned text, even if the model leaks prompt steps.
                 cleaned_extracted = [
-                    text.split('<cleaned_start>')[1].split('<cleaned_end>')[0].strip()
-                    if '<cleaned_start>' in str(text) and '<cleaned_end>' in str(text)
-                    else str(text).strip()
+                    extract_cleaned_text(
+                        text,
+                        getattr(self.prompts, "_post_process", None),
+                    )
                     for text in cleaned
                 ]
                 json_items=[{

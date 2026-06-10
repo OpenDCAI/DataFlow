@@ -11,6 +11,57 @@ from dataflow.core.prompt import prompt_restrict, DIYPromptABC
 from typing import Union
 
 import re
+
+
+_CLEANED_BLOCK_RE = re.compile(
+    r"<cleaned_start>\s*(.*?)\s*<cleaned_end>",
+    flags=re.IGNORECASE | re.DOTALL,
+)
+_ANSWER_BLOCK_RE = re.compile(
+    r"<answer>\s*(.*?)\s*</answer>",
+    flags=re.IGNORECASE | re.DOTALL,
+)
+_PROCESSING_STEPS_RE = re.compile(
+    r"\s*Processing Steps:\s*"
+    r"1\.\s*\[Tag Analysis\]\s*Classify markup tags\s*"
+    r"2\.\s*\[Reference Extraction\]\s*Isolate images/tables\s*"
+    r"3\.\s*\[Character Audit\]\s*Log special chars\s*"
+    r"4\.\s*\[Structure Check\]\s*Validate hierarchy\s*"
+    r"5\.\s*\[Final Output\]\s*Generate cleaned text.*$",
+    flags=re.IGNORECASE | re.DOTALL,
+)
+_PROCESSING_STEPS_WITHOUT_HEADER_RE = re.compile(
+    r"\s*1\.\s*\[Tag Analysis\]\s*Classify markup tags\s*"
+    r"2\.\s*\[Reference Extraction\]\s*Isolate images/tables\s*"
+    r"3\.\s*\[Character Audit\]\s*Log special chars\s*"
+    r"4\.\s*\[Structure Check\]\s*Validate hierarchy\s*"
+    r"5\.\s*\[Final Output\]\s*Generate cleaned text.*$",
+    flags=re.IGNORECASE | re.DOTALL,
+)
+
+
+def extract_cleaned_text(text, post_process=None) -> str:
+    """Extract model output while dropping prompt-instruction leakage."""
+    text = "" if text is None else str(text)
+
+    cleaned_match = _CLEANED_BLOCK_RE.search(text)
+    if cleaned_match:
+        text = cleaned_match.group(1)
+    else:
+        answer_match = _ANSWER_BLOCK_RE.search(text)
+        if answer_match:
+            text = answer_match.group(1)
+        text = text.replace("<cleaned_start>", "").replace("<cleaned_end>", "")
+
+    text = _PROCESSING_STEPS_RE.sub("", text)
+    text = _PROCESSING_STEPS_WITHOUT_HEADER_RE.sub("", text)
+    text = text.strip()
+
+    if post_process:
+        text = post_process(text)
+    return text
+
+
 @prompt_restrict(
     KnowledgeCleanerPrompt       
 )
@@ -27,7 +78,7 @@ class KBCTextCleaner(OperatorABC):
         if prompt_template:
             self.prompt_template = prompt_template
         else:
-            self.prompt_template = KnowledgeCleanerPrompt()
+            self.prompt_template = KnowledgeCleanerPrompt(lang=lang)
     
     @staticmethod
     def get_desc(lang: str = "zh"):
@@ -123,11 +174,12 @@ class KBCTextCleaner(OperatorABC):
         formatted_prompts = self._reformat_prompt(dataframe)
         cleaned = self.llm_serving.generate_from_input(formatted_prompts,"")
 
-        #for each in cleaned, only save the content in <cleaned_start> and <cleaned_end>
+        # Save only the final cleaned text, even if the model leaks prompt steps.
         cleaned_extracted = [
-            str(text).split('<cleaned_start>')[1].split('<cleaned_end>')[0].strip() 
-            if '<cleaned_start>' in str(text) and '<cleaned_end>' in str(text)
-            else str(text).strip()
+            extract_cleaned_text(
+                text,
+                getattr(self.prompt_template, "_post_process", None),
+            )
             for text in cleaned
         ]
         dataframe[self.output_key] = cleaned_extracted

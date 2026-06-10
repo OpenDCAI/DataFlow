@@ -177,24 +177,8 @@ Diagram: [Image: Diagram demo.jpg]
 """
 
       if self.lang == "en":
-         processing_steps = """
-Processing Steps:
-1. [Tag Analysis] Classify markup tags
-2. [Reference Extraction] Isolate images/tables
-3. [Character Audit] Log special chars
-4. [Structure Check] Validate hierarchy
-5. [Final Output] Generate cleaned text
-""".strip()
-         output_requirement = 'Response must contain ONLY cleaned text between <cleaned_start> and <cleaned_end>.'
+         output_requirement = 'Response must contain ONLY the final cleaned text between <cleaned_start> and <cleaned_end>. Do not include analysis, explanations, processing steps, or bullet lists outside the cleaned text.'
       else:
-         processing_steps = """
-处理步骤：
-1. [标签分析] 识别并分类所有标记标签
-2. [引用提取] 分离图片/表格/签名等引用内容
-3. [字符审核] 记录特殊字符变更
-4. [结构检查] 验证文本层级
-5. [最终输出] 生成清洗后文本
-""".strip()
          output_requirement = '响应必须只包含清洗后文本，以<cleaned_start>开头，<cleaned_end>结尾，无其他内容。'
 
       return f"""
@@ -202,8 +186,6 @@ Processing Steps:
 
 待清洗内容：
 {raw_content}
-
-{processing_steps}
 
 {output_requirement}
 """.strip()
