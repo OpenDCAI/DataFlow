@@ -47,6 +47,7 @@
 </div>
 
 ## 📰 0. 新闻
+* **[2026-07-13] 🚀 DataFlow-Agent 与 DataFlow-WebUI 功能升级！** [DataFlow-Agent](https://github.com/OpenDCAI/DataFlow-Agent) 现可将 Agent 轨迹转化为训练就绪数据，[DataFlow-WebUI](https://github.com/OpenDCAI/DataFlow-webui) 支持 AI Agent 辅助构建、管理和运行 pipeline。
 * **[2026-05-22] DataFlow-Skills 正式发布！**
   一个专门为 DataFlow 用户设计的skills和教程集合。👉 [DataFlow-Skills](https://github.com/OpenDCAI/DataFlow-Skills)
 * **[2026-02-02] 🖥️ DataFlow WebUI 正式发布！**
@@ -109,8 +110,8 @@ DataFlow 是一个专门为从嘈杂来源（PDF、纯文本、低质量 QA）�
 
 DataFlow 套件提供了基本的算力设施，以配合 DataFlow 主仓库实现 LLM 数据准备的自动化和规模化。它由四个紧密集成的层组成：
 * [DataFlow-Skills](https://github.com/OpenDCAI/DataFlow-Skills) – 一个专门为 DataFlow 用户设计的技能和教程集合，涵盖算子开发、流水线构建以及以数据为中心的 AI 最佳实践。
-* [DataFlow-WebUI](#dfwebui) – 一个直观的可视化界面，用于通过拖拽式算子工作流构建和管理复杂的数据流水线。
-* [DataFlow-Agent](https://github.com/OpenDCAI/DataFlow-Agent) – 一个由 AI 驱动的助手，根据用户的高层意图动态组合、执行和优化算子及流水线。
+* [DataFlow-Agent](https://github.com/OpenDCAI/DataFlow-Agent) – A toolkit for generating and optimizing Agent trajectory data. It records Agent reasoning, tool calls, observations, and final responses, then scores, selects, filters, and refines trajectories into training-ready datasets for tool-using LLMs.
+* [DataFlow-WebUI](https://github.com/OpenDCAI/DataFlow-webui) – A visual and AI Agent assisted workspace for building, managing, and running DataFlow pipelines. It combines drag-and-drop pipeline editing with natural-language interaction, enabling users to construct and execute data workflows more efficiently.
 * [DataFlow-Ecosystem](#awesome-dataflow) – 一个标准化的算子注册模块化分发层。它允许特定领域的模块（例如 [DataFlow-MM](https://github.com/OpenDCAI/DataFlow-MM)、DataFlow-AI4S）在统一的抽象下贡献可扩展库。
 * [RayOrch](https://github.com/OpenDCAI/RayOrch) – 一个基于 Ray 构建的高性能编排层，为大规模数据任务提供分布式计算调度和资源管理。
 
