@@ -162,6 +162,24 @@ def test_bench_evaluator_handles_missing_reference_answers(
     assert len(storage.dataframe) == expected_rows
 
 
+def test_bench_evaluator_validates_columns_before_reading_them():
+    """Missing input columns should be reported instead of raising KeyError."""
+    from dataflow.prompts.model_evaluation.general import AnswerJudgePromptQuestion
+    from dataflow.operators.core_text import BenchDatasetEvaluatorQuestion
+
+    evaluator = BenchDatasetEvaluatorQuestion(
+        compare_method="semantic",
+        llm_serving=object(),
+        prompt_template=AnswerJudgePromptQuestion(),
+    )
+    storage = InMemoryStorage(pd.DataFrame({"question": ["a"]}))
+
+    returned_keys = evaluator.run(storage=storage, input_question_key="question")
+
+    assert returned_keys == ["generated_cot", "golden_answer", "question"]
+    assert "answer_match_result" not in storage.dataframe.columns
+
+
 def test_bench_match_mode_initializes_subquestion_setting(tmp_path, monkeypatch):
     """Match-mode statistics must not read an attribute only semantic mode defines."""
     from dataflow.prompts.model_evaluation.general import AnswerJudgePromptQuestion
@@ -192,3 +210,45 @@ def test_bench_match_mode_initializes_subquestion_setting(tmp_path, monkeypatch)
         "answer_match_result",
     ]
     assert storage.dataframe["answer_match_result"].tolist() == [True]
+
+
+@pytest.mark.parametrize("compare_method", ["match", "semantic"])
+def test_bench_evaluator_handles_non_default_index(compare_method, tmp_path, monkeypatch):
+    """Upstream filters hand downstream a sliced frame whose index is not 0..n-1.
+
+    Row lookups used to index the Series by position, which is a label lookup
+    on a pandas Series, so a gapped index raised KeyError.
+    """
+    from dataflow.prompts.model_evaluation.general import AnswerJudgePromptQuestion
+    from dataflow.operators.core_text import BenchDatasetEvaluatorQuestion
+
+    class StubLLMServing:
+        def generate_from_input(self, user_inputs, system_prompt=None):
+            return ['{"judgement_result": true}', '{"judgement_result": false}']
+
+    evaluator = BenchDatasetEvaluatorQuestion(
+        compare_method=compare_method,
+        eval_result_path=str(tmp_path / "statistics.json"),
+        llm_serving=StubLLMServing(),
+        prompt_template=AnswerJudgePromptQuestion(),
+    )
+    if compare_method == "match":
+        monkeypatch.setattr(
+            evaluator.answer_extractor, "extract_answer", lambda answer, _: answer
+        )
+        monkeypatch.setattr(
+            evaluator, "compare", lambda answer, expected: answer == expected
+        )
+    sliced_frame = pd.DataFrame(
+        {
+            "question": ["q1", "q2"],
+            "generated_cot": ["42", "7"],
+            "golden_answer": ["42", "9"],
+        },
+        index=[3, 7],
+    )
+    storage = InMemoryStorage(sliced_frame)
+
+    evaluator.run(storage=storage, input_question_key="question")
+
+    assert storage.dataframe["answer_match_result"].tolist() == [True, False]
