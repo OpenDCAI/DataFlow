@@ -1,4 +1,5 @@
 import os
+import base64
 import torch
 from dataflow import get_logger
 from huggingface_hub import snapshot_download
