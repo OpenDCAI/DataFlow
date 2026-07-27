@@ -32,7 +32,8 @@ class BenchDatasetEvaluatorQuestion(OperatorABC):
                 system_prompt: str = "You are a helpful assistant specialized in evaluating answer correctness.",
                 llm_serving: LLMServingABC = None,
                 prompt_template: Union[AnswerJudgePromptQuestion, AnswerJudgeMultipleQuestionsPrompt, DIYPromptABC] = AnswerJudgePromptQuestion,
-                support_subquestions: bool = False
+                support_subquestions: bool = False,
+                keep_all_samples: bool = False
                 ):
         
         if eval_result_path is None:
@@ -42,6 +43,7 @@ class BenchDatasetEvaluatorQuestion(OperatorABC):
         self.eval_result_path = eval_result_path
         self.compare_method = compare_method
         self.empty_responses_count = 0  # 添加空响应计数器
+        self.keep_all_samples = keep_all_samples
         
         if compare_method == "match":
             self.compare = self.math_verify_compare
@@ -219,8 +221,9 @@ class BenchDatasetEvaluatorQuestion(OperatorABC):
         ground_truths = dataframe[self.gt_answer_key]
     
         if self.compare_method == "match":
+            required_columns = [input_test_answer_key, input_gt_answer_key]
             if self.check_column(
-                required_columns=[input_test_answer_key,input_gt_answer_key],
+                required_columns=required_columns,
                 dataframe=dataframe
             ) is False:
                 return required_columns
@@ -239,8 +242,9 @@ class BenchDatasetEvaluatorQuestion(OperatorABC):
             
             return [self.test_answer_key, self.gt_answer_key, 'answer_match_result']
         else:
+            required_columns = [input_test_answer_key, input_gt_answer_key, input_question_key]
             if self.check_column(
-                required_columns=[input_test_answer_key,input_gt_answer_key, input_question_key],
+                required_columns=required_columns,
                 dataframe=dataframe
             ) is False:
                 return required_columns
