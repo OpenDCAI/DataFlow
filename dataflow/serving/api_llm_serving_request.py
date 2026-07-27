@@ -82,7 +82,9 @@ class APILLMServing_request(LLMServingABC):
         
         # Extract message content
         message = response.get('choices', [{}])[0].get('message', {})
-        content = message.get('content', '')
+        # `content` is null rather than absent when the model returns only tool
+        # calls or only reasoning, so a plain default is not enough here.
+        content = message.get('content') or ''
         
         # Return directly if content is already in think/answer format
         if re.search(r'<think>.*?</think>.*?<answer>.*?</answer>', content, re.DOTALL):
