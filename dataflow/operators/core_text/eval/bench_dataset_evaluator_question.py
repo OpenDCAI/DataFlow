@@ -1,4 +1,3 @@
-from email.policy import strict
 from dataflow.utils.reasoning.AnswerExtraction import StringCleaner, UnitTextManager, AnswerExtractor
 from dataflow.prompts.model_evaluation.general import AnswerJudgePromptQuestion, AnswerJudgeMultipleQuestionsPrompt
 from dataflow.core.prompt import DIYPromptABC
@@ -44,7 +43,8 @@ class BenchDatasetEvaluatorQuestion(OperatorABC):
         self.compare_method = compare_method
         self.empty_responses_count = 0  # 添加空响应计数器
         self.keep_all_samples = keep_all_samples
-        
+        self.support_subquestions = support_subquestions
+
         if compare_method == "match":
             self.compare = self.math_verify_compare
             unit_manager = UnitTextManager()
@@ -56,7 +56,6 @@ class BenchDatasetEvaluatorQuestion(OperatorABC):
             self.prompt_template = prompt_template
             self.system_prompt = system_prompt
             self.llm_serving = llm_serving
-            self.support_subquestions = support_subquestions
             
         self.logger = get_logger()
     
@@ -137,7 +136,8 @@ class BenchDatasetEvaluatorQuestion(OperatorABC):
                 "- input_test_answer_key：预测答案字段名\n"
                 "- input_gt_answer_key：标准答案字段名\n"
                 "- input_question_key：问题字段名（语义匹配模式下必需）\n"
-                "- compare_method：比较方法（match/semantic）\n\n"
+                "- compare_method：比较方法（match/semantic）\n"
+                "- keep_all_samples：参考答案全部为空时是否保留输入行\n\n"
                 "输出参数：\n"
                 "- answer_match_result：匹配结果（True/False）\n"
                 "- 统计结果将保存到指定的eval_result_path路径\n"
@@ -151,7 +151,8 @@ class BenchDatasetEvaluatorQuestion(OperatorABC):
                 "- input_test_answer_key: Predicted answer field\n"
                 "- input_gt_answer_key: Ground truth field\n"
                 "- input_question_key: Question field (required for semantic mode)\n"
-                "- compare_method: Comparison method (match/semantic)\n\n"
+                "- compare_method: Comparison method (match/semantic)\n"
+                "- keep_all_samples: Preserve input rows when all reference answers are missing\n\n"
                 "Output Parameters:\n"
                 "- answer_match_result: Matching result (True/False)\n"
                 "- Statistics will be saved to the specified eval_result_path\n"

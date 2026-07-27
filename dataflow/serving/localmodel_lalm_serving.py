@@ -1,5 +1,5 @@
-import os
 import base64
+import os
 import torch
 from dataflow import get_logger
 from huggingface_hub import snapshot_download
@@ -254,4 +254,3 @@ class LocalModelLALMServing_vllm(LLMServingABC):
         import gc;
         gc.collect()
         torch.cuda.empty_cache()
-    

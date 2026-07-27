@@ -123,8 +123,6 @@ class CodeGenericScoreFilter(OperatorABC):
             storage.write(dataframe)
             return [self.output_key]
 
-        original_count = len(dataframe)
-        
         # 2. Validate the data
         self._validate_dataframe(dataframe)
         
