@@ -141,7 +141,7 @@ class CodeGenericScoreFilter(OperatorABC):
             filter_mask = dataframe[self.input_score_key] == self.score_threshold
         else:
             # This case should ideally not be hit due to Literal type hint, but is good for robustness
-            raise ValueError(f"Unsupported filter_method: '{filter_method}'")
+            raise ValueError(f"Unsupported filter_method: '{self.filter_method}'")
         
         dataframe[self.output_key] = filter_mask.astype(int)
         filtered_df = dataframe[filter_mask]
