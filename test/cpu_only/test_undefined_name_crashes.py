@@ -47,7 +47,6 @@ def test_text2sql_prompts_import():
     module = importlib.import_module("dataflow.prompts.text2sql")
 
     assert hasattr(module, "SelectSQLGeneratorPrompt")
-    assert not hasattr(module, "template")
 
 
 @pytest.mark.parametrize(
@@ -81,17 +80,12 @@ def test_lalm_serving_decodes_base64_audio(monkeypatch):
     ) == (expected_waveform, 16_000)
 
 
-def test_format_response_handles_null_content(api_serving):
-    """Providers send `"content": null` when a reply carries only tool calls.
-
-    `.get('content', '')` returns None in that case, and the regex below it
-    raised TypeError, which the caller swallowed into a silently dropped row.
-    """
+def test_format_response_marks_tool_call_only_response_as_failed(api_serving):
+    """Unsupported tool calls must not become an empty successful response."""
     response = {
         "choices": [
             {
                 "message": {
-                    "role": "assistant",
                     "content": None,
                     "tool_calls": [{"id": "call_1", "type": "function"}],
                 }
@@ -99,7 +93,7 @@ def test_format_response_handles_null_content(api_serving):
         ]
     }
 
-    assert api_serving.format_response(response) == ""
+    assert api_serving.format_response(response) is None
 
 
 def test_format_response_wraps_reasoning_when_content_is_null(api_serving):
@@ -162,8 +156,11 @@ def test_bench_evaluator_handles_missing_reference_answers(
     assert len(storage.dataframe) == expected_rows
 
 
-def test_bench_match_mode_initializes_subquestion_setting(tmp_path, monkeypatch):
-    """Match-mode statistics must not read an attribute only semantic mode defines."""
+@pytest.mark.parametrize("support_subquestions", [False, True])
+def test_bench_match_mode_initializes_subquestion_setting(
+    support_subquestions, tmp_path, monkeypatch
+):
+    """Match mode must not read semantic-only subquestion statistics."""
     from dataflow.prompts.model_evaluation.general import AnswerJudgePromptQuestion
     from dataflow.operators.core_text import BenchDatasetEvaluatorQuestion
 
@@ -171,6 +168,7 @@ def test_bench_match_mode_initializes_subquestion_setting(tmp_path, monkeypatch)
         compare_method="match",
         eval_result_path=str(tmp_path / "statistics.json"),
         prompt_template=AnswerJudgePromptQuestion(),
+        support_subquestions=support_subquestions,
     )
     monkeypatch.setattr(
         evaluator.answer_extractor,

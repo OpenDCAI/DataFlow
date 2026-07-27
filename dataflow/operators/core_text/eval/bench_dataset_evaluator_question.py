@@ -184,7 +184,7 @@ class BenchDatasetEvaluatorQuestion(OperatorABC):
             "compare_method": compare_method
         }
         
-        if self.support_subquestions:
+        if self.support_subquestions and compare_method == "semantic":
             total_subquestions = dataframe['total_subquestions'].sum()
             correct_subquestions = dataframe['correct_answer_num'].sum()
             subquestion_accuracy = correct_subquestions / total_subquestions if total_subquestions > 0 else 0
