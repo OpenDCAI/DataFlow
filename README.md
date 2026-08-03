@@ -581,7 +581,7 @@ Join the DataFlow open-source community to ask questions, share ideas, and colla
 •	💬 Join our community groups to connect with us and other contributors!
 
 <div align="center">
-  <img src="https://github.com/user-attachments/assets/52febf13-5288-4bcd-95e8-9126dffbc409" width="60%">
+  <img src="https://github.com/user-attachments/assets/75c9ad12-d322-47dc-b494-c125a672a3e4" width="70%">
 </div>
 
 ## 📜 14. Citation
