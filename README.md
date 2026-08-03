@@ -65,7 +65,7 @@ Turn raw data into high-quality LLM training datasets.🔧
 
 
 ## 📰 0. News
-* **[2026-07-13] 🚀 DataFlow-WebUI receives major upgrades!** [DataFlow-WebUI](https://github.com/OpenDCAI/DataFlow-webui) supports AI-agent-assisted pipeline construction, management, and execution.
+* **[2026-07-18] DataFlow-Harness Released!** 🔥[DataFlow-Harness](https://huggingface.co/papers/2607.16617) lets coding agents build DataFlow pipelines for you. Download and installation entry points are available in [DataFlow-WebUI](https://github.com/OpenDCAI/DataFlow-WebUI), where you can use DataFlow through either the visual interface or MCP.
 * **[2026-05-22] DataFlow-Skills is now available!**
   A collection of skills and tutorials for working with DataFlow. 👉 [DataFlow-Skills](https://github.com/OpenDCAI/DataFlow-Skills)
 * **[2026-02-02] 🖥️ DataFlow WebUI is now available!**
