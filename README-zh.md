@@ -47,7 +47,7 @@
 </div>
 
 ## 📰 0. 新闻
-* **[2026-07-13] 🚀 DataFlow-WebUI 功能升级！** [DataFlow-WebUI](https://github.com/OpenDCAI/DataFlow-webui) 支持 AI Agent 辅助构建、管理和运行 pipeline。
+* **[2026-07-18] 🔥 DataFlow-Harness 正式发布！** 通过 [DataFlow-Harness](https://huggingface.co/papers/2607.16617)，可以使用 Coding Agent 搭建 DataFlow pipeline。安装与使用入口在 [DataFlow-WebUI](https://github.com/OpenDCAI/DataFlow-WebUI)，同时支持可视化画布与 MCP 管理 pipeline。
 * **[2026-05-22] DataFlow-Skills 正式发布！**
   一个专门为 DataFlow 用户设计的skills和教程集合。👉 [DataFlow-Skills](https://github.com/OpenDCAI/DataFlow-Skills)
 * **[2026-02-02] 🖥️ DataFlow WebUI 正式发布！**
@@ -573,7 +573,7 @@ dataflow webui
 •	💬 加入我们的社区群组，与我们及其他贡献者建立联系！
 
 <div align="center">
-  <img src="https://github.com/user-attachments/assets/52febf13-5288-4bcd-95e8-9126dffbc409" width="60%">
+  <img src="https://github.com/user-attachments/assets/779b049b-7557-4556-8973-4d99ffb1495c" width="70%">
 </div>
 
 ## 📜 14. 引用
