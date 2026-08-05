@@ -142,7 +142,7 @@ Together, these components form a unified, extensible environment that transform
 
 ## ✅ 4. Why use DataFlow?
 Data generation and cleaning are crucial for high-quality models, but for both enterprises and individuals, these tasks are often time-consuming, labor-intensive, and costly. **DataFlow provides a one-stop solution to tackle these challenges efficiently.**
-Compared with systems like Nemo-Curator and Data-Juicer, DataFlow offers:
+DataFlow offers the following advantages:
 - **Enhanced Support for Data Synthesis Modules** – Seamlessly integrates text, code, and math data generation pipeline for high-quality training datasets.
 - **PyTorch-like Programming Management** – Clear **Pipeline → Operator → Prompt** hierarchical structure for workflow control.
 - **Principled and Multi-Category Operator Classification** – Operators are systematically organized into multiple functional categories such as **generation, evaluation, filtering, and refinement**, forming a scientifically grounded, multi-dimensional taxonomy that reflects different stages of data preparation and enables precise operator selection and composition.
