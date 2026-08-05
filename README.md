@@ -264,7 +264,7 @@ If you want to use your own GPU for local inference, please use:
 
 ```shell
 pip install uv
-uv pip install 'open-dataflow[vllm]'
+uv pip install "open-dataflow[vllm]"
 ```
 
 After installation, you can use the following command to check if dataflow has been installed correctly:

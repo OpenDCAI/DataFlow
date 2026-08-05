@@ -246,7 +246,7 @@ uv pip install open-dataflow
 
 ```shell
 pip install uv
-uv pip install 'open-dataflow[vllm]'
+uv pip install "open-dataflow[vllm]"
 
 ```
 
