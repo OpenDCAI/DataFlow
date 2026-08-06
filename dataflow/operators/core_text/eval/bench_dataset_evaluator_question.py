@@ -1,4 +1,3 @@
-from email.policy import strict
 from dataflow.utils.reasoning.AnswerExtraction import StringCleaner, UnitTextManager, AnswerExtractor
 from dataflow.prompts.model_evaluation.general import AnswerJudgePromptQuestion, AnswerJudgeMultipleQuestionsPrompt
 from dataflow.core.prompt import DIYPromptABC
@@ -32,7 +31,8 @@ class BenchDatasetEvaluatorQuestion(OperatorABC):
                 system_prompt: str = "You are a helpful assistant specialized in evaluating answer correctness.",
                 llm_serving: LLMServingABC = None,
                 prompt_template: Union[AnswerJudgePromptQuestion, AnswerJudgeMultipleQuestionsPrompt, DIYPromptABC] = AnswerJudgePromptQuestion,
-                support_subquestions: bool = False
+                support_subquestions: bool = False,
+                keep_all_samples: bool = False
                 ):
         
         if eval_result_path is None:
@@ -42,7 +42,9 @@ class BenchDatasetEvaluatorQuestion(OperatorABC):
         self.eval_result_path = eval_result_path
         self.compare_method = compare_method
         self.empty_responses_count = 0  # 添加空响应计数器
-        
+        self.keep_all_samples = keep_all_samples
+        self.support_subquestions = support_subquestions
+
         if compare_method == "match":
             self.compare = self.math_verify_compare
             unit_manager = UnitTextManager()
@@ -54,7 +56,6 @@ class BenchDatasetEvaluatorQuestion(OperatorABC):
             self.prompt_template = prompt_template
             self.system_prompt = system_prompt
             self.llm_serving = llm_serving
-            self.support_subquestions = support_subquestions
             
         self.logger = get_logger()
     
@@ -135,7 +136,8 @@ class BenchDatasetEvaluatorQuestion(OperatorABC):
                 "- input_test_answer_key：预测答案字段名\n"
                 "- input_gt_answer_key：标准答案字段名\n"
                 "- input_question_key：问题字段名（语义匹配模式下必需）\n"
-                "- compare_method：比较方法（match/semantic）\n\n"
+                "- compare_method：比较方法（match/semantic）\n"
+                "- keep_all_samples：参考答案全部为空时是否保留输入行\n\n"
                 "输出参数：\n"
                 "- answer_match_result：匹配结果（True/False）\n"
                 "- 统计结果将保存到指定的eval_result_path路径\n"
@@ -149,7 +151,8 @@ class BenchDatasetEvaluatorQuestion(OperatorABC):
                 "- input_test_answer_key: Predicted answer field\n"
                 "- input_gt_answer_key: Ground truth field\n"
                 "- input_question_key: Question field (required for semantic mode)\n"
-                "- compare_method: Comparison method (match/semantic)\n\n"
+                "- compare_method: Comparison method (match/semantic)\n"
+                "- keep_all_samples: Preserve input rows when all reference answers are missing\n\n"
                 "Output Parameters:\n"
                 "- answer_match_result: Matching result (True/False)\n"
                 "- Statistics will be saved to the specified eval_result_path\n"
@@ -181,7 +184,7 @@ class BenchDatasetEvaluatorQuestion(OperatorABC):
             "compare_method": compare_method
         }
         
-        if self.support_subquestions:
+        if self.support_subquestions and compare_method == "semantic":
             total_subquestions = dataframe['total_subquestions'].sum()
             correct_subquestions = dataframe['correct_answer_num'].sum()
             subquestion_accuracy = correct_subquestions / total_subquestions if total_subquestions > 0 else 0
@@ -219,8 +222,9 @@ class BenchDatasetEvaluatorQuestion(OperatorABC):
         ground_truths = dataframe[self.gt_answer_key]
     
         if self.compare_method == "match":
+            required_columns = [input_test_answer_key, input_gt_answer_key]
             if self.check_column(
-                required_columns=[input_test_answer_key,input_gt_answer_key],
+                required_columns=required_columns,
                 dataframe=dataframe
             ) is False:
                 return required_columns
@@ -239,8 +243,9 @@ class BenchDatasetEvaluatorQuestion(OperatorABC):
             
             return [self.test_answer_key, self.gt_answer_key, 'answer_match_result']
         else:
+            required_columns = [input_test_answer_key, input_gt_answer_key, input_question_key]
             if self.check_column(
-                required_columns=[input_test_answer_key,input_gt_answer_key, input_question_key],
+                required_columns=required_columns,
                 dataframe=dataframe
             ) is False:
                 return required_columns

@@ -11,6 +11,7 @@ from dataflow.core  import LLMServingABC
 import re
 import time
 
+
 class APILLMServing_request(LLMServingABC):
     """Use OpenAI API to generate responses based on input messages.
     """
@@ -80,16 +81,19 @@ class APILLMServing_request(LLMServingABC):
         if is_embedding:
             return response.get('data', [{}])[0].get('embedding', [])
         
-        # Extract message content
-        message = response.get('choices', [{}])[0].get('message', {})
-        content = message.get('content', '')
+        message = response.get('choices', [{}])[0].get('message') or {}
+        content = message.get('content')
+        reasoning_content = message.get('reasoning_content')
+
+        if content is None:
+            if reasoning_content:
+                content = ''
+            else:
+                return None
         
         # Return directly if content is already in think/answer format
         if re.search(r'<think>.*?</think>.*?<answer>.*?</answer>', content, re.DOTALL):
             return content
-        
-        # Check for reasoning_content
-        reasoning_content = message.get('reasoning_content')
         
         # Wrap with think/answer tags if reasoning_content exists and is not empty
         if reasoning_content:
