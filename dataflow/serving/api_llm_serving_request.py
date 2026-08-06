@@ -80,9 +80,10 @@ class APILLMServing_request(LLMServingABC):
         if is_embedding:
             return response.get('data', [{}])[0].get('embedding', [])
         
-        # Extract message content
         message = response.get('choices', [{}])[0].get('message', {})
-        content = message.get('content', '')
+        content = message.get('content')
+        if content is None:
+            content = ''
         
         # Return directly if content is already in think/answer format
         if re.search(r'<think>.*?</think>.*?<answer>.*?</answer>', content, re.DOTALL):

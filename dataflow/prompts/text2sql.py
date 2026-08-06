@@ -2,7 +2,6 @@
 A collection of prompts for the text2sql operator.
 '''
 import random
-from re import template
 import numpy as np
 import json
 from typing import List

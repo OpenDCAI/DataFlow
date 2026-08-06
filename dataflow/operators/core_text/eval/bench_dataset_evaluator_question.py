@@ -1,4 +1,3 @@
-from email.policy import strict
 from dataflow.utils.reasoning.AnswerExtraction import StringCleaner, UnitTextManager, AnswerExtractor
 from dataflow.prompts.model_evaluation.general import AnswerJudgePromptQuestion, AnswerJudgeMultipleQuestionsPrompt
 from dataflow.core.prompt import DIYPromptABC
@@ -12,11 +11,9 @@ from math_verify import parse, verify
 from dataflow import get_logger
 from typing import Literal, Union
 import pandas as pd
-import numpy as np
 import time
-import os  # 添加os模块导入
+import os
 import re
-import json
 import json5
 
 @prompt_restrict(
@@ -32,7 +29,8 @@ class BenchDatasetEvaluatorQuestion(OperatorABC):
                 system_prompt: str = "You are a helpful assistant specialized in evaluating answer correctness.",
                 llm_serving: LLMServingABC = None,
                 prompt_template: Union[AnswerJudgePromptQuestion, AnswerJudgeMultipleQuestionsPrompt, DIYPromptABC] = AnswerJudgePromptQuestion,
-                support_subquestions: bool = False
+                support_subquestions: bool = False,
+                keep_all_samples: bool = False,
                 ):
         
         if eval_result_path is None:
@@ -42,6 +40,8 @@ class BenchDatasetEvaluatorQuestion(OperatorABC):
         self.eval_result_path = eval_result_path
         self.compare_method = compare_method
         self.empty_responses_count = 0  # 添加空响应计数器
+        self.keep_all_samples = keep_all_samples
+        self.support_subquestions = support_subquestions
         
         if compare_method == "match":
             self.compare = self.math_verify_compare
@@ -54,7 +54,6 @@ class BenchDatasetEvaluatorQuestion(OperatorABC):
             self.prompt_template = prompt_template
             self.system_prompt = system_prompt
             self.llm_serving = llm_serving
-            self.support_subquestions = support_subquestions
             
         self.logger = get_logger()
     
@@ -135,7 +134,8 @@ class BenchDatasetEvaluatorQuestion(OperatorABC):
                 "- input_test_answer_key：预测答案字段名\n"
                 "- input_gt_answer_key：标准答案字段名\n"
                 "- input_question_key：问题字段名（语义匹配模式下必需）\n"
-                "- compare_method：比较方法（match/semantic）\n\n"
+                "- compare_method：比较方法（match/semantic）\n"
+                "- keep_all_samples：参考答案全部为空时是否保留输入行\n\n"
                 "输出参数：\n"
                 "- answer_match_result：匹配结果（True/False）\n"
                 "- 统计结果将保存到指定的eval_result_path路径\n"
@@ -149,7 +149,8 @@ class BenchDatasetEvaluatorQuestion(OperatorABC):
                 "- input_test_answer_key: Predicted answer field\n"
                 "- input_gt_answer_key: Ground truth field\n"
                 "- input_question_key: Question field (required for semantic mode)\n"
-                "- compare_method: Comparison method (match/semantic)\n\n"
+                "- compare_method: Comparison method (match/semantic)\n"
+                "- keep_all_samples: Preserve input rows when all reference answers are missing\n\n"
                 "Output Parameters:\n"
                 "- answer_match_result: Matching result (True/False)\n"
                 "- Statistics will be saved to the specified eval_result_path\n"
@@ -200,7 +201,129 @@ class BenchDatasetEvaluatorQuestion(OperatorABC):
         self.logger.success(f"Statistics saved to {self.eval_result_path}")
         
         return stats_df
-        
+
+    def _get_required_columns(
+        self,
+        input_test_answer_key: str,
+        input_gt_answer_key: str,
+        input_question_key: str,
+    ) -> list[str]:
+        required_columns = [input_test_answer_key, input_gt_answer_key]
+        if self.compare_method == "semantic":
+            required_columns.append(input_question_key)
+        return required_columns
+
+    def _run_match_evaluation(
+        self,
+        storage: DataFlowStorage,
+        dataframe: pd.DataFrame,
+        required_columns: list[str],
+    ) -> list[str]:
+        for row_index in dataframe.index:
+            answer = dataframe.at[row_index, self.test_answer_key]
+            ground_truth = dataframe.at[row_index, self.gt_answer_key]
+            final_answer = self.answer_extractor.extract_answer(answer, None)
+            dataframe.at[row_index, "answer_match_result"] = self.compare(
+                final_answer,
+                ground_truth,
+            )
+
+        storage.write(dataframe)
+        self.statistic(storage.file_name_prefix, dataframe, self.compare_method)
+        return required_columns + ["answer_match_result"]
+
+    def _build_semantic_inputs(self, valid_rows: pd.DataFrame) -> list[str]:
+        return [
+            self.prompt_template.build_prompt(
+                question=row[self.question_key],
+                answer=row[self.test_answer_key],
+                reference_answer=row[self.gt_answer_key],
+            )
+            for _, row in valid_rows.iterrows()
+        ]
+
+    def _handle_missing_reference_answers(
+        self,
+        storage: DataFlowStorage,
+        dataframe: pd.DataFrame,
+        required_columns: list[str],
+        skipped_count: int,
+    ) -> list[str]:
+        self.logger.warning(
+            "No valid samples with reference answers found. All samples skipped."
+        )
+        output_dataframe = (
+            dataframe if self.keep_all_samples else dataframe.iloc[0:0].copy()
+        )
+        output_file = storage.write(output_dataframe)
+        self.logger.info(
+            f"Dataframe saved to {output_file}. Skipped {skipped_count} samples "
+            "due to missing reference answers."
+        )
+        return required_columns + ["answer_match_result"]
+
+    def _apply_subquestion_results(
+        self,
+        dataframe: pd.DataFrame,
+        valid_rows: pd.DataFrame,
+        responses: list[str],
+        results: list[str],
+    ) -> None:
+        for row_index, response, result in zip(valid_rows.index, responses, results):
+            correct_answer_count, total_subquestions = map(int, result.split("/"))
+            dataframe.at[row_index, "correct_answer_num"] = correct_answer_count
+            dataframe.at[row_index, "total_subquestions"] = total_subquestions
+            dataframe.at[row_index, "answer_match_result"] = (
+                correct_answer_count == total_subquestions and total_subquestions > 0
+            )
+            dataframe.at[row_index, "response_evaluation"] = response
+
+    def _apply_semantic_results(
+        self,
+        dataframe: pd.DataFrame,
+        valid_rows: pd.DataFrame,
+        responses: list[str],
+        results: list,
+    ) -> None:
+        if self.support_subquestions:
+            self._apply_subquestion_results(dataframe, valid_rows, responses, results)
+            return
+
+        for row_index, result in zip(valid_rows.index, results):
+            dataframe.at[row_index, "answer_match_result"] = result
+
+    def _run_semantic_evaluation(
+        self,
+        storage: DataFlowStorage,
+        dataframe: pd.DataFrame,
+        required_columns: list[str],
+    ) -> list[str]:
+        empty_reference_mask = dataframe[self.gt_answer_key].isna() | (
+            dataframe[self.gt_answer_key] == ""
+        )
+        valid_rows = dataframe[~empty_reference_mask]
+        skipped_count = int(empty_reference_mask.sum())
+
+        if valid_rows.empty:
+            return self._handle_missing_reference_answers(
+                storage,
+                dataframe,
+                required_columns,
+                skipped_count,
+            )
+
+        inputs = self._build_semantic_inputs(valid_rows)
+        responses = self.llm_serving.generate_from_input(
+            user_inputs=inputs,
+            system_prompt=self.system_prompt,
+        )
+        results = [self.ResolveResponse(response) for response in responses]
+        self._apply_semantic_results(dataframe, valid_rows, responses, results)
+        storage.write(dataframe)
+        self.statistic(storage.file_name_prefix, dataframe, self.compare_method)
+        self.empty_responses_count = 0
+        return required_columns + ["answer_match_result"]
+
     def run(
             self,
             storage:DataFlowStorage,
@@ -214,91 +337,15 @@ class BenchDatasetEvaluatorQuestion(OperatorABC):
         self.question_key = input_question_key
         
         dataframe = storage.read("dataframe")
-        dataframe['answer_match_result'] = False
-        answers = dataframe[self.test_answer_key]
-        ground_truths = dataframe[self.gt_answer_key]
-    
-        if self.compare_method == "match":
-            if self.check_column(
-                required_columns=[input_test_answer_key,input_gt_answer_key],
-                dataframe=dataframe
-            ) is False:
-                return required_columns
-            
-            for i in range(len(answers)):
-                final_answer =  self.answer_extractor.extract_answer(answers[i], None)
-                if self.compare(final_answer, ground_truths[i]):
-                    dataframe.at[i, 'answer_match_result'] = True
-                else:
-                    dataframe.at[i, 'answer_match_result'] = False
-                    
-            output_file = storage.write(dataframe)
-            
-            # 生成统计信息并直接写入JSON文件
-            stats = self.statistic(storage.file_name_prefix, dataframe, self.compare_method)
-            
-            return [self.test_answer_key, self.gt_answer_key, 'answer_match_result']
-        else:
-            if self.check_column(
-                required_columns=[input_test_answer_key,input_gt_answer_key, input_question_key],
-                dataframe=dataframe
-            ) is False:
-                return required_columns
-            
-            empty_reference_mask = dataframe[input_gt_answer_key].isna() | (dataframe[input_gt_answer_key] == '')
-            skipped_rows = dataframe[empty_reference_mask]
-            valid_rows = dataframe[~empty_reference_mask]
-            skipped_count = len(skipped_rows)
-            
-            if len(valid_rows) == 0:
-                self.logger.warning("No valid samples with reference answers found. All samples skipped.")
-                if self.keep_all_samples:
-                    output_file = storage.write(dataframe)  # 保留所有行，但answer_match_result都为False
-                else:
-                    output_file = storage.write(pd.DataFrame(columns=dataframe.columns))  # 不保留任何行
-                self.logger.info(f"Dataframe saved to {output_file}. Skipped {skipped_count} samples due to missing reference answers.")
-                return required_columns + ['answer_match_result']
-            
-            # 只对有参考答案的行构建提示词并调用LLM
-            inputs = [self.prompt_template.build_prompt(
-                question=row[input_question_key],
-                answer=row[input_test_answer_key],
-                reference_answer=row[input_gt_answer_key]
-            ) for _, row in valid_rows.iterrows()]
-            
-            responses = self.llm_serving.generate_from_input(user_inputs=inputs, system_prompt=self.system_prompt)
-            
-            # if self.support_subquestions:
-            #     # 每个response是一个列表，连接一个长列表，比如[["true", "false"], ["true"]] -> ["true", "false", "true"]
-            #     responses = [item for sublist in responses for item in sublist]
-            
-            results = [self.ResolveResponse(response) for response in responses]
-            
-            # 创建结果掩码，与valid_rows长度相同
-            result_mask = np.array(results, dtype=bool)
-            
-            # 更新有效行的answer_match_result
-            valid_indices = valid_rows.index
-            if not self.support_subquestions:
-                for i, idx in enumerate(valid_indices):
-                    dataframe.at[idx, 'answer_match_result'] = results[i]
-            else:
-                for i, idx in enumerate(valid_indices):
-                    correct_answer_num = int(results[i].split('/')[0])
-                    total_subquestions = int(results[i].split('/')[1])
-                    dataframe.at[idx, 'correct_answer_num'] = correct_answer_num
-                    dataframe.at[idx, 'total_subquestions'] = total_subquestions
-                    dataframe.at[idx, 'answer_match_result'] = (correct_answer_num == total_subquestions) and (total_subquestions > 0)   # 全对为True，否则为False
-                    dataframe.at[idx, 'response_evaluation'] = responses[i]  # 保存LLM的原始响应内容
-                
-            output_file = storage.write(dataframe)
-            
-            # 生成统计信息并直接写入JSON文件
-            stats = self.statistic(storage.file_name_prefix, dataframe, self.compare_method)
-            
-            # 重置空响应计数器
-            self.empty_responses_count = 0
-            
-            return [input_test_answer_key, input_gt_answer_key, input_question_key, 'answer_match_result']
+        required_columns = self._get_required_columns(
+            input_test_answer_key,
+            input_gt_answer_key,
+            input_question_key,
+        )
+        if not self.check_column(required_columns, dataframe):
+            return required_columns
 
-        
+        dataframe["answer_match_result"] = False
+        if self.compare_method == "match":
+            return self._run_match_evaluation(storage, dataframe, required_columns)
+        return self._run_semantic_evaluation(storage, dataframe, required_columns)
