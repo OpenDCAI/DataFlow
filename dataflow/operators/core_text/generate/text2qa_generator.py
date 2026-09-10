@@ -112,32 +112,39 @@ class Text2QAGenerator:
             system_prompt=""
         )
 
-        prompts = []
-        for i, p in enumerate(raw_prompts):
+        if len(raw_prompts) != len(dataframe):
+            raise RuntimeError(
+                f"Prompt response count mismatch: expected {len(dataframe)}, got {len(raw_prompts)}"
+            )
+
+        expanded_indices = []
+        expanded_prompts = []
+        for i, raw_prompt in enumerate(raw_prompts):
             try:
-                prompts.append(json.loads(p))
-            except json.JSONDecodeError:
-                self.logger.warning(f"Failed to parse prompt at index {i}: {p}")
+                prompt_list = json.loads(raw_prompt)
+            except (json.JSONDecodeError, TypeError):
+                self.logger.warning(f"Failed to parse prompt at index {i}: {raw_prompt}")
+                continue
+            if not isinstance(prompt_list, list) or not all(isinstance(p, str) for p in prompt_list):
+                self.logger.warning(f"Expected a list of prompt strings at index {i}: {raw_prompt}")
                 continue
 
-        expanded_rows = []
-        expanded_prompts = []
+            for prompt in prompt_list[:self.input_question_num]:
+                expanded_indices.append(i)
+                expanded_prompts.append(prompt)
 
-        for idx, prompt_list in enumerate(prompts):
-            for p in prompt_list[:min(self.input_question_num,len(prompt_list))]:
-                expanded_rows.append(dataframe.iloc[idx].to_dict())  # 复制该行
-                expanded_prompts.append(p)  # 对应的 prompt
-
-        dataframe = pd.DataFrame(expanded_rows)
+        # Keep original row positions even when earlier responses are invalid.
+        dataframe = dataframe.iloc[expanded_indices].copy().reset_index(drop=True)
         dataframe[self.output_prompt_key] = expanded_prompts
+        dataframe[self.output_question_key] = ""
+        dataframe[self.output_answer_key] = ""
 
-        formatted_prompts = self._build_prompt(dataframe, "qa")
-        responses = self.llm_serving.generate_from_input(user_inputs=formatted_prompts, system_prompt="")
-
-        questions, answers = zip(*[self._parse_qa(r) for r in responses])
-
-        dataframe[self.output_question_key] = questions
-        dataframe[self.output_answer_key] = answers
+        if not dataframe.empty:
+            formatted_prompts = self._build_prompt(dataframe, "qa")
+            responses = self.llm_serving.generate_from_input(user_inputs=formatted_prompts, system_prompt="")
+            questions, answers = zip(*[self._parse_qa(r) for r in responses])
+            dataframe[self.output_question_key] = questions
+            dataframe[self.output_answer_key] = answers
 
         # Filter out rows where QA generation failed (empty question or answer)
         before_count = len(dataframe)
