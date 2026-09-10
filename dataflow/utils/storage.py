@@ -352,6 +352,16 @@ class LazyFileStorage(DataFlowStorage):
 
     # ---------- 落盘 ----------
     def flush_step(self, step: int):
+        if step <= 0:
+            raise ValueError(
+                f"Cannot flush step {step}. LazyFileStorage reserves step 0 for "
+                "the original input source, and negative steps do not identify "
+                "writable outputs. Flushing step 0 could overwrite or reformat "
+                "the user's source file. Only output steps greater than 0 can be "
+                "flushed; pass a positive output step containing data buffered "
+                "by write()."
+            )
+
         with self._lock:
             if step not in self._buffers:
                 self.logger.info(f"No buffer for step {step}; nothing to flush.")
