@@ -84,7 +84,7 @@ class LazyFileStorage(DataFlowStorage):
         file_name_prefix:str="dataflow_cache_step",
         cache_type:Literal["json", "jsonl", "csv", "parquet", "pickle"] = "jsonl",
         save_on_exit: bool = True,        # 进程退出时自动 flush
-        flush_all_steps: bool = False      # True: 所有缓冲步落盘；False: 仅最新一步
+        flush_all_steps: bool = False      # True: 所有脏输出步落盘；False: 仅最新一步
     ):
         """
         Initialize a LazyFileStorage.
@@ -127,8 +127,11 @@ class LazyFileStorage(DataFlowStorage):
                 In restricted environments registering signal handlers may fail silently.
             flush_all_steps (bool, optional):
                 Controls flush_all() behavior:
-                - True: flush_all() persists all buffered steps.
-                - False (default): flush_all() persists only the most recently buffered step.
+                - True: flush_all() persists all dirty output steps.
+                - False (default): flush_all() persists the latest buffered step
+                  only if it is a dirty output.
+                Buffers populated by read(), including the source at step 0,
+                are not rewritten by flush_all().
 
         Returns:
             None
@@ -389,10 +392,13 @@ class LazyFileStorage(DataFlowStorage):
 
     def flush_all(self):
         with self._lock:
-            if not self._buffers:
-                self.logger.info("No buffers to flush.")
+            if not self._dirty_steps:
+                self.logger.info("No dirty buffers to flush.")
                 return
-            steps = sorted(self._buffers.keys()) if self._flush_all_steps else [max(self._buffers.keys())]
+            # Select the latest buffered step before filtering dirty outputs so
+            # repeated flushes do not start persisting older steps in default mode.
+            steps = sorted(self._dirty_steps) if self._flush_all_steps else [max(self._buffers)]
+            steps = [step for step in steps if step > 0 and step in self._dirty_steps]
         for s in steps:
             self.flush_step(s)
 
