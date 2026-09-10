@@ -20,11 +20,11 @@ def source_file(tmp_path):
     return source
 
 
-def make_storage(source_file, flush_all_steps=False):
+def make_storage(source_file, flush_all_steps=False, cache_type="jsonl"):
     return LazyFileStorage(
         str(source_file),
         cache_path=str(source_file.parent / "cache"),
-        cache_type="jsonl",
+        cache_type=cache_type,
         save_on_exit=False,
         flush_all_steps=flush_all_steps,
     )
@@ -148,29 +148,54 @@ def test_flush_step_rejects_source_step(source_file):
     assert source_file.read_bytes() == original
 
 
-def test_compiled_pipeline_can_flush_and_reload_lazy_output(source_file):
-    source_file.write_bytes(b'id,text\r\n1,"HELLO, DataFlow"\r\n')
+@pytest.mark.parametrize("row_count", [0, 1, 2, 17])
+@pytest.mark.parametrize("operator_count", [1, 2, 4])
+def test_compiled_pipelines_of_varied_sizes_flush_and_reload_lazy_output(
+    source_file, row_count, operator_count
+):
+    source_data = pd.DataFrame(
+        {
+            "id": range(row_count),
+            "text": [f"ROW {index}, DataFlow" for index in range(row_count)],
+        }
+    )
+    source_data.to_csv(source_file, index=False)
     original = source_file.read_bytes()
 
     class LowercasePipeline(PipelineABC):
         def __init__(self):
             super().__init__()
-            self.storage = make_storage(source_file)
-            self.lowercase = LowercaseRefiner()
+            self.storage = make_storage(source_file, cache_type="csv")
+            for index in range(operator_count):
+                setattr(self, f"lowercase_{index}", LowercaseRefiner())
 
         def forward(self):
-            self.lowercase.run(storage=self.storage.step(), input_key="text")
+            for index in range(operator_count):
+                operator = getattr(self, f"lowercase_{index}")
+                operator.run(storage=self.storage.step(), input_key="text")
 
     pipeline = LowercasePipeline()
     pipeline.compile()
     pipeline.forward()
     pipeline.storage.flush_all()
 
-    output = Path(pipeline.storage.cache_path) / "dataflow_cache_step_step1.jsonl"
+    output = (
+        Path(pipeline.storage.cache_path)
+        / f"dataflow_cache_step_step{operator_count}.csv"
+    )
     reloaded = LazyFileStorage(str(output), save_on_exit=False).step().read("dict")
 
     assert source_file.read_bytes() == original
-    assert reloaded == [{"id": 1, "text": "hello, dataflow"}]
+    assert reloaded == [
+        {"id": index, "text": f"row {index}, dataflow"}
+        for index in range(row_count)
+    ]
+    for step in range(1, operator_count):
+        intermediate = (
+            Path(pipeline.storage.cache_path)
+            / f"dataflow_cache_step_step{step}.csv"
+        )
+        assert not intermediate.exists()
 
 
 @pytest.mark.parametrize("flush_all_steps", [False, True])
