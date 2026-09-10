@@ -5,6 +5,8 @@ from pathlib import Path
 import pandas as pd
 import pytest
 
+from dataflow.operators.general_text import LowercaseRefiner
+from dataflow.pipeline import PipelineABC
 from dataflow.utils import storage as storage_module
 from dataflow.utils.storage import LazyFileStorage
 
@@ -144,6 +146,31 @@ def test_flush_step_rejects_source_step(source_file):
         storage.flush_step(0)
 
     assert source_file.read_bytes() == original
+
+
+def test_compiled_pipeline_can_flush_and_reload_lazy_output(source_file):
+    source_file.write_bytes(b'id,text\r\n1,"HELLO, DataFlow"\r\n')
+    original = source_file.read_bytes()
+
+    class LowercasePipeline(PipelineABC):
+        def __init__(self):
+            super().__init__()
+            self.storage = make_storage(source_file)
+            self.lowercase = LowercaseRefiner()
+
+        def forward(self):
+            self.lowercase.run(storage=self.storage.step(), input_key="text")
+
+    pipeline = LowercasePipeline()
+    pipeline.compile()
+    pipeline.forward()
+    pipeline.storage.flush_all()
+
+    output = Path(pipeline.storage.cache_path) / "dataflow_cache_step_step1.jsonl"
+    reloaded = LazyFileStorage(str(output), save_on_exit=False).step().read("dict")
+
+    assert source_file.read_bytes() == original
+    assert reloaded == [{"id": 1, "text": "hello, dataflow"}]
 
 
 @pytest.mark.parametrize("flush_all_steps", [False, True])
