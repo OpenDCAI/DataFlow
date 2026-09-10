@@ -973,45 +973,10 @@ class BatchedFileStorage(FileStorage):
         file_path = self._get_cache_file_path(self.operator_step)
         self.logger.info(f"Reading data from {file_path} with type {output_type}")
 
-        if self.operator_step == 0:
-            source = self.first_entry_file_name
-            self.logger.info(f"Reading remote dataset from {source} with type {output_type}")
-            if source.startswith("hf:"):
-                from datasets import load_dataset
-                _, dataset_name, *parts = source.split(":")
-
-                if len(parts) == 1:
-                    config, split = None, parts[0]
-                elif len(parts) == 2:
-                    config, split = parts
-                else:
-                    config, split = None, "train"
-
-                dataset = (
-                    load_dataset(dataset_name, config, split=split) 
-                    if config 
-                    else load_dataset(dataset_name, split=split)
-                )
-                dataframe = dataset.to_pandas()
-                return self._convert_output(dataframe, output_type)
-        
-            elif source.startswith("ms:"):
-                from modelscope import MsDataset
-                _, dataset_name, *split_parts = source.split(":")
-                split = split_parts[0] if split_parts else "train"
-
-                dataset = MsDataset.load(dataset_name, split=split)
-                dataframe = pd.DataFrame(dataset)
-                return self._convert_output(dataframe, output_type)
-                            
-            else:
-                local_cache = file_path.split(".")[-1]
-        else:
-            local_cache = self.cache_type
         if self._dataframe_buffer.get(self.operator_step) is not None:
             dataframe = self._dataframe_buffer[self.operator_step].copy()
         else:
-            dataframe = self._load_local_file(file_path, local_cache)
+            dataframe = super().read(output_type="dataframe")
             self._dataframe_buffer[self.operator_step] = dataframe.copy()
         self.record_count = len(dataframe)
         # 读出当前批次数据
