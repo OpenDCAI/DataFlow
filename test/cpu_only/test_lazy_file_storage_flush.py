@@ -132,6 +132,20 @@ def test_explicit_flush_step_can_persist_an_older_output(source_file):
     ]
 
 
+def test_flush_step_rejects_source_step(source_file):
+    original = source_file.read_bytes()
+    storage = make_storage(source_file)
+    assert storage.step().read("dict") == [{"id": 1, "text": "original, text"}]
+
+    with pytest.raises(
+        ValueError,
+        match=r"Cannot flush step 0.*original input source.*greater than 0",
+    ):
+        storage.flush_step(0)
+
+    assert source_file.read_bytes() == original
+
+
 @pytest.mark.parametrize("flush_all_steps", [False, True])
 def test_latest_output_can_be_updated_after_flushing(source_file, flush_all_steps):
     original = source_file.read_bytes()
