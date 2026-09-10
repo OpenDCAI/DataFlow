@@ -137,7 +137,8 @@ class ChunkedPromptedGenerator(OperatorABC):
                     idx += num_chunks
 
         for (i, row), gen_results in zip(dataframe.iterrows(), all_generated_results):
-            output_path = row[input_path_key].split('.')[0] + '_llm_output.txt'
+            source_path = Path(row[input_path_key])
+            output_path = str(source_path.with_name(f'{source_path.stem}_llm_output.txt'))
             with open(output_path, 'w', encoding='utf-8') as f:
                 f.write(self.separator.join(gen_results))
             dataframe.at[i, output_path_key] = output_path
