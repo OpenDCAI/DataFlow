@@ -45,8 +45,12 @@ class MinHashDeduplicateFilter(OperatorABC):
     def create_minhash(self, data):
         minhash = MinHash(num_perm=self.num_perm)
         if self.use_n_gram:
-            for i in range(len(data) - self.n_gram + 1):
-                minhash.update(data[i:i + self.n_gram].encode('utf8'))
+            if 0 < len(data) < self.n_gram:
+                # A non-empty text shorter than n still needs a distinguishing shingle.
+                minhash.update(data.encode('utf8'))
+            else:
+                for i in range(len(data) - self.n_gram + 1):
+                    minhash.update(data[i:i + self.n_gram].encode('utf8'))
         else:
             for d in data:
                 minhash.update(d.encode('utf8'))
