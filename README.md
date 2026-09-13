@@ -21,12 +21,13 @@
 [![PyPI - Python Version](https://img.shields.io/pypi/pyversions/open-dataflow)](https://pypi.org/project/open-dataflow/)
 [![PyPI - Downloads](https://img.shields.io/pypi/dm/open-dataflow?style=flat&logo=python)](https://pypistats.org/packages/open-dataflow)
 [![Downloads](https://static.pepy.tech/badge/open-dataflow)](https://pepy.tech/project/open-dataflow)
+[![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/OpenDCAI/DataFlow)
 
 [![Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/drive/1haosl2QS4N4HM7u7HvSsz_MnLabxexXl?usp=sharing)
 [![Docker](https://img.shields.io/badge/Docker-Ready-blue?logo=docker)](https://hub.docker.com/r/molyheci/dataflow)
 [![Documents](https://img.shields.io/badge/Documentation-Click_here-brightgreen?logo=read-the-docs)](https://OpenDCAI.github.io/DataFlow-Doc/)
 [![Arxiv](https://img.shields.io/badge/Technical_Report-2512.16676-b31b1b.svg?logo=arxiv)](https://arxiv.org/abs/2512.16676)
-[![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/OpenDCAI/DataFlow)
+[![SIGMOD 2027](https://img.shields.io/badge/ACM_SIGMOD_2027-Accepted-success)](https://2027.sigmod.org/)
 
 
 [![Discord Online](https://img.shields.io/discord/1479323317096939551?logo=discord&label=discord&color=%235966F0)](https://discord.gg/e4mKEaFptu)
@@ -65,6 +66,9 @@ Turn raw data into high-quality LLM training datasets.🔧
 
 
 ## 📰 0. News
+
+* **[2026-09-12] 🎉 DataFlow has been accepted by ACM SIGMOD 2027!**
+  Our paper, *DataFlow: An LLM-Driven Framework for Unified Data Preparation and Workflow Automation in the Era of Data-Centric AI*, has been accepted by **ACM SIGMOD 2027**.
 * **[2026-07-18] DataFlow-Harness Released!** 🔥[DataFlow-Harness](https://huggingface.co/papers/2607.16617) lets coding agents build DataFlow pipelines for you. Download and installation entry points are available in [DataFlow-WebUI](https://github.com/OpenDCAI/DataFlow-WebUI), where you can use DataFlow through either the visual interface or MCP.
 * **[2026-05-22] DataFlow-Skills is now available!**
   A collection of skills and tutorials for working with DataFlow. 👉 [DataFlow-Skills](https://github.com/OpenDCAI/DataFlow-Skills)
@@ -525,6 +529,7 @@ Our team has published the following papers that form core components of the Dat
 
 | Paper Title                                                                                                             | DataFlow Component                                                                            | Venue | Year |
 | ----------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------- | ----- | ---- |
+| [DataFlow: An LLM-Driven Framework for Unified Data Preparation and Workflow Automation in the Era of Data-Centric AI](https://arxiv.org/abs/2512.16676) | Unified data preparation and workflow automation | ACM SIGMOD / PACMMOD | 2027 |
 | [AgenticRAGTracer: A Clear and Stepwise-Process Benchmark for Agentic RAG](https://arxiv.org/abs/2602.19127v1) | Agentic RAG Data Synthesis | ACL Findings  | 2026 |
 | [Text2SQL-Flow: A Robust SQL-Aware Data Augmentation Framework for Text-to-SQL](https://arxiv.org/abs/2505.13903)  | Text2SQL Data Augmentation   | ICDE   | 2026 |
 | [Let&#39;s Verify Math Questions Step by Step](https://arxiv.org/abs/2505.13903)                                           | Math question quality evaluation                                                              | KDD   | 2026 |
@@ -589,7 +594,7 @@ Join the DataFlow open-source community to ask questions, share ideas, and colla
 
 ## 📜 14. Citation
 
-If you use DataFlow in your research, feel free to give us a cite.
+The DataFlow paper has been accepted for publication in the **Proceedings of the ACM on Management of Data (PACMMOD)** and presentation at **ACM SIGMOD 2027**. Until the official ACM citation becomes available, please cite the arXiv version:
 
 ```bibtex
 @article{liang2025dataflow,

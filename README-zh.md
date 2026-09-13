@@ -19,12 +19,13 @@
 [![PyPI - Python Version](https://img.shields.io/pypi/pyversions/open-dataflow)](https://pypi.org/project/open-dataflow/)
 [![PyPI - Downloads](https://img.shields.io/pypi/dm/open-dataflow?style=flat&logo=python)](https://pypistats.org/packages/open-dataflow)
 [![Downloads](https://static.pepy.tech/badge/open-dataflow)](https://pepy.tech/project/open-dataflow)
+[![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/OpenDCAI/DataFlow)
 
 [![Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/drive/1haosl2QS4N4HM7u7HvSsz_MnLabxexXl?usp=sharing)
 [![Docker](https://img.shields.io/badge/Docker-Ready-blue?logo=docker)](https://hub.docker.com/r/molyheci/dataflow)
 [![Documents](https://img.shields.io/badge/官方文档-单击此处-brightgreen?logo=read-the-docs)](https://OpenDCAI.github.io/DataFlow-Doc/)
 [![Arxiv](https://img.shields.io/badge/技术报告-2512.16676-b31b1b.svg?logo=arxiv)](https://arxiv.org/abs/2512.16676)
-[![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/OpenDCAI/DataFlow)
+[![SIGMOD 2027](https://img.shields.io/badge/ACM_SIGMOD_2027-Accepted-success)](https://2027.sigmod.org/)
 
 
 [![Discord Online](https://img.shields.io/discord/1479323317096939551?logo=discord&label=discord&color=%235966F0)](https://discord.gg/e4mKEaFptu)
@@ -47,6 +48,9 @@
 </div>
 
 ## 📰 0. 新闻
+
+* **[2026-09-12] 🎉 DataFlow 论文被 ACM SIGMOD 2027 录用！**
+  我们的论文 *DataFlow: An LLM-Driven Framework for Unified Data Preparation and Workflow Automation in the Era of Data-Centric AI* 已被 **ACM SIGMOD 2027** 录用。
 * **[2026-07-18] 🔥 DataFlow-Harness 正式发布！** 通过 [DataFlow-Harness](https://huggingface.co/papers/2607.16617)，可以使用 Coding Agent 搭建 DataFlow pipeline。安装与使用入口在 [DataFlow-WebUI](https://github.com/OpenDCAI/DataFlow-WebUI)，同时支持可视化画布与 MCP 管理 pipeline。
 * **[2026-05-22] DataFlow-Skills 正式发布！**
   一个专门为 DataFlow 用户设计的skills和教程集合。👉 [DataFlow-Skills](https://github.com/OpenDCAI/DataFlow-Skills)
@@ -511,6 +515,7 @@ dataflow webui
 
 | 论文题目 | DataFlow 组件 | 会议/期刊 | 年份 |
 | --- | --- | --- | --- |
+| [DataFlow: An LLM-Driven Framework for Unified Data Preparation and Workflow Automation in the Era of Data-Centric AI](https://arxiv.org/abs/2512.16676) | 统一数据准备与工作流自动化框架 | ACM SIGMOD / PACMMOD | 2027 |
 | [AgenticRAGTracer: A Clear and Stepwise-Process Benchmark for Agentic RAG](https://arxiv.org/abs/2602.19127v1) | Agentic RAG 数据合成 | ACL Findings  | 2026 |
 | [Text2SQL-Flow: A Robust SQL-Aware Data Augmentation Framework for Text-to-SQL](https://arxiv.org/abs/2505.13903) | Text2SQL 数据增强 | ICDE | 2026 |
 | [Let's Verify Math Questions Step by Step](https://arxiv.org/abs/2505.13903) | 数学问题质量评估 | KDD | 2026 |
@@ -582,7 +587,7 @@ dataflow webui
 
 ## 📜 14. 引用
 
-如果您在研究中使用了 DataFlow，请随时引用我们。
+DataFlow 论文已被 **ACM SIGMOD 2027** 录用，将发表于 **Proceedings of the ACM on Management of Data (PACMMOD)**。在 ACM 正式引用信息发布前，请暂时引用 arXiv 版本：
 
 ```bibtex
 @article{liang2025dataflow,
