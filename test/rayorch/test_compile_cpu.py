@@ -10,10 +10,17 @@ Run:
 from __future__ import annotations
 
 import os
+import sys
 
 import numpy as np
 import pandas as pd
 import pytest
+
+if sys.version_info < (3, 11):
+    pytest.skip(
+        "RayOrch 0.1.0 requires Python 3.11 or newer",
+        allow_module_level=True,
+    )
 
 from dataflow.pipeline.Pipeline import (
     BatchedPipelineABC,

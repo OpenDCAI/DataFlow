@@ -1,5 +1,5 @@
 [build-system]
-requires = ["setuptools>=77", "wheel"]
+requires = ["setuptools>=61", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
@@ -11,12 +11,13 @@ authors = [
 description = "Modern Data Centric AI system for Large Language Models"
 readme = {file = "README.md", content-type = "text/markdown"}
 requires-python = ">=3.7, <4"
-license = "Apache-2.0"
+license = {text = "Apache-2.0"}
 classifiers = [
     "Development Status :: 3 - Alpha",
     "Intended Audience :: Developers",
     "Intended Audience :: Science/Research",
     "Topic :: Scientific/Engineering :: Artificial Intelligence",
+    "License :: Free For Educational Use",
     "Programming Language :: Python :: 3",
     # "Programming Language :: Python :: 3.7",
     # "Programming Language :: Python :: 3.8",
@@ -52,7 +53,7 @@ dependencies = {file = "requirements.txt"}
 
 
 [project.optional-dependencies]
-test = ["flask", "setuptools<=81.0.0", "rayorch==0.1.0"] # https://setuptools.pypa.io/en/latest/pkg_resources.html & https://github.com/dgtlmoon/changedetection.io/pull/2424
+test = ["flask", "setuptools<=81.0.0", "rayorch==0.1.0; python_version >= '3.11'"] # https://setuptools.pypa.io/en/latest/pkg_resources.html & https://github.com/dgtlmoon/changedetection.io/pull/2424
 vllm =["vllm>=0.7.0,<=0.9.2", "numpy<2.0.0"]
 vllm07 = ["vllm<0.8", "numpy<2.0.0"]
 vllm08 = ["vllm<0.9"]
