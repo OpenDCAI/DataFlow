@@ -533,7 +533,7 @@ def test_auto_shutdown_pipeline_abc(ray_env, test_data):
     assert len(df) == N_ROWS
 
     for node in _get_ray_op_nodes(pipe):
-        assert node.op_obj._module is None, (
+        assert node.op_obj._executor is None, (
             f"{node.op_name} was not auto-shutdown after compiled forward"
         )
 
@@ -556,7 +556,7 @@ def test_auto_shutdown_batched(ray_env, test_data):
     assert len(df) == N_ROWS
 
     for node in _get_ray_op_nodes(pipe):
-        assert node.op_obj._module is None, (
+        assert node.op_obj._executor is None, (
             f"{node.op_name} was not auto-shutdown after compiled forward"
         )
 
@@ -579,6 +579,6 @@ def test_auto_shutdown_stream_batched(ray_env, test_data):
     assert len(df) == N_ROWS
 
     for node in _get_ray_op_nodes(pipe):
-        assert node.op_obj._module is None, (
+        assert node.op_obj._executor is None, (
             f"{node.op_name} was not auto-shutdown after compiled forward"
         )
