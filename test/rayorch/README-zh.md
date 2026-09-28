@@ -56,7 +56,7 @@ Actor 在首次 `run()` 时**懒加载**创建，pipeline compile 阶段不会�
 pip install -e .
 
 # 或仅额外安装 RayOrch
-pip install rayorch==0.1.0
+pip install "rayorch>=0.1.1,<0.2"
 ```
 
 RayOrch 加速功能要求 Python 3.11 或更高版本；未安装可选 `ray` extra 时，
