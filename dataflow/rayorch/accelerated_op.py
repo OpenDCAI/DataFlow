@@ -1,7 +1,8 @@
 from __future__ import annotations
 
 import inspect
-from typing import Any, Generic, Optional, Protocol, Type, ParamSpec
+import math
+from typing import Any, Generic, Mapping, Optional, Protocol, Type, ParamSpec
 
 import pandas as pd
 
@@ -36,21 +37,58 @@ class _OperatorProto(Protocol[_INITP, _RUNP]):
 class _OpRunner:
     """Actor-side worker: each replica holds an independent operator instance.
 
-    Receives a chunk of records (``list[dict]``), wraps it in
-    :class:`InMemoryStorage`, delegates to the DataFlow operator's ``run``,
-    and returns the result as ``list[dict]``.
+    Receives logical record groups, runs each group through
+    :class:`InMemoryStorage`, and returns one output group per input group.
     """
 
     def __init__(self, op_cls: type, op_init_args: tuple, op_init_kwargs: dict):
         self.op = op_cls(*op_init_args, **op_init_kwargs)
 
-    def run(self, records: list[dict], run_params: dict) -> list[dict]:
-        if not records:
-            return []
-        df = pd.DataFrame(records)
-        storage = InMemoryStorage(df)
-        self.op.run(storage, *run_params.get("args", ()), **run_params.get("kwargs", {}))
-        return storage.result.to_dict("records")
+    def run(
+        self,
+        record_groups: list[list[dict]],
+        run_params: list[dict],
+    ) -> list[list[dict]]:
+        outputs = []
+        for records, params in zip(record_groups, run_params, strict=True):
+            storage = InMemoryStorage(pd.DataFrame(records))
+            self.op.run(storage, *params["args"], **params["kwargs"])
+            outputs.append(storage.result.to_dict("records"))
+        return outputs
+
+
+def _build_operator_pipeline(
+    op_cls: type,
+    op_init_args: tuple,
+    op_init_kwargs: dict,
+    *,
+    replicas: int,
+    num_gpus_per_replica: float,
+    runtime_env: Mapping[str, Any] | None,
+):
+    """Build the RayOrch pipeline only when the optional dependency is used."""
+
+    from rayorch import Pipeline, RayModule
+
+    class OperatorPipeline(Pipeline):
+        def __init__(self) -> None:
+            options: dict[str, Any] = {
+                "replicas": replicas,
+                "batch_size": 1,
+                "num_gpus": num_gpus_per_replica,
+            }
+            if runtime_env is not None:
+                options["runtime_env"] = dict(runtime_env)
+            self.operator = (
+                RayModule(_OpRunner)
+                .pre_init(op_cls, op_init_args, op_init_kwargs)
+                .ray_options(**options)
+            )
+
+        def forward(self, records, run_params):
+            return self.operator(records, run_params)
+
+    return OperatorPipeline()
 
 
 class RayAcceleratedOperator(OperatorABC, Generic[_INITP, _RUNP]):
@@ -81,7 +119,13 @@ class RayAcceleratedOperator(OperatorABC, Generic[_INITP, _RUNP]):
         Fractional GPU allocation per replica (e.g. ``0.25`` to share one
         GPU across four replicas).
     env:
-        Optional RayOrch ``EnvRegistry`` key for a custom ``runtime_env``.
+        Backward-compatible shorthand for ``runtime_env={"conda": env}``.
+    batch_size:
+        Maximum rows passed to one actor call. By default each input is
+        divided evenly across replicas, matching the previous contiguous-shard
+        behavior.
+    runtime_env:
+        Optional Ray ``runtime_env`` forwarded to every actor.
 
     Example
     -------
@@ -106,15 +150,32 @@ class RayAcceleratedOperator(OperatorABC, Generic[_INITP, _RUNP]):
         replicas: int = 1,
         num_gpus_per_replica: float = 0.0,
         env: Optional[str] = None,
+        batch_size: int | None = None,
+        runtime_env: Mapping[str, Any] | None = None,
     ):
         super().__init__()
+        if type(replicas) is not int or replicas <= 0:
+            raise ValueError("replicas must be a positive integer")
+        if batch_size is not None and (
+            type(batch_size) is not int or batch_size <= 0
+        ):
+            raise ValueError("batch_size must be a positive integer or None")
+        if num_gpus_per_replica < 0:
+            raise ValueError("num_gpus_per_replica cannot be negative")
         self._op_cls = op_cls
         self._op_init_args: tuple = ()
         self._op_init_kwargs: dict = {}
         self._replicas = replicas
+        self._batch_size = batch_size
         self._num_gpus_per_replica = num_gpus_per_replica
-        self._env = env
-        self._module = None  # created lazily
+        if env is not None and runtime_env is not None:
+            raise ValueError("pass env or runtime_env, not both")
+        self._runtime_env = (
+            {"conda": env}
+            if env is not None
+            else None if runtime_env is None else dict(runtime_env)
+        )
+        self._executor = None  # Created lazily and reused across run() calls.
 
         # PipelineABC.compile() compatibility:
         # compile() → AutoOP uses inspect.signature(operator.run) to bind()
@@ -140,22 +201,21 @@ class RayAcceleratedOperator(OperatorABC, Generic[_INITP, _RUNP]):
         return self
 
     def _ensure_initialized(self) -> None:
-        if self._module is not None:
+        if self._executor is not None:
             return
-        from rayorch import Dispatch, RayModule
+        from rayorch import Executor
 
-        self._module = RayModule(
-            _OpRunner,
+        pipeline = _build_operator_pipeline(
+            self._op_cls,
+            self._op_init_args,
+            self._op_init_kwargs,
             replicas=self._replicas,
             num_gpus_per_replica=self._num_gpus_per_replica,
-            dispatch_mode=Dispatch.SHARD_CONTIGUOUS,
-            env=self._env,
+            runtime_env=self._runtime_env,
         )
-        self._module.pre_init(
-            op_cls=self._op_cls,
-            op_init_args=self._op_init_args,
-            op_init_kwargs=self._op_init_kwargs,
-        )
+        # DataFlow may invoke one operator repeatedly, so keep the Executor
+        # alive instead of using Pipeline.run(), which is intentionally one-shot.
+        self._executor = Executor(pipeline)
 
     # --- inner signature propagation ---
 
@@ -214,27 +274,43 @@ class RayAcceleratedOperator(OperatorABC, Generic[_INITP, _RUNP]):
         *args: _RUNP.args,
         **kwargs: _RUNP.kwargs,
     ) -> None:
-        self._ensure_initialized()
         df = storage.read("dataframe")
+        if df.empty:
+            storage.write(df.copy())
+            return
         records: list[dict] = df.to_dict("records")
+        chunk_size = self._batch_size or max(
+            1,
+            math.ceil(len(records) / self._replicas),
+        )
+        record_groups = [
+            records[start : start + chunk_size]
+            for start in range(0, len(records), chunk_size)
+        ]
+        self._ensure_initialized()
         run_params: dict = {"args": args, "kwargs": kwargs}
-        result_records = self._module(records, run_params)
-        storage.write(pd.DataFrame(result_records))
+        result = self._executor.run(
+            record_groups,
+            [run_params] * len(record_groups),
+        )
+        output_records = [
+            record
+            for group in result.outputs
+            for record in group
+        ]
+        storage.write(pd.DataFrame(output_records))
 
     # --- lifecycle helpers ---
 
     def shutdown(self) -> None:
         """Terminate all Ray actors held by this operator."""
-        if self._module is None:
+        if self._executor is None:
             return
-        import ray
-
-        for actor in self._module.actors:
-            ray.kill(actor)
-        self._module = None
+        self._executor.close()
+        self._executor = None
 
     def __repr__(self) -> str:
-        state = "initialized" if self._module is not None else "lazy"
+        state = "initialized" if self._executor is not None else "lazy"
         return (
             f"RayAcceleratedOperator({self._op_cls.__name__}, "
             f"replicas={self._replicas}, state={state})"

@@ -59,8 +59,11 @@ compilation does not trigger model loading.
 pip install -e .
 
 # Or install RayOrch separately
-pip install rayorch==0.0.1
+pip install "rayorch>=0.1.1,<0.2"
 ```
+
+RayOrch acceleration requires Python 3.11 or newer. Other DataFlow features
+remain importable without installing the optional `ray` extra.
 
 ## Test Files
 
