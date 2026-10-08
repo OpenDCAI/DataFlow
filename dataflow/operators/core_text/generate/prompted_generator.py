@@ -57,7 +57,7 @@ class PromptedGenerator(OperatorABC):
 
     def run(self, storage: DataFlowStorage, input_key: str = "raw_content", output_key: str = "generated_content"):
         self.input_key, self.output_key = input_key, output_key
-        self.logger.info("Running PromptGenerator...")
+        self.logger.info("Running PromptedGenerator...")
 
         # Load the raw dataframe from the input file
         dataframe = storage.read('dataframe')
@@ -65,13 +65,15 @@ class PromptedGenerator(OperatorABC):
 
         # Create a list to hold all generated questions and answers
         llm_inputs = []
+        valid_positions = []
 
         # Prepare LLM inputs by formatting the prompt with raw content from the dataframe
-        for index, row in dataframe.iterrows():
+        for position, (_, row) in enumerate(dataframe.iterrows()):
             raw_content = row.get(self.input_key, '')
             if raw_content:
                 llm_input = self.user_prompt + str(raw_content)
                 llm_inputs.append(llm_input)
+                valid_positions.append(position)
         
         # Generate the text using the model
         try:
@@ -82,8 +84,16 @@ class PromptedGenerator(OperatorABC):
             self.logger.error(f"Error during text generation: {e}")
             return
 
-        # Add the generated content back to the dataframe
-        dataframe[self.output_key] = generated_outputs
+        if len(generated_outputs) != len(valid_positions):
+            raise RuntimeError(
+                f"Response count mismatch: expected {len(valid_positions)}, got {len(generated_outputs)}"
+            )
+
+        # Add the generated content back to the dataframe, keeping skipped rows empty
+        aligned_outputs = [""] * len(dataframe)
+        for position, output in zip(valid_positions, generated_outputs):
+            aligned_outputs[position] = output
+        dataframe[self.output_key] = aligned_outputs
 
         # Save the updated dataframe to the output file
         output_file = storage.write(dataframe)

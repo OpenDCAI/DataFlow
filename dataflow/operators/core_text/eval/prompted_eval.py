@@ -78,11 +78,13 @@ class PromptedEvaluator(OperatorABC):
 
     def eval(self, dataframe, input_key):
         llm_inputs = []
-        for index, row in dataframe.iterrows():
+        valid_positions = []
+        for position, (_, row) in enumerate(dataframe.iterrows()):
             raw_content = row.get(input_key, '')
             if raw_content:
                 llm_input = self.system_prompt + str(raw_content) + 'Please only output the score!'
                 llm_inputs.append(llm_input)
+                valid_positions.append(position)
         
         try:
             self.logger.info("Generating text using the model...")
@@ -92,10 +94,20 @@ class PromptedEvaluator(OperatorABC):
         except Exception as e:
             self.logger.error(f"Error during text generation: {e}")
             return
-        return scores
+
+        if len(scores) != len(valid_positions):
+            raise RuntimeError(
+                f"Response count mismatch: expected {len(valid_positions)}, got {len(scores)}"
+            )
+
+        # Empty rows take _parse_scores' failure value so callers get one score per row.
+        aligned_scores = [0] * len(dataframe)
+        for position, score in zip(valid_positions, scores):
+            aligned_scores[position] = score
+        return aligned_scores
 
     def run(self, storage: DataFlowStorage, input_key: str = "raw_content", output_key: str = "eval"):
-        self.logger.info("Running PromptGenerator...")
+        self.logger.info("Running PromptedEvaluator...")
 
         # Load the raw dataframe from the input file
         dataframe = storage.read('dataframe')

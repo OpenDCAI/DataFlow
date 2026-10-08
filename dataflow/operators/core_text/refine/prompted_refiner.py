@@ -32,7 +32,7 @@ class PromptedRefiner(OperatorABC):
                 "- 无返回值（结果已通过 DataFlowStorage 写出）\n"
                 "\n备注：\n"
                 "- 该算子**覆盖** input_key 列；若需保留原文，建议先拷贝到新列。\n"
-                "- 期望每行在 input_key 列提供可用文本；空值将不会生成对应输入，如与行数不匹配可能导致赋值报错。"
+                "- input_key 为空/缺失的行不会送入模型，其原文本保持不变。"
             )
         elif lang == "en":
             return (
@@ -48,8 +48,7 @@ class PromptedRefiner(OperatorABC):
                 "- No return value (the result is written via DataFlowStorage)\n"
                 "\nNotes:\n"
                 "- This operator **overwrites** the input_key column; copy it first if you need to keep originals.\n"
-                "- Each row is expected to provide text in input_key; missing/empty rows won’t form inputs, which may cause "
-                "length-mismatch errors on assignment."
+                "- Rows whose input_key value is empty or missing are not sent to the model and keep their original text."
             )
         else:
             return (
@@ -59,7 +58,7 @@ class PromptedRefiner(OperatorABC):
 
     def run(self, storage: DataFlowStorage, input_key: str = "raw_content"):
         self.input_key = input_key
-        self.logger.info("Running PromptGenerator...")
+        self.logger.info("Running PromptedRefiner...")
 
         # Load the raw dataframe from the input file
         dataframe = storage.read('dataframe')
@@ -67,13 +66,15 @@ class PromptedRefiner(OperatorABC):
 
         # Create a list to hold all generated questions and answers
         llm_inputs = []
+        valid_positions = []
 
         # Prepare LLM inputs by formatting the prompt with raw content from the dataframe
-        for index, row in dataframe.iterrows():
+        for position, (_, row) in enumerate(dataframe.iterrows()):
             raw_content = row.get(self.input_key, '')
             if raw_content:
                 llm_input = self.system_prompt + str(raw_content)
                 llm_inputs.append(llm_input)
+                valid_positions.append(position)
         
         # Generate the text using the model
         try:
@@ -84,8 +85,16 @@ class PromptedRefiner(OperatorABC):
             self.logger.error(f"Error during text generation: {e}")
             return
 
-        # Add the generated content back to the dataframe
-        dataframe[self.input_key] = generated_outputs
+        if len(generated_outputs) != len(valid_positions):
+            raise RuntimeError(
+                f"Response count mismatch: expected {len(valid_positions)}, got {len(generated_outputs)}"
+            )
+
+        # Add the generated content back to the dataframe; skipped rows keep their original text
+        aligned_outputs = dataframe[self.input_key].tolist()
+        for position, output in zip(valid_positions, generated_outputs):
+            aligned_outputs[position] = output
+        dataframe[self.input_key] = aligned_outputs
 
         # Save the updated dataframe to the output file
         output_file = storage.write(dataframe)
