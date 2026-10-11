@@ -123,7 +123,7 @@ class LiteLLMServing(LLMServingABC):
             model_name: Model name to switch to
             key_name_of_api_key: New environment variable name for API key (optional)
             api_url: New API base URL (optional)
-            api_version: API version (optional)
+            api_version: New API version (optional)
             **kwargs: Additional parameters for the new model
         """
         # Update model
