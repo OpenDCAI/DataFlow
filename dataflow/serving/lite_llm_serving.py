@@ -123,7 +123,7 @@ class LiteLLMServing(LLMServingABC):
             model_name: Model name to switch to
             key_name_of_api_key: New environment variable name for API key (optional)
             api_url: New API base URL (optional)
-            api_version: New API version (optional)
+            api_version: API version (optional)
             **kwargs: Additional parameters for the new model
         """
         # Update model
@@ -378,7 +378,7 @@ class LiteLLMServing(LLMServingABC):
         if not texts:
             return []
         
-        embeddings = []
+        embeddings = [[] for _ in texts]
         
         # Prepare embedding parameters
         embedding_params = {
@@ -420,16 +420,17 @@ class LiteLLMServing(LLMServingABC):
         
         # Process in batches for better performance
         with ThreadPoolExecutor(max_workers=self.max_workers) as executor:
-            futures = [executor.submit(embed_with_retry, text) for text in texts]
+            future_to_index = {
+                executor.submit(embed_with_retry, text): idx
+                for idx, text in enumerate(texts)
+            }
             
-            for future in tqdm(as_completed(futures), total=len(futures), desc="Generating embeddings"):
+            for future in tqdm(as_completed(future_to_index), total=len(future_to_index), desc="Generating embeddings"):
+                idx = future_to_index[future]
                 try:
-                    embedding = future.result()
-                    embeddings.append(embedding)
+                    embeddings[idx] = future.result()
                 except Exception as e:
                     self.logger.error(f"Failed to generate embedding: {e}")
-                    # Return empty embedding for failed cases to maintain list structure
-                    embeddings.append([])
         
         return embeddings
     
