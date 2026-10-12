@@ -357,7 +357,7 @@ def pdf2model_init(cache: Path = typer.Option(Path("."),
 
     try:
         from dataflow.cli_funcs.cli_pdf import cli_pdf2model_init  # type: ignore
-        cli_pdf2model_init(
+        ok = cli_pdf2model_init(
             cache_path=str(cache),
             qa_type=qa,
             model_name=model,
@@ -365,6 +365,8 @@ def pdf2model_init(cache: Path = typer.Option(Path("."),
         )
     except Exception as e:
         _echo(f"pdf2model init error: {e}", "red")
+        raise typer.Exit(code=1)
+    if not ok:
         raise typer.Exit(code=1)
 
 
@@ -375,9 +377,11 @@ def pdf2model_train(cache: Path = typer.Option(Path("."), help="Cache dir"),
     try:
         from dataflow.cli_funcs.cli_pdf import cli_pdf2model_train  # type: ignore
         lf = str(lf_yaml) if lf_yaml else f"{cache}/.cache/train_config.yaml"
-        cli_pdf2model_train(lf_yaml=lf, cache_path=str(cache))
+        ok = cli_pdf2model_train(lf_yaml=lf, cache_path=str(cache))
     except Exception as e:
         _echo(f"pdf2model train error: {e}", "red")
+        raise typer.Exit(code=1)
+    if not ok:
         raise typer.Exit(code=1)
 
 
@@ -390,9 +394,11 @@ app.add_typer(text_app, name="text2model")
 def text2model_init(cache: Path = typer.Option(Path("."), help="Cache dir")):
     try:
         from dataflow.cli_funcs.cli_text import cli_text2model_init  # type: ignore
-        cli_text2model_init(cache_path=str(cache))
+        ok = cli_text2model_init(cache_path=str(cache))
     except Exception as e:
         _echo(f"text2model init error: {e}", "red")
+        raise typer.Exit(code=1)
+    if not ok:
         raise typer.Exit(code=1)
 
 
@@ -403,9 +409,11 @@ def text2model_train(input_dir: Path = typer.Argument(Path("."), help="Input dir
     try:
         from dataflow.cli_funcs.cli_text import cli_text2model_train  # type: ignore
         lf = str(lf_yaml) if lf_yaml else "./.cache/train_config.yaml"
-        cli_text2model_train(input_keys=input_keys, lf_yaml=lf, input_dir=str(input_dir))
+        ok = cli_text2model_train(input_keys=input_keys, lf_yaml=lf, input_dir=str(input_dir))
     except Exception as e:
         _echo(f"text2model train error: {e}", "red")
+        raise typer.Exit(code=1)
+    if not ok:
         raise typer.Exit(code=1)
 
 
