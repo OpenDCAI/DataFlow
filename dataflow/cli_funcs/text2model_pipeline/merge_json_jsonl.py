@@ -22,7 +22,7 @@ def extract_text_from_json(json_file_path):
                         if text_content:
                             texts.append(text_content)
                     except json.JSONDecodeError as e:
-                        print(f"  ⚠️  Warning: Invalid JSON at line {line_num} in {json_file_path}: {e}")
+                        print(f"  [WARN] Invalid JSON at line {line_num} in {json_file_path}: {e}")
                         continue
                 return texts
             else:
@@ -32,7 +32,7 @@ def extract_text_from_json(json_file_path):
                 return [text_content] if text_content else []
 
     except Exception as e:
-        print(f"  ❌ Error reading {json_file_path}: {e}")
+        print(f"  [ERROR] Error reading {json_file_path}: {e}")
         return []
 
 
@@ -114,7 +114,7 @@ def create_text_files(json_files, cache_path_obj):
         text_contents = extract_text_from_json(json_file)
 
         if not text_contents:
-            print(f"  ⚠️  No valid text content found in {json_file}")
+            print(f"  [WARN] No valid text content found in {json_file}")
             continue
 
         # 为每个文本内容创建文件
@@ -125,7 +125,7 @@ def create_text_files(json_files, cache_path_obj):
             # 最终验证文本（最小验证）
             final_text = validate_and_clean_text(text_content)
             if not final_text:
-                print(f"  ⚠️  Text content failed validation")
+                print("  [WARN] Text content failed validation")
                 continue
 
             # 创建文本文件名
@@ -143,15 +143,15 @@ def create_text_files(json_files, cache_path_obj):
                 if verify_text_file(temp_file):
                     text_paths.append(str(temp_file))
                     processed_count += 1
-                    print(f"  ✅ Created: {temp_file.name} ({len(final_text)} chars)")
+                    print(f"  [OK] Created: {temp_file.name} ({len(final_text)} chars)")
                 else:
-                    print(f"  ❌ Failed validation: {temp_file.name}")
+                    print(f"  [ERROR] Failed validation: {temp_file.name}")
                     temp_file.unlink()  # 删除无效文件
 
             except Exception as e:
-                print(f"  ❌ Error creating {temp_file}: {e}")
+                print(f"  [ERROR] Error creating {temp_file}: {e}")
 
-    print(f"\n✅ Successfully processed {processed_count} text contents from {len(json_files)} JSON files")
+    print(f"\n[OK] Successfully processed {processed_count} text contents from {len(json_files)} JSON files")
     return text_paths
 
 
@@ -179,7 +179,7 @@ def verify_text_file(file_path):
         return True
 
     except Exception as e:
-        print(f"  ⚠️  File verification failed: {e}")
+        print(f"  [WARN] File verification failed: {e}")
         return False
 
 
@@ -231,7 +231,7 @@ def scan_json_files(base_dir, cache_path="./", mode="paths"):
         text_paths = create_text_files(json_files, cache_path_obj)
 
         if not text_paths:
-            print("❌ No valid text content found in any JSON files!")
+            print("[ERROR] No valid text content found in any JSON files!")
             return False
 
         # 创建text_input.jsonl文件，包含文本文件路径
@@ -241,12 +241,12 @@ def scan_json_files(base_dir, cache_path="./", mode="paths"):
                     record = {"text_path": text_path}
                     f.write(json.dumps(record, ensure_ascii=False) + '\n')
 
-            print(f"✅ Created: {text_input_file}")
-            print(f"✅ Contains {len(text_paths)} text file paths")
+            print(f"[OK] Created: {text_input_file}")
+            print(f"[OK] Contains {len(text_paths)} text file paths")
             return True
 
         except Exception as e:
-            print(f"❌ Error creating file: {e}")
+            print(f"[ERROR] Error creating file: {e}")
             return False
 
     else:
@@ -258,12 +258,12 @@ def scan_json_files(base_dir, cache_path="./", mode="paths"):
                     record = {"text_path": str(json_file)}
                     f.write(json.dumps(record, ensure_ascii=False) + '\n')
 
-            print(f"✅ Created: {text_input_file}")
-            print(f"✅ Contains {len(json_files)} file paths")
+            print(f"[OK] Created: {text_input_file}")
+            print(f"[OK] Contains {len(json_files)} file paths")
             return True
 
         except Exception as e:
-            print(f"❌ Error creating file: {e}")
+            print(f"[ERROR] Error creating file: {e}")
             return False
 
 
@@ -282,7 +282,7 @@ def main():
     success = scan_json_files(args.input_dir, args.cache, args.mode)
 
     if success:
-        print("✅ Processing completed successfully!")
+        print("[OK] Processing completed successfully!")
         if args.mode == 'texts':
             print("Ready for CorpusTextSplitterBatch processing with extracted text files.")
             print("\nNext steps:")
@@ -292,7 +292,7 @@ def main():
             print("Ready for CorpusTextSplitterBatch processing with JSON file paths.")
             print("\nNote: Make sure your JSON files contain text fields like 'text', 'content', or 'body'")
     else:
-        print("❌ Processing failed!")
+        print("[ERROR] Processing failed!")
         raise SystemExit(1)
 
 
