@@ -65,11 +65,13 @@ class RetrievalGenerator(OperatorABC):
         self.logger.info(f"Loading, number of tasks: {len(df)}")
 
         llm_inputs = []
-        for index, row in df.iterrows():
+        valid_positions = []
+        for position, (_, row) in enumerate(df.iterrows()):
             raw_content = row.get(self.input_key, '')
             if raw_content:
                 llm_input = str(raw_content)
                 llm_inputs.append(llm_input)
+                valid_positions.append(position)
 
         try:
             self.logger.info("Generating text using the model...")
@@ -78,8 +80,16 @@ class RetrievalGenerator(OperatorABC):
         except Exception as e:
             self.logger.error(f"Error during text generation: {e}")
             return
-        
-        df[self.output_key] = generated_outputs
+
+        if len(generated_outputs) != len(valid_positions):
+            raise RuntimeError(
+                f"Response count mismatch: expected {len(valid_positions)}, got {len(generated_outputs)}"
+            )
+
+        aligned_outputs = [""] * len(df)
+        for position, output in zip(valid_positions, generated_outputs):
+            aligned_outputs[position] = output
+        df[self.output_key] = aligned_outputs
 
         output_file = storage.write(df)
         return output_key
