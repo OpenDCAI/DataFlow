@@ -29,11 +29,26 @@ def _install_helper(monkeypatch, module_name: str, helper_name: str, behavior: s
     if module_name.endswith("cli_pdf"):
         module.DATAFLEX_BACKEND_SPECS = {}
 
-    def helper(*args, **kwargs):
+    def outcome():
         if behavior == "exception":
             raise RuntimeError("boom")
         print(f"helper-{behavior}")
         return behavior == "true"
+
+    if helper_name == "cli_pdf2model_init":
+        def helper(cache_path="./", model_name=None, qa_type="kbc", pdf2model_train_backend="base"):
+            return outcome()
+    elif helper_name == "cli_pdf2model_train":
+        def helper(lf_yaml=".cache/train_config.yaml", cache_path="./"):
+            return outcome()
+    elif helper_name == "cli_text2model_init":
+        def helper(cache_path="./"):
+            return outcome()
+    elif helper_name == "cli_text2model_train":
+        def helper(input_keys=None, lf_yaml="./.cache/train_config.yaml", input_dir="./"):
+            return outcome()
+    else:
+        raise AssertionError(helper_name)
 
     setattr(module, helper_name, helper)
     monkeypatch.setitem(sys.modules, module_name, module)

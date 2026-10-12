@@ -350,7 +350,7 @@ def cli_text2model_init(cache_path: str = "./") -> bool:
         return False
 
 
-def cli_text2model_train(input_keys: str = None, lf_yaml: str = "./.cache/train_config.yaml") -> bool:
+def cli_text2model_train(input_keys: str = None, lf_yaml: str = "./.cache/train_config.yaml", input_dir: str = "./") -> bool:
     """
     Start Text2Model training using complete pipeline
     """
@@ -371,7 +371,6 @@ def cli_text2model_train(input_keys: str = None, lf_yaml: str = "./.cache/train_
         print("Run 'dataflow text2model init' first")
         return False
 
-    input_dir = "./"
     cache_path_obj = current_dir
     input_path = Path(input_dir)
     if not input_path.is_absolute():
