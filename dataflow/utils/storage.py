@@ -391,7 +391,8 @@ class LazyFileStorage(DataFlowStorage):
 
             os.replace(tmp_path, file_path)
             with self._lock:
-                self._dirty_steps.discard(step)
+                if self._buffers.get(step) is df:
+                    self._dirty_steps.discard(step)
             self.logger.success(f"[flush] Persisted step {step} -> {file_path}")
         finally:
             try:
