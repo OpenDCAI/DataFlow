@@ -32,15 +32,19 @@ def test_prompt_registry_full_enumeration_uses_real_prompt_tree():
         before = dict(PROMPT_REGISTRY.get_obj_map())
         assert "GeneralAnswerGeneratorPrompt" in before
         assert "FormatStrPrompt" not in before
+        assert "AnswerJudgePrompt" not in before
 
         # Exercise the real full-enumeration boundary and real prompt module tree.
         PROMPT_REGISTRY._get_all()
 
         prompts = PROMPT_REGISTRY.get_obj_map()
+        assert None not in PROMPT_REGISTRY.loader_map.values()
         assert len(prompts) > len(before)
         assert "GeneralAnswerGeneratorPrompt" in prompts
         assert "FormatStrPrompt" in prompts
         assert "ExtractSmilesFromTextPrompt" in prompts
+        # model_evaluation is a real nested prompt package without its own __init__.py.
+        assert "AnswerJudgePrompt" in prompts
         assert all(
             isinstance(prompt, type) and issubclass(prompt, PromptABC)
             for prompt in prompts.values()
@@ -48,6 +52,7 @@ def test_prompt_registry_full_enumeration_uses_real_prompt_tree():
 
         # Single-item lookup must still resolve the same registered class.
         assert PROMPT_REGISTRY.get("FormatStrPrompt") is prompts["FormatStrPrompt"]
+        assert PROMPT_REGISTRY.get("GeneralAnswerGeneratorPrompt") is general_prompt
         """
     )
 
