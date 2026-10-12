@@ -10,6 +10,8 @@ import dataflow.cli_funcs as cli_funcs_pkg
 from dataflow.cli import app
 
 
+pytestmark = pytest.mark.cpu
+
 runner = CliRunner()
 
 
