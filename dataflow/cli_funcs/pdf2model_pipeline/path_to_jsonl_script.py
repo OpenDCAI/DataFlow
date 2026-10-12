@@ -233,11 +233,11 @@ def main():
 
     if not input_path.exists():
         print(f"Error: Input directory '{input_path}' does not exist")
-        return
+        raise SystemExit(1)
 
     if not input_path.is_dir():
         print(f"Error: '{input_path}' is not a valid directory")
-        return
+        raise SystemExit(1)
 
     # Create detector
     detector = PDFDetector(args.output)
@@ -249,10 +249,17 @@ def main():
     print(f"Starting directory scan: {input_directory}")
     print(f"Recursive mode: {'enabled' if args.recursive else 'disabled'}")
 
-    detector.scan_directory(input_directory, args.recursive)
+    pdf_files = detector.scan_directory(input_directory, args.recursive)
+    if not pdf_files:
+        print("Error: No PDF files found; detector did not produce a current manifest")
+        raise SystemExit(1)
 
     # Generate JSONL file
-    detector.generate_jsonl(output_file=args.output, qa_type=args.qa_type)
+    generated_file = detector.generate_jsonl(output_file=args.output, qa_type=args.qa_type)
+    generated_path = Path(generated_file)
+    if not generated_path.is_file() or generated_path.stat().st_size == 0:
+        print(f"Error: PDF detector did not create a usable manifest: {generated_path}")
+        raise SystemExit(1)
 
 
 if __name__ == "__main__":
