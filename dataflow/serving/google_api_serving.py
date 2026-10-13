@@ -47,6 +47,10 @@ class PerspectiveAPIServing(LLMServingABC):
                     scores[idx] = float('nan')
         return [scores[i] for i in range(len(user_inputs))]
 
+    def start_serving(self) -> None:
+        """Perspective API serving is ready immediately after initialization."""
+        return
+
     def cleanup(self) -> None:
         """Cleanup any resources or open connections if necessary."""
         # No persistent resources to clean up

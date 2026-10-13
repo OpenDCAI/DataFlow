@@ -56,6 +56,8 @@ class LightRAGServing(LLMServingABC):
                  max_embed_tokens: int = 8192,
                  document_list: List[str] = []
                  ):
+        global LightRAG, QueryParam, openai_complete_if_cache
+        global ollama_embed, EmbeddingFunc, initialize_pipeline_status
         try:
             from lightrag import LightRAG, QueryParam
             from lightrag.llm.openai import openai_complete_if_cache
