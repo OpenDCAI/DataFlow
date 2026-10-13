@@ -1056,6 +1056,7 @@ class BatchedFileStorage(FileStorage):
         else:
             raise ValueError(f"Unsupported file type: {self.cache_type}, output file should end with jsonl, csv")
         
+        self._dataframe_buffer.pop(self.operator_step + 1, None)
         return file_path
 
 class StreamBatchedFileStorage(BatchedFileStorage):
