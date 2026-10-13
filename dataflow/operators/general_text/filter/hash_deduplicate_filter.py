@@ -79,7 +79,7 @@ class HashDeduplicateFilter(OperatorABC):
             if input_keys is not None and len(input_keys) > 1:
                 text = '\n'.join([f"{k}:\n{sample[k]}" for k in input_keys])
             else:
-                text = sample[self.input_key]
+                text = sample[self.input_key if input_keys is None else input_keys[0]]
             hash_value = self._compute_hash(text)
             if hash_value not in seen_hashes:
                 labels[idx] = 1
