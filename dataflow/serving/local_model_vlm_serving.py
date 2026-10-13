@@ -180,7 +180,8 @@ class LocalVLMServing_vllm(LLMServingABC):
         text_prompts: List[str],
         system_prompt: str = "Describe the image in detail.",
         model: str = None, # Unused, kept for interface compatibility
-        timeout: int = 1800 # Unused, kept for interface compatibility
+        timeout: int = 1800, # Unused, kept for interface compatibility
+        json_schema: dict = None,
     ) -> List[str]:
         """
         Batch process single-image chat requests concurrently using vLLM.
@@ -224,8 +225,26 @@ class LocalVLMServing_vllm(LLMServingABC):
                 }
             })
 
+        sampling_params = self.sampling_params
+        if json_schema is not None:
+            try:
+                from vllm import SamplingParams
+                from vllm.sampling_params import GuidedDecodingParams
+            except Exception:
+                raise ImportError("please install vllm first like 'pip install open-dataflow[vllm]'")
+            guided_decoding_params = GuidedDecodingParams(json=json_schema)
+            sampling_params = SamplingParams(
+                temperature=self.vllm_temperature,
+                top_p=self.vllm_top_p,
+                max_tokens=self.vllm_max_tokens,
+                top_k=self.vllm_top_k,
+                repetition_penalty=self.vllm_repetition_penalty,
+                seed=self.vllm_seed,
+                guided_decoding=guided_decoding_params,
+            )
+
         # Run Inference
-        outputs = self.llm.generate(inputs, sampling_params=self.sampling_params)
+        outputs = self.llm.generate(inputs, sampling_params=sampling_params)
         
         # Extract Text
         responses = []
@@ -357,5 +376,6 @@ class LocalVLMServing_vllm(LLMServingABC):
         return self.generate_from_input_one_image(
             image_paths=user_inputs,
             text_prompts=[""] * len(user_inputs),
-            system_prompt=system_prompt
+            system_prompt=system_prompt,
+            json_schema=json_schema,
         )
