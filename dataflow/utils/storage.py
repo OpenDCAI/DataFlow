@@ -160,6 +160,8 @@ class LazyFileStorage(DataFlowStorage):
         self._buffers: Dict[int, pd.DataFrame] = {}
         self._dirty_steps: set[int] = set()
         self._lock = RLock()
+        # Serialize flushes: an older snapshot must never replace a newer one.
+        self._flush_lock = RLock()
 
         self._save_on_exit = save_on_exit
         self._flush_all_steps = flush_all_steps
@@ -352,6 +354,12 @@ class LazyFileStorage(DataFlowStorage):
 
     # ---------- 落盘 ----------
     def flush_step(self, step: int):
+        # A write can update the buffer while a flush serializes on disk; only
+        # other flushes are serialized to preserve their persistence order.
+        with self._flush_lock:
+            return self._flush_step_serialized(step)
+
+    def _flush_step_serialized(self, step: int):
         if step <= 0:
             raise ValueError(
                 f"Cannot flush step {step}. LazyFileStorage reserves step 0 for "
