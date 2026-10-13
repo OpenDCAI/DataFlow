@@ -1061,10 +1061,17 @@ class BatchedFileStorage(FileStorage):
             with open(file_path, open_mode, encoding='utf-8') as f:
                 dataframe.to_json(f, orient="records", lines=True, force_ascii=False)
         elif self.cache_type == "csv":
-            if self.batch_step == 0:
-                dataframe.to_csv(file_path, index=False)
+            if dataframe.empty and len(dataframe.columns) == 0:
+                if self.batch_step == 0:
+                    open(file_path, 'w', encoding='utf-8').close()
             else:
-                dataframe.to_csv(file_path, index=False, header=False, mode='a')
+                write_header = (
+                    self.batch_step == 0
+                    or not os.path.exists(file_path)
+                    or os.path.getsize(file_path) == 0
+                )
+                open_mode = 'w' if self.batch_step == 0 else 'a'
+                dataframe.to_csv(file_path, index=False, header=write_header, mode=open_mode)
         else:
             raise ValueError(f"Unsupported file type: {self.cache_type}, output file should end with jsonl, csv")
         
