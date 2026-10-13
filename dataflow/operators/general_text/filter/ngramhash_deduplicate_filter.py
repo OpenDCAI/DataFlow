@@ -71,7 +71,7 @@ class NgramHashDeduplicateFilter(OperatorABC):
             if input_keys is not None and len(input_keys) > 1:
                 text = '\n'.join([f"{k}:\n{sample[k]}" for k in input_keys])
             else:
-                text = sample[self.input_key]
+                text = sample[self.input_key if input_keys is None else input_keys[0]]
             gram_length = len(text) // self.n_gram
             ngrams = [text[i*gram_length:(i+1)*gram_length] for i in range(self.n_gram)]
             hash_value = set(self._compute_hash(ngram) for ngram in ngrams)
