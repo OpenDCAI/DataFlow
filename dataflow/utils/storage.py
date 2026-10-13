@@ -962,6 +962,16 @@ class BatchedFileStorage(FileStorage):
         self._dataframe_buffer = {}
         if cache_type not in ["jsonl", "csv"]:
             raise ValueError(f"BatchedFileStorage only supports 'jsonl' and 'csv' cache types, got: {cache_type}")
+
+    def _load_local_file(self, file_path: str, file_type: str) -> pd.DataFrame:
+        if file_type != "csv" or not os.path.exists(file_path):
+            return super()._load_local_file(file_path, file_type)
+        try:
+            return pd.read_csv(file_path)
+        except pd.errors.EmptyDataError:
+            return pd.DataFrame()
+        except Exception as e:
+            raise ValueError(f"Failed to load {file_type} file: {str(e)}")
         
     def read(self, output_type: Literal["dataframe", "dict"]="dataframe") -> Any:
         """
@@ -1029,7 +1039,9 @@ class BatchedFileStorage(FileStorage):
 
         # 转换数据为DataFrame
         if isinstance(data, list):
-            if len(data) > 0 and isinstance(data[0], dict):
+            if not data:
+                dataframe = pd.DataFrame()
+            elif isinstance(data[0], dict):
                 # 清洗列表中的每个字典
                 cleaned_data = [clean_surrogates(item) for item in data]
                 dataframe = pd.DataFrame(cleaned_data)
