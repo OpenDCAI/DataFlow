@@ -1003,6 +1003,12 @@ class BatchedFileStorage(FileStorage):
         return self._convert_output(dataframe, output_type)
     
     def write(self, data: Any) -> Any:
+        transaction = getattr(self, "_stream_transaction", None)
+        if transaction is not None:
+            return transaction.write(self, data)
+        return self._legacy_batched_write(data)
+
+    def _legacy_batched_write(self, data: Any) -> Any:
         """
         Write data to current file managed by storage.
         data: Any, the data to write, it should be a dataframe, List[dict], etc.
