@@ -3,6 +3,8 @@ import importlib.util
 import sys
 import types
 import os
+import pkgutil
+from contextlib import contextmanager
 from dataflow.logger import get_logger
 from pathlib import Path
 
@@ -64,8 +66,10 @@ class Registry():
         """
         self._name = name
         self._obj_map = {}
+        # Avoid re-parsing the source tree for repeated lookups of the same class.
+        self._verified_precedence = {}
         self._base_folder = Path(__file__).resolve().parents[1]
-        self._sub_modules = list(os.listdir(self._base_folder / name))
+        self._sub_modules = sorted(os.listdir(self._base_folder / name))
         if "__init__.py" in self._sub_modules:
             self._sub_modules.remove("__init__.py")
         if "__pycache__" in self._sub_modules:
@@ -73,61 +77,297 @@ class Registry():
         if len(self._sub_modules) > 0:
             self.loader_map = dict(zip(self._sub_modules, [None] * len(self._sub_modules)))
         
+    @contextmanager
+    def _discovery_transaction(self):
+        """Rollback discovery-owned state if an import fails.
+
+        This includes import side effects in the other global registry. Previously
+        loaded modules and manually registered objects are left intact.
+        """
+        registries = [
+            value for value in globals().values()
+            if isinstance(value, Registry)
+        ]
+        if self not in registries:
+            registries.append(self)
+        snapshots = [
+            (registry, dict(registry._obj_map),
+             dict(getattr(registry, "loader_map", {})),
+             dict(registry._verified_precedence))
+            for registry in registries
+        ]
+        loaded = set(sys.modules)
+        lazy_cache = {
+            id(module): (module, dict(module._loaded_classes))
+            for module in sys.modules.values()
+            if isinstance(module, LazyLoader)
+        }
+        try:
+            yield
+        except BaseException:
+            for registry, objects, loaders, verified in snapshots:
+                registry._obj_map.clear()
+                registry._obj_map.update(objects)
+                registry._verified_precedence.clear()
+                registry._verified_precedence.update(verified)
+                if hasattr(registry, "loader_map"):
+                    registry.loader_map.clear()
+                    registry.loader_map.update(loaders)
+            for module, cache in lazy_cache.values():
+                module._loaded_classes.clear()
+                module._loaded_classes.update(cache)
+            # Python normally removes only the failing module. Dependencies that
+            # imported successfully during the attempt must also be discarded.
+            for module_name in sorted(set(sys.modules) - loaded, reverse=True):
+                module = sys.modules.pop(module_name, None)
+                parent_name, separator, child_name = module_name.rpartition(".")
+                if separator:
+                    parent = sys.modules.get(parent_name)
+                    if parent is not None and parent.__dict__.get(child_name) is module:
+                        del parent.__dict__[child_name]
+            raise
+
+    def _load_module(self, module_name):
+        entry = Path(module_name).stem if module_name.endswith(".py") else module_name
+        module = importlib.import_module(f"dataflow.{self._name}.{entry}")
+        self.loader_map[module_name] = module
+        return module
+
     def _init_loaders(self):
-        for module_name in self.loader_map.keys():
-            module_path = f"dataflow.{self._name}.{module_name}"
-            self.loader_map[module_name] = importlib.import_module(module_path)
+        with self._discovery_transaction():
+            for module_name in self.loader_map:
+                if self.loader_map[module_name] is None:
+                    self._load_module(module_name)
 
     def _do_register(self, name, obj):
-        if name not in self._obj_map:
+        existing = self._obj_map.get(name)
+        if existing is None:
             self._obj_map[name] = obj
+            self._verified_precedence.pop(name, None)
+            return
+        if existing is obj:
+            return
+        # Preserve the public first-registration-wins contract for user
+        # extensions. Built-in discovery conflicts use a stable source ranking.
+        namespace = f"dataflow.{self._name}."
+        old_module = getattr(existing, "__module__", "")
+        new_module = getattr(obj, "__module__", "")
+        if old_module.startswith(namespace) and new_module.startswith(namespace):
+            if (new_module, getattr(obj, "__qualname__", name)) < (
+                old_module, getattr(existing, "__qualname__", name)
+            ):
+                self._obj_map[name] = obj
+                self._verified_precedence.pop(name, None)
 
     def register(self, obj=None):
-        """
-        Register the given object under the the name `obj.__name__`.
-        Can be used as either a decorator or not.
-        See docstring of this class for usage.
-        """
+        """Register an object under its class/function name."""
         if obj is None:
-            # used as a decorator
             def deco(func_or_class):
-                name = func_or_class.__name__
-                self._do_register(name, func_or_class)
+                self._do_register(func_or_class.__name__, func_or_class)
                 return func_or_class
-
             return deco
+        self._do_register(obj.__name__, obj)
 
-        # used as a function call
-        name = obj.__name__
-        self._do_register(name, obj)
+    def _source_declares_registration(self, source, name):
+        """Recognize statically attributable registrations for this registry.
+
+        This rejects comments, string mentions, unrelated decorated classes,
+        and registrations targeting a different registry. Dynamic aliases and
+        computed registration names require explicit full discovery.
+        """
+        try:
+            tree = ast.parse(source.read_text(encoding="utf-8"))
+        except (OSError, UnicodeError, SyntaxError):
+            return False
+
+        # Canonical names of this exact registry object in this module.
+        registry_names = {
+            symbol for symbol, value in globals().items() if value is self
+        }
+        imported_names = set(registry_names)
+        registry_modules = set()
+        for statement in tree.body:
+            if isinstance(statement, ast.ImportFrom):
+                if statement.module in ("dataflow.utils.registry", "dataflow.utils"):
+                    for alias in statement.names:
+                        if alias.name in registry_names:
+                            imported_names.add(alias.asname or alias.name)
+                        if alias.name == "registry" and statement.module == "dataflow.utils":
+                            registry_modules.add(alias.asname or alias.name)
+            elif isinstance(statement, ast.Import):
+                for alias in statement.names:
+                    if alias.name == "dataflow.utils.registry" and alias.asname:
+                        registry_modules.add(alias.asname)
+
+        def dotted(node):
+            if isinstance(node, ast.Name):
+                return node.id
+            if isinstance(node, ast.Attribute):
+                return f"{dotted(node.value)}.{node.attr}"
+            return ""
+
+        def owned_registration(node):
+            # Registry.register supports both @registry.register and
+            # @registry.register() in addition to registry.register(Class).
+            target_call = node.func if isinstance(node, ast.Call) else node
+            if not (
+                isinstance(target_call, ast.Attribute)
+                and target_call.attr == "register"
+            ):
+                return False
+            target = target_call.value
+            if isinstance(target, ast.Name):
+                return target.id in imported_names
+            if isinstance(target, ast.Attribute) and target.attr in registry_names:
+                qualifier = dotted(target.value)
+                return qualifier in registry_modules or qualifier in (
+                    "dataflow.utils.registry", "dataflow.utils"
+                )
+            return False
+
+        def expression_registers(node):
+            """A direct registration call evaluated by this statement."""
+            return any(
+                isinstance(child, ast.Call)
+                and child.args
+                and isinstance(child.args[0], ast.Name)
+                and child.args[0].id == name
+                and owned_registration(child)
+                for child in ast.walk(node)
+            )
+
+        def static_truth(node):
+            """Evaluate only literal conditions; do not execute arbitrary code."""
+            if isinstance(node, ast.UnaryOp) and isinstance(node.op, ast.Not):
+                operand = static_truth(node.operand)
+                return None if operand is None else not operand
+            if isinstance(node, ast.BoolOp):
+                values = [static_truth(value) for value in node.values]
+                if isinstance(node.op, ast.And):
+                    if False in values:
+                        return False
+                    if all(value is True for value in values):
+                        return True
+                elif isinstance(node.op, ast.Or):
+                    if True in values:
+                        return True
+                    if all(value is False for value in values):
+                        return False
+                return None
+            try:
+                return bool(ast.literal_eval(node))
+            except (ValueError, TypeError, SyntaxError, MemoryError, RecursionError):
+                return None
+
+        def block_registers(statements):
+            # Unlike ast.walk, this respects known-dead branches and does not
+            # descend into functions whose bodies run only if called.
+            for statement in statements:
+                if isinstance(statement, (ast.ClassDef, ast.FunctionDef, ast.AsyncFunctionDef)):
+                    if statement.name == name and any(
+                        owned_registration(decorator)
+                        for decorator in statement.decorator_list
+                    ):
+                        return True
+                    if isinstance(statement, ast.ClassDef) and block_registers(statement.body):
+                        return True
+                elif isinstance(statement, ast.If):
+                    condition = static_truth(statement.test)
+                    if condition is not False and block_registers(statement.body):
+                        return True
+                    if condition is not True and block_registers(statement.orelse):
+                        return True
+                elif isinstance(statement, (ast.While, ast.For, ast.AsyncFor)):
+                    if isinstance(statement, ast.While) and static_truth(statement.test) is False:
+                        if block_registers(statement.orelse):
+                            return True
+                    elif block_registers(statement.body) or block_registers(statement.orelse):
+                        return True
+                elif isinstance(statement, (ast.Try, getattr(ast, "TryStar", ast.Try))):
+                    if block_registers(statement.body):
+                        return True
+                    if any(block_registers(handler.body) for handler in statement.handlers):
+                        return True
+                    if block_registers(statement.orelse) or block_registers(statement.finalbody):
+                        return True
+                elif isinstance(statement, (ast.With, ast.AsyncWith)):
+                    if block_registers(statement.body):
+                        return True
+                elif isinstance(statement, ast.Match):
+                    for case in statement.cases:
+                        if case.guard is not None and static_truth(case.guard) is False:
+                            continue
+                        if block_registers(case.body):
+                            return True
+                else:
+                    if expression_registers(statement):
+                        return True
+                if isinstance(statement, (ast.Raise, ast.Return, ast.Break, ast.Continue)):
+                    break
+            return False
+
+        return block_registers(tree.body)
+
+    def _resolve_prior_builtin_candidates(self, name, current):
+        """Find higher-ranked built-in registrations without full discovery.
+
+        A top-level package being initialized does not imply that nested
+        modules have been imported, so this check is independent of loader_map.
+        """
+        prefix = f"dataflow.{self._name}."
+        current_module = getattr(current, "__module__", "")
+        if not current_module.startswith(prefix):
+            return
+
+        package = importlib.import_module(f"dataflow.{self._name}")
+        for location in getattr(package, "__path__", ()):
+            root = Path(location)
+            for source in sorted(root.rglob("*.py")):
+                parts = source.relative_to(root).with_suffix("").parts
+                if parts[-1] == "__init__":
+                    parts = parts[:-1]
+                if not parts:
+                    continue
+                contender = prefix + ".".join(parts)
+                if contender >= current_module or contender in sys.modules:
+                    continue
+                if self._source_declares_registration(source, name):
+                    importlib.import_module(contender)
 
     def get(self, name):
         ret = self._obj_map.get(name)
+        if ret is not None:
+            if getattr(ret, "__module__", "").startswith(
+                f"dataflow.{self._name}."
+            ):
+                if self._verified_precedence.get(name) is ret:
+                    return ret
+                with self._discovery_transaction():
+                    self._resolve_prior_builtin_candidates(name, ret)
+                resolved = self._obj_map[name]
+                self._verified_precedence[name] = resolved
+                return resolved
+            return ret
         logger = get_logger()
-        if ret is None:
+        with self._discovery_transaction():
             if None in self.loader_map.values():
                 self._init_loaders()
+            # Built-in registration may have populated the map during import.
+            ret = self._obj_map.get(name)
+            if ret is not None:
+                return ret
             for module_lib in self.loader_map.values():
-                # module_path = "dataflow.operators." + x
                 try:
-                    # module_lib = importlib.import_module(module_path)
                     clss = getattr(module_lib, name)
-                    self._obj_map[name] = clss
-                    return clss
-                except AttributeError as e:
-                    logger.debug(f"{str(e)}")
+                except AttributeError:
                     continue
-                except Exception as e:
-                    raise e
-            logger.error(f"No object named '{name}' found in '{self._name}' registry!")
-            raise KeyError(f"No object named '{name}' found in '{self._name}' registry!")
+                self._do_register(name, clss)
+            ret = self._obj_map.get(name)
+            if ret is not None:
+                return ret
+        logger.error(f"No object named '{name}' found in '{self._name}' registry!")
+        raise KeyError(f"No object named '{name}' found in '{self._name}' registry!")
 
-        if ret is None:
-            logger.error(f"No object named '{name}' found in '{self._name}' registry!")
-        assert ret is not None, f"No object named '{name}' found in '{self._name}' registry!"
-        
-        return ret
-    
     def apply_whitelist(self, names, *, verbose: bool = True):
         """
         在已调用 _get_all() 之后执行：
@@ -165,6 +405,7 @@ class Registry():
         # 4) 执行就地裁剪
         for k in to_remove:
             self._obj_map.pop(k, None)
+            self._verified_precedence.pop(k, None)
 
         # 5) 统计结果
         total_after = len(self._obj_map)
@@ -229,10 +470,21 @@ class Registry():
         return capture.get()
 
     def _get_all(self):
-        if None in self.loader_map.values():
-            self._init_loaders()
-        for loader in self.loader_map.values():
-            loader._import_all()
+        with self._discovery_transaction():
+            for module_name in self.loader_map:
+                loader = self.loader_map[module_name]
+                if loader is None:
+                    loader = self._load_module(module_name)
+                import_all = getattr(loader, "_import_all", None)
+                if callable(import_all):
+                    import_all()
+                elif hasattr(loader, "__path__"):
+                    for info in sorted(
+                        pkgutil.walk_packages(
+                            loader.__path__, prefix=f"{loader.__name__}."
+                        ), key=lambda item: item.name
+                    ):
+                        importlib.import_module(info.name)
 
     def get_obj_map(self):
         """
@@ -324,7 +576,10 @@ class LazyLoader(types.ModuleType):
             logger.debug(f"Module package: {module.__package__}")
             spec.loader.exec_module(module)
 
-        except Exception as e:
+        except BaseException as e:
+            # Never leave a partially executed module in sys.modules.
+            if "mod_name" in locals() and sys.modules.get(mod_name) is locals().get("module"):
+                sys.modules.pop(mod_name, None)
             import traceback
             logger.exception("Import failed for %s from %s", mod_name, abs_file_path)
             # 可选：再打印一份，CI 日志更清楚
@@ -356,7 +611,10 @@ class LazyLoader(types.ModuleType):
         if item in self._import_structure:
             file_path, class_name = self._import_structure[item]
             logger.info(f"Lazyloader {self.__path__} trying to import {item} ")
-            cls = self._load_class_from_file(file_path, class_name)
+            # Direct attribute access bypasses Registry.get()/_get_all();
+            # it must still rollback decorators executed by a failed module.
+            with OPERATOR_REGISTRY._discovery_transaction():
+                cls = self._load_class_from_file(file_path, class_name)
             logger.debug(f"Lazyloader {self.__path__} got and cached class {cls}")
             self._loaded_classes[item] = cls
             return cls
