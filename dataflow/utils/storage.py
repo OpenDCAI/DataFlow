@@ -338,7 +338,13 @@ class LazyFileStorage(DataFlowStorage):
             else:
                 raise ValueError(f"Unsupported data type: {type(data[0]) if data else 'empty list'}")
         elif isinstance(data, pd.DataFrame):
-            dataframe = data.applymap(clean_surrogates)
+            # DataFrame.applymap was removed in pandas 3.0; DataFrame.map is its
+            # replacement and exists since pandas 2.1, so keep a fallback for
+            # environments that still run an older pandas.
+            if hasattr(data, "map"):
+                dataframe = data.map(clean_surrogates)
+            else:
+                dataframe = data.applymap(clean_surrogates)
         else:
             raise ValueError(f"Unsupported data type: {type(data)}")
 
