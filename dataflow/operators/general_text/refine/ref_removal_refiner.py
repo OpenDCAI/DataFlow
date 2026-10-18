@@ -58,7 +58,6 @@ class ReferenceRemoverRefiner(OperatorABC):
 
         refined_data = []
         for item in tqdm(dataframe[self.input_key], desc=f"Implementing {self.__class__.__name__}"):
-            modified = False  
             original_text = item
             refined_text = original_text
 
@@ -70,14 +69,12 @@ class ReferenceRemoverRefiner(OperatorABC):
 
             # 检查是否有任何修改
             if ref_count > 0 or cite_count > 0:
-                modified = True
                 numbers += 1
                 self.logger.debug(f"Item modified, removed {ref_count} ref tags and {cite_count} cite templates")
 
-            refined_data.append(item)
-            if modified:
-                numbers += 1
-                self.logger.debug(f"Item modified, total modified so far: {numbers}")
+            # Append the cleaned text; appending the original item would silently
+            # discard the refinement (see #554).
+            refined_data.append(refined_text)
         self.logger.info(f"Refining Complete. Total modified items: {numbers}")
         dataframe[self.input_key] = refined_data
         output_file = storage.write(dataframe)
