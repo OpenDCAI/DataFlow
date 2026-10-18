@@ -152,29 +152,38 @@ class DatabaseManager:
     def batch_compare_queries(self, query_triples: List[Tuple[str, str, str]]) -> List[Dict[str, Any]]:
         """
         Compare multiple pairs of queries across different databases in parallel.
+
+        A triple whose ``db_id`` is not registered produces an error result for that
+        triple only; it must not fail the rest of the batch (see #556).
         """
-        unique_db_ids = set(db_id for db_id, _, _ in query_triples)
-        for db_id in unique_db_ids:
-            if not self.database_exists(db_id):
-                error_msg = f"Database '{db_id}' not found"
-                return [self._create_error_result(error_msg) for _ in query_triples]
-        
-        all_queries = []
+        # Pre-size the result list so output order always matches input order.
+        comparisons: List[Optional[Dict[str, Any]]] = [None] * len(query_triples)
+        executable: List[Tuple[int, str, str, str]] = []
+
         for idx, (db_id, gold_sql, pred_sql) in enumerate(query_triples):
-            all_queries.extend([
-                (db_id, gold_sql),
-                (db_id, pred_sql)
-            ])
-        
-        # Batch execute all queries
-        all_results = self.batch_execute_queries(all_queries)
-        
-        # Group results by comparison pairs
-        comparisons = []
-        for i in range(len(query_triples)):
-            result1 = all_results[2*i]
-            result2 = all_results[2*i + 1]
-            comparisons.append(self.compare_results(result1, result2))
+            if not self.database_exists(db_id):
+                comparisons[idx] = self._create_error_result(
+                    f"Database '{db_id}' not found"
+                )
+            else:
+                executable.append((idx, db_id, gold_sql, pred_sql))
+
+        if executable:
+            all_queries: List[Tuple[str, str]] = []
+            for _, db_id, gold_sql, pred_sql in executable:
+                all_queries.extend([
+                    (db_id, gold_sql),
+                    (db_id, pred_sql)
+                ])
+
+            # Batch execute all queries
+            all_results = self.batch_execute_queries(all_queries)
+
+            # Group results by comparison pairs and place them at their original index
+            for j, (idx, _, _, _) in enumerate(executable):
+                result1 = all_results[2 * j]
+                result2 = all_results[2 * j + 1]
+                comparisons[idx] = self.compare_results(result1, result2)
 
         return comparisons
 
