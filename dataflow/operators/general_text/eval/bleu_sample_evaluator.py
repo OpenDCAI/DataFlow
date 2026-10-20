@@ -58,7 +58,7 @@ class BleuSampleEvaluator(OperatorABC):
             special_reflen=self.special_reflen,
         )
         bleu_score, _ = bleu_scorer.compute_score(option=self.eff)
-        return bleu_score[0]
+        return bleu_score[self.n - 1]
     
     def eval(self, dataframe, input_key, reference_key):
         eval_data = dataframe[input_key]
