@@ -21,6 +21,10 @@ class NgramHashDeduplicateFilter(OperatorABC):
         
         if self.hash_func not in self.hash_func_dict:
             raise ValueError(f'Invalid hash function: {self.hash_func}')
+        if self.n_gram < 1:
+            raise ValueError(f"Invalid value for 'n_gram'. Must be >= 1, but got '{self.n_gram}'.")
+        if self.diff_size < 1:
+            raise ValueError(f"Invalid value for 'diff_size'. Must be >= 1, but got '{self.diff_size}'.")
         self.logger.info(f"Initializing {self.__class__.__name__} with n_gram = {self.n_gram}, hash_func = {self.hash_func}, diff_size = {self.diff_size}...")
     @staticmethod
     def get_desc(lang: str = "zh"):
@@ -50,6 +54,22 @@ class NgramHashDeduplicateFilter(OperatorABC):
     def _compute_hash(self, text: str) -> str:
         return self.hash_func_dict[self.hash_func](text.encode('utf-8')).hexdigest()
 
+    def _split_chunks(self, text: str) -> list:
+        """Split text into n_gram contiguous chunks that cover every character.
+
+        The chunk count is fixed at n_gram, so the chunks cannot all have the same
+        length unless len(text) is a multiple of n_gram. Boundaries are rounded
+        instead of using a single integer chunk size, which would drop the
+        len(text) % n_gram trailing characters and make texts that differ only
+        in their tail look identical. Texts no longer than n_gram become a single
+        chunk so that short texts still hash to something that distinguishes them.
+        """
+        if len(text) <= self.n_gram:
+            return [text]
+        step = len(text) / self.n_gram
+        bounds = [round(i * step) for i in range(self.n_gram + 1)]
+        return [text[bounds[i]:bounds[i + 1]] for i in range(self.n_gram)]
+
     def run(self, storage: DataFlowStorage, input_keys: list = None, input_key: str = None, output_key: str = 'minhash_deduplicated_label'):
         if input_keys is None and input_key is None:
             self.logger.error(f"Need to specify either input_keys or input_key!")
@@ -64,7 +84,10 @@ class NgramHashDeduplicateFilter(OperatorABC):
         self.input_key = input_key
         self.input_keys = input_keys
         self.output_key = output_key
-        seen_hashes = []
+        # Inverted index: chunk hash -> rows kept so far that contain it. Comparing
+        # a new row against every kept row is quadratic; walking the postings of the
+        # row's own chunks is proportional to the rows that actually share a chunk.
+        postings = {}
         dataframe = storage.read("dataframe")
         labels = [0] * len(dataframe)
         for idx, sample in tqdm(enumerate(dataframe.to_dict(orient='records')), desc=f"Implementing {self.__class__.__name__}", total=len(dataframe)):
@@ -72,12 +95,21 @@ class NgramHashDeduplicateFilter(OperatorABC):
                 text = '\n'.join([f"{k}:\n{sample[k]}" for k in input_keys])
             else:
                 text = sample[self.input_key if input_keys is None else input_keys[0]]
-            gram_length = len(text) // self.n_gram
-            ngrams = [text[i*gram_length:(i+1)*gram_length] for i in range(self.n_gram)]
-            hash_value = set(self._compute_hash(ngram) for ngram in ngrams)
-            if all(len(hash_value & hash) < self.diff_size for hash in seen_hashes):
+            hash_value = set(self._compute_hash(chunk) for chunk in self._split_chunks(text))
+            overlaps = {}
+            is_duplicate = False
+            for chunk_hash in hash_value:
+                for kept_idx in postings.get(chunk_hash, ()):
+                    overlaps[kept_idx] = overlaps.get(kept_idx, 0) + 1
+                    if overlaps[kept_idx] >= self.diff_size:
+                        is_duplicate = True
+                        break
+                if is_duplicate:
+                    break
+            if not is_duplicate:
                 labels[idx] = 1
-                seen_hashes.append(hash_value)
+                for chunk_hash in hash_value:
+                    postings.setdefault(chunk_hash, set()).add(idx)
         dataframe[self.output_key] = labels
         filtered_dataframe = dataframe[(dataframe[self.output_key] > 0)]
         output_file = storage.write(filtered_dataframe)
