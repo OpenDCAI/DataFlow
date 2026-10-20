@@ -83,9 +83,9 @@ class Bleu(object):
 
 
         if refs is not None:
-            self.crefs.append(cook_refs(refs))
+            self.crefs.append(cook_refs(refs, n=self.n))
             if test is not None:
-                cooked_test = cook_test(test, self.crefs[-1])
+                cooked_test = cook_test(test, self.crefs[-1], n=self.n)
                 self.ctest.append(cooked_test) ## N.B.: -1
             else:
                 self.ctest.append(None) # lens of crefs and ctest have to match
@@ -157,6 +157,8 @@ class Bleu(object):
             reflen = min(reflens)
         elif option == "average":
             reflen = float(sum(reflens))/len(reflens)
+        elif option == "longest":
+            reflen = max(reflens)
         elif option == "closest":
             reflen = min((abs(l-testlen), l) for l in reflens)[1]
         else:
