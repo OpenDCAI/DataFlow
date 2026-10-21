@@ -545,7 +545,7 @@ class BatchedPipelineABC(PipelineABC):
     def __init__(self):
         super().__init__()
         
-    def _compiled_forward(self, resume_step: int=0, batch_size: int|None=None, resume_from_last: bool=True):
+    def _compiled_forward(self, resume_step: int=0, batch_size: int|None=None, resume_from_last: bool=True, checkpoint_dir=None, checkpoint_config=None):
         """
             resume_step (int): resume inference from this step
             batch_size (int|None): if set, run the pipeline in batch mode with this batch size
@@ -554,6 +554,14 @@ class BatchedPipelineABC(PipelineABC):
         if not self.compiled:
             raise RuntimeError("Pipeline is not compiled yet. Please call `compile()` before running the pipeline.")
         
+        if checkpoint_config is not None and checkpoint_dir is None:
+            raise ValueError("checkpoint_config requires checkpoint_dir")
+        if checkpoint_dir is not None:
+            if resume_step:
+                raise ValueError("resume_step cannot be combined with enhanced checkpoints")
+            from dataflow.utils.pipeline_checkpoint import run_checkpointed_pipeline
+            return run_checkpointed_pipeline(self, checkpoint_dir, batch_size, checkpoint_config, streaming=False)
+
         if resume_step > 0 and resume_from_last:
             raise ValueError("Cannot set both `resume_step` and `resume_from_last` to True.")
         
@@ -625,7 +633,7 @@ class StreamBatchedPipelineABC(BatchedPipelineABC):
     def __init__(self):
         super().__init__()
         
-    def _compiled_forward(self, resume_step: int=0, batch_size: int|None=None, resume_from_last: bool=True):
+    def _compiled_forward(self, resume_step: int=0, batch_size: int|None=None, resume_from_last: bool=True, checkpoint_dir=None, checkpoint_config=None):
         """
             resume_step (int): resume inference from this step
             batch_size (int|None): if set, run the pipeline in batch mode with this batch size
@@ -634,6 +642,14 @@ class StreamBatchedPipelineABC(BatchedPipelineABC):
         if not self.compiled:
             raise RuntimeError("Pipeline is not compiled yet. Please call `compile()` before running the pipeline.")
         
+        if checkpoint_config is not None and checkpoint_dir is None:
+            raise ValueError("checkpoint_config requires checkpoint_dir")
+        if checkpoint_dir is not None:
+            if resume_step:
+                raise ValueError("resume_step cannot be combined with enhanced checkpoints")
+            from dataflow.utils.pipeline_checkpoint import run_checkpointed_pipeline
+            return run_checkpointed_pipeline(self, checkpoint_dir, batch_size, checkpoint_config, streaming=True)
+
         if resume_step > 0 and resume_from_last:
             raise ValueError("Cannot set both `resume_step` and `resume_from_last` to True.")
         

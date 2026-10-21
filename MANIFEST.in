@@ -18,12 +18,16 @@ include README.md
 include requirements.txt
 include LICENSE
 
-# Ship the guides and offline verification sources.
-include docs/resilient_jsonl_processing.md
-include test/cpu_only/test_jsonl_read_policy.py
+# Ship the training/resilience guides and their offline verification sources.
 include docs/training_data_preparation.md
+include docs/resilient_jsonl_processing.md
 include test/cpu_only/test_training_data_preparation.py
 include test/cpu_only/test_training_conversations.py
+include test/cpu_only/test_jsonl_read_policy.py
+include test/cpu_only/test_pipeline_enhanced_checkpoint.py
+include test/cpu_only/test_record_ledger.py
+include test/cpu_only/test_api_recorded_requests.py
+include test/benchmarks/benchmark_resilient_jsonl.py
 
 # 排除无用缓存文件
 global-exclude *.py[cod]

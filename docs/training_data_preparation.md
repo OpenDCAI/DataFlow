@@ -192,3 +192,8 @@ These are functional assertions, including expected content, rejected records,
 error locations and file/lazy/batch/stream Pipeline output. They check more than
 whether code runs. They cover the documented profiles and constructed fixtures,
 not every data dialect, real model service or downstream training framework.
+
+For opt-in JSONL read quarantine, enhanced batch resume, source-linked model
+failures and replay, see [resilient JSONL processing](resilient_jsonl_processing.md).
+These are separate APIs; the training converters' own error ledgers still do not
+provide a replay/transaction contract.

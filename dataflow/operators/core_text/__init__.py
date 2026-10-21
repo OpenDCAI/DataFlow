@@ -23,6 +23,7 @@ if TYPE_CHECKING:
     from .refine.training_messages_converter import TrainingMessagesConverter
     from .refine.training_preference_converter import TrainingPreferenceConverter
     from .filter.training_data_validation_filter import TrainingDataValidationFilter
+    from .generate.recorded_prompted_generator import RecordedPromptedGenerator
 else:
     import sys
     from dataflow.utils.registry import LazyLoader, generate_import_structure_from_type_checking
