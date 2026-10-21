@@ -21,6 +21,9 @@ include LICENSE
 # Ship the guides and offline verification sources.
 include docs/resilient_jsonl_processing.md
 include test/cpu_only/test_jsonl_read_policy.py
+include docs/training_data_preparation.md
+include test/cpu_only/test_training_data_preparation.py
+include test/cpu_only/test_training_conversations.py
 
 # 排除无用缓存文件
 global-exclude *.py[cod]

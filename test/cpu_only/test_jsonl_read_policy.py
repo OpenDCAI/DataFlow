@@ -5,6 +5,7 @@ from pathlib import Path
 
 import pytest
 
+from dataflow.operators.core_text import TrainingMessagesConverter, TrainingDataValidationFilter
 from dataflow.pipeline import PipelineABC, BatchedPipelineABC, StreamBatchedPipelineABC
 from dataflow.utils.jsonl_reader import JSONLReadPolicy
 from dataflow.utils.storage import FileStorage, LazyFileStorage, BatchedFileStorage, StreamBatchedFileStorage
@@ -104,3 +105,54 @@ def test_error_destination_cannot_replace_source_or_cache(tmp_path):
         FileStorage(str(source), jsonl_read_policy=JSONLReadPolicy(source))
     with pytest.raises(ValueError, match="cache"):
         FileStorage(str(source), cache_path=str(tmp_path), jsonl_read_policy=JSONLReadPolicy(tmp_path / "dataflow_cache_step_step1.jsonl"))
+
+
+class Prepare(PipelineABC):
+    def __init__(self, storage):
+        super().__init__()
+        self.storage = storage
+        self.convert = TrainingMessagesConverter()
+        self.validate = TrainingDataValidationFilter()
+
+    def forward(self):
+        self.convert.run(self.storage.step(), input_key="q", input_answer_key="a")
+        self.validate.run(self.storage.step(), input_key="messages")
+
+
+class BatchedPrepare(Prepare, BatchedPipelineABC):
+    _compiled_forward = BatchedPipelineABC._compiled_forward
+
+
+class StreamPrepare(Prepare, StreamBatchedPipelineABC):
+    _compiled_forward = StreamBatchedPipelineABC._compiled_forward
+
+
+@pytest.mark.parametrize("cls,pipeline_cls", [
+    (FileStorage, Prepare), (LazyFileStorage, Prepare),
+    (BatchedFileStorage, BatchedPrepare), (StreamBatchedFileStorage, StreamPrepare),
+])
+def test_pipeline_compile_and_output_with_bad_first_line(tmp_path, cls, pipeline_cls):
+    source, _ = make_source(tmp_path)
+    kwargs = {"save_on_exit": False} if cls is LazyFileStorage else {}
+    storage = cls(str(source), cache_path=str(tmp_path / "cache"), jsonl_read_policy=JSONLReadPolicy(tmp_path / "errors.jsonl"), **kwargs)
+    pipeline = pipeline_cls(storage)
+    pipeline.compile()
+    if cls in (BatchedFileStorage, StreamBatchedFileStorage):
+        pipeline.forward(batch_size=8, resume_from_last=False)
+    else:
+        pipeline.forward()
+    if cls is LazyFileStorage:
+        storage.flush_all()
+    actual = [json.loads(line) for line in Path(storage._get_cache_file_path(2)).read_text().splitlines()]
+    assert len(actual) == 97
+    assert [row["id"] for row in actual] == [i for i in range(1, 99) if i != 50]
+
+
+def test_conversion_error_keeps_physical_source_line(tmp_path):
+    source = tmp_path / "input.jsonl"
+    source.write_text('bad\n{"prompt":"q","answer":""}\n')
+    storage = FileStorage(str(source), jsonl_read_policy=JSONLReadPolicy(tmp_path / "read_errors.jsonl")).step()
+    operator = TrainingMessagesConverter(on_invalid="quarantine", errors_path=tmp_path / "convert_errors.jsonl")
+    operator.run(storage)
+    error = json.loads((tmp_path / "convert_errors.jsonl").read_text())
+    assert error["source_location"]["line"] == 2

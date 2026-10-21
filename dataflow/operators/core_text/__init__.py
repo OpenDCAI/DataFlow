@@ -20,6 +20,9 @@ if TYPE_CHECKING:
     from .filter.general_filter import GeneralFilter
     from .refine.prompted_refiner import PromptedRefiner
     from .refine.pandas_operator import PandasOperator
+    from .refine.training_messages_converter import TrainingMessagesConverter
+    from .refine.training_preference_converter import TrainingPreferenceConverter
+    from .filter.training_data_validation_filter import TrainingDataValidationFilter
 else:
     import sys
     from dataflow.utils.registry import LazyLoader, generate_import_structure_from_type_checking
