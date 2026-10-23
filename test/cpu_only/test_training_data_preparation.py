@@ -88,7 +88,7 @@ def test_task_in_file_lazy_batch_stream(tmp_path,storage_cls,pipeline_cls,kind,g
     else: p.forward()
     if storage_cls is LazyFileStorage: storage.flush_all()
     step=4 if kind in ['qa','alpaca','sharegpt'] else 3
-    actual=[json.loads(line) for line in Path(storage._get_cache_file_path(step)).read_text().splitlines()]
+    actual=[json.loads(line) for line in Path(storage._get_cache_file_path(step)).read_text(encoding='utf-8').splitlines()]
     assert [row['id'] for row in actual]==['ok0','ok1','ok2']
     assert all(row['final_valid'] is True for row in actual)
     if expected is not None: assert [row['messages'] for row in actual]==[expected]*3

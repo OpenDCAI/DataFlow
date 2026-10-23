@@ -47,7 +47,7 @@ def test_100_records_97_accepted_and_three_errors(tmp_path, cls):
     assert [row["id"] for row in rows] == [i for i in range(1, 99) if i != 50]
     assert (locations[0]["line"], locations[0]["byte_offset"]) == (2, len(lines[0]))
     assert locations[-1]["line"] == 99
-    ledger = [json.loads(line) for line in policy.errors_path.read_text().splitlines()]
+    ledger = [json.loads(line) for line in policy.errors_path.read_text(encoding="utf-8").splitlines()]
     assert [error["line"] for error in ledger] == [1, 51, 100]
     assert [error["code"] for error in ledger] == ["invalid_json", "invalid_json", "invalid_utf8"]
     assert ledger[1]["byte_offset"] == sum(map(len, lines[:50]))
@@ -56,7 +56,7 @@ def test_100_records_97_accepted_and_three_errors(tmp_path, cls):
     assert policy.last_report["rejected"] == 3
     # Header/count/data reads must not append duplicate ledger records.
     storage.read()
-    assert len(policy.errors_path.read_text().splitlines()) == 3
+    assert len(policy.errors_path.read_text(encoding="utf-8").splitlines()) == 3
     assert source.read_bytes() == b''.join(lines)
 
 
@@ -146,7 +146,7 @@ def test_pipeline_compile_and_output_with_bad_first_line(tmp_path, cls, pipeline
         pipeline.forward()
     if cls is LazyFileStorage:
         storage.flush_all()
-    actual = [json.loads(line) for line in Path(storage._get_cache_file_path(2)).read_text().splitlines()]
+    actual = [json.loads(line) for line in Path(storage._get_cache_file_path(2)).read_text(encoding="utf-8").splitlines()]
     assert len(actual) == 97
     assert [row["id"] for row in actual] == [i for i in range(1, 99) if i != 50]
 
