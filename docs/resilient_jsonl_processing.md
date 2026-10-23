@@ -89,27 +89,32 @@ untracked side effects inside an operator and assume they roll back.
 
 ## Per-record failures and replay
 
-`RecordedPromptedGenerator` is a separate opt-in operator; existing generators
-are unchanged. It processes each input independently and requires a materialized
-local JSONL input (ordinary/batched/streaming Storage, not unflushed lazy input).
+`RecordedGenerationRunner` is an explicit task execution helper, not an operator.
+It accepts an immutable local JSONL snapshot and explicit output paths; it never
+reads Storage private paths or becomes a hidden Pipeline graph node. Materialize
+upstream results first. Source line numbers always refer to that snapshot, not
+original rows guessed from filtered positions. The previous unpublished
+RecordedPromptedGenerator core operator has been removed.
 
 ```python
-from dataflow.operators.core_text import RecordedPromptedGenerator
+from dataflow.utils.record_execution import RecordedGenerationRunner
 from dataflow.serving import APILLMServing_request
 
 serving = APILLMServing_request(
     api_url="http://localhost:8000/v1/chat/completions",
     model_name="my-model", record_results=True,
 )
-generator = RecordedPromptedGenerator(
+generator = RecordedGenerationRunner(
     serving, ledger_dir="run/generation-ledger",
     run_config={"parser_revision": 1},
     system_prompt="Answer the question",
 )
-generator.run(storage.step(), input_key="question", output_key="answer")
+generator.run("input.jsonl", "run/successful.jsonl",
+              input_key="question", output_key="answer",
+              outcomes_output="run/all-outcomes.jsonl")
 ```
 
-Pass all custom parser/dependency versions in `run_config`. The operator also
+Pass all custom parser/dependency versions in `run_config`. The runner also
 binds the system prompt, model/API URL, model options, field mapping, retry count
 and request budget. Calls on one Serving instance must not be concurrent across
 independent clients: `last_results` belongs to the most recent generation call.
@@ -129,15 +134,26 @@ Optional `parse_response` may convert a response to a JSON-serializable value.
 A `ValueError` means a data/parse failure; programming exceptions propagate. Raw
 parser exception messages are not put in failure artifacts. This version executes
 one logical generation per record; it does not generalize arbitrary multi-call
-agent trajectories. The dedicated generator currently sends records sequentially;
+agent trajectories. The runner sends records sequentially;
 it prioritizes source association and recovery over model throughput.
+
+The aligned outcomes export retains every parsed input record, with the generated
+field (None on failure) and a generation_outcome object containing status,
+snapshot source/physical line, attempt count and error code/stage. Its default
+path is the success export stem plus `.outcomes.jsonl`. Output/status fields must
+be new; collisions and unsafe destination paths fail before model calls. Malformed
+physical lines are audited separately by the reader policy. The successful export
+is explicitly a filtered view, not implicit row deletion inside a Generator.
+Exports are individually atomic; two output files are not one atomic transaction.
+Re-running exports rebuilds them from committed ledger outcomes.
 
 Replay and merge:
 
 ```python
-generator.replay_failed(
-    "input.jsonl", "run/merged.jsonl",
+generator.run(
+    "input.jsonl", "run/merged.jsonl", only_failed=True,
     input_key="question", output_key="answer",
+    outcomes_output="run/all-outcomes.jsonl",
 )
 ```
 

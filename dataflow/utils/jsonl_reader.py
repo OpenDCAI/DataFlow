@@ -76,7 +76,7 @@ class JSONLReadPolicy:
             raise ValueError("JSONL error ledger must differ from the source")
         identity = self._identity(path)
         if self._inspected == identity and self.errors_path.exists():
-            return dict(self.last_report)
+            return {**self.last_report, "keys": list(self.last_report["keys"])}
         self.errors_path.parent.mkdir(parents=True, exist_ok=True)
         descriptor, name = tempfile.mkstemp(prefix=".jsonl-errors-", dir=self.errors_path.parent)
         scanned = accepted = 0
@@ -104,7 +104,7 @@ class JSONLReadPolicy:
             "keys": list(keys),
         }
         self._inspected = identity
-        return dict(self.last_report)
+        return {**self.last_report, "keys": list(self.last_report["keys"])}
 
     def iter_chunks(self, file_path, batch_size):
         if not isinstance(batch_size, int) or isinstance(batch_size, bool) or batch_size < 1:

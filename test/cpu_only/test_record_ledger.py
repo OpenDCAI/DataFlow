@@ -4,7 +4,7 @@ from pathlib import Path
 import pytest
 from dataflow.utils.record_ledger import RecordLedger, RecordProcessingError, RecordResult
 from dataflow.utils.storage import FileStorage, BatchedFileStorage, StreamBatchedFileStorage
-from dataflow.operators.core_text import RecordedPromptedGenerator
+from dataflow.utils.record_execution import RecordedGenerationRunner
 
 pytestmark = pytest.mark.cpu
 
@@ -107,124 +107,6 @@ class FakeServing:
         self.last_results = [{'index': 0, 'attempts': 1, 'error_code': 'read_timeout' if fail else None}]
         return [None if fail else text.upper()]
 
-def test_generator_output_report_and_public_replay(tmp_path, source):
-    serving = FakeServing()
-    operator = RecordedPromptedGenerator(serving, tmp_path / 'state', {'parser_revision': 1})
-    storage = FileStorage(str(source), cache_path=str(tmp_path / 'cache')).step()
-    operator.run(storage)
-    assert operator.last_report['failed'] == 5
-    assert len(Path(storage._get_cache_file_path(1)).read_text().splitlines()) == 95
-    serving.failed = False
-    serving.calls.clear()
-    operator.replay_failed(source, tmp_path / 'merged.jsonl')
-    assert serving.calls == ['q0','q20','q40','q60','q80']
-    assert len((tmp_path / 'merged.jsonl').read_text().splitlines()) == 100
-    assert operator.last_report['success'] == 100
-    serving.calls.clear()
-    operator.replay_failed(source, tmp_path / 'merged.jsonl')
-    assert serving.calls == []
-
-def test_parser_error_records_failure_without_logging_raw_response(tmp_path):
-    source = tmp_path / 'input.jsonl'
-    source.write_text('{"raw_content":"secret"}\n')
-    serving = FakeServing()
-    operator = RecordedPromptedGenerator(serving, tmp_path / 'state', {}, parse_response=json.loads)
-    operator.run(FileStorage(str(source), cache_path=str(tmp_path / 'cache')).step())
-    failure = json.loads((tmp_path / 'state/failures.jsonl').read_text())
-    assert (failure['stage'], failure['code']) == ('parse', 'invalid_model_output')
-    assert 'secret' not in (tmp_path / 'state/failures.jsonl').read_text()
-
-def test_recorded_generator_stream_resume_rebuilds_uncommitted_output_without_recalling_successes(tmp_path, source, monkeypatch):
-    from dataflow.pipeline import StreamBatchedPipelineABC
-    from dataflow.utils.storage import StreamBatchedFileStorage
-    class RecordedPipeline(StreamBatchedPipelineABC):
-        def __init__(self):
-            super().__init__()
-            self.storage = StreamBatchedFileStorage(str(source), cache_path=str(tmp_path / 'cache'))
-            self.generate = RecordedPromptedGenerator(serving, tmp_path / 'ledger', {'revision': 1})
-        def forward(self):
-            self.generate.run(self.storage.step())
-    serving = FakeServing()
-    original_write = StreamBatchedFileStorage.write
-    calls = []
-    def crash(storage, data):
-        output = original_write(storage, data)
-        if storage.batch_step == 1:
-            raise RuntimeError('interrupt after output')
-        return output
-    with monkeypatch.context() as patch:
-        patch.setattr(StreamBatchedFileStorage, 'write', crash)
-        pipeline = RecordedPipeline()
-        pipeline.compile()
-        with pytest.raises(RuntimeError):
-            pipeline.forward(batch_size=7, checkpoint_dir=tmp_path / 'checkpoint', checkpoint_config={'revision': 1})
-    assert len(serving.calls) == 14
-    pipeline = RecordedPipeline()
-    pipeline.compile()
-    pipeline.forward(batch_size=7, checkpoint_dir=tmp_path / 'checkpoint', checkpoint_config={'revision': 1})
-    assert len(serving.calls) == 100
-    actual = [json.loads(line) for line in Path(pipeline.storage._get_cache_file_path(1)).read_text().splitlines()]
-    assert len(actual) == 95
-    assert [row['id'] for row in actual] == [i for i in range(100) if i % 20]
-    assert pipeline.generate._operator.last_report['complete'] is True
-
-
-def test_invalid_parser_type_is_not_silently_treated_as_bad_model_data(tmp_path):
-    source = tmp_path / 'input.jsonl'
-    source.write_text('{"raw_content":"valid"}\n')
-    def bug(value):
-        raise TypeError('parser programming error')
-    generator = RecordedPromptedGenerator(FakeServing(), tmp_path / 'ledger', {}, parse_response=bug)
-    with pytest.raises(TypeError, match='programming error'):
-        generator.run(FileStorage(str(source), cache_path=str(tmp_path / 'cache')).step())
-
-def test_empty_pandas_jsonl_output_is_a_complete_zero_record_stage(tmp_path):
-    source = tmp_path / 'empty.jsonl'
-    source.write_text('\n')
-    generator = RecordedPromptedGenerator(FakeServing(), tmp_path / 'ledger', {})
-    generator.run(FileStorage(str(source), cache_path=str(tmp_path / 'cache')).step())
-    assert generator.last_report['input'] == 0
-    assert generator.last_report['complete'] is True
-    assert generator.last_report['attempts'] == 0
-
-
-@pytest.mark.parametrize('count', [1, 3])
-@pytest.mark.parametrize('storage_type', [FileStorage, BatchedFileStorage, StreamBatchedFileStorage])
-def test_empty_objects_have_terminal_failures_in_all_materialized_modes(tmp_path, count, storage_type):
-    source = tmp_path / 'input.jsonl'
-    source.write_text('{}\n' * count, encoding='utf-8')
-    serving = FakeServing()
-    generator = RecordedPromptedGenerator(serving, tmp_path / 'ledger', {})
-    storage = storage_type(str(source), cache_path=str(tmp_path / 'cache')).step()
-    if storage_type is FileStorage:
-        generator.run(storage)
-    else:
-        storage.batch_size = 2
-        if storage_type is StreamBatchedFileStorage:
-            for index, chunk in enumerate(storage.iter_chunks()):
-                storage.batch_step = index
-                storage._current_streaming_chunk = chunk
-                generator.run(storage)
-            storage._current_streaming_chunk = None
-        else:
-            for index in range((count + 1) // 2):
-                storage.batch_step = index
-                generator.run(storage)
-    assert serving.calls == []
-    assert generator.last_report['input'] == count
-    assert generator.last_report['failed'] == count
-    assert generator.last_report['pending'] == 0
-    assert generator.last_report['complete'] is True
-    failures = [json.loads(line) for line in (tmp_path / 'ledger/failures.jsonl').read_text().splitlines()]
-    assert [(row['line'], row['code'], row['attempts']) for row in failures] == [
-        (index + 1, 'invalid_input', 0) for index in range(count)
-    ]
-    generator.replay_failed(source, tmp_path / 'merged.jsonl')
-    assert serving.calls == []
-    assert generator.last_report['failed'] == count
-    assert generator.last_report['pending'] == 0
-
-
 def test_unicode_ledger_identity_reopens_with_non_utf8_default(tmp_path, source, monkeypatch):
     original = Path.read_text
 
@@ -239,3 +121,124 @@ def test_unicode_ledger_identity_reopens_with_non_utf8_default(tmp_path, source,
         ledger.process(lambda row: {'result': row['id']})
     with RecordLedger(directory, unicode_source, {'revision': 1}) as ledger:
         assert ledger.report()['success'] == 100
+
+
+def test_runner_aligned_failures_and_explicit_success_view(tmp_path, source):
+    serving=FakeServing();runner=RecordedGenerationRunner(serving,tmp_path/'ledger',{'parser_revision':1})
+    success=tmp_path/'success.jsonl';outcomes=tmp_path/'aligned.jsonl'
+    report=runner.run(source,success,outcomes_output=outcomes)
+    assert (report['success'],report['failed'])==(95,5)
+    rows=list(map(json.loads,outcomes.read_text().splitlines()))
+    assert [row['id'] for row in rows]==list(range(100))
+    assert sum(row['generation_outcome']['status']=='failed' for row in rows)==5
+    assert all(row['generated_content'] is None for row in rows if row['id']%20==0)
+    assert len(success.read_text().splitlines())==95
+    serving.failed=False;serving.calls.clear()
+    runner.run(source,success,only_failed=True,outcomes_output=outcomes)
+    assert serving.calls==['q0','q20','q40','q60','q80']
+    before=outcomes.read_bytes();serving.calls.clear()
+    runner.run(source,success,only_failed=True,outcomes_output=outcomes)
+    assert serving.calls==[] and outcomes.read_bytes()==before
+    assert len(success.read_text().splitlines())==100
+
+
+def test_parser_expected_error_is_recorded_but_programming_error_escapes(tmp_path):
+    source=tmp_path/'input.jsonl';source.write_text('{"raw_content":"secret"}\n')
+    runner=RecordedGenerationRunner(FakeServing(),tmp_path/'ledger',{},parse_response=json.loads)
+    runner.run(source,tmp_path/'success.jsonl')
+    failure=json.loads((tmp_path/'ledger/failures.jsonl').read_text())
+    assert (failure['stage'],failure['code'])==('parse','invalid_model_output')
+    assert 'secret' not in (tmp_path/'ledger/failures.jsonl').read_text()
+    def bug(value):raise TypeError('parser programming error')
+    runner=RecordedGenerationRunner(FakeServing(),tmp_path/'bug-ledger',{},parse_response=bug)
+    with pytest.raises(TypeError,match='programming error'):runner.run(source,tmp_path/'other.jsonl')
+
+@pytest.mark.parametrize('count',[0,1,3])
+def test_empty_objects_and_empty_stage_have_terminal_reports(tmp_path,count):
+    source=tmp_path/'input.jsonl';source.write_text('{}\n'*count)
+    serving=FakeServing();runner=RecordedGenerationRunner(serving,tmp_path/'ledger',{})
+    report=runner.run(source,tmp_path/'success.jsonl')
+    assert report['input']==count and report['failed']==count and report['pending']==0 and report['complete']
+    assert serving.calls==[]
+    rows=list(map(json.loads,(tmp_path/'success.outcomes.jsonl').read_text().splitlines()))
+    assert [row['generation_outcome']['line'] for row in rows]==list(range(1,count+1))
+    assert all(row['generation_outcome']['code']=='invalid_input' for row in rows)
+
+
+def test_input_output_status_collisions_fail_before_model_calls(tmp_path):
+    source=tmp_path/'input.jsonl';source.write_text('{"raw_content":"q","generated_content":"keep"}\n')
+    serving=FakeServing();runner=RecordedGenerationRunner(serving,tmp_path/'ledger',{})
+    for target in [source,tmp_path/'success.jsonl',tmp_path/'ledger/output.jsonl']:
+        with pytest.raises(ValueError):runner.run(source,target)
+    assert serving.calls==[] and source.read_text().endswith('"keep"}\n')
+
+
+def test_physical_source_identity_survives_bad_lines_and_duplicate_content(tmp_path):
+    from dataflow.utils.jsonl_reader import JSONLReadPolicy
+    source=tmp_path/'input.jsonl';source.write_text('bad\n{"raw_content":"q0"}\n{"raw_content":"q0"}\n{"raw_content":"q1"}\n')
+    serving=FakeServing();runner=RecordedGenerationRunner(serving,tmp_path/'ledger',{})
+    policy=JSONLReadPolicy(tmp_path/'read-errors.jsonl')
+    report=runner.run(source,tmp_path/'success.jsonl',read_policy=policy)
+    assert (report['input'],report['failed'])==(3,2)
+    rows=list(map(json.loads,(tmp_path/'success.outcomes.jsonl').read_text().splitlines()))
+    assert [row['generation_outcome']['line'] for row in rows]==[2,3,4]
+    serving.failed=False;serving.calls.clear()
+    runner.run(source,tmp_path/'success.jsonl',only_failed=True,read_policy=policy)
+    assert serving.calls==['q0','q0']
+
+
+def test_runner_resume_after_interruption_does_not_recall_recorded_success(tmp_path,source):
+    serving=FakeServing();original=serving.generate_from_input
+    def interrupt(texts,prompt):
+        if texts==['q3']:raise RuntimeError('interrupt')
+        return original(texts,prompt)
+    serving.generate_from_input=interrupt
+    runner=RecordedGenerationRunner(serving,tmp_path/'ledger',{})
+    with pytest.raises(RuntimeError):runner.run(source,tmp_path/'success.jsonl')
+    assert serving.calls==['q0','q1','q2']
+    serving.generate_from_input=original;serving.calls.clear()
+    report=runner.run(source,tmp_path/'success.jsonl')
+    assert serving.calls==[f'q{i}' for i in range(3,100)]
+    assert report['complete'] and report['failed']==5
+
+@pytest.mark.parametrize('boundary',['before_commit','after_commit','before_export'])
+def test_real_sigkill_recovery_rebuilds_outputs(tmp_path,boundary):
+    import os, subprocess, sys, signal
+    if os.name == 'nt':
+        pytest.skip('Native POSIX SIGKILL boundary; Windows transaction tests are separate')
+    source=tmp_path/'source.jsonl'
+    source.write_text(''.join(json.dumps({'raw_content':str(i)})+'\n' for i in range(10)))
+    script=tmp_path/'worker.py'
+    script.write_text('''import json, os, signal, sys
+from pathlib import Path
+from dataflow.utils.record_execution import RecordedGenerationRunner
+from dataflow.utils.record_ledger import RecordLedger
+root=Path(sys.argv[1]); boundary=sys.argv[2]
+class Serving:
+    record_results=True
+    def generate_from_input(self, inputs, prompt):
+        with (root/'calls.jsonl').open('a') as stream: stream.write(json.dumps(inputs[0])+'\\n')
+        self.last_results=[{'attempts':1}]
+        return [inputs[0].upper()]
+original=RecordLedger.record
+def record(self,line,*args,**kwargs):
+    if line==3 and boundary=='before_commit':os.kill(os.getpid(),signal.SIGKILL)
+    value=original(self,line,*args,**kwargs)
+    if line==3 and boundary=='after_commit':os.kill(os.getpid(),signal.SIGKILL)
+    return value
+RecordLedger.record=record
+if boundary=='before_export':
+    def kill(*args,**kwargs):os.kill(os.getpid(),signal.SIGKILL)
+    RecordLedger.export_results=kill
+RecordedGenerationRunner(Serving(),root/'ledger',{}).run(root/'source.jsonl',root/'success.jsonl')
+''')
+    result=subprocess.run([sys.executable,str(script),str(tmp_path),boundary],capture_output=True,timeout=30)
+    assert result.returncode==-signal.SIGKILL, result.stderr.decode()
+    result=subprocess.run([sys.executable,str(script),str(tmp_path),'none'],capture_output=True,timeout=30)
+    assert result.returncode==0,result.stderr.decode()
+    rows=list(map(json.loads,(tmp_path/'success.outcomes.jsonl').read_text().splitlines()))
+    assert [row['raw_content'] for row in rows]==list(map(str,range(10)))
+    assert all(row['generation_outcome']['status']=='success' for row in rows)
+    calls=list(map(json.loads,(tmp_path/'calls.jsonl').read_text().splitlines()))
+    assert len(calls)==(11 if boundary=='before_commit' else 10)
+    assert calls.count('2')==(2 if boundary=='before_commit' else 1)

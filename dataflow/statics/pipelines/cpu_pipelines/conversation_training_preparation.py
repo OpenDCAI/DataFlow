@@ -4,7 +4,9 @@ import argparse
 import json
 from pathlib import Path
 
-from dataflow.operators.core_text import TrainingDataValidationFilter, TrainingMessagesConverter
+from dataflow.operators.text_sft import AlpacaMessagesGenerator, AlpacaStructureSampleEvaluator
+from dataflow.operators.conversations import (ShareGPTMessagesGenerator, ShareGPTStructureSampleEvaluator,
+    ConversationStructureSampleEvaluator, ConversationStructureFilter)
 from dataflow.pipeline import PipelineABC
 from dataflow.utils.storage import FileStorage
 
@@ -14,23 +16,30 @@ class ConversationPreparationPipeline(PipelineABC):
         super().__init__()
         self.storage = FileStorage(str(source), cache_path=str(output_dir / "cache"))
         self.source_format = source_format
-        self.converter = TrainingMessagesConverter(
-            source_format=source_format, on_invalid="quarantine",
-            errors_path=output_dir / "conversion_errors.jsonl",
-        )
-        self.validator = TrainingDataValidationFilter(message_profile="conversation")
+        if source_format == "alpaca":
+            self.source_check = AlpacaStructureSampleEvaluator()
+            self.converter = AlpacaMessagesGenerator()
+        elif source_format == "sharegpt":
+            self.source_check = ShareGPTStructureSampleEvaluator()
+            self.converter = ShareGPTMessagesGenerator()
+        elif source_format == "messages":
+            self.source_check = ConversationStructureSampleEvaluator()
+        else:
+            raise ValueError("source_format must be alpaca, sharegpt or messages")
+        self.keep_valid = ConversationStructureFilter()
+        self.validator = ConversationStructureSampleEvaluator()
 
     def forward(self):
         if self.source_format == "alpaca":
-            self.converter.run(
-                self.storage.step(), input_key="instruction", input_answer_key="output",
-                input_context_key="input", input_history_key="history", input_system_key="system",
-            )
-        elif self.source_format == "sharegpt":
-            self.converter.run(self.storage.step(), input_key="conversations")
+            self.source_check.run(self.storage.step(), input_context_key="input", input_history_key="history", input_system_key="system")
         else:
-            self.converter.run(self.storage.step(), input_key="messages")
-        self.validator.run(self.storage.step(), input_key="messages")
+            self.source_check.run(self.storage.step())
+        self.keep_valid.run(self.storage.step(), input_key="conversation_valid" if self.source_format == "messages" else "source_valid")
+        if self.source_format == "alpaca":
+            self.converter.run(self.storage.step(), input_context_key="input", input_history_key="history", input_system_key="system")
+        elif self.source_format == "sharegpt":
+            self.converter.run(self.storage.step())
+        self.validator.run(self.storage.step(), output_valid_key="final_valid", output_error_key="final_error")
 
 
 def _write_jsonl(path, rows):
@@ -84,12 +93,15 @@ def main():
         pipeline = ConversationPreparationPipeline(source, root, source_format)
         pipeline.compile()
         pipeline.forward()
-        prepared = [json.loads(line) for line in Path(pipeline.storage._get_cache_file_path(2)).read_text(encoding="utf-8").splitlines()]
+        prepared = [json.loads(line) for line in Path(pipeline.storage._get_cache_file_path(3 if source_format == "messages" else 4)).read_text(encoding="utf-8").splitlines()]
         assert len(prepared) == 1 and prepared[0]["id"] == good["id"]
         assert prepared[0]["messages"] == expected
-        assert prepared[0]["training_data_valid"] is True
-        errors = [json.loads(line) for line in (root / "conversion_errors.jsonl").read_text(encoding="utf-8").splitlines()]
-        assert len(errors) == 1 and (errors[0]["row"], errors[0]["field"], errors[0]["code"]) == (2, error_field, error_code)
+        assert prepared[0]["final_valid"] is True
+        evaluated = [json.loads(line) for line in Path(pipeline.storage._get_cache_file_path(1)).read_text(encoding="utf-8").splitlines()]
+        error_key = "conversation_error" if source_format == "messages" else "source_error"
+        errors = [row[error_key] for row in evaluated if row[error_key] is not None]
+        assert len(evaluated) == 2 and len(errors) == 1
+        assert (errors[0]["row"], errors[0]["field"], errors[0]["code"]) == (2, error_field, error_code)
         assert source.read_bytes() == original
         _write_jsonl(root / "training.jsonl", [{"messages": row["messages"]} for row in prepared])
         summary[source_format] = {"input": 2, "accepted": 1, "rejected": 1, "matches_expected": True}

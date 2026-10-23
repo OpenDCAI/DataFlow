@@ -95,3 +95,24 @@ def convert_messages(row: dict, key: str) -> list:
     # Keep tool arguments/IDs/content and all messages intact; detach output
     # objects from the source column even when both columns are kept in memory.
     return deepcopy(row[key])
+
+
+def map_preference_fields(row, input_prompt_key="prompt", input_chosen_key="chosen", input_rejected_key="rejected",
+                          output_prompt_key="prompt", output_chosen_key="chosen", output_rejected_key="rejected"):
+    """Return a copied preference record with explicit, lossless field mapping.
+
+    This is a Python utility, not a registered conversion/filter operator.
+    Target fields may equal their corresponding input, but may not overwrite
+    unrelated source fields or another preference field.
+    """
+    from dataflow.utils.training_data import check_keys
+    inputs = [input_prompt_key, input_chosen_key, input_rejected_key]
+    outputs = [output_prompt_key, output_chosen_key, output_rejected_key]
+    check_keys(*inputs, *outputs)
+    if len(set(inputs)) != 3 or len(set(outputs)) != 3:
+        raise ValueError("Preference fields must be distinct")
+    values = [require_text(row, key) for key in inputs]
+    for source, target in zip(inputs, outputs):
+        if target in row and target != source:
+            raise ValueError("Preference outputs must not overwrite unrelated source fields")
+    return {**row, **dict(zip(outputs, values))}

@@ -3,10 +3,8 @@
 from __future__ import annotations
 
 import json
-from pathlib import Path
-from typing import Callable
 
-import pandas as pd
+
 
 
 class TrainingDataError(ValueError):
@@ -181,85 +179,6 @@ def validate_preference(row: dict, prompt: str, chosen: str, rejected: str) -> N
         require_text(row, key)
 
 
-def check_policy(on_invalid: str, errors_path) -> None:
-    if on_invalid not in {"raise", "quarantine"}:
-        raise ValueError("on_invalid must be 'raise' or 'quarantine'")
-    if on_invalid == "quarantine" and errors_path is None:
-        raise ValueError("quarantine requires errors_path so rejected records are auditable")
-
-
 def check_keys(*keys: str) -> None:
     if any(not isinstance(key, str) or not key.strip() for key in keys):
         raise ValueError("Field keys must be nonblank strings")
-
-
-def process_batch(operator, storage, transform: Callable, output_columns: list[str]) -> None:
-    """Write a batch only after validation; keep source columns and row order.
-
-    Error locations are positions in this step's input, not original-source IDs
-    after upstream filtering. Error ledgers append across calls; last_report is
-    per call. There is deliberately no resume/replay contract in this helper.
-    """
-    frame = storage.read("dataframe")
-    if operator.errors_path is not None:
-        error_path = Path(operator.errors_path).resolve()
-        source = getattr(storage, "first_entry_file_name", None)
-        if source and error_path == Path(source).resolve():
-            raise ValueError("errors_path must not be the source file")
-        cache_file = getattr(storage, "_get_cache_file_path", None)
-        step = getattr(storage, "operator_step", None)
-        if cache_file is not None and step is not None:
-            for position in (step, step + 1):
-                if error_path == Path(cache_file(position)).resolve():
-                    raise ValueError("errors_path must not be a Storage input or output file")
-
-    batch = getattr(storage, "batch_step", 0)
-    size = getattr(storage, "batch_size", None)
-    offset = batch * size if size is not None else 0
-    operator.last_report = {"input": len(frame), "accepted": 0, "rejected": 0}
-    rows, errors = [], []
-    locations = frame.attrs.get("dataflow_source_locations")
-    # pandas drops records entirely for a frame with rows but zero columns.
-    # Keep those records so required-field validation can reject each one.
-    records = frame.to_dict(orient="records") if len(frame.columns) else [{} for _ in range(len(frame))]
-    for position, row in enumerate(records):
-        try:
-            updates = transform(row)
-        except TrainingDataError as exc:
-            error = {
-                "schema_version": 1,
-                "operator": type(operator).__name__,
-                "step": getattr(storage, "operator_step", None),
-                "row": offset + position + 1,
-                "field": exc.field,
-                "code": exc.code,
-                "message": str(exc),
-            }
-            if locations is not None:
-                error["source_location"] = locations[position]
-            operator.last_report["rejected"] += 1
-            if operator.on_invalid == "raise":
-                _append_errors(operator.errors_path, [error])
-                raise TrainingDataError(
-                    exc.field, exc.code,
-                    f"row {error['row']}, {exc.field}: {exc}",
-                ) from exc
-            errors.append(error)
-            continue
-        rows.append({**row, **updates})
-        operator.last_report["accepted"] += 1
-
-    _append_errors(operator.errors_path, errors)
-    columns = list(dict.fromkeys([*frame.columns, *output_columns]))
-    # A DataFrame preserves the schema even when every record is quarantined.
-    storage.write(pd.DataFrame(rows, columns=columns))
-
-
-def _append_errors(path, errors: list[dict]) -> None:
-    if path is None or not errors:
-        return
-    destination = Path(path)
-    destination.parent.mkdir(parents=True, exist_ok=True)
-    with destination.open("a", encoding="utf-8") as stream:
-        for error in errors:
-            stream.write(json.dumps(error, ensure_ascii=False) + "\n")

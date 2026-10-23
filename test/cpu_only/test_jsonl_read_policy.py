@@ -3,9 +3,11 @@
 import json
 from pathlib import Path
 
+import pandas as pd
 import pytest
 
-from dataflow.operators.core_text import TrainingMessagesConverter, TrainingDataValidationFilter
+from dataflow.operators.text_sft import QAMessagesGenerator
+from dataflow.operators.conversations import ConversationStructureSampleEvaluator
 from dataflow.pipeline import PipelineABC, BatchedPipelineABC, StreamBatchedPipelineABC
 from dataflow.utils.jsonl_reader import JSONLReadPolicy
 from dataflow.utils.storage import FileStorage, LazyFileStorage, BatchedFileStorage, StreamBatchedFileStorage
@@ -111,8 +113,8 @@ class Prepare(PipelineABC):
     def __init__(self, storage):
         super().__init__()
         self.storage = storage
-        self.convert = TrainingMessagesConverter()
-        self.validate = TrainingDataValidationFilter()
+        self.convert = QAMessagesGenerator()
+        self.validate = ConversationStructureSampleEvaluator()
 
     def forward(self):
         self.convert.run(self.storage.step(), input_key="q", input_answer_key="a")
@@ -137,6 +139,7 @@ def test_pipeline_compile_and_output_with_bad_first_line(tmp_path, cls, pipeline
     storage = cls(str(source), cache_path=str(tmp_path / "cache"), jsonl_read_policy=JSONLReadPolicy(tmp_path / "errors.jsonl"), **kwargs)
     pipeline = pipeline_cls(storage)
     pipeline.compile()
+    assert storage.jsonl_read_policy.inspect(source)["keys"] == ["id", "q", "a"]
     if cls in (BatchedFileStorage, StreamBatchedFileStorage):
         pipeline.forward(batch_size=8, resume_from_last=False)
     else:
@@ -148,11 +151,14 @@ def test_pipeline_compile_and_output_with_bad_first_line(tmp_path, cls, pipeline
     assert [row["id"] for row in actual] == [i for i in range(1, 99) if i != 50]
 
 
-def test_conversion_error_keeps_physical_source_line(tmp_path):
-    source = tmp_path / "input.jsonl"
+def test_evaluation_error_keeps_physical_source_line(tmp_path):
+    from dataflow.operators.text_sft import QAStructureSampleEvaluator
+    source = tmp_path / 'input.jsonl'
     source.write_text('bad\n{"prompt":"q","answer":""}\n')
-    storage = FileStorage(str(source), jsonl_read_policy=JSONLReadPolicy(tmp_path / "read_errors.jsonl")).step()
-    operator = TrainingMessagesConverter(on_invalid="quarantine", errors_path=tmp_path / "convert_errors.jsonl")
-    operator.run(storage)
-    error = json.loads((tmp_path / "convert_errors.jsonl").read_text())
-    assert error["source_location"]["line"] == 2
+    storage = FileStorage(str(source), jsonl_read_policy=JSONLReadPolicy(tmp_path/'reader-errors')).step()
+    QAStructureSampleEvaluator().run(storage)
+    frame = pd.read_json(storage._get_cache_file_path(1), lines=True)
+    error = frame.iloc[0]['source_error']
+    assert error['source_location']['line'] == 2
+    assert error['field'] == 'answer'
+    assert len(frame) == 1

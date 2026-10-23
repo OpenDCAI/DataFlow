@@ -171,6 +171,34 @@ class RecordLedger:
                     yield {**row, **outcome["result"]}
         self._write_jsonl(output_path, rows())
 
+    def export_outcomes(self, output_path, output_key="generated_content", status_key="generation_outcome"):
+        """Export every parsed source record, including failures, in source order.
+
+        Status line numbers refer to this ledger's immutable source snapshot,
+        never positions inferred from a filtered upstream dataset.
+        """
+        if Path(output_path).resolve().is_relative_to(self.directory):
+            raise ValueError("Export outcomes outside the ledger state directory")
+        if output_key == status_key:
+            raise ValueError("Output and status fields must be distinct")
+        def rows():
+            for row, location, code in JSONLReadPolicy._records(self.source):
+                if code is not None:
+                    if self.read_policy is None and not (code == "blank_line" and self.total == 0):
+                        raise ValueError("Source is not valid JSONL")
+                    continue
+                if output_key in row or status_key in row:
+                    raise ValueError("Outcome fields must not overwrite source columns")
+                outcome = self.get(location["line"])
+                status = outcome["status"] if outcome else "pending"
+                updates = outcome["result"] if status == "success" else {output_key: None}
+                yield {**row, **updates, status_key: {
+                    "status": status, "line": location["line"], "source": str(self.source),
+                    "attempts": outcome["attempts"] if outcome else 0,
+                    "stage": outcome["stage"] if outcome else None,
+                    "code": outcome["code"] if outcome else None}}
+        self._write_jsonl(output_path, rows())
+
     def process(self, processor, only_failed=False):
         """Process missing records or replay only recorded failures.
 

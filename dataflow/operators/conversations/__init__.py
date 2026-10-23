@@ -1,6 +1,10 @@
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
+    from .eval.sharegpt_structure_sample_evaluator import ShareGPTStructureSampleEvaluator
+    from .generate.sharegpt_messages_generator import ShareGPTMessagesGenerator
+    from .eval.conversation_structure_sample_evaluator import ConversationStructureSampleEvaluator
+    from .filter.conversation_structure_filter import ConversationStructureFilter
     from .generate.func_call_generators import (
         ScenarioExtractGenerator,
         ScenarioExpandGenerator,
