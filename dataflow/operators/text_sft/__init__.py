@@ -1,6 +1,10 @@
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
+    from .eval.alpaca_structure_sample_evaluator import AlpacaStructureSampleEvaluator
+    from .eval.qa_structure_sample_evaluator import QAStructureSampleEvaluator
+    from .generate.qa_messages_generator import QAMessagesGenerator
+    from .generate.alpaca_messages_generator import AlpacaMessagesGenerator
     from .eval.alpagasus_sample_evaluator import AlpagasusSampleEvaluator
     from .eval.deita_quality_sample_evaluator import DeitaQualitySampleEvaluator
     from .eval.deita_complexity_sample_evaluator import DeitaComplexitySampleEvaluator
