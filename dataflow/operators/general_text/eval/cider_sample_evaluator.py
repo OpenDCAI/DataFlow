@@ -79,7 +79,15 @@ class CiderSampleEvaluator(OperatorABC):
         eval_data = dataframe[input_key]
         ref_data = dataframe[reference_key]
         self.logger.info(f"Evaluating {self.score_name}...")
-        scores = [self._score_func(eval_text, ref_text) for eval_text, ref_text in tqdm(zip(eval_data, ref_data), desc="CiderScorer Evaluating...")]
+        if self.df_mode == "corpus" and len(dataframe) > 0:
+            # Estimate IDF from all reference documents before scoring any row.
+            cider_scorer = Cider(n=self.n, sigma=self.sigma)
+            for eval_text, ref_text in tqdm(zip(eval_data, ref_data), desc="CiderScorer Evaluating..."):
+                cider_scorer += (eval_text, [ref_text])
+            _, scores = cider_scorer.compute_score(df_mode="corpus")
+            scores = scores.tolist()
+        else:
+            scores = [self._score_func(eval_text, ref_text) for eval_text, ref_text in tqdm(zip(eval_data, ref_data), desc="CiderScorer Evaluating...")]
         self.logger.info("Evaluation complete!")
         return scores
     
