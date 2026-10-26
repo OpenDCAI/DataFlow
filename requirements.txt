@@ -62,7 +62,7 @@ httpx[socks]
 cloudpickle
 fastapi
 httpx
-pandas==3.0.6
+pandas==2.3.3
 psutil
 pyfiglet
 pyyaml
