@@ -27,9 +27,12 @@ class PresidioFilter(OperatorABC):
                 "- lang：文本语言，默认为'en'\n"
                 "- device：模型运行设备，默认为'cuda'\n"
                 "- model_cache_dir：模型缓存目录，默认为'./dataflow_cache'\n"
+                "- input_key：输入文本字段名（必填）\n"
+                "- output_key：写入PII数量的输出字段名，默认为'PresidioScore'\n"
                 "输出参数：\n"
-                "- 过滤后的DataFrame，仅保留PII数量在[min_score, max_score]范围内的样本\n"
-                "- 返回包含输出字段名的列表，用于后续算子引用"
+                "- 过滤后的DataFrame，仅保留PII数量在[min_score, max_score]范围内（含边界）的样本；"
+                "每行新增output_key字段，值为该行检测到的整数PII实体数量，该字段保留在输出中\n"
+                "- 返回包含output_key的列表，用于后续算子引用"
             )
         elif lang == "en":
             return (
@@ -41,9 +44,12 @@ class PresidioFilter(OperatorABC):
                 "- lang: Text language, default is 'en'\n"
                 "- device: Model running device, default is 'cuda'\n"
                 "- model_cache_dir: Model cache directory, default is './dataflow_cache'\n"
+                "- input_key: Input text field name (required)\n"
+                "- output_key: Name of the output field that receives the PII count, default is 'PresidioScore'\n"
                 "Output Parameters:\n"
-                "- Filtered DataFrame containing only samples with PII count within [min_score, max_score] range\n"
-                "- List containing output field name for subsequent operator reference"
+                "- Filtered DataFrame containing only samples with PII count within [min_score, max_score] range (inclusive); "
+                "each row gets a new output_key field holding the integer number of PII entities detected in that row, which is kept in the output\n"
+                "- List containing output_key for subsequent operator reference"
             )
         else:
             return "Filter data based on PII detection results using Microsoft Presidio model."

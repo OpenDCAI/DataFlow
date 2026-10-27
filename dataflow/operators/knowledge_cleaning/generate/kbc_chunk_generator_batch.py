@@ -43,13 +43,29 @@ class KBCChunkGeneratorBatch(OperatorABC):
                 "CorpusTextSplitter是轻量级文本分割工具，",
                 "支持词/句/语义/递归分块，",
                 "可配置块大小、重叠和最小块长度",
+                "\n输入参数：\n"
+                "- input_key：存放待分块文件路径的字段名，默认为'text_path'（支持.txt/.md/.xml/.json/.jsonl）\n"
+                "- output_key：写入分块文件路径的输出字段名，默认为'chunk_path'；该字段在输入中已存在时报错\n"
+                "输出参数：\n"
+                "- 不改变行数；每个输入文件的分块写入JSON文件<原文件目录>/extract/<原文件名>_chunk.json，"
+                "内容为[{\"raw_chunk\": 分块文本}, ...]\n"
+                "- 每行新增output_key字段，值为该JSON文件的路径字符串（文件不存在或文本为空时为空字符串），该字段保留在输出中；分块文本本身不写入DataFrame\n"
+                "- 返回包含output_key的列表",
             )
         elif (lang == "en"):
             return (
                 "CorpusTextSplitter is a lightweight text segmentation tool",
                 "that supports multiple chunking methods",
                 "(token/sentence/semantic/recursive) with configurable size and overlap,",
-                "optimized for RAG applications."
+                "optimized for RAG applications.",
+                "\nInput Parameters:\n"
+                "- input_key: Field holding the path of the file to chunk, default is 'text_path' (supports .txt/.md/.xml/.json/.jsonl)\n"
+                "- output_key: Name of the output field that receives the chunk file path, default is 'chunk_path'; raises an error if it already exists in the input\n"
+                "Output Parameters:\n"
+                "- Row count is unchanged; the chunks of each input file are written to the JSON file <source dir>/extract/<source name>_chunk.json "
+                "as [{\"raw_chunk\": chunk text}, ...]\n"
+                "- Each row gets a new output_key field holding that JSON file's path string (empty string if the file is missing or its text is empty), which is kept in the output; the chunk text itself is not written to the DataFrame\n"
+                "- List containing output_key",
             )
 
     def _initialize_chunker(self):

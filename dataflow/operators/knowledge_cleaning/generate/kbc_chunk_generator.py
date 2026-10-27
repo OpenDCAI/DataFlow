@@ -42,13 +42,27 @@ class KBCChunkGenerator(OperatorABC):
                 "CorpusTextSplitter是轻量级文本分割工具，",
                 "支持词/句/语义/递归分块，",
                 "可配置块大小、重叠和最小块长度",
+                "\n输入参数：\n"
+                "- input_key：存放待分块文件路径的字段名，默认为'text_path'（支持.txt/.md/.xml/.json/.jsonl）\n"
+                "- output_key：写入分块文本的输出字段名，默认为'raw_chunk'；该字段在输入中已存在时报错\n"
+                "输出参数：\n"
+                "- 新的DataFrame，每个分块一行（行数通常多于输入），复制原行所有字段，"
+                "并新增output_key字段，值为该分块的文本字符串，该字段保留在输出中\n"
+                "- 返回包含output_key的列表",
             )
         elif(lang=="en"):
             return (
                 "CorpusTextSplitter is a lightweight text segmentation tool",
                 "that supports multiple chunking methods",
                 "(token/sentence/semantic/recursive) with configurable size and overlap,",
-                "optimized for RAG applications."
+                "optimized for RAG applications.",
+                "\nInput Parameters:\n"
+                "- input_key: Field holding the path of the file to chunk, default is 'text_path' (supports .txt/.md/.xml/.json/.jsonl)\n"
+                "- output_key: Name of the output field that receives the chunk text, default is 'raw_chunk'; raises an error if it already exists in the input\n"
+                "Output Parameters:\n"
+                "- A new DataFrame with one row per chunk (usually more rows than the input); each row copies all fields of its source row "
+                "and gets a new output_key field holding that chunk's text string, which is kept in the output\n"
+                "- List containing output_key",
             )
 
     def _initialize_chunker(self):

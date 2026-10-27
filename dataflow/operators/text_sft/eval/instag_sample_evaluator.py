@@ -38,20 +38,26 @@ class InstagSampleEvaluator(OperatorABC):
                 "使用Instag评分器评估指令的内容多样性和意图标签。通过分析指令文本生成相关标签，标签数量越多表示内容多样性越大，" 
                 "同时返回标签的详细解释。基于OFA-Sys/InsTagger模型实现。\n" 
                 "输入参数：\n" 
-                "- query: 待评估的指令文本\n" 
-                "输出参数：\n" 
-                "- int: 标签数量（内容多样性指标）\n" 
-                "- list: 包含标签和解释的字典列表"
+                "- query: 待评估的指令文本\n"
+                "- input_instruction_key：run()读取的指令字段名，默认为'instruction'\n"
+                "- output_key：写入标签数量的输出字段名，默认为'InstagScore'\n"
+                "输出参数：\n"
+                "- int: 标签数量（内容多样性指标）；模型输出为JSON列表时为列表长度，为非空字典时为1，否则为0（JSON解析失败时按字典处理，计为1）\n"
+                "- list: 包含标签和解释的字典列表（仅在内部生成，不写入DataFrame）\n"
+                "- 不过滤任何行；每行新增output_key字段，值为该行的整数标签数量，该字段保留在输出中；run()无返回值(None)"
             )
         else:
             return (
                 "Evaluate instruction content diversity and intention tags using the Instag scorer. Generate relevant tags by analyzing instruction text, " 
                 "with more tags indicating greater content diversity, while returning detailed explanations of tags. Implemented based on OFA-Sys/InsTagger model.\n" 
                 "Input parameters:\n" 
-                "- query: Instruction text to be evaluated\n" 
-                "Output parameters:\n" 
-                "- int: Number of tags (content diversity indicator)\n" 
-                "- list: List of dictionaries containing tags and explanations"
+                "- query: Instruction text to be evaluated\n"
+                "- input_instruction_key: Name of the instruction field read by run(), default is 'instruction'\n"
+                "- output_key: Name of the output field that receives the tag count, default is 'InstagScore'\n"
+                "Output parameters:\n"
+                "- int: Number of tags (content diversity indicator); length of the list if the model outputs a JSON list, 1 for a non-empty dict, otherwise 0 (a JSON parse failure is treated as a dict and counts as 1)\n"
+                "- list: List of dictionaries containing tags and explanations (produced internally only, not written to the DataFrame)\n"
+                "- No rows are filtered; each row gets a new output_key field holding its integer tag count, which is kept in the output; run() returns None"
             )
 
     def make_prompt(self, query):

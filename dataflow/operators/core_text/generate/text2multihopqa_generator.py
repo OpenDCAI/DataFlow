@@ -67,6 +67,16 @@ class Text2MultiHopQAGenerator(OperatorABC):
             return (
                 "MultiHopQAGenerator 是多跳问答对生成处理器，支持从文本中自动生成需要多步推理的问题与答案。",
                 "处理流程包括：文本预处理、信息抽取、问题生成与回答生成，支持自定义语言模型后端和参数。",
+                "输入参数：\n"
+                "- input_key：输入文本字段名，默认为'cleaned_chunk'\n"
+                "- output_key：写入QA对列表的字段名，默认为'QA_pairs'\n"
+                "- output_meta_key：写入元数据的字段名，默认为'QA_metadata'\n"
+                "- num_q（__init__参数）：每行最多保留的QA对数量，默认为5",
+                "输出参数：\n"
+                "- output_key：该行生成的QA对列表（最多num_q个，结构同下方qa_pairs）\n"
+                "- output_meta_key：元数据dict {source, timestamp, complexity}（下方metadata）\n"
+                "- 不写入text字段，输入字段原样保留；删除QA对列表为空的行（含未通过长度/质量检查的文本）；若output_key已存在于输入中则报错\n"
+                "- 返回[output_key]",
                 "输出格式如下：",
                 "输入：\n"
                 "text: <原始上下文文本>",
@@ -97,6 +107,16 @@ class Text2MultiHopQAGenerator(OperatorABC):
             return (
                 "MultiHopQAGenerator is a processor for generating multi-hop question-answer pairs from raw text.",
                 "It includes preprocessing, information extraction, and reasoning-based QA generation, with configurable LLM backends.",
+                "Input Parameters:\n"
+                "- input_key: Input text field name, default 'cleaned_chunk'\n"
+                "- output_key: Name of the field that receives the QA-pair list, default 'QA_pairs'\n"
+                "- output_meta_key: Name of the field that receives the metadata, default 'QA_metadata'\n"
+                "- num_q (__init__ parameter): maximum QA pairs kept per row, default 5",
+                "Output Parameters:\n"
+                "- output_key: list of QA pairs generated for the row (at most num_q, structured like qa_pairs below)\n"
+                "- output_meta_key: metadata dict {source, timestamp, complexity} (metadata below)\n"
+                "- No text field is written and input fields are kept; rows with an empty QA-pair list (including texts failing the length/quality checks) are dropped; raises an error if output_key already exists in the input\n"
+                "- Returns [output_key]",
                 "Expected output format:",
                 "Input:\n"
                 "text: <raw input context>",

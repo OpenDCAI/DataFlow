@@ -23,25 +23,31 @@ class PairQualFilter(OperatorABC):
             return (
                 "基于PairQualScorer打分器的得分对数据进行过滤。基于BGE模型，使用GPT对文本成对比较打分后训练而成的双语文本质量评分器，得分越高表示质量越高。\n"
                 "输入参数：\n"
-                "- min_score：最小质量得分阈值\n"
-                "- max_score：最大质量得分阈值\n"
+                "- min_score：最小质量得分阈值（包含），默认为0\n"
+                "- max_score：最大质量得分阈值（包含），默认为10000\n"
                 "- model_cache_dir：模型缓存目录路径\n"
-                "- lang：文本语言类型\n"
+                "- lang：文本语言类型，'en'或'zh'，默认为'en'\n"
+                "- input_key：输入文本字段名，无默认值，必须指定\n"
+                "- output_key：写入质量得分的输出字段名，默认为'PairQualScore'\n"
                 "输出参数：\n"
-                "- 过滤后的DataFrame，仅保留质量得分在指定范围内的文本\n"
-                "- 返回包含质量得分字段名的列表"
+                "- 过滤后的DataFrame，仅保留 min_score <= 质量得分 <= max_score 的文本；"
+                "每行新增output_key字段，值为该行的浮点质量得分，该字段保留在输出中\n"
+                "- 返回包含output_key的列表"
             )
         else:
             return (
                 "Filter data using scores from the PairQualScorer. Bilingual text quality scorer trained on GPT pairwise comparison annotations using BGE model; higher scores indicate better quality.\n"
                 "Input Parameters:\n"
-                "- min_score: Minimum quality score threshold\n"
-                "- max_score: Maximum quality score threshold\n"
+                "- min_score: Minimum quality score threshold (inclusive), default is 0\n"
+                "- max_score: Maximum quality score threshold (inclusive), default is 10000\n"
                 "- model_cache_dir: Model cache directory path\n"
-                "- lang: Text language type\n\n"
+                "- lang: Text language type, 'en' or 'zh', default is 'en'\n"
+                "- input_key: Input text field name; no default, must be given\n"
+                "- output_key: Name of the output field that receives the quality score, default is 'PairQualScore'\n\n"
                 "Output Parameters:\n"
-                "- Filtered DataFrame containing only texts with quality score within specified range\n"
-                "- List containing quality score field name"
+                "- Filtered DataFrame containing only texts with min_score <= quality score <= max_score; "
+                "each row gets a new output_key field holding its float quality score, which is kept in the output\n"
+                "- List containing output_key"
             )
 
     def eval(self, dataframe, input_key):
