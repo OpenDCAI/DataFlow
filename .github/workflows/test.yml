@@ -46,7 +46,7 @@ jobs:
         with:
           python-version: ${{ matrix.python }}
 
-      # 仅 Linux：释放 GitHub runner 的大块预装组件，立刻回收十几 GB
+      # 仅 Linux：清理不需要的预装组件，释放磁盘空间
       - name: Free up disk space on Linux
         if: runner.os == 'Linux'
         run: |
@@ -60,16 +60,16 @@ jobs:
           sudo rm -rf /var/lib/apt/lists/*
           df -h
 
-      # 安装 uv（正确的官方 action）
       - name: Install uv
         uses: astral-sh/setup-uv@v7
         with:
-          enable-cache: true  # 远端缓存 uv 自身（对磁盘占用很小）
+          enable-cache: true
 
-      # 用系统 Python 安装依赖，禁用缓存，避免写入大体积 wheel 缓存
       - name: Install dependencies
         env:
           UV_SYSTEM_PYTHON: "1"
+          # 避开 Ubuntu 26.04 上 /tmp 的 tmpfs 容量限制
+          TMPDIR: ${{ runner.temp }}
         run: |
           uv pip install --no-cache -r requirements.txt
           uv pip install -e .[test]
@@ -87,4 +87,3 @@ jobs:
           PYTHONDONTWRITEBYTECODE: 1
         run: |
           pytest -m "cpu or api"
-
