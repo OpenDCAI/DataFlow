@@ -30,19 +30,25 @@ class PerplexitySampleEvaluator(OperatorABC):
             return (
                 "基于Huggingface语言模型计算文本的困惑度(Perplexity)，困惑度越低表示文本的流畅性和可理解性越高。" 
                 "输入参数：\n" 
-                "- model_name：Huggingface模型路径或名称\n"
-                "- device：模型运行设备\n"
-                "输出参数：\n" 
-                "- float: 困惑度值，越低表示文本流畅性越好"
+                "- model_name：Huggingface模型路径或名称，默认为'gpt2'\n"
+                "- device：模型运行设备，默认为'cuda'\n"
+                "- input_key：run()读取的输入文本字段名，默认为'raw_content'\n"
+                "- output_key：写入困惑度的输出字段名，默认为'PerplexityScore'\n"
+                "输出参数：\n"
+                "- float: 困惑度值，越低表示文本流畅性越好\n"
+                "- 不过滤任何行；每行新增output_key字段，值为该行的浮点困惑度，该字段保留在输出中；run()无返回值(None)"
             )
         else:
             return (
                 "Calculate text perplexity using a Huggingface language model; lower perplexity indicates better fluency and understandability."
                 "Input Parameters:\n"
-                "- model_name: Huggingface model path or name\n"
-                "- device: Model device\n\n"
+                "- model_name: Huggingface model path or name, default is 'gpt2'\n"
+                "- device: Model device, default is 'cuda'\n"
+                "- input_key: Name of the input text field read by run(), default is 'raw_content'\n"
+                "- output_key: Name of the output field that receives the perplexity, default is 'PerplexityScore'\n\n"
                 "Output Parameters:\n"
-                "- float: Perplexity score, lower values indicate better fluency and understandability"
+                "- float: Perplexity score, lower values indicate better fluency and understandability\n"
+                "- No rows are filtered; each row gets a new output_key field holding its float perplexity, which is kept in the output; run() returns None"
             )
 
     def eval(self, dataframe, input_key):

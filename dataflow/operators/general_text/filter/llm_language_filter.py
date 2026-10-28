@@ -21,7 +21,25 @@ class LLMLanguageFilter(OperatorABC):
 
     @staticmethod
     def get_desc(lang: str = "zh"):
-        return "使用大语言模型识别语言并过滤数据" if lang == "zh" else "Using large language models to identify languages and filter data."
+        return (
+            "使用大语言模型识别语言并过滤数据。\n"
+            "输入参数：\n"
+            "- input_key：输入文本字段名（必填）\n"
+            "- output_key：写入LLM语言识别结果的输出字段名，默认为'language_label'\n"
+            "输出参数：\n"
+            "- 过滤后的DataFrame，仅保留output_key值在allowed_languages中的行；"
+            "每行新增output_key字段，值为LLM返回的原始字符串（预期为ISO 639-1语言代码，如'en'），该字段保留在输出中\n"
+            "- run()返回的是过滤前的完整DataFrame（含output_key列），而不是字段名列表"
+        ) if lang == "zh" else (
+            "Using large language models to identify languages and filter data.\n"
+            "Input Parameters:\n"
+            "- input_key: Input text field name (required)\n"
+            "- output_key: Name of the output field that receives the LLM language label, default is 'language_label'\n"
+            "Output Parameters:\n"
+            "- Filtered DataFrame containing only rows whose output_key value is in allowed_languages; "
+            "each row gets a new output_key field holding the raw string returned by the LLM (expected to be an ISO 639-1 code such as 'en'), which is kept in the output\n"
+            "- run() returns the full unfiltered DataFrame (including the output_key column), not a list of field names"
+        )
     
     def _reformat_prompt(self, dataframe):
         formatted_prompts = [self.prompt.build_prompt(text=item) for item in tqdm(dataframe[self.input_key], desc="Reformatting Prompt...")]
