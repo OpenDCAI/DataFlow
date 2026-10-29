@@ -160,6 +160,8 @@ class LazyFileStorage(DataFlowStorage):
         self._buffers: Dict[int, pd.DataFrame] = {}
         self._dirty_steps: set[int] = set()
         self._lock = RLock()
+        # Serialize flushes: an older snapshot must never replace a newer one.
+        self._flush_lock = RLock()
 
         self._save_on_exit = save_on_exit
         self._flush_all_steps = flush_all_steps
@@ -358,6 +360,12 @@ class LazyFileStorage(DataFlowStorage):
 
     # ---------- 落盘 ----------
     def flush_step(self, step: int):
+        # A write can update the buffer while a flush serializes on disk; only
+        # other flushes are serialized to preserve their persistence order.
+        with self._flush_lock:
+            return self._flush_step_serialized(step)
+
+    def _flush_step_serialized(self, step: int):
         if step <= 0:
             raise ValueError(
                 f"Cannot flush step {step}. LazyFileStorage reserves step 0 for "
@@ -397,7 +405,8 @@ class LazyFileStorage(DataFlowStorage):
 
             os.replace(tmp_path, file_path)
             with self._lock:
-                self._dirty_steps.discard(step)
+                if self._buffers.get(step) is df:
+                    self._dirty_steps.discard(step)
             self.logger.success(f"[flush] Persisted step {step} -> {file_path}")
         finally:
             try:
@@ -968,6 +977,16 @@ class BatchedFileStorage(FileStorage):
         self._dataframe_buffer = {}
         if cache_type not in ["jsonl", "csv"]:
             raise ValueError(f"BatchedFileStorage only supports 'jsonl' and 'csv' cache types, got: {cache_type}")
+
+    def _load_local_file(self, file_path: str, file_type: str) -> pd.DataFrame:
+        if file_type != "csv" or not os.path.exists(file_path):
+            return super()._load_local_file(file_path, file_type)
+        try:
+            return pd.read_csv(file_path)
+        except pd.errors.EmptyDataError:
+            return pd.DataFrame()
+        except Exception as e:
+            raise ValueError(f"Failed to load {file_type} file: {str(e)}")
         
     def read(self, output_type: Literal["dataframe", "dict"]="dataframe") -> Any:
         """
@@ -1035,7 +1054,9 @@ class BatchedFileStorage(FileStorage):
 
         # 转换数据为DataFrame
         if isinstance(data, list):
-            if len(data) > 0 and isinstance(data[0], dict):
+            if not data:
+                dataframe = pd.DataFrame()
+            elif isinstance(data[0], dict):
                 # 清洗列表中的每个字典
                 cleaned_data = [clean_surrogates(item) for item in data]
                 dataframe = pd.DataFrame(cleaned_data)
@@ -1055,10 +1076,17 @@ class BatchedFileStorage(FileStorage):
             with open(file_path, open_mode, encoding='utf-8') as f:
                 dataframe.to_json(f, orient="records", lines=True, force_ascii=False)
         elif self.cache_type == "csv":
-            if self.batch_step == 0:
-                dataframe.to_csv(file_path, index=False)
+            if dataframe.empty and len(dataframe.columns) == 0:
+                if self.batch_step == 0:
+                    open(file_path, 'w', encoding='utf-8').close()
             else:
-                dataframe.to_csv(file_path, index=False, header=False, mode='a')
+                write_header = (
+                    self.batch_step == 0
+                    or not os.path.exists(file_path)
+                    or os.path.getsize(file_path) == 0
+                )
+                open_mode = 'w' if self.batch_step == 0 else 'a'
+                dataframe.to_csv(file_path, index=False, header=write_header, mode=open_mode)
         else:
             raise ValueError(f"Unsupported file type: {self.cache_type}, output file should end with jsonl, csv")
         
