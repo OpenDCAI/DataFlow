@@ -6,10 +6,8 @@ from dataflow.utils.storage import DataFlowStorage
 from dataflow.utils.registry import OPERATOR_REGISTRY
 
 def get_similarity(simhash, another_simhash):
-    max_hashbit = max(len(bin(simhash.value)), len(bin(another_simhash.value)))
-    distince = simhash.distance(another_simhash)
-    similar = 1 - distince / max_hashbit
-    return similar
+    distance = simhash.distance(another_simhash)
+    return 1 - distance / simhash.f
 
 @OPERATOR_REGISTRY.register()
 class SimHashDeduplicateFilter(OperatorABC):
