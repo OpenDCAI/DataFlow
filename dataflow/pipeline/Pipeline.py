@@ -625,7 +625,203 @@ class StreamBatchedPipelineABC(BatchedPipelineABC):
     def __init__(self):
         super().__init__()
         
-    def _compiled_forward(self, resume_step: int=0, batch_size: int|None=None, resume_from_last: bool=True):
+    def _compiled_forward(self, resume_step: int=0, batch_size: int|None=None, resume_from_last: bool=True, transactional_resume: bool=False):
+        """Execute streaming batches.
+
+        transactional_resume=True is opt-in for local CSV/JSONL streaming
+        storage with batch_size > 0 and resume_from_last=True. Each cooperating
+        operator must declare transaction_safe=True, provide a stable, JSON-
+        serializable transaction_signature() covering effective configuration,
+        and issue exactly one storage.write() per executed batch ([] is valid).
+        Operators must not modify managed files directly, launch detached
+        writers, or rely on exactly-once external side effects. Unverifiable
+        operators and incompatible legacy checkpoints fail closed.
+        Default transactional_resume=False preserves legacy behavior.
+        """
+        if transactional_resume:
+            if not resume_from_last or resume_step != 0:
+                raise ValueError("Transactional streaming requires resume_from_last=True and resume_step=0")
+            return self._transactional_forward(batch_size)
+        return self._legacy_stream_forward(resume_step, batch_size, resume_from_last)
+
+    @staticmethod
+    def _stream_sync_cleanup(serving):
+        """Do not silently drop dynamically returned cleanup coroutines."""
+        import inspect
+        from dataflow.utils.stream_transaction import TransactionError
+
+        result = serving.cleanup()
+        if inspect.isawaitable(result):
+            close = getattr(result, "close", None)
+            if callable(close):
+                close()
+            raise TransactionError(
+                "Serving cleanup returned an awaitable; transactional mode requires synchronous cleanup"
+            )
+
+    @staticmethod
+    def _stream_sync_shutdown(operator):
+        """Reject sync shutdown implementations returning unawaited coroutines.
+
+        Static preflight can reject async functions, but cannot infer a
+        synchronous function's return value without running user code.
+        """
+        import inspect
+        from dataflow.utils.stream_transaction import TransactionError
+
+        result = operator.shutdown()
+        if inspect.isawaitable(result) or inspect.isasyncgen(result):
+            close = getattr(result, "close", None)
+            if callable(close):
+                try:
+                    close()
+                except Exception:
+                    # An awaitable has no synchronous cleanup contract; reject
+                    # regardless of whether closing the coroutine succeeds.
+                    pass
+            raise TransactionError(
+                "Operator shutdown returned an awaitable; "
+                "restart the process to resume safely"
+            )
+
+    def _transactional_forward(self, batch_size):
+        from dataflow.utils.stream_transaction import StreamTransactionCoordinator
+        from dataflow.utils.stream_transaction import TransactionError
+
+        if not self.compiled:
+            raise RuntimeError("Pipeline is not compiled yet")
+        if getattr(self, "_stream_lifecycle_failed", False):
+            raise TransactionError("Lifecycle failure requires a fresh process for safe resume")
+        nodes = [node for node in self.op_nodes_list if node.op_obj is not None]
+        with StreamTransactionCoordinator(nodes, batch_size) as coordinator:
+            # A resume starts from the durable stage cursor, not from in-memory
+            # serving counters left over by a previous forward() attempt.
+            remaining = Counter(
+                node.llm_serving for node in nodes[coordinator.manifest["stage"]:]
+                if node.llm_serving is not None
+            )
+            active_serving = None
+            active_node = None
+            self.active_llm_serving = None
+            try:
+                while coordinator.manifest["stage"] < len(nodes):
+                    stage = coordinator.manifest["stage"]
+                    node = nodes[stage]
+                    active_node = node
+                    serving = node.llm_serving
+                    if serving is not None and serving is not active_serving:
+                        if active_serving is not None:
+                            try:
+                                self._stream_sync_cleanup(active_serving)
+                            except Exception:
+                                self._stream_lifecycle_failed = True
+                                coordinator.mark_lifecycle_unsafe()
+                                raise
+                        active_serving = serving
+                        self.active_llm_serving = serving
+                    storage = node.storage
+                    storage.batch_size = batch_size
+                    batch = coordinator.manifest["batch"]
+                    count = coordinator.input_rows(stage)
+                    total_batches = (count + batch_size - 1) // batch_size
+                    if batch > total_batches:
+                        raise TransactionError("Committed cursor exceeds stage input")
+                    if batch < total_batches:
+                        storage.batch_step = batch
+                        stream = storage.iter_chunks()
+                        try:
+                            for _ in range(batch):
+                                if next(stream, None) is None:
+                                    raise TransactionError("Input stream shorter than committed cursor")
+                            while coordinator.manifest["batch"] < total_batches:
+                                current_batch = coordinator.manifest["batch"]
+                                chunk = next(stream, None)
+                                if chunk is None:
+                                    raise TransactionError("Input stream shorter than manifest row count")
+                                storage._current_streaming_chunk = chunk
+                                coordinator.begin(stage, current_batch)
+                                try:
+                                    node.op_obj.run(storage=storage, **node.kwargs)
+                                    coordinator.commit(stage, current_batch)
+                                except BaseException:
+                                    coordinator.abort()
+                                    raise
+                                finally:
+                                    storage._current_streaming_chunk = None
+                                storage.batch_step = coordinator.manifest["batch"]
+                        finally:
+                            storage._current_streaming_chunk = None
+                            if hasattr(stream, "close"):
+                                stream.close()
+
+                    # Stage cursor is durable before releasing stage resources.
+                    coordinator.transition(stage)
+                    active_node = None
+                    if hasattr(node.op_obj, "shutdown"):
+                        try:
+                            self._stream_sync_shutdown(node.op_obj)
+                        except Exception as exc:
+                            self._stream_lifecycle_failed = True
+                            coordinator.mark_lifecycle_unsafe()
+                            if isinstance(exc, TransactionError):
+                                raise
+                            raise TransactionError(
+                                "Operator shutdown failed after durable stage transition; "
+                                "restart the process to resume"
+                            ) from exc
+                    if serving is not None:
+                        remaining[serving] -= 1
+                        if remaining[serving] == 0 and active_serving is serving:
+                            active_serving = None
+                            self.active_llm_serving = None
+                            try:
+                                self._stream_sync_cleanup(serving)
+                            except Exception:
+                                self._stream_lifecycle_failed = True
+                                coordinator.mark_lifecycle_unsafe()
+                                raise
+            except BaseException:
+                # A failed stage must not strand resources in the same process.
+                # Cleanup errors do not mask the primary transaction failure.
+                if active_node is not None and hasattr(active_node.op_obj, "shutdown"):
+                    try:
+                        self._stream_sync_shutdown(active_node.op_obj)
+                    except BaseException:
+                        # Rollback already happened. Do not mask the operator's
+                        # primary exception, but never retry with uncertain
+                        # in-process operator resources.
+                        self._stream_lifecycle_failed = True
+                        coordinator.mark_lifecycle_unsafe()
+                        try:
+                            self.logger.exception(
+                                "Operator shutdown failed during transactional abort; "
+                                "a fresh process is required to resume"
+                            )
+                        except Exception:
+                            pass
+                raise
+            finally:
+                try:
+                    if active_serving is not None:
+                        if __import__("sys").exc_info()[0] is not None:
+                            try:
+                                self._stream_sync_cleanup(active_serving)
+                            except Exception:
+                                self._stream_lifecycle_failed = True
+                                coordinator.mark_lifecycle_unsafe()
+                                self.logger.exception("Serving cleanup failed during transactional abort")
+                        else:
+                            try:
+                                self._stream_sync_cleanup(active_serving)
+                            except Exception:
+                                self._stream_lifecycle_failed = True
+                                coordinator.mark_lifecycle_unsafe()
+                                raise
+                finally:
+                    self.active_llm_serving = None
+        return None
+
+    def _legacy_stream_forward(self, resume_step: int=0, batch_size: int|None=None, resume_from_last: bool=True):
         """
             resume_step (int): resume inference from this step
             batch_size (int|None): if set, run the pipeline in batch mode with this batch size
