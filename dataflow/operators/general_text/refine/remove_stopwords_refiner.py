@@ -22,11 +22,14 @@ class RemoveStopwordsRefiner(OperatorABC):
             nltk.data.find('corpora/stopwords')
         except LookupError:
             nltk.download('stopwords')
+
+        # The English corpus never changes while the operator is alive, so load
+        # it once here instead of re-reading and re-parsing it for every row.
+        self.stopwords_set = set(stopwords.words('english'))
     
     def remove_stopwords(self, text):
         words = text.split()
-        stopwords_list = set(stopwords.words('english'))
-        refined_words = [word for word in words if word.lower() not in stopwords_list]
+        refined_words = [word for word in words if word.lower() not in self.stopwords_set]
         return " ".join(refined_words)
     
     @staticmethod
@@ -65,6 +68,11 @@ class RemoveStopwordsRefiner(OperatorABC):
         numbers = 0
         refined_data = []
         for item in tqdm(dataframe[self.input_key], desc=f"Implementing {self.__class__.__name__}"):
+            if not isinstance(item, str):
+                # A missing cell has no stopwords to remove. Keep it as-is so
+                # the row survives instead of aborting the whole step.
+                refined_data.append(item)
+                continue
             modified = False
             original_text = item
             refined_text = self.remove_stopwords(original_text)
