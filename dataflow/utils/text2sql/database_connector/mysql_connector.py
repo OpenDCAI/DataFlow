@@ -46,14 +46,21 @@ class MySQLConnector(DatabaseConnectorABC):
             else:
                 cursor.execute(sql)
             
-            # Handle different query types
-            if sql.strip().upper().startswith(('SELECT', 'SHOW', 'DESC', 'EXPLAIN')):
-                rows = cursor.fetchall()
-                columns = [desc[0] for desc in cursor.description] if cursor.description else []
-                # Since we're using DictCursor, rows are already dictionaries
-                data = rows if rows else []
-            else:
+            # Whether the statement produced a result set is decided by the
+            # server: MySQL fills ``cursor.description`` for any statement that
+            # returns rows and leaves it ``None`` for DML. Sniffing the leading
+            # keyword instead rejected legitimate reads that do not literally
+            # begin with SELECT -- CTEs ("WITH ... SELECT"), parenthesized
+            # unions, and statements behind a comment -- even though
+            # ``filter_select_sql`` accepts ``WITH`` on purpose. The SQLite
+            # connector already keys off ``description``; this keeps both
+            # backends agreeing on what counts as a read.
+            if cursor.description is None:
                 raise Exception("Write operations are not allowed in read-only mode")
+            rows = cursor.fetchall()
+            columns = [desc[0] for desc in cursor.description]
+            # Since we're using DictCursor, rows are already dictionaries
+            data = rows if rows else []
             
             return QueryResult(
                 success=True,
