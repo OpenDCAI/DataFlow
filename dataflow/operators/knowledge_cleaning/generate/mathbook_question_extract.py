@@ -6,7 +6,7 @@ import os
 from pathlib import Path
 import json
 import shutil
-import fitz # pip install pymupdf
+import pymupdf
 from dataflow.prompts.kbcleaning import MathbookQuestionExtractPrompt
 import re
 from openai import OpenAI
@@ -184,7 +184,7 @@ Please make sure you have GPU on your machine.
             pdf_path: pdf文件路径
             output_folder: 输出图片文件夹路径
         '''
-        doc = fitz.open(pdf_path)
+        doc = pymupdf.open(pdf_path)
         # make output directory if it doesn't exist
         os.makedirs(output_folder, exist_ok=True)
         # convert each page to image
