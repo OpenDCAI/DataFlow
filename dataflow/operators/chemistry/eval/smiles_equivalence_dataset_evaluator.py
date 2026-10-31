@@ -25,12 +25,34 @@ class SmilesEquivalenceDatasetEvaluator(OperatorABC):
         if lang == "zh":
             return (
                 "评估 golden_label 与 synth_smiles 的 SMILES 等价性并计算分数。"
-                "逐块输出 final_result、块内得分与准确率，并统计全局总分。"
+                "逐块输出 final_result、块内得分与准确率，并统计全局总分。\n"
+                "输入参数：\n"
+                "- input_golden_key：标准答案字段名（list[dict]，含abbreviation/full_name/smiles），默认为'golden_label'\n"
+                "- input_synth_key：合成结果字段名（list[dict]，含abbreviation/smiles），默认为'synth_smiles'\n"
+                "- output_key：写入逐项评估结果的字段名，默认为'final_result'\n"
+                "输出参数：\n"
+                "- output_key：list[dict]，每个golden项一条{abbreviation, full_name, smiles, score}，按abbreviation对齐，RDKit规范化后等价得1，否则或无对应项得0\n"
+                "- block_score：该行得分之和（整数）\n"
+                "- block_total：该行golden项数量（整数）\n"
+                "- block_accuracy：block_score / block_total，block_total为0时为空\n"
+                "- 不过滤任何行；全局汇总仅保存在算子的overall_summary属性中，不写入数据\n"
+                "- 返回output_key（字符串）"
             )
         elif lang == "en":
             return (
                 "Evaluate SMILES equivalence between golden_label and synth_smiles per block, "
-                "emit final_result, block-level scores/accuracy, and compute overall summary."
+                "emit final_result, block-level scores/accuracy, and compute overall summary.\n"
+                "Input Parameters:\n"
+                "- input_golden_key: gold label field (list[dict] with abbreviation/full_name/smiles), default 'golden_label'\n"
+                "- input_synth_key: synthesized field (list[dict] with abbreviation/smiles), default 'synth_smiles'\n"
+                "- output_key: name of the field that receives the per-item results, default 'final_result'\n"
+                "Output Parameters:\n"
+                "- output_key: list[dict], one {abbreviation, full_name, smiles, score} per gold item, aligned by abbreviation; score is 1 if the RDKit canonical SMILES match, else 0 (also 0 when no matching item)\n"
+                "- block_score: sum of scores in the row (integer)\n"
+                "- block_total: number of gold items in the row (integer)\n"
+                "- block_accuracy: block_score / block_total, empty when block_total is 0\n"
+                "- No rows are filtered; the overall summary is kept only in the operator's overall_summary attribute, not written to the data\n"
+                "- Returns output_key (a string)"
             )
         else:
             return "Evaluate SMILES equivalence for each block."

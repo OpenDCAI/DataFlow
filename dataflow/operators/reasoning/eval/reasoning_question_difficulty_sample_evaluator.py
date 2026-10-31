@@ -31,22 +31,24 @@ class ReasoningQuestionDifficultySampleEvaluator(OperatorABC):
                 "该算子用于评估问题的难度等级。"
                 "通过大语言模型分析问题复杂度，输出1-10级的难度评分。\n\n"
                 "输入参数：\n"
-                "- eval_stage：评估阶段标识\n"
-                "- read_min/max_score：分数过滤阈值\n"
-                "- 其他参数同ReasoningCategoryDatasetEvaluator\n\n"
+                "- input_key：输入问题字段名，必填，无默认值\n"
+                "- output_key：写入难度评分的输出字段名，默认为'difficulty_score'\n\n"
                 "输出参数：\n"
-                "- difficulty_score：数值型难度评分（1-10）"
+                "- output_key：从LLM回复中“Rating: X”解析出的浮点难度评分（1-10），无法解析时为-1；若该字段已存在于输入中则报错\n"
+                "- 不过滤任何行，所有输入字段保留\n"
+                "- 返回包含output_key的列表"
             )
         elif lang == "en":
             return (
                 "Evaluates question difficulty level using LLM analysis. "
                 "Outputs numerical difficulty score from 1 to 10.\n\n"
                 "Input Parameters:\n"
-                "- eval_stage: Evaluation stage identifier\n"
-                "- read_min/max_score: Score filtering thresholds\n"
-                "- Other params same as ReasoningCategoryDatasetEvaluator\n\n"
+                "- input_key: Input question field name, required, no default\n"
+                "- output_key: Name of the output field that receives the difficulty score, default is 'difficulty_score'\n\n"
                 "Output Parameters:\n"
-                "- difficulty_score: Numerical difficulty rating (1-10)"
+                "- output_key: float difficulty score (1-10) parsed from 'Rating: X' in the LLM reply, -1 if it cannot be parsed; raises an error if this field already exists in the input\n"
+                "- No rows are filtered; all input fields are kept\n"
+                "- Returns a list containing output_key"
             )
         
     def _validate_dataframe(self, dataframe: pd.DataFrame, input_key: str = "instruction", output_key: str = "difficulty_score"):
