@@ -168,12 +168,12 @@ This section highlights open-source projects, research works, and applications b
 - **[dataflow-pcb-inspection](https://github.com/Pyromind-Dynamics/dataflow-pcb-inspection)** [![GitHub Stars](https://img.shields.io/github/stars/Pyromind-Dynamics/dataflow-pcb-inspection?style=social)](https://github.com/Pyromind-Dynamics/dataflow-pcb-inspection)
   - `PCB Data` · `Data Cleaning` · `Annotation` · `Synthetic Data`
   - A DataFlow extension for organizing PCB defect data, converting existing pixel bounding boxes to Label Studio tasks, supporting multi-image model pre-annotation, review-result merging, and template-based sample synthesis.
-  - **Maintainer:** Pyromind Dynamics
+  - **Maintainer:** [Pyromind Dynamics](https://pyromind.ai/)
 
 - **[dataflow-embodied](https://github.com/Pyromind-Dynamics/dataflow-embodied)** [![GitHub Stars](https://img.shields.io/github/stars/Pyromind-Dynamics/dataflow-embodied?style=social)](https://github.com/Pyromind-Dynamics/dataflow-embodied)
   - `Embodied AI` · `Robotics` · `Data Cleaning` · `LeRobot`
   - A DataFlow extension for organizing robot-collected step labels and time ranges, planning cleaning intervals, and exporting validated LeRobot v2.1 datasets from supported sources.
-  - **Maintainer:** Pyromind Dynamics
+  - **Maintainer:** [Pyromind Dynamics](https://pyromind.ai/)
 
 Have a project built with DataFlow? We welcome community contributions via Pull Requests. See the [DataFlow Ecosystem Guide](https://opendcai.github.io/DataFlow-Doc/en/guide/df_ecosystem/) for guidance on creating a DataFlow extension.
 
