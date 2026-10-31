@@ -3,6 +3,7 @@ from typing import TYPE_CHECKING
 if TYPE_CHECKING:
     from .eval.alpaca_structure_sample_evaluator import AlpacaStructureSampleEvaluator
     from .eval.qa_structure_sample_evaluator import QAStructureSampleEvaluator
+    from .eval.preference_structure_sample_evaluator import PreferenceStructureSampleEvaluator
     from .generate.qa_messages_generator import QAMessagesGenerator
     from .generate.alpaca_messages_generator import AlpacaMessagesGenerator
     from .eval.alpagasus_sample_evaluator import AlpagasusSampleEvaluator
@@ -22,6 +23,7 @@ if TYPE_CHECKING:
     from .filter.rm_filter import RMFilter
     from .filter.superfiltering_filter import SuperfilteringFilter
     from .filter.treeinstruct_filter import TreeinstructFilter
+    from .filter.preference_structure_filter import PreferenceStructureFilter
     
     from .generate.condor_generator import CondorGenerator
     from .generate.sft_generator_from_seed import SFTGeneratorSeed

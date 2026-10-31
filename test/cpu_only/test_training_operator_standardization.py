@@ -4,7 +4,7 @@ import pandas as pd
 import pytest
 from dataflow.operators.text_sft import QAMessagesGenerator, AlpacaMessagesGenerator
 from dataflow.operators.conversations import (ShareGPTMessagesGenerator,
-    ConversationStructureSampleEvaluator, ConversationStructureFilter)
+    ConversationStructureSampleEvaluator, ValidationFlagFilter)
 from dataflow.pipeline import PipelineABC
 from dataflow.utils.storage import FileStorage
 
@@ -60,13 +60,13 @@ def test_evaluation_and_filtering_are_separate():
     assert s.frame['conversation_valid'].tolist() == [True] * 97 + [False] * 3
     assert s.frame.iloc[-1]['conversation_error']['field']
     expected = s.frame.iloc[:97].copy()
-    ConversationStructureFilter().run(s)
+    ValidationFlagFilter().run(s, input_key='conversation_valid')
     pd.testing.assert_frame_equal(s.frame, expected)
 
 @pytest.mark.parametrize('flag', ['True', None, 1, 0])
 def test_filter_rejects_non_boolean_flags(flag):
     with pytest.raises(ValueError):
-        ConversationStructureFilter().run(MemoryStorage([{'conversation_valid':flag}]))
+        ValidationFlagFilter().run(MemoryStorage([{'conversation_valid':flag}]), input_key='conversation_valid')
 
 @pytest.mark.parametrize('cls', [QAMessagesGenerator, AlpacaMessagesGenerator, ShareGPTMessagesGenerator,
                                ConversationStructureSampleEvaluator])
@@ -93,11 +93,11 @@ def test_compile_and_forward_custom_fields(tmp_path):
             self.storage = FileStorage(first_entry_file_name=str(path), cache_path=str(tmp_path/'cache'), cache_type='jsonl')
             self.convert = QAMessagesGenerator()
             self.evaluate = ConversationStructureSampleEvaluator()
-            self.keep = ConversationStructureFilter()
+            self.keep = ValidationFlagFilter()
         def forward(self):
             self.convert.run(self.storage.step(), input_key='q', input_answer_key='a', output_key='dialogue')
             self.evaluate.run(self.storage.step(), input_key='dialogue')
-            self.keep.run(self.storage.step())
+            self.keep.run(self.storage.step(), input_key='conversation_valid')
     p = Pipeline()
     p.compile()
     assert p.op_nodes_list[1].input_keys == ['q','a']
@@ -121,7 +121,7 @@ def test_compile_ignores_disabled_optional_fields(tmp_path, capsys):
     assert "Unexpected key 'input_" not in capsys.readouterr().out
 
 @pytest.mark.parametrize('cls', [QAMessagesGenerator, AlpacaMessagesGenerator, ShareGPTMessagesGenerator,
-                               ConversationStructureSampleEvaluator, ConversationStructureFilter])
+                               ConversationStructureSampleEvaluator, ValidationFlagFilter])
 def test_descriptions_explain_public_parameters(cls):
     for lang in ['zh', 'en']:
         description = cls.get_desc(lang)
@@ -139,7 +139,7 @@ def test_source_evaluate_filter_convert_count(name, rows):
     s = MemoryStorage(rows)
     cls().run(s)
     assert len(s.frame) == 2 and s.frame['source_valid'].tolist() == [True,False]
-    ConversationStructureFilter().run(s, input_key='source_valid')
+    ValidationFlagFilter().run(s, input_key='source_valid')
     assert len(s.frame) == 1
 
 
@@ -182,7 +182,7 @@ def test_direct_call_optional_missing_is_field_error(cls,kwargs):
 def test_filter_subsets_physical_locations_with_retained_rows():
     s=MemoryStorage([{'conversation_valid':False},{'conversation_valid':True}])
     s.frame.attrs['dataflow_source_locations']=[{'line':2},{'line':8}]
-    ConversationStructureFilter().run(s)
+    ValidationFlagFilter().run(s, input_key='conversation_valid')
     assert s.frame.attrs['dataflow_source_locations']==[{'line':8}]
 
 

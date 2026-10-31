@@ -173,12 +173,13 @@ def validate_conversation(row: dict, key: str) -> None:
         raise TrainingDataError(key, "invalid_structure", "Conversation must end with a nonblank assistant answer")
 
 
-def validate_preference(row: dict, prompt: str, chosen: str, rejected: str) -> None:
-    """Validate a string-valued DPO record; preserve both responses verbatim."""
-    for key in (prompt, chosen, rejected):
-        require_text(row, key)
-
-
 def check_keys(*keys: str) -> None:
+    """Validate configured field names.
+
+    This only checks that each key is a nonblank string. It does not check
+    whether a DataFrame contains the field, whether values are valid, whether
+    keys are unique, or whether an output would overwrite an input column.
+    Those checks belong to the batch helper or the operator-specific rules.
+    """
     if any(not isinstance(key, str) or not key.strip() for key in keys):
         raise ValueError("Field keys must be nonblank strings")

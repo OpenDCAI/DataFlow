@@ -16,14 +16,15 @@ Existing upstream operators are unchanged.
 | conversations/eval | ShareGPTStructureSampleEvaluator | Check text from/value ShareGPT |
 | conversations/generate | ShareGPTMessagesGenerator | Add messages from text ShareGPT |
 | conversations/eval | ConversationStructureSampleEvaluator | Check complete messages/tool relationships |
-| conversations/filter | ConversationStructureFilter | Keep True validation flags, leaving retained rows unchanged |
-| text_preference/eval | PreferenceStructureSampleEvaluator | Check string-valued prompt/chosen/rejected |
-| text_preference/filter | PreferenceStructureFilter | Keep explicitly validated preference records |
+| conversations/filter | ValidationFlagFilter | Keep True validation flags, leaving retained rows unchanged |
+| text_sft/eval | PreferenceStructureSampleEvaluator | Check string-valued prompt/chosen/rejected |
+| text_sft/filter | PreferenceStructureFilter | Keep explicitly validated preference records |
 
 The structured field builders use the domain `generate` category because they
-add a field without changing row count. The proposed `text_preference` domain
-separates preference data from SFT. These are explicit classification proposals
-for maintainer review, not claims of prior maintainer approval.
+add a field without changing row count. Preference records are kept under
+`text_sft` because they are training examples for supervised/preference fine-
+tuning, while the `conversations` domain is reserved for conversation-shaped
+data and conversation-specific validation.
 
 ## QA pipeline
 
@@ -31,14 +32,14 @@ for maintainer review, not claims of prior maintainer approval.
 from dataflow.pipeline import PipelineABC
 from dataflow.utils.storage import FileStorage
 from dataflow.operators.text_sft import QAStructureSampleEvaluator, QAMessagesGenerator
-from dataflow.operators.conversations import ConversationStructureFilter
+from dataflow.operators.conversations import ValidationFlagFilter
 
 class Prepare(PipelineABC):
     def __init__(self, source, cache):
         super().__init__()
         self.storage = FileStorage(source, cache_path=cache)
         self.check = QAStructureSampleEvaluator()
-        self.keep = ConversationStructureFilter()
+        self.keep = ValidationFlagFilter()
         self.convert = QAMessagesGenerator()
 
     def forward(self):
@@ -77,12 +78,15 @@ converter.run(storage, input_context_key="input", input_history_key="history",
               input_system_key="system", output_key="messages")
 ```
 
-Use the same optional keys and constructor system_prompt in
+Use the same optional input keys in
 `AlpacaStructureSampleEvaluator` before filtering. `None` means the column is not
 read. If enabled, the column must exist; null optional values within a record
-remain supported. There is no automatic search for history/input/system.
+remain supported. There is no automatic search for history/input/system. The
+evaluator has no constructor `system_prompt`: system-message insertion belongs
+to the generator, while the evaluator only checks source fields.
 Instruction and nonblank context are joined by two newlines, with historical
-turns first. Conflicting source and constructor system prompts are rejected.
+turns first. In the generator, conflicting source and constructor system
+prompts are rejected.
 
 ## ShareGPT and complete conversations
 
@@ -110,7 +114,7 @@ of order; no tool IDs or missing responses are invented.
 
 ```python
 from dataflow.utils.training_data_formats import map_preference_fields
-from dataflow.operators.text_preference import (
+from dataflow.operators.text_sft import (
     PreferenceStructureSampleEvaluator, PreferenceStructureFilter,
 )
 

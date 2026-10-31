@@ -5,7 +5,7 @@ import json
 from pathlib import Path
 
 from dataflow.operators.text_sft import QAStructureSampleEvaluator, QAMessagesGenerator
-from dataflow.operators.conversations import ConversationStructureFilter, ConversationStructureSampleEvaluator
+from dataflow.operators.conversations import ValidationFlagFilter, ConversationStructureSampleEvaluator
 from dataflow.pipeline import PipelineABC
 from dataflow.utils.storage import FileStorage
 
@@ -15,7 +15,7 @@ class TrainingPreparationPipeline(PipelineABC):
         super().__init__()
         self.storage = FileStorage(str(source), cache_path=str(output_dir / "cache"))
         self.source_check = QAStructureSampleEvaluator()
-        self.keep_valid = ConversationStructureFilter()
+        self.keep_valid = ValidationFlagFilter()
         self.converter = QAMessagesGenerator()
         self.validator = ConversationStructureSampleEvaluator()
 

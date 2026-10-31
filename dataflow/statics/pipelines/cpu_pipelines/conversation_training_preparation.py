@@ -6,7 +6,7 @@ from pathlib import Path
 
 from dataflow.operators.text_sft import AlpacaMessagesGenerator, AlpacaStructureSampleEvaluator
 from dataflow.operators.conversations import (ShareGPTMessagesGenerator, ShareGPTStructureSampleEvaluator,
-    ConversationStructureSampleEvaluator, ConversationStructureFilter)
+    ConversationStructureSampleEvaluator, ValidationFlagFilter)
 from dataflow.pipeline import PipelineABC
 from dataflow.utils.storage import FileStorage
 
@@ -26,7 +26,7 @@ class ConversationPreparationPipeline(PipelineABC):
             self.source_check = ConversationStructureSampleEvaluator()
         else:
             raise ValueError("source_format must be alpaca, sharegpt or messages")
-        self.keep_valid = ConversationStructureFilter()
+        self.keep_valid = ValidationFlagFilter()
         self.validator = ConversationStructureSampleEvaluator()
 
     def forward(self):

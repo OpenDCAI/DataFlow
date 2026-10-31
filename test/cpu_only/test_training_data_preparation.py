@@ -6,8 +6,8 @@ import pytest
 from training_fixtures import QA_ERRORS, ALPACA, ALPACA_EXPECTED, SHAREGPT, SHAREGPT_EXPECTED, TOOL_MESSAGES
 from test_training_operator_standardization import MemoryStorage
 from dataflow.operators.text_sft import QAMessagesGenerator, QAStructureSampleEvaluator, AlpacaMessagesGenerator, AlpacaStructureSampleEvaluator
-from dataflow.operators.conversations import ShareGPTMessagesGenerator, ShareGPTStructureSampleEvaluator, ConversationStructureSampleEvaluator, ConversationStructureFilter
-from dataflow.operators.text_preference import PreferenceStructureSampleEvaluator, PreferenceStructureFilter
+from dataflow.operators.conversations import ShareGPTMessagesGenerator, ShareGPTStructureSampleEvaluator, ConversationStructureSampleEvaluator, ValidationFlagFilter
+from dataflow.operators.text_sft import PreferenceStructureSampleEvaluator, PreferenceStructureFilter
 from dataflow.utils.training_data import TrainingDataError
 from dataflow.utils.training_data_formats import map_preference_fields
 from dataflow.pipeline import PipelineABC, BatchedPipelineABC, StreamBatchedPipelineABC
@@ -49,7 +49,7 @@ class Prepare(PipelineABC):
         self.source_check={'qa':QAStructureSampleEvaluator,'alpaca':AlpacaStructureSampleEvaluator,
                            'sharegpt':ShareGPTStructureSampleEvaluator,'messages':ConversationStructureSampleEvaluator,
                            'dpo':PreferenceStructureSampleEvaluator}[kind]()
-        self.keep=PreferenceStructureFilter() if kind=='dpo' else ConversationStructureFilter()
+        self.keep=PreferenceStructureFilter() if kind=='dpo' else ValidationFlagFilter()
         if kind in ['qa','alpaca','sharegpt']:
             self.convert={'qa':QAMessagesGenerator,'alpaca':AlpacaMessagesGenerator,'sharegpt':ShareGPTMessagesGenerator}[kind]()
         self.final_check=PreferenceStructureSampleEvaluator() if kind=='dpo' else ConversationStructureSampleEvaluator()
@@ -97,7 +97,7 @@ def test_task_in_file_lazy_batch_stream(tmp_path,storage_cls,pipeline_cls,kind,g
 
 @pytest.mark.parametrize('cls',[QAMessagesGenerator,AlpacaMessagesGenerator,ShareGPTMessagesGenerator,
  QAStructureSampleEvaluator,AlpacaStructureSampleEvaluator,ShareGPTStructureSampleEvaluator,
- ConversationStructureSampleEvaluator,ConversationStructureFilter,PreferenceStructureSampleEvaluator,PreferenceStructureFilter])
+ ConversationStructureSampleEvaluator,ValidationFlagFilter,PreferenceStructureSampleEvaluator,PreferenceStructureFilter])
 def test_public_registration_and_description(cls):
     assert OPERATOR_REGISTRY.get(cls.__name__) is cls
     for lang in ['zh','en']: assert 'input_' in cls.get_desc(lang)
@@ -121,7 +121,7 @@ def test_invalid_keys_and_output_collisions_fail_without_writing(cls):
 
 def test_empty_batches_preserve_schema():
     s=MemoryStorage([]);s.frame=pd.DataFrame(columns=['prompt','answer'])
-    QAStructureSampleEvaluator().run(s);ConversationStructureFilter().run(s,input_key='source_valid');QAMessagesGenerator().run(s)
+    QAStructureSampleEvaluator().run(s);ValidationFlagFilter().run(s,input_key='source_valid');QAMessagesGenerator().run(s)
     assert len(s.frame)==0 and 'messages' in s.frame
 
 def test_zero_column_record_is_a_missing_field_error():
