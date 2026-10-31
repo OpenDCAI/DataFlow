@@ -103,6 +103,23 @@ def test_compile_and_forward_custom_fields(tmp_path):
     assert p.op_nodes_list[1].input_keys == ['q','a']
     p.forward()
 
+
+def test_compile_ignores_disabled_optional_fields(tmp_path, capsys):
+    path = tmp_path / 'input.jsonl'
+    path.write_text(json.dumps({'instruction': 'Q', 'output': 'A'}) + '\n')
+
+    class Pipeline(PipelineABC):
+        def __init__(self):
+            super().__init__()
+            self.storage = FileStorage(first_entry_file_name=str(path), cache_path=str(tmp_path / 'cache'), cache_type='jsonl')
+            self.op = AlpacaMessagesGenerator()
+
+        def forward(self):
+            self.op.run(self.storage.step())
+
+    Pipeline().compile()
+    assert "Unexpected key 'input_" not in capsys.readouterr().out
+
 @pytest.mark.parametrize('cls', [QAMessagesGenerator, AlpacaMessagesGenerator, ShareGPTMessagesGenerator,
                                ConversationStructureSampleEvaluator, ConversationStructureFilter])
 def test_descriptions_explain_public_parameters(cls):

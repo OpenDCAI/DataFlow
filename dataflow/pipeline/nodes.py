@@ -58,6 +58,11 @@ class OperatorNode(object):
         
     def _get_keys_from_kwargs(self):
         for k, v in self.kwargs.items():
+            # Optional input/output fields use None to mean "disabled". Keep
+            # the runtime default in kwargs, but do not treat it as a graph
+            # key or report it as an unexpected operator argument.
+            if v is None and (k.startswith("input_") or k.startswith("output_")):
+                continue
             if k.startswith("input_") and isinstance(v, str):
                 self.input_keys.append(v)
                 self.input_key_nodes[v] = KeyNode(k, v)
