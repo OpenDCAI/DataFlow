@@ -143,6 +143,16 @@ DataFlow 具备以下优势：
   - 面向客服语音转写文本的 DataFlow 扩展，支持质量过滤、清洗、去标识化和标注。
   - **维护者：** Jiapeng Mi · 中国联通软件研究院
 
+- **[dataflow-pcb-inspection](https://github.com/Pyromind-Dynamics/dataflow-pcb-inspection)** [![GitHub Stars](https://img.shields.io/github/stars/Pyromind-Dynamics/dataflow-pcb-inspection?style=social)](https://github.com/Pyromind-Dynamics/dataflow-pcb-inspection)
+  - `PCB 数据` · `数据清洗` · `数据标注` · `合成数据`
+  - 面向 PCB 缺陷数据整理与标注的 DataFlow 扩展：将已有像素框转换为 Label Studio 任务，支持多图模型预标注、人工复核结果合并和模板合成。
+  - **维护者：** Pyromind Dynamics
+
+- **[dataflow-embodied](https://github.com/Pyromind-Dynamics/dataflow-embodied)** [![GitHub Stars](https://img.shields.io/github/stars/Pyromind-Dynamics/dataflow-embodied?style=social)](https://github.com/Pyromind-Dynamics/dataflow-embodied)
+  - `具身智能` · `机器人数据` · `数据清洗` · `LeRobot`
+  - 面向机器人采集数据整理的 DataFlow 扩展：整理已有步骤标签和时间区间，生成清理计划，并从支持的数据源导出和校验 LeRobot v2.1 数据集。
+  - **维护者：** Pyromind Dynamics
+
 欢迎通过 Pull Request 提交基于 DataFlow 的项目。[DataFlow 生态指南](https://opendcai.github.io/DataFlow-Doc/zh/guide/df_ecosystem/)介绍了如何创建 DataFlow 扩展。
 
 ## 🔧 6. 算子如何工作？
