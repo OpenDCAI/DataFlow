@@ -8,7 +8,7 @@ import pandas as pd
 import pytest
 
 from dataflow.operators.general_text import CiderSampleEvaluator
-from dataflow.operators.general_text.eval.cider.cider import precook
+from dataflow.operators.general_text.eval.cider.cider import Cider, precook
 from dataflow.utils.storage import DataFlowStorage
 
 pytestmark = pytest.mark.cpu
@@ -156,3 +156,12 @@ def test_precomputed_idf_remains_independent_of_evaluation_corpus(tmp_path):
     assert evaluator.eval(source, "generated", "reference") == pytest.approx(
         [10.0, 10.0]
     )
+
+
+@pytest.mark.parametrize("n", [1, 2, 6])
+def test_cider_uses_the_configured_ngram_order(n):
+    text = "one two three four five six"
+    scorer = Cider(test=text, refs=[text], n=n)
+
+    observed_orders = {len(ngram) for ngram in scorer.ctest[0]}
+    assert max(observed_orders) == n
