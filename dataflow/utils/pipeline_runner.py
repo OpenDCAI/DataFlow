@@ -8,25 +8,45 @@ from tqdm import tqdm
 
 
 def _automatic_checkpoint_path(pipeline, batch_size: int | None) -> Path | None:
-    """Return the automatic checkpoint directory for a new local JSONL run.
+    """Return the automatic checkpoint directory for a new local JSONL/CSV run.
 
     ``None`` means the pipeline must keep the historical cursor. This is the
     compatibility behavior for unsupported backends and caches that already
     contain outputs without a manifest owner.
     """
-    from dataflow.utils.storage import BatchedFileStorage
+    from dataflow.utils.pipeline_checkpoint import (
+        BATCH_CHECKPOINT_FORMATS,
+        WHOLE_FILE_CHECKPOINT_FORMATS,
+    )
+    from dataflow.utils.storage import BatchedFileStorage, FileStorage
 
-    if not isinstance(batch_size, int) or isinstance(batch_size, bool) or batch_size <= 0:
-        return None
-    nodes = [node for node in pipeline.op_nodes_list if node.op_obj is not None]
-    if not nodes or any(
-        not isinstance(node.storage, BatchedFileStorage)
-        or node.storage.cache_type != "jsonl"
-        for node in nodes
+    if batch_size is not None and (
+        not isinstance(batch_size, int)
+        or isinstance(batch_size, bool)
+        or batch_size <= 0
     ):
         return None
+    nodes = [node for node in pipeline.op_nodes_list if node.op_obj is not None]
+    if not nodes:
+        return None
+    if batch_size is None:
+        if any(
+            type(node.storage) is not FileStorage
+            or node.storage.cache_type not in WHOLE_FILE_CHECKPOINT_FORMATS
+            for node in nodes
+        ):
+            return None
+        supported_source_formats = WHOLE_FILE_CHECKPOINT_FORMATS
+    else:
+        if any(
+            not isinstance(node.storage, BatchedFileStorage)
+            or node.storage.cache_type not in BATCH_CHECKPOINT_FORMATS
+            for node in nodes
+        ):
+            return None
+        supported_source_formats = BATCH_CHECKPOINT_FORMATS
     source = Path(nodes[0].storage.first_entry_file_name).resolve()
-    if not source.is_file() or source.suffix.lower() != ".jsonl":
+    if not source.is_file() or source.suffix.lower().lstrip(".") not in supported_source_formats:
         return None
     if any(Path(node.storage.first_entry_file_name).resolve() != source for node in nodes):
         return None
@@ -153,10 +173,10 @@ def run_compiled_pipeline(
 ) -> None:
     """Run a compiled pipeline with one recovery model when possible.
 
-    New local JSONL runs use the transactional manifest automatically when the
-    caller uses the historical ``resume_from_last=True`` default. Other
-    backends retain their compatibility behavior until they provide the same
-    storage contract.
+    New local JSONL/CSV batch runs and whole-file FileStorage runs use the
+    transactional manifest automatically when the caller uses the historical
+    ``resume_from_last=True`` default. Other backends retain compatibility
+    behavior.
     """
     if resume_from_last and resume_step == 0:
         directory = _automatic_checkpoint_path(pipeline, batch_size)

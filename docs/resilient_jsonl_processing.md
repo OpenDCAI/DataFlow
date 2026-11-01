@@ -1,10 +1,10 @@
-# Resilient local JSONL processing
+# Resilient local JSONL and CSV processing
 
 The malformed-record policy is opt-in. Ordinary Storage reads and Serving list
-return values keep their existing behavior. Local JSONL batch pipelines using
+return values keep their existing behavior. Local JSONL/CSV batch pipelines using
 the default `resume_from_last=True` now use the transactional manifest runner
-when their storage and cache satisfy the supported contract. CSV, remote
-datasets, and existing legacy caches retain the compatibility path. This
+when their storage and cache satisfy the supported contract. Remote datasets
+and existing legacy caches retain the compatibility path. This
 implementation does not include global deduplication or distributed execution.
 
 ## Isolate malformed input records
@@ -38,10 +38,10 @@ step output or appends one batch:
 
 JSON, Parquet, Pickle, and XLSX are whole-file formats in the current batched
 storage API and are rejected by `BatchedFileStorage` and
-`StreamBatchedFileStorage`. Use `FileStorage` for those formats, or convert the
-source to JSONL/CSV before using batch append and manifest recovery. The append
-contract applies to output files; source reading and output persistence are
-separate choices.
+`StreamBatchedFileStorage`. Use `FileStorage` with `batch_size=None` for
+stage-level manifest recovery, or convert the source to JSONL/CSV for
+batch-level append and recovery. The append contract applies to output files;
+source reading and output persistence are separate choices.
 
 The new reader rejects blank lines, invalid UTF-8/JSON, nonstandard NaN/Infinity
 constants, and JSON values that are not objects. Filesystem errors still abort.
@@ -93,12 +93,18 @@ pipeline.forward(
 )
 ```
 
-For a local JSONL source with standard batched storage, the historical
-`resume_from_last=True` default automatically creates
+For a local JSONL or CSV source with standard batched storage and a positive
+`batch_size`, the historical `resume_from_last=True` default automatically creates
 `<cache_path>/.dataflow_checkpoint/manifest.json` and uses the same transactional
 runner. No extra argument is required. `resume_from_last=False`, `resume_step`,
-CSV, remote sources, and preexisting legacy outputs retain the compatibility
-cursor behavior. `resume_step` cannot be combined with an explicit checkpoint.
+remote sources, and preexisting legacy outputs retain the compatibility cursor
+behavior. `resume_step` cannot be combined with an explicit checkpoint.
+
+For a local source handled by standard `FileStorage`, the same default also
+creates a checkpoint when `batch_size=None`. JSON, JSONL, CSV, Parquet, Pickle,
+and XLSX are then committed as complete stage files. This is stage-level
+recovery: whole-file formats are rewritten as a unit and do not provide
+batch-level append recovery.
 
 `checkpoint_config` is required for the explicit checkpoint form: the caller
 must declare constructor settings, prompts, model versions, parser revisions and
@@ -108,10 +114,13 @@ output paths, batch size, reader policy, error-ledger path, and input content
 hash are bound. Materialized and streaming readers share the same execution and
 recovery protocol.
 
-Supported: a single local JSONL source, standard batched or streaming-batched
-JSONL Storage, one writer, and operators that write each output via that Storage.
-Custom Storage, lazy buffers, remote outputs, extra operator files, external
-side effects and arbitrary stateful operators are not covered. Unix locking and
+Supported batch-level recovery: a single local JSONL or CSV source, standard
+batched or streaming-batched JSONL/CSV Storage, one writer, and operators that
+write each output via that Storage. Supported whole-file recovery: a single
+local source in JSON, JSONL, CSV, Parquet, Pickle, or XLSX format, standard
+`FileStorage`, `batch_size=None`, and the same one-writer contract. Custom
+Storage, lazy buffers, remote outputs, extra operator files, external side
+effects and arbitrary stateful operators are not covered. Unix locking and
 durability are tested on macOS; Windows code paths have not been validated.
 
 After each batch the output files are flushed, then a versioned manifest is
