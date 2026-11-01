@@ -987,6 +987,7 @@ class BatchedFileStorage(FileStorage):
         self.batch_size = None
         self.batch_step = 0
         self._dataframe_buffer = {}
+        self._active_batch = None
         if cache_type not in ["jsonl", "csv"]:
             raise ValueError(f"BatchedFileStorage only supports 'jsonl' and 'csv' cache types, got: {cache_type}")
         
@@ -1008,6 +1009,9 @@ class BatchedFileStorage(FileStorage):
         Raises:
             ValueError: For unsupported file types or output types
         """
+        if self._active_batch is not None:
+            return self._convert_output(self._active_batch, output_type)
+
         if self.operator_step == 0 and self.first_entry_file_name == "":
             self.logger.info("first_entry_file_name is empty, returning empty dataframe")
             empty_dataframe = pd.DataFrame()
@@ -1033,6 +1037,31 @@ class BatchedFileStorage(FileStorage):
                     self.batch_step * self.batch_size:(self.batch_step + 1) * self.batch_size
                 ]
         return self._convert_output(dataframe, output_type)
+
+    def iter_batches(self) -> Generator[pd.DataFrame, None, None]:
+        """Yield input batches through the common storage execution contract.
+
+        Streaming and materialized storage implementations expose the same
+        iterator contract to the pipeline runner.  The materialized storage
+        keeps its existing dataframe cache and only changes how batches are
+        presented to operators.
+        """
+        if not isinstance(self.batch_size, int) or self.batch_size <= 0:
+            raise ValueError("batch_size must be a positive integer")
+
+        dataframe = self._dataframe_buffer.get(self.operator_step)
+        if dataframe is None:
+            dataframe = super().read(output_type="dataframe")
+            self._dataframe_buffer[self.operator_step] = dataframe.copy()
+        self.record_count = len(dataframe)
+        locations = dataframe.attrs.get("dataflow_source_locations")
+
+        for batch_step, start in enumerate(range(0, len(dataframe), self.batch_size)):
+            frame = dataframe.iloc[start:start + self.batch_size].reset_index(drop=True)
+            if locations is not None:
+                frame.attrs["dataflow_source_locations"] = locations[start:start + self.batch_size]
+            self.batch_step = batch_step
+            yield frame
     
     def write(self, data: Any) -> Any:
         """
@@ -1179,6 +1208,9 @@ class StreamBatchedFileStorage(BatchedFileStorage):
 
     def read(self, output_type: Literal["dataframe", "dict"]="dataframe") -> Any:
 
+        if self._active_batch is not None:
+            return self._convert_output(self._active_batch, output_type)
+
         if hasattr(self, "_current_streaming_chunk") and self._current_streaming_chunk is not None:
             return self._convert_output(self._current_streaming_chunk, output_type)
         
@@ -1188,6 +1220,10 @@ class StreamBatchedFileStorage(BatchedFileStorage):
                 f"The storage will fall back to loading the full file into memory."
             )
         return super().read(output_type)
+
+    def iter_batches(self) -> Generator[pd.DataFrame, None, None]:
+        """Expose the streaming reader through the common batch contract."""
+        yield from self.iter_chunks()
     
     def iter_chunks(self) -> Generator[pd.DataFrame, None, None]:
         """

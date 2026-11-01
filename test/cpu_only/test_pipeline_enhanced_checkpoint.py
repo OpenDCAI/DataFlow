@@ -52,6 +52,14 @@ def run(cls, source, root, **kwargs):
     path = Path(pipeline.storage._get_cache_file_path(2))
     return [json.loads(line) for line in path.read_text().splitlines() if line.strip()]
 
+
+def run_compatibility_resume(cls, source, root, **kwargs):
+    pipeline = cls(source, root, **kwargs)
+    pipeline.compile()
+    pipeline.forward(batch_size=2)
+    path = Path(pipeline.storage._get_cache_file_path(2))
+    return [json.loads(line) for line in path.read_text().splitlines() if line.strip()]
+
 @pytest.fixture
 def source(tmp_path):
     source = tmp_path / "source.jsonl"
@@ -83,6 +91,18 @@ def test_restart_after_manifest_commit(tmp_path, source, cls, monkeypatch):
         with pytest.raises(RuntimeError, match="after commit"):
             run(cls, source, tmp_path / "restart")
     assert run(cls, source, tmp_path / "restart") == run(cls, source, tmp_path / "baseline")
+
+
+@pytest.mark.parametrize("cls", [Prepare, StreamPrepare])
+def test_default_resume_uses_the_transactional_runner(tmp_path, source, cls):
+    with pytest.raises(RuntimeError, match="injected"):
+        run_compatibility_resume(cls, source, tmp_path / "restart", crash=(1, "after"))
+
+    actual = run_compatibility_resume(cls, source, tmp_path / "restart")
+    expected = run_compatibility_resume(cls, source, tmp_path / "baseline")
+    assert actual == expected
+    assert [row["number"] for row in actual] == list(range(7))
+    assert (tmp_path / "restart" / "cache" / ".dataflow_checkpoint" / "manifest.json").exists()
 
 @pytest.mark.parametrize("cls", [Prepare, StreamPrepare])
 def test_empty_filtered_batches_can_resume(tmp_path, source, cls):
