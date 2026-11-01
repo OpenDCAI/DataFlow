@@ -24,6 +24,25 @@ storage = StreamBatchedFileStorage(
 local initial JSONL inputs, not remote datasets or intermediate caches. Omit it
 for the existing pandas reader and default error behavior.
 
+## File formats and write semantics
+
+The file format and storage class determine whether a write replaces the whole
+step output or appends one batch:
+
+| Storage | Supported output formats | Write behavior |
+| --- | --- | --- |
+| `FileStorage` | JSON, JSONL, CSV, Parquet, Pickle, XLSX | Materializes and replaces the complete step output on each write. |
+| `BatchedFileStorage` | JSONL, CSV | Batch 0 replaces the output; later batches append. |
+| `StreamBatchedFileStorage` | JSONL, CSV | Same append contract as `BatchedFileStorage`, with streaming input. |
+| `LazyFileStorage` | JSON, JSONL, CSV, Parquet, Pickle | Buffers writes and materializes the complete output when flushed. |
+
+JSON, Parquet, Pickle, and XLSX are whole-file formats in the current batched
+storage API and are rejected by `BatchedFileStorage` and
+`StreamBatchedFileStorage`. Use `FileStorage` for those formats, or convert the
+source to JSONL/CSV before using batch append and manifest recovery. The append
+contract applies to output files; source reading and output persistence are
+separate choices.
+
 The new reader rejects blank lines, invalid UTF-8/JSON, nonstandard NaN/Infinity
 constants, and JSON values that are not objects. Filesystem errors still abort.
 It publishes an atomic error JSONL with physical line numbers and byte offsets,
