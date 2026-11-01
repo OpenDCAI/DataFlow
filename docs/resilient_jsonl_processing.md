@@ -1,8 +1,11 @@
 # Resilient local JSONL processing
 
-These are opt-in APIs. Default Storage reads, legacy batch resume, and Serving
-list return values keep their existing behavior. This implementation does not
-include global deduplication or distributed execution.
+The malformed-record policy is opt-in. Ordinary Storage reads and Serving list
+return values keep their existing behavior. Local JSONL batch pipelines using
+the default `resume_from_last=True` now use the transactional manifest runner
+when their storage and cache satisfy the supported contract. CSV, remote
+datasets, and existing legacy caches retain the compatibility path. This
+implementation does not include global deduplication or distributed execution.
 
 ## Isolate malformed input records
 
@@ -20,6 +23,25 @@ storage = StreamBatchedFileStorage(
 `StreamBatchedFileStorage` accept the same optional policy. It applies only to
 local initial JSONL inputs, not remote datasets or intermediate caches. Omit it
 for the existing pandas reader and default error behavior.
+
+## File formats and write semantics
+
+The file format and storage class determine whether a write replaces the whole
+step output or appends one batch:
+
+| Storage | Supported output formats | Write behavior |
+| --- | --- | --- |
+| `FileStorage` | JSON, JSONL, CSV, Parquet, Pickle, XLSX | Materializes and replaces the complete step output on each write. |
+| `BatchedFileStorage` | JSONL, CSV | Batch 0 replaces the output; later batches append. |
+| `StreamBatchedFileStorage` | JSONL, CSV | Same append contract as `BatchedFileStorage`, with streaming input. |
+| `LazyFileStorage` | JSON, JSONL, CSV, Parquet, Pickle | Buffers writes and materializes the complete output when flushed. |
+
+JSON, Parquet, Pickle, and XLSX are whole-file formats in the current batched
+storage API and are rejected by `BatchedFileStorage` and
+`StreamBatchedFileStorage`. Use `FileStorage` for those formats, or convert the
+source to JSONL/CSV before using batch append and manifest recovery. The append
+contract applies to output files; source reading and output persistence are
+separate choices.
 
 The new reader rejects blank lines, invalid UTF-8/JSON, nonstandard NaN/Infinity
 constants, and JSON values that are not objects. Filesystem errors still abort.
@@ -59,13 +81,32 @@ pipeline.forward(
 ```
 
 Use fresh output/cache directories for the first run. Restart the same pipeline
-with the same arguments to resume. This mode does not read or migrate the legacy
-`*_last_success_step.txt`; `resume_step` cannot be combined with it. Without
-`checkpoint_dir`, legacy behavior is unchanged. `checkpoint_config` is required:
-the caller must declare constructor settings, prompt, model, parser versions and
+with the same arguments to resume. The explicit `checkpoint_dir` form is the
+recommended production form because it makes the checkpoint location and run
+configuration visible:
+
+```python
+pipeline.forward(
+    batch_size=100,
+    checkpoint_dir="run/checkpoint",
+    checkpoint_config={"pipeline_revision": 1, "model": "model-id"},
+)
+```
+
+For a local JSONL source with standard batched storage, the historical
+`resume_from_last=True` default automatically creates
+`<cache_path>/.dataflow_checkpoint/manifest.json` and uses the same transactional
+runner. No extra argument is required. `resume_from_last=False`, `resume_step`,
+CSV, remote sources, and preexisting legacy outputs retain the compatibility
+cursor behavior. `resume_step` cannot be combined with an explicit checkpoint.
+
+`checkpoint_config` is required for the explicit checkpoint form: the caller
+must declare constructor settings, prompts, model versions, parser revisions and
 other dependencies that affect results. Arbitrary Python objects are not inferred
 or fingerprinted automatically. The graph's operator types, run arguments,
-output paths, batch size, reading mode, and input content hash are also bound.
+output paths, batch size, reader policy, error-ledger path, and input content
+hash are bound. Materialized and streaming readers share the same execution and
+recovery protocol.
 
 Supported: a single local JSONL source, standard batched or streaming-batched
 JSONL Storage, one writer, and operators that write each output via that Storage.
