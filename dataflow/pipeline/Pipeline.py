@@ -14,7 +14,8 @@ import atexit
 from datetime import datetime
 from dataflow.logger import get_logger
 import colorsys
-from tqdm import tqdm
+
+
 class PipelineABC(ABC):
     def __init__(self):
         # list of dict, contains `OPRuntime` class and parameters for `operator.run()`

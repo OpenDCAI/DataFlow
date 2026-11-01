@@ -2,14 +2,18 @@
 
 from __future__ import annotations
 
-import os
 from pathlib import Path
 
 from tqdm import tqdm
 
 
-def _automatic_checkpoint_path(pipeline, batch_size):
-    """Return a private manifest path when the storage contract is safe."""
+def _automatic_checkpoint_path(pipeline, batch_size: int | None) -> Path | None:
+    """Return the automatic checkpoint directory for a new local JSONL run.
+
+    ``None`` means the pipeline must keep the historical cursor. This is the
+    compatibility behavior for unsupported backends and caches that already
+    contain outputs without a manifest owner.
+    """
     from dataflow.utils.storage import BatchedFileStorage
 
     if not isinstance(batch_size, int) or isinstance(batch_size, bool) or batch_size <= 0:
@@ -38,7 +42,8 @@ def _automatic_checkpoint_path(pipeline, batch_size):
     return directory
 
 
-def _run_operator(node, frame=None, batch_step=None):
+def _run_operator(node, frame=None, batch_step: int | None = None) -> None:
+    """Run one operator with its current batch exposed through storage."""
     storage = node.storage
     if batch_step is not None:
         storage.batch_step = batch_step
@@ -51,7 +56,12 @@ def _run_operator(node, frame=None, batch_step=None):
             storage._active_batch = None
 
 
-def run_legacy_pipeline(pipeline, resume_step, batch_size, resume_from_last):
+def run_legacy_pipeline(
+    pipeline,
+    resume_step: int,
+    batch_size: int | None,
+    resume_from_last: bool,
+) -> None:
     """Run the compatibility cursor through one shared batch loop.
 
     The historical cursor format remains supported for existing callers. New
@@ -63,17 +73,17 @@ def run_legacy_pipeline(pipeline, resume_step, batch_size, resume_from_last):
     resume_batch = 0
     cache_path = None
     if resume_from_last:
-        cache_path = os.path.join(
+        cache_path = Path(
             pipeline.op_nodes_list[1].storage.cache_path,
             f"{pipeline.op_nodes_list[1].storage.file_name_prefix}_last_success_step.txt",
         )
-        if not os.path.exists(cache_path):
+        if not cache_path.exists():
             resume_step = 0
             pipeline.logger.info(
                 f"No last success step cache found at {cache_path}, starting from step 0."
             )
         else:
-            with open(cache_path, "r") as stream:
+            with cache_path.open("r", encoding="utf-8") as stream:
                 resume_step, resume_batch = map(int, stream.readline().strip().split(","))
             pipeline.logger.info(
                 f"Resuming from last success step {resume_step}, batch step {resume_batch}."
@@ -114,7 +124,7 @@ def run_legacy_pipeline(pipeline, resume_step, batch_size, resume_from_last):
                 )
                 if resume_from_last:
                     resume_batch = batch + 1 if batch_size is not None else 0
-                    with open(cache_path, "w") as stream:
+                    with cache_path.open("w", encoding="utf-8") as stream:
                         stream.write(f"{step},{resume_batch}\n")
 
             if hasattr(node.op_obj, "shutdown"):
@@ -125,7 +135,7 @@ def run_legacy_pipeline(pipeline, resume_step, batch_size, resume_from_last):
 
         if resume_from_last:
             resume_batch = 0
-            with open(cache_path, "w") as stream:
+            with cache_path.open("w", encoding="utf-8") as stream:
                 stream.write(f"{index},{resume_batch}\n")
 
         if node.llm_serving is not None:
@@ -135,7 +145,12 @@ def run_legacy_pipeline(pipeline, resume_step, batch_size, resume_from_last):
                 pipeline.active_llm_serving = None
 
 
-def run_compiled_pipeline(pipeline, resume_step, batch_size, resume_from_last):
+def run_compiled_pipeline(
+    pipeline,
+    resume_step: int,
+    batch_size: int | None,
+    resume_from_last: bool,
+) -> None:
     """Run a compiled pipeline with one recovery model when possible.
 
     New local JSONL runs use the transactional manifest automatically when the

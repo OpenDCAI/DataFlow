@@ -22,6 +22,7 @@ ROWS = pd.DataFrame(
 
 
 def write_source(path, file_type):
+    """Create a small source file in the format under test."""
     if file_type == "json":
         ROWS.to_json(path, orient="records", force_ascii=False, indent=2)
     elif file_type == "jsonl":
@@ -40,7 +41,9 @@ def write_source(path, file_type):
         raise AssertionError(file_type)
 
 
-@pytest.mark.parametrize("file_type", ["json", "jsonl", "csv", "parquet", "pickle", "xlsx"])
+@pytest.mark.parametrize(
+    "file_type", ["json", "jsonl", "csv", "parquet", "pickle", "xlsx"]
+)
 def test_file_storage_roundtrip_is_whole_file_replace(tmp_path, file_type):
     source = tmp_path / f"source.{file_type}"
     write_source(source, file_type)
@@ -62,9 +65,13 @@ def test_file_storage_roundtrip_is_whole_file_replace(tmp_path, file_type):
     assert reread["id"].tolist() == [99, 2, 3, 4, 5]
 
 
-@pytest.mark.parametrize("storage_cls", [BatchedFileStorage, StreamBatchedFileStorage])
+@pytest.mark.parametrize(
+    "storage_cls", [BatchedFileStorage, StreamBatchedFileStorage]
+)
 @pytest.mark.parametrize("file_type", ["jsonl", "csv"])
-def test_batched_storage_appends_jsonl_and_csv_batches(tmp_path, storage_cls, file_type):
+def test_batched_storage_appends_jsonl_and_csv_batches(
+    tmp_path, storage_cls, file_type
+):
     source = tmp_path / f"source.{file_type}"
     write_source(source, file_type)
     storage = storage_cls(
@@ -87,7 +94,9 @@ def test_batched_storage_appends_jsonl_and_csv_batches(tmp_path, storage_cls, fi
     assert reread["id"].tolist() == [1, 2, 3, 4, 5]
 
 
-@pytest.mark.parametrize("storage_cls", [BatchedFileStorage, StreamBatchedFileStorage])
+@pytest.mark.parametrize(
+    "storage_cls", [BatchedFileStorage, StreamBatchedFileStorage]
+)
 @pytest.mark.parametrize("file_type", ["json", "parquet", "pickle", "xlsx"])
 def test_batched_storage_rejects_non_append_formats(tmp_path, storage_cls, file_type):
     with pytest.raises(ValueError, match="only supports 'jsonl' and 'csv'"):
