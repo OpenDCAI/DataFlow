@@ -27,9 +27,12 @@ class NgramFilter(OperatorABC):
                 "- max_score：最大n-gram得分阈值\n"
                 "- ngrams：n-gram的n值\n"
                 "- language：处理语言；'zh' 使用字粒度切分，'en' 使用空格分词，'auto' 根据每条文本是否包含汉字自动选择\n"
+                "- input_key：输入文本字段名（必填）\n"
+                "- output_key：写入n-gram得分的输出字段名，默认为'NgramScore'\n"
                 "输出参数：\n"
-                "- 过滤后的DataFrame，仅保留n-gram得分在指定范围内的文本\n"
-                "- 返回包含n-gram得分字段名的列表"
+                "- 过滤后的DataFrame，仅保留n-gram得分在[min_score, max_score]范围内（含边界）的文本；"
+                "每行新增output_key字段，值为0到1之间的浮点得分（唯一n-gram数/n-gram总数；空文本或token数少于ngrams时为0.0），该字段保留在输出中\n"
+                "- 返回包含output_key的列表"
             )
         else:
             return (
@@ -38,10 +41,13 @@ class NgramFilter(OperatorABC):
                 "- min_score: Minimum n-gram score threshold\n"
                 "- max_score: Maximum n-gram score threshold\n"
                 "- ngrams: n value for n-gram\n"
-                "- language: Processing language. 'zh' uses character-level splitting, 'en' uses whitespace splitting, and 'auto' selects per sample based on the presence of Han characters.\n\n"
+                "- language: Processing language. 'zh' uses character-level splitting, 'en' uses whitespace splitting, and 'auto' selects per sample based on the presence of Han characters.\n"
+                "- input_key: Input text field name (required)\n"
+                "- output_key: Name of the output field that receives the n-gram score, default is 'NgramScore'\n\n"
                 "Output Parameters:\n"
-                "- Filtered DataFrame containing only texts with n-gram score within specified range\n"
-                "- List containing n-gram score field name"
+                "- Filtered DataFrame containing only texts with n-gram score within [min_score, max_score] (inclusive); "
+                "each row gets a new output_key field holding a float score in 0-1 (unique n-grams / total n-grams; 0.0 for empty text or fewer tokens than ngrams), which is kept in the output\n"
+                "- List containing output_key"
             )
 
     def run(self, storage: DataFlowStorage, input_key: str, output_key: str='NgramScore'):

@@ -10,6 +10,7 @@ import json
 from typing import Any, Dict, Literal, Generator
 import os
 import copy
+from dataflow.utils.jsonl_reader import JSONLReadPolicy
 
 class DataFlowStorage(ABC):
     """
@@ -84,7 +85,8 @@ class LazyFileStorage(DataFlowStorage):
         file_name_prefix:str="dataflow_cache_step",
         cache_type:Literal["json", "jsonl", "csv", "parquet", "pickle"] = "jsonl",
         save_on_exit: bool = True,        # 进程退出时自动 flush
-        flush_all_steps: bool = False      # True: 所有脏输出步落盘；False: 仅最新一步
+        flush_all_steps: bool = False,     # True: 所有脏输出步落盘；False: 仅最新一步
+        jsonl_read_policy: JSONLReadPolicy | None = None,
     ):
         """
         Initialize a LazyFileStorage.
@@ -132,6 +134,9 @@ class LazyFileStorage(DataFlowStorage):
                   only if it is a dirty output.
                 Buffers populated by read(), including the source at step 0,
                 are not rewritten by flush_all().
+            jsonl_read_policy (JSONLReadPolicy, optional):
+                Opt into bad-record isolation for the local initial JSONL input.
+                None preserves the existing pandas reader. See docs/resilient_jsonl_processing.md.
 
         Returns:
             None
@@ -155,6 +160,10 @@ class LazyFileStorage(DataFlowStorage):
         self.cache_type = cache_type
         self.operator_step = -1
         self.logger = get_logger()
+
+        self.jsonl_read_policy = jsonl_read_policy
+        if jsonl_read_policy is not None:
+            jsonl_read_policy.bind(self)
 
         # 内存缓冲：step -> DataFrame
         self._buffers: Dict[int, pd.DataFrame] = {}
@@ -228,6 +237,8 @@ class LazyFileStorage(DataFlowStorage):
         return dataframe.columns.tolist() if isinstance(dataframe, pd.DataFrame) else []
 
     def _load_local_file(self, file_path: str, file_type: str) -> pd.DataFrame:
+        if file_type == "jsonl" and self.operator_step == 0 and self.jsonl_read_policy is not None:
+            return self.jsonl_read_policy.read(file_path)
         if not os.path.exists(file_path):
             raise FileNotFoundError(f"File {file_path} does not exist. Please check the path.")
         try:
@@ -472,7 +483,8 @@ class FileStorage(DataFlowStorage):
         first_entry_file_name: str,
         cache_path:str="./cache",
         file_name_prefix:str="dataflow_cache_step",
-        cache_type:Literal["json", "jsonl", "csv", "parquet", "pickle"] = "jsonl"
+        cache_type:Literal["json", "jsonl", "csv", "parquet", "pickle"] = "jsonl",
+        jsonl_read_policy: JSONLReadPolicy | None = None,
     ):
         """
         Initialize a FileStorage.
@@ -510,6 +522,9 @@ class FileStorage(DataFlowStorage):
             cache_type (Literal["json","jsonl","csv","parquet","pickle"], optional):
                 File format used when writing step outputs to disk.
                 Defaults to "jsonl".
+            jsonl_read_policy (JSONLReadPolicy, optional):
+                Opt into bad-record isolation for the local initial JSONL input.
+                None preserves the existing pandas reader. See docs/resilient_jsonl_processing.md.
 
         Returns:
             None
@@ -530,6 +545,9 @@ class FileStorage(DataFlowStorage):
         self.cache_type = cache_type
         self.operator_step = -1
         self.logger = get_logger()
+        self.jsonl_read_policy = jsonl_read_policy
+        if jsonl_read_policy is not None:
+            jsonl_read_policy.bind(self)
 
     def _get_cache_file_path(self, step) -> str:
         if step == -1:
@@ -555,6 +573,8 @@ class FileStorage(DataFlowStorage):
     
     def _load_local_file(self, file_path: str, file_type: str) -> pd.DataFrame:
         """Load data from local file based on file type."""
+        if file_type == "jsonl" and self.operator_step == 0 and self.jsonl_read_policy is not None:
+            return self.jsonl_read_policy.read(file_path)
         # check if file exists
         if not os.path.exists(file_path):
             raise FileNotFoundError(f"File {file_path} does not exist. Please check the path.")
@@ -961,11 +981,13 @@ class BatchedFileStorage(FileStorage):
         cache_path:str="./cache",
         file_name_prefix:str="dataflow_cache_step",
         cache_type:Literal["jsonl", "csv"] = "jsonl",
+        jsonl_read_policy: JSONLReadPolicy | None = None,
     ):
-        super().__init__(first_entry_file_name, cache_path, file_name_prefix, cache_type)
+        super().__init__(first_entry_file_name, cache_path, file_name_prefix, cache_type, jsonl_read_policy)
         self.batch_size = None
         self.batch_step = 0
         self._dataframe_buffer = {}
+        self._active_batch = None
         if cache_type not in ["jsonl", "csv"]:
             raise ValueError(f"BatchedFileStorage only supports 'jsonl' and 'csv' cache types, got: {cache_type}")
         
@@ -987,6 +1009,9 @@ class BatchedFileStorage(FileStorage):
         Raises:
             ValueError: For unsupported file types or output types
         """
+        if self._active_batch is not None:
+            return self._convert_output(self._active_batch, output_type)
+
         if self.operator_step == 0 and self.first_entry_file_name == "":
             self.logger.info("first_entry_file_name is empty, returning empty dataframe")
             empty_dataframe = pd.DataFrame()
@@ -1003,10 +1028,40 @@ class BatchedFileStorage(FileStorage):
         self.record_count = len(dataframe)
         # 读出当前批次数据
         if self.batch_size:
+            locations = dataframe.attrs.get("dataflow_source_locations")
             dataframe = dataframe.iloc[
                 self.batch_step * self.batch_size : (self.batch_step + 1) * self.batch_size
             ].reset_index(drop=True) # reset_index, make the new index of every batch start from 0. Instead of its original index.
+            if locations is not None:
+                dataframe.attrs["dataflow_source_locations"] = locations[
+                    self.batch_step * self.batch_size:(self.batch_step + 1) * self.batch_size
+                ]
         return self._convert_output(dataframe, output_type)
+
+    def iter_batches(self) -> Generator[pd.DataFrame, None, None]:
+        """Yield input batches through the common storage execution contract.
+
+        Streaming and materialized storage implementations expose the same
+        iterator contract to the pipeline runner.  The materialized storage
+        keeps its existing dataframe cache and only changes how batches are
+        presented to operators.
+        """
+        if not isinstance(self.batch_size, int) or self.batch_size <= 0:
+            raise ValueError("batch_size must be a positive integer")
+
+        dataframe = self._dataframe_buffer.get(self.operator_step)
+        if dataframe is None:
+            dataframe = super().read(output_type="dataframe")
+            self._dataframe_buffer[self.operator_step] = dataframe.copy()
+        self.record_count = len(dataframe)
+        locations = dataframe.attrs.get("dataflow_source_locations")
+
+        for batch_step, start in enumerate(range(0, len(dataframe), self.batch_size)):
+            frame = dataframe.iloc[start:start + self.batch_size].reset_index(drop=True)
+            if locations is not None:
+                frame.attrs["dataflow_source_locations"] = locations[start:start + self.batch_size]
+            self.batch_step = batch_step
+            yield frame
     
     def write(self, data: Any) -> Any:
         """
@@ -1075,8 +1130,9 @@ class StreamBatchedFileStorage(BatchedFileStorage):
         cache_path:str="./cache",
         file_name_prefix:str="dataflow_cache_step",
         cache_type:Literal["jsonl", "csv"] = "jsonl",
+        jsonl_read_policy: JSONLReadPolicy | None = None,
     ):
-        super().__init__(first_entry_file_name, cache_path, file_name_prefix, cache_type)
+        super().__init__(first_entry_file_name, cache_path, file_name_prefix, cache_type, jsonl_read_policy)
     
     def get_keys_from_dataframe(self) -> list[str]:
         if self._dataframe_buffer.get(self.operator_step) is not None:
@@ -1084,6 +1140,8 @@ class StreamBatchedFileStorage(BatchedFileStorage):
 
         file_path = self._get_cache_file_path(self.operator_step)
         ext = self.cache_type if self.operator_step != 0 else file_path.split(".")[-1].lower()
+        if ext == "jsonl" and self.operator_step == 0 and self.jsonl_read_policy is not None:
+            return self.jsonl_read_policy.inspect(file_path)["keys"]
         try:
             if ext == "csv":
                 return pd.read_csv(file_path, nrows=0).columns.tolist()
@@ -1106,6 +1164,10 @@ class StreamBatchedFileStorage(BatchedFileStorage):
 
     def _load_local_file(self, file_path: str, file_type: str,batchsize: int=None) -> pd.DataFrame:
         """Load data from local file based on file type."""
+        if file_type == "jsonl" and self.operator_step == 0 and self.jsonl_read_policy is not None:
+            if batchsize is not None:
+                return self.jsonl_read_policy.iter_chunks(file_path, batchsize)
+            return self.jsonl_read_policy.read(file_path)
         # check if file exists
         if not os.path.exists(file_path):
             raise FileNotFoundError(f"File {file_path} does not exist. Please check the path.")
@@ -1121,6 +1183,8 @@ class StreamBatchedFileStorage(BatchedFileStorage):
 
     def get_record_count(self) -> int:
         """显式获取记录总数，支持缓存以提高性能"""
+        if self.operator_step == 0 and self.first_entry_file_name.lower().endswith(".jsonl") and self.jsonl_read_policy is not None:
+            return self.jsonl_read_policy.inspect(self.first_entry_file_name)["accepted"]
         if hasattr(self, "_cached_record_count"):
             return self._cached_record_count
 
@@ -1144,6 +1208,9 @@ class StreamBatchedFileStorage(BatchedFileStorage):
 
     def read(self, output_type: Literal["dataframe", "dict"]="dataframe") -> Any:
 
+        if self._active_batch is not None:
+            return self._convert_output(self._active_batch, output_type)
+
         if hasattr(self, "_current_streaming_chunk") and self._current_streaming_chunk is not None:
             return self._convert_output(self._current_streaming_chunk, output_type)
         
@@ -1153,6 +1220,10 @@ class StreamBatchedFileStorage(BatchedFileStorage):
                 f"The storage will fall back to loading the full file into memory."
             )
         return super().read(output_type)
+
+    def iter_batches(self) -> Generator[pd.DataFrame, None, None]:
+        """Expose the streaming reader through the common batch contract."""
+        yield from self.iter_chunks()
     
     def iter_chunks(self) -> Generator[pd.DataFrame, None, None]:
         """

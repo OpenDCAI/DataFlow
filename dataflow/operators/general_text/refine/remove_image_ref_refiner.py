@@ -14,7 +14,6 @@ class RemoveImageRefsRefiner(OperatorABC):
             r'[a-fA-F0-9]+\.[a-zA-Z]{3,4}\)|'
             r'!\[\]\(images\/[a-f0-9]|'
             r'图\s+\d+-\d+：[\u4e00-\u9fa5a-zA-Z0-9]+|'
-            r'(?:[0-9a-zA-Z]+){7,}|'                # 正则5
             r'(?:[一二三四五六七八九十零壹贰叁肆伍陆柒捌玖拾佰仟万亿]+){5,}|'  # 正则6（汉字数字）
             r"u200e|"
             r"&#247;|\? :|"
