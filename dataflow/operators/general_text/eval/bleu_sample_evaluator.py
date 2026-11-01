@@ -23,11 +23,11 @@ class BleuSampleEvaluator(OperatorABC):
     def get_desc(lang: str = "zh"):
         if lang == "zh":
             return (
-                "计算BLEU分数评估生成文本与参考文本的n-gram重叠度，支持1-4元语法分析。\n"
+                "计算BLEU分数评估生成文本与参考文本的n-gram重叠度，返回从1元到n元的累计BLEU-n分数。\n"
                 "输入参数：\n"
-                "- n：最大n-gram长度，默认为4\n"
+                "- n：最大n-gram阶数，默认为4；输出为累计BLEU-n分数，支持大于4的阶数\n"
                 "- eff：参考长度计算方式，可选'shortest'/'average'/'longest'，默认为'average'\n"
-                "- special_reflen：特殊参考长度，默认为None\n"
+                "- special_reflen：特殊参考长度；为None时根据eff自动计算，默认为None\n"
                 "- input_key：生成文本字段名\n"
                 "- reference_key：参考文本字段名\n"
                 "- output_key：输出得分字段名，默认为'BleuScore'\n"
@@ -36,11 +36,11 @@ class BleuSampleEvaluator(OperatorABC):
             )
         elif lang == "en":
             return (
-                "Evaluate n-gram overlap between generated and reference text using BLEU score (1-4 grams supported).\n"
+                "Evaluate n-gram overlap between generated and reference text with cumulative BLEU-n scores from 1-gram through the configured maximum order.\n"
                 "Input Parameters:\n"
-                "- n: Maximum n-gram length, default 4\n"
+                "- n: Maximum n-gram order, default 4; returns the cumulative BLEU-n score and supports orders greater than 4\n"
                 "- eff: Reference length calculation method, 'shortest'/'average'/'longest', default 'average'\n"
-                "- special_reflen: Special reference length, default None\n"
+                "- special_reflen: Special reference length; when None, it is computed from eff, default None\n"
                 "- input_key: Field name for generated text\n"
                 "- reference_key: Field name for reference text\n"
                 "- output_key: Field name for output score, default 'BleuScore'\n"
