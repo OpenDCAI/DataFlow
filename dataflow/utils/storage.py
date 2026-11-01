@@ -483,7 +483,7 @@ class FileStorage(DataFlowStorage):
         first_entry_file_name: str,
         cache_path:str="./cache",
         file_name_prefix:str="dataflow_cache_step",
-        cache_type:Literal["json", "jsonl", "csv", "parquet", "pickle"] = "jsonl",
+        cache_type:Literal["json", "jsonl", "csv", "parquet", "pickle", "xlsx"] = "jsonl",
         jsonl_read_policy: JSONLReadPolicy | None = None,
     ):
         """
@@ -519,7 +519,7 @@ class FileStorage(DataFlowStorage):
                 Cache files are named as
                 "{file_name_prefix}_step{n}.{cache_type}".
                 Defaults to "dataflow_cache_step".
-            cache_type (Literal["json","jsonl","csv","parquet","pickle"], optional):
+            cache_type (Literal["json","jsonl","csv","parquet","pickle","xlsx"], optional):
                 File format used when writing step outputs to disk.
                 Defaults to "jsonl".
             jsonl_read_policy (JSONLReadPolicy, optional):

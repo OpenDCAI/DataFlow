@@ -12,7 +12,10 @@ from pathlib import Path
 import pandas as pd
 
 
-CHECKPOINT_FORMATS = frozenset({"jsonl", "csv"})
+BATCH_CHECKPOINT_FORMATS = frozenset({"jsonl", "csv"})
+WHOLE_FILE_CHECKPOINT_FORMATS = frozenset(
+    {"json", "jsonl", "csv", "parquet", "pickle", "xlsx"}
+)
 
 
 def file_digest(path):
@@ -84,31 +87,52 @@ class PipelineCheckpoint:
     """Persist the committed cursor and output offsets for one local run."""
 
     def __init__(self, pipeline, directory, batch_size, config, streaming=None):
-        from dataflow.utils.storage import BatchedFileStorage
+        from dataflow.utils.storage import BatchedFileStorage, FileStorage
 
         # ``streaming`` is retained for callers that used the v1 constructor;
         # the unified identity no longer depends on the reader strategy.
         del streaming
-        if not isinstance(batch_size, int) or isinstance(batch_size, bool) or batch_size <= 0:
-            raise ValueError("Enhanced checkpoints require a positive batch_size")
+        if batch_size is not None and (
+            not isinstance(batch_size, int)
+            or isinstance(batch_size, bool)
+            or batch_size <= 0
+        ):
+            raise ValueError("Enhanced checkpoints require a positive batch_size or None")
         if not isinstance(config, dict):
             raise ValueError("checkpoint_config must declare prompt/model/operator configuration")
         nodes = [node for node in pipeline.op_nodes_list if node.op_obj is not None]
         if not nodes:
             raise ValueError("Checkpoint pipeline must contain an operator")
         output_formats = [node.storage.cache_type for node in nodes]
-        if any(
-            not isinstance(node.storage, BatchedFileStorage)
-            or node.storage.cache_type not in CHECKPOINT_FORMATS
-            for node in nodes
-        ):
+        if batch_size is None:
+            valid_storage = all(type(node.storage) is FileStorage for node in nodes)
+            valid_formats = all(
+                node.storage.cache_type in WHOLE_FILE_CHECKPOINT_FORMATS
+                for node in nodes
+            )
+        else:
+            valid_storage = all(
+                isinstance(node.storage, BatchedFileStorage) for node in nodes
+            )
+            valid_formats = all(
+                node.storage.cache_type in BATCH_CHECKPOINT_FORMATS for node in nodes
+            )
+        if not valid_storage or not valid_formats:
             raise ValueError(
-                "Enhanced checkpoints support standard local batched JSONL/CSV Storage only"
+                "Enhanced checkpoints require standard local FileStorage for "
+                "whole-file runs or BatchedFileStorage for JSONL/CSV batches"
             )
         source = Path(nodes[0].storage.first_entry_file_name).resolve()
         source_format = source.suffix.lower().lstrip(".")
-        if not source.is_file() or source_format not in CHECKPOINT_FORMATS:
-            raise ValueError("Enhanced checkpoints require a local JSONL or CSV source")
+        allowed_source_formats = (
+            WHOLE_FILE_CHECKPOINT_FORMATS
+            if batch_size is None
+            else BATCH_CHECKPOINT_FORMATS
+        )
+        if not source.is_file() or source_format not in allowed_source_formats:
+            raise ValueError(
+                "Enhanced checkpoints require a supported local source format"
+            )
         if any(Path(node.storage.first_entry_file_name).resolve() != source for node in nodes):
             raise ValueError("Enhanced checkpoints require a single input source")
         self.outputs = [
@@ -196,6 +220,8 @@ class PipelineCheckpoint:
                     self.state["step"] == len(nodes) and self.state["batch"] != 0
                 ):
                     raise ValueError("Invalid checkpoint step")
+                if batch_size is None and self.state["batch"] != 0:
+                    raise ValueError("Whole-file checkpoints cannot contain a batch cursor")
                 for size in self.state["files"].values():
                     if size is not None and (type(size) is not int or size < 0):
                         raise ValueError("Invalid committed output size")
@@ -264,7 +290,7 @@ def _require_output(storage) -> None:
 
 
 def run_checkpointed_pipeline(pipeline, directory, batch_size, config, streaming=None):
-    """Run local JSONL/CSV batches and atomically commit output boundaries.
+    """Run transactional local batches or whole-file stages.
 
     External side effects performed by an operator are outside the checkpoint
     transaction and may be repeated when an uncommitted batch is retried.
@@ -281,13 +307,24 @@ def run_checkpointed_pipeline(pipeline, directory, batch_size, config, streaming
                 if node.op_obj is None or step < resume_step:
                     continue
                 storage = node.storage
-                storage.batch_size = batch_size
                 start = resume_batch if step == resume_step else 0
-                storage._dataframe_buffer.clear()
+                if hasattr(storage, "_dataframe_buffer"):
+                    storage._dataframe_buffer.clear()
                 if node.llm_serving is not None and all(
                     node.llm_serving is not resource for resource in resources
                 ):
                     resources.append(node.llm_serving)
+                if batch_size is None:
+                    try:
+                        node.op_obj.run(storage=storage, **node.kwargs)
+                        _require_output(storage)
+                        checkpoint.commit(step + 1, 0)
+                    finally:
+                        if hasattr(node.op_obj, "shutdown"):
+                            node.op_obj.shutdown()
+                    continue
+
+                storage.batch_size = batch_size
                 batches = storage.iter_batches()
                 processed = 0
                 for batch, frame in enumerate(batches):
