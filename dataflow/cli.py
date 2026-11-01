@@ -405,11 +405,17 @@ def text2model_init(cache: Path = typer.Option(Path("."), help="Cache dir")):
 @text_app.command("train")
 def text2model_train(input_dir: Path = typer.Argument(Path("."), help="Input directory"),
                      input_keys: Optional[str] = typer.Option(None, help="Input keys"),
-                     lf_yaml: Optional[Path] = typer.Option(None, help="LlamaFactory yaml")):
+                     lf_yaml: Optional[Path] = typer.Option(None, help="LlamaFactory yaml"),
+                     cache: Path = typer.Option(Path("."), help="Cache dir")):
     try:
         from dataflow.cli_funcs.cli_text import cli_text2model_train  # type: ignore
-        lf = str(lf_yaml) if lf_yaml else "./.cache/train_config.yaml"
-        ok = cli_text2model_train(input_keys=input_keys, lf_yaml=lf, input_dir=str(input_dir))
+        lf = str(lf_yaml) if lf_yaml else f"{cache}/.cache/train_config.yaml"
+        ok = cli_text2model_train(
+            input_keys=input_keys,
+            lf_yaml=lf,
+            input_dir=str(input_dir),
+            cache_path=str(cache),
+        )
     except Exception as e:
         _echo(f"text2model train error: {e}", "red")
         raise typer.Exit(code=1)
