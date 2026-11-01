@@ -1,10 +1,10 @@
-# Resilient local JSONL processing
+# Resilient local JSONL and CSV processing
 
 The malformed-record policy is opt-in. Ordinary Storage reads and Serving list
-return values keep their existing behavior. Local JSONL batch pipelines using
+return values keep their existing behavior. Local JSONL/CSV batch pipelines using
 the default `resume_from_last=True` now use the transactional manifest runner
-when their storage and cache satisfy the supported contract. CSV, remote
-datasets, and existing legacy caches retain the compatibility path. This
+when their storage and cache satisfy the supported contract. Remote datasets
+and existing legacy caches retain the compatibility path. This
 implementation does not include global deduplication or distributed execution.
 
 ## Isolate malformed input records
@@ -93,12 +93,12 @@ pipeline.forward(
 )
 ```
 
-For a local JSONL source with standard batched storage, the historical
+For a local JSONL or CSV source with standard batched storage, the historical
 `resume_from_last=True` default automatically creates
 `<cache_path>/.dataflow_checkpoint/manifest.json` and uses the same transactional
 runner. No extra argument is required. `resume_from_last=False`, `resume_step`,
-CSV, remote sources, and preexisting legacy outputs retain the compatibility
-cursor behavior. `resume_step` cannot be combined with an explicit checkpoint.
+remote sources, and preexisting legacy outputs retain the compatibility cursor
+behavior. `resume_step` cannot be combined with an explicit checkpoint.
 
 `checkpoint_config` is required for the explicit checkpoint form: the caller
 must declare constructor settings, prompts, model versions, parser revisions and
@@ -108,11 +108,12 @@ output paths, batch size, reader policy, error-ledger path, and input content
 hash are bound. Materialized and streaming readers share the same execution and
 recovery protocol.
 
-Supported: a single local JSONL source, standard batched or streaming-batched
-JSONL Storage, one writer, and operators that write each output via that Storage.
-Custom Storage, lazy buffers, remote outputs, extra operator files, external
-side effects and arbitrary stateful operators are not covered. Unix locking and
-durability are tested on macOS; Windows code paths have not been validated.
+Supported: a single local JSONL or CSV source, standard batched or
+streaming-batched JSONL/CSV Storage, one writer, and operators that write each
+output via that Storage. Custom Storage, lazy buffers, remote outputs, extra
+operator files, external side effects and arbitrary stateful operators are not
+covered. Unix locking and durability are tested on macOS; Windows code paths
+have not been validated.
 
 After each batch the output files are flushed, then a versioned manifest is
 atomically published with committed byte sizes and progress. On resume, all

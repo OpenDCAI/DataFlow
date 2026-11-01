@@ -1,4 +1,4 @@
-"""Opt-in local JSONL batch commits, isolated from legacy resume cursors."""
+"""Opt-in local JSONL/CSV batch commits, isolated from legacy cursors."""
 
 from __future__ import annotations
 
@@ -10,6 +10,9 @@ from contextlib import contextmanager
 from pathlib import Path
 
 import pandas as pd
+
+
+CHECKPOINT_FORMATS = frozenset({"jsonl", "csv"})
 
 
 def file_digest(path):
@@ -93,17 +96,19 @@ class PipelineCheckpoint:
         nodes = [node for node in pipeline.op_nodes_list if node.op_obj is not None]
         if not nodes:
             raise ValueError("Checkpoint pipeline must contain an operator")
+        output_formats = [node.storage.cache_type for node in nodes]
         if any(
             not isinstance(node.storage, BatchedFileStorage)
-            or node.storage.cache_type != "jsonl"
+            or node.storage.cache_type not in CHECKPOINT_FORMATS
             for node in nodes
         ):
             raise ValueError(
-                "Enhanced checkpoints support standard local batched JSONL Storage only"
+                "Enhanced checkpoints support standard local batched JSONL/CSV Storage only"
             )
         source = Path(nodes[0].storage.first_entry_file_name).resolve()
-        if not source.is_file() or source.suffix.lower() != ".jsonl":
-            raise ValueError("Enhanced checkpoints require a local JSONL source")
+        source_format = source.suffix.lower().lstrip(".")
+        if not source.is_file() or source_format not in CHECKPOINT_FORMATS:
+            raise ValueError("Enhanced checkpoints require a local JSONL or CSV source")
         if any(Path(node.storage.first_entry_file_name).resolve() != source for node in nodes):
             raise ValueError("Enhanced checkpoints require a single input source")
         self.outputs = [
@@ -118,10 +123,15 @@ class PipelineCheckpoint:
         self.source = source
         self.source_stat = (source.stat().st_size, source.stat().st_mtime_ns, source.stat().st_ino)
         self.source_digest = file_digest(source)
-        policy = nodes[0].storage.jsonl_read_policy
+        policy = (
+            nodes[0].storage.jsonl_read_policy
+            if source_format == "jsonl"
+            else None
+        )
         identity_payload = {
             "source": str(source), "sha256": self.source_digest,
             "batch_size": batch_size, "config": config,
+            "formats": {"source": source_format, "outputs": output_formats},
             "operators": [
                 {
                     "type": type(node.op_obj).__module__ + "." + type(node.op_obj).__name__,
@@ -139,14 +149,26 @@ class PipelineCheckpoint:
         # v1 manifests included the implementation-specific streaming flag in
         # their identity.  Accept both historical values while migrating the
         # manifest to the unified execution identity below.
+        # Manifests produced by #583 did not include format metadata and used
+        # two different reader-policy encodings. Accept them once and migrate
+        # to the unified identity above on the next successful initialization.
         legacy_identity_payload = {
-            **identity_payload,
-            "read_policy": type(policy).__name__,
+            key: value
+            for key, value in identity_payload.items()
+            if key != "formats"
         }
+        legacy_identity_payload_without_formats = dict(legacy_identity_payload)
+        legacy_identity_payload["read_policy"] = type(policy).__name__
         self.legacy_identities = {
             canonical_digest({**legacy_identity_payload, "streaming": value})
             for value in (False, True)
         }
+        self.legacy_identities.add(
+            canonical_digest(legacy_identity_payload)
+        )
+        self.legacy_identities.add(
+            canonical_digest(legacy_identity_payload_without_formats)
+        )
         expected_files = {str(path): None for path in self.outputs}
         if self.path.exists():
             try:
@@ -242,7 +264,7 @@ def _require_output(storage) -> None:
 
 
 def run_checkpointed_pipeline(pipeline, directory, batch_size, config, streaming=None):
-    """Run batches and atomically commit their local output boundaries.
+    """Run local JSONL/CSV batches and atomically commit output boundaries.
 
     External side effects performed by an operator are outside the checkpoint
     transaction and may be repeated when an uncommitted batch is retried.

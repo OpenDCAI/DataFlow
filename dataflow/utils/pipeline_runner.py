@@ -8,12 +8,13 @@ from tqdm import tqdm
 
 
 def _automatic_checkpoint_path(pipeline, batch_size: int | None) -> Path | None:
-    """Return the automatic checkpoint directory for a new local JSONL run.
+    """Return the automatic checkpoint directory for a new local JSONL/CSV run.
 
     ``None`` means the pipeline must keep the historical cursor. This is the
     compatibility behavior for unsupported backends and caches that already
     contain outputs without a manifest owner.
     """
+    from dataflow.utils.pipeline_checkpoint import CHECKPOINT_FORMATS
     from dataflow.utils.storage import BatchedFileStorage
 
     if not isinstance(batch_size, int) or isinstance(batch_size, bool) or batch_size <= 0:
@@ -21,12 +22,12 @@ def _automatic_checkpoint_path(pipeline, batch_size: int | None) -> Path | None:
     nodes = [node for node in pipeline.op_nodes_list if node.op_obj is not None]
     if not nodes or any(
         not isinstance(node.storage, BatchedFileStorage)
-        or node.storage.cache_type != "jsonl"
+        or node.storage.cache_type not in CHECKPOINT_FORMATS
         for node in nodes
     ):
         return None
     source = Path(nodes[0].storage.first_entry_file_name).resolve()
-    if not source.is_file() or source.suffix.lower() != ".jsonl":
+    if not source.is_file() or source.suffix.lower().lstrip(".") not in CHECKPOINT_FORMATS:
         return None
     if any(Path(node.storage.first_entry_file_name).resolve() != source for node in nodes):
         return None
@@ -153,8 +154,8 @@ def run_compiled_pipeline(
 ) -> None:
     """Run a compiled pipeline with one recovery model when possible.
 
-    New local JSONL runs use the transactional manifest automatically when the
-    caller uses the historical ``resume_from_last=True`` default. Other
+    New local JSONL/CSV runs use the transactional manifest automatically when
+    the caller uses the historical ``resume_from_last=True`` default. Other
     backends retain their compatibility behavior until they provide the same
     storage contract.
     """
