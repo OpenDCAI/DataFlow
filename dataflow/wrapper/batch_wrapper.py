@@ -17,6 +17,11 @@ class HasRun(Protocol[P, R]):
         """
         ...
 
+class _BatchDummyStorage(DummyStorage):
+    def get_keys_from_dataframe(self) -> list[str]:
+        dataframe = self.read(output_type="dataframe")
+        return dataframe.columns.tolist() if isinstance(dataframe, pd.DataFrame) else []
+
 class BatchWrapper(Generic[P, R]):
     """
     通用的批处理 Wrapper。
@@ -57,13 +62,13 @@ class BatchWrapper(Generic[P, R]):
             
         # prepare a dummy storage，for batch processing
         if self._batch_cache: # if we need to cache each batch result
-            self._dummy_storage = DummyStorage(
+            self._dummy_storage = _BatchDummyStorage(
                 cache_path=storage.cache_path,
                 file_name_prefix=storage.file_name_prefix,
                 cache_type=storage.cache_type
             )
         else:  # if we don't need to cache each batch result
-            self._dummy_storage = DummyStorage()
+            self._dummy_storage = _BatchDummyStorage()
 
         # —— 2. 读出全量数据并按 batch_size 切分 —— 
         whole_dataframe = storage.read()

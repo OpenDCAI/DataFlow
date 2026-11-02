@@ -82,7 +82,7 @@ class PromptedGenerator(OperatorABC):
             self.logger.info("Text generation completed.")
         except Exception as e:
             self.logger.error(f"Error during text generation: {e}")
-            return
+            raise
 
         if len(generated_outputs) != len(valid_positions):
             raise RuntimeError(

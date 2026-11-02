@@ -47,9 +47,9 @@ class Cider(object):
 
     def cook_append(self, test, refs):
         if refs is not None:
-            self.crefs.append(cook_refs(refs))
+            self.crefs.append(cook_refs(refs, n=self.n))
             if test is not None:
-                self.ctest.append(cook_test(test))  
+                self.ctest.append(cook_test(test, n=self.n))
             else:
                 self.ctest.append(None)  
 

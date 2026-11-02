@@ -24,19 +24,25 @@ class PerspectiveFilter(OperatorABC):
                 "输入参数：\n"
                 "- min_score：最小毒性得分阈值\n"
                 "- max_score：最大毒性得分阈值\n"
+                "- input_key：输入文本字段名（必填）\n"
+                "- output_key：写入毒性得分的输出字段名，默认为'PerspectiveScore'\n"
                 "输出参数：\n"
-                "- 过滤后的DataFrame，仅保留毒性得分在指定范围内的文本\n"
-                "- 返回包含毒性得分字段名的列表"
+                "- 过滤后的DataFrame，仅保留毒性得分在[min_score, max_score]范围内（含边界）的文本，得分为NaN的行也会保留；"
+                "每行新增output_key字段，值为Perspective API返回的浮点毒性概率（可能为NaN），该字段保留在输出中\n"
+                "- 返回包含output_key的列表"
             )
         else:
             return (
                 "Filter data using scores from the PerspectiveScorer. Assess text toxicity using Perspective API; higher scores indicate more toxicity.\n"
                 "Input Parameters:\n"
                 "- min_score: Minimum toxicity score threshold\n"
-                "- max_score: Maximum toxicity score threshold\n\n"
+                "- max_score: Maximum toxicity score threshold\n"
+                "- input_key: Input text field name (required)\n"
+                "- output_key: Name of the output field that receives the toxicity score, default is 'PerspectiveScore'\n\n"
                 "Output Parameters:\n"
-                "- Filtered DataFrame containing only texts with toxicity score within specified range\n"
-                "- List containing toxicity score field name"
+                "- Filtered DataFrame containing only texts with toxicity score within [min_score, max_score] (inclusive); rows whose score is NaN are also kept; "
+                "each row gets a new output_key field holding the float toxicity probability returned by Perspective API (may be NaN), which is kept in the output\n"
+                "- List containing output_key"
             )
         
     def run(self, storage: DataFlowStorage, input_key: str, output_key: str = 'PerspectiveScore'):

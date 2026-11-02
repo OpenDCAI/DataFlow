@@ -25,9 +25,12 @@ class MinHashDeduplicateFilter(OperatorABC):
                 "- threshold：相似度阈值，超过此阈值判定为相似文本\n"
                 "- use_n_gram：是否使用n-gram分词\n"
                 "- ngram：n-gram的n值\n"
+                "- input_key / input_keys：输入文本字段名（单个字符串）或字段名列表（多个字段会拼接后比较），二者必须且只能指定一个\n"
+                "- output_key：写入去重标签的输出字段名，默认为'minhash_deduplicated_label'\n"
                 "输出参数：\n"
-                "- 去重后的DataFrame，仅保留唯一文本\n"
-                "- 返回包含去重标签字段名的列表"
+                "- 去重后的DataFrame，仅保留唯一文本；"
+                "每行新增output_key字段，值为整数标签（1=首次出现被保留，0=判定为重复；由于只保留标签为1的行，输出中该值均为1），该字段保留在输出中\n"
+                "- 返回包含output_key的列表"
             )
         else:
             return (
@@ -36,10 +39,13 @@ class MinHashDeduplicateFilter(OperatorABC):
                 "- num_perm: Number of permutations for generating MinHash signatures\n"
                 "- threshold: Similarity threshold above which texts are considered duplicates\n"
                 "- use_n_gram: Whether to use n-gram tokenization\n"
-                "- ngram: n value for n-gram\n\n"
+                "- ngram: n value for n-gram\n"
+                "- input_key / input_keys: Input text field name (string) or list of field names (multiple fields are concatenated before comparison); exactly one of the two must be given\n"
+                "- output_key: Name of the output field that receives the deduplication label, default is 'minhash_deduplicated_label'\n\n"
                 "Output Parameters:\n"
-                "- Deduplicated DataFrame containing only unique texts\n"
-                "- List containing deduplication label field name"
+                "- Deduplicated DataFrame containing only unique texts; "
+                "each row gets a new output_key field holding an integer label (1 = first occurrence kept, 0 = duplicate; since only label-1 rows are kept, it is 1 in the output), which is kept in the output\n"
+                "- List containing output_key"
             )
 
     def create_minhash(self, data):

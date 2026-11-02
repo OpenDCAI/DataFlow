@@ -31,9 +31,12 @@ class NgramHashDeduplicateFilter(OperatorABC):
                 "- n_gram：将文本分割的片段数量\n"
                 "- hash_func：哈希函数类型，支持'md5'、'sha256'和'xxh3'\n"
                 "- diff_size：哈希集合差异阈值，小于此值判定为相似文本\n"
+                "- input_key / input_keys：输入文本字段名（单个字符串）或字段名列表（多个字段会拼接后比较），二者必须且只能指定一个\n"
+                "- output_key：写入去重标签的输出字段名，默认为'minhash_deduplicated_label'\n"
                 "输出参数：\n"
-                "- 去重后的DataFrame，仅保留唯一文本\n"
-                "- 返回包含去重标签字段名的列表"
+                "- 去重后的DataFrame，仅保留唯一文本；"
+                "每行新增output_key字段，值为整数标签（1=首次出现被保留，0=判定为重复；由于只保留标签为1的行，输出中该值均为1），该字段保留在输出中\n"
+                "- 返回包含output_key的列表"
             )
         else:
             return (
@@ -41,10 +44,13 @@ class NgramHashDeduplicateFilter(OperatorABC):
                 "Input Parameters:\n"
                 "- n_gram: Number of segments to split text into\n"
                 "- hash_func: Hash function type, supporting 'md5', 'sha256', and 'xxh3'\n"
-                "- diff_size: Hash set difference threshold below which texts are considered similar\n\n"
+                "- diff_size: Hash set difference threshold below which texts are considered similar\n"
+                "- input_key / input_keys: Input text field name (string) or list of field names (multiple fields are concatenated before comparison); exactly one of the two must be given\n"
+                "- output_key: Name of the output field that receives the deduplication label, default is 'minhash_deduplicated_label'\n\n"
                 "Output Parameters:\n"
-                "- Deduplicated DataFrame containing only unique texts\n"
-                "- List containing deduplication label field name"
+                "- Deduplicated DataFrame containing only unique texts; "
+                "each row gets a new output_key field holding an integer label (1 = first occurrence kept, 0 = duplicate; since only label-1 rows are kept, it is 1 in the output), which is kept in the output\n"
+                "- List containing output_key"
             )
 
     def _compute_hash(self, text: str) -> str:

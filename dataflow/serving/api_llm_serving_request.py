@@ -8,9 +8,14 @@ from ..logger import get_logger
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from tqdm import tqdm
 from dataflow.core  import LLMServingABC
-import re
 import time
+import math
+import subprocess
+import sys
+import threading
+from pathlib import Path
 from typing import Optional
+from ._bounded_api_worker import format_api_response
 
 
 class APILLMServing_request(LLMServingABC):
@@ -29,6 +34,8 @@ class APILLMServing_request(LLMServingABC):
                  max_retries: int = 5,
                  connect_timeout: float = 10.0,
                  read_timeout: float = 120.0,
+                 record_results: bool = False,
+                 request_budget_seconds: float | None = None,
                  **configs : dict
                  ):
         # Get API key from environment variable or config
@@ -37,6 +44,14 @@ class APILLMServing_request(LLMServingABC):
         # self.temperature = temperature
         self.max_workers = max_workers
         self.max_retries = max_retries
+        if request_budget_seconds is not None and (not math.isfinite(request_budget_seconds) or request_budget_seconds <= 0):
+            raise ValueError("request_budget_seconds must be finite and positive")
+        if (record_results or request_budget_seconds is not None) and (type(max_retries) is not int or max_retries < 1):
+            raise ValueError("Recorded requests require max_retries >= 1")
+        self.record_results = record_results or request_budget_seconds is not None
+        self.request_budget_seconds = request_budget_seconds
+        self.last_results = []
+        self._result_state = threading.local()
 
         self.timeout = (connect_timeout, read_timeout)  # (connect timeout, read timeout)
         # check for deprecated timeout
@@ -77,30 +92,7 @@ class APILLMServing_request(LLMServingABC):
 
     def format_response(self, response: dict, is_embedding: bool = False) -> Optional[str]:
         """Format API response, supporting both embedding and chat completion modes"""
-        
-        # Handle embedding requests
-        if is_embedding:
-            return response.get('data', [{}])[0].get('embedding', [])
-        
-        message = response.get('choices', [{}])[0].get('message') or {}
-        content = message.get('content')
-        reasoning_content = message.get('reasoning_content')
-
-        if content is None:
-            if reasoning_content:
-                content = ''
-            else:
-                return None
-        
-        # Return directly if content is already in think/answer format
-        if re.search(r'<think>.*?</think>.*?<answer>.*?</answer>', content, re.DOTALL):
-            return content
-        
-        # Wrap with think/answer tags if reasoning_content exists and is not empty
-        if reasoning_content:
-            return f"<think>{reasoning_content}</think>\n<answer>{content}</answer>"
-        
-        return content
+        return format_api_response(response, is_embedding)
     # deprecated
     # def api_chat(self, system_info: str, messages: str, model: str):
     #     try:
@@ -139,6 +131,7 @@ class APILLMServing_request(LLMServingABC):
               json_schema: dict = None
               ):
             start = time.time()
+            self._note_result(error_code="request_error")
             try:
                 if is_embedding:
                     payload = {
@@ -173,31 +166,38 @@ class APILLMServing_request(LLMServingABC):
                     # logging.info(f"API request successful")
                     response_data = response.json()
                     # logging.info(f"API response: {response_data['choices'][0]['message']['content']}")
-                    return id,self.format_response(response_data, is_embedding)
+                    formatted = self.format_response(response_data, is_embedding)
+                    self._note_result(error_code=None if formatted is not None else "empty_response")
+                    return id, formatted
                 else:
+                    self._note_result(error_code="http_error")
                     # self.logger.exception(f"API request failed (id = {id}) with status {response.status_code}: {response.text}")
                     self.logger.error(f"API request failed id={id} status={response.status_code} cost={cost:.2f}s body={response.text[:500]}")
                     return id, None
             # ✅ 1) 连接阶段超时：认为“根本连不上” => 统一抛 RuntimeError（Win/Linux 一致）
             except requests.exceptions.ConnectTimeout as e:
+                self._note_result(error_code="connect_timeout")
                 cost = time.time() - start
                 self.logger.error(f"API connect timeout (id={id}) cost={cost:.2f}s: {e}")
                 raise RuntimeError(f"Cannot connect to LLM server (connect timeout): {e}") from e
 
             # ✅ 2) 读超时：服务可达但没有数据（排队/推理太久）=> warn + None
             except requests.exceptions.ReadTimeout as e:
+                self._note_result(error_code="read_timeout")
                 cost = time.time() - start
                 warnings.warn(f"API read timeout (id={id}) cost={cost:.2f}s: {e}", RuntimeWarning)
                 return id, None
 
             # ✅ 3) 其他 Timeout（极少）按 warn 处理
             except requests.exceptions.Timeout as e:
+                self._note_result(error_code="request_timeout")
                 cost = time.time() - start
                 warnings.warn(f"API timeout (id={id}) cost={cost:.2f}s: {e}", RuntimeWarning)
                 return id, None
 
             # ✅ 4) ConnectionError：这里面 Win/Linux/urllib3 可能包装了各种“超时/断开”
             except requests.exceptions.ConnectionError as e:
+                self._note_result(error_code="connection_error")
                 cost = time.time() - start
                 msg = str(e).lower()
 
@@ -216,17 +216,104 @@ class APILLMServing_request(LLMServingABC):
                 raise RuntimeError(f"Cannot connect to LLM server: {e}") from e
 
             except Exception as e:
+                if isinstance(e, ValueError):
+                    self._note_result(error_code="invalid_response_json")
                 cost = time.time() - start
                 self.logger.exception(f"API request error (id = {id}) cost={cost:.2f}s: {e}")
                 return id, None
         
     def _api_chat_id_retry(self, id, payload, model, is_embedding : bool = False, json_schema: dict = None):
+        if self.request_budget_seconds is not None:
+            return self._bounded_request(id, payload, model, is_embedding, json_schema)
         for i in range(self.max_retries):
+            self._note_result(attempts=i + 1)
             id, response = self._api_chat_with_id(id, payload, model, is_embedding, json_schema)
             if response is not None:
                 return id, response
             time.sleep(2**i)
         return id, None    
+
+    def _note_result(self, **values):
+        state = getattr(self._result_state, "current", None)
+        if state is not None:
+            state.update(values)
+
+    def _bounded_request(self, id, payload, model, is_embedding=False, json_schema=None):
+        body = {"model": model, "input" if is_embedding else "messages": payload}
+        if json_schema is not None and not is_embedding:
+            body["response_format"] = {"type": "json_schema", "json_schema": {
+                "name": "custom_response", "strict": True, "schema": json_schema,
+            }}
+        body.update(self.configs)
+        spec = {"url": self.api_url, "headers": self.headers, "payload": body,
+                "timeout": self.timeout, "max_retries": self.max_retries,
+                "is_embedding": is_embedding}
+        started = time.monotonic()
+        worker = subprocess.Popen(
+            [sys.executable, str(Path(__file__).with_name("_bounded_api_worker.py"))],
+            stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+        )
+        expired = False
+        try:
+            remaining = max(0, self.request_budget_seconds - (time.monotonic() - started))
+            try:
+                stdout, stderr = worker.communicate(json.dumps(spec).encode(), timeout=remaining)
+            except subprocess.TimeoutExpired:
+                expired = True
+                worker.kill()
+                stdout, stderr = worker.communicate()
+        finally:
+            if worker.poll() is None:
+                worker.kill()
+                worker.communicate()
+        attempts = 0
+        for line in stderr.splitlines():
+            try:
+                attempts = max(attempts, json.loads(line).get("attempt", 0))
+            except (ValueError, TypeError):
+                pass
+        self._note_result(attempts=attempts)
+        if expired:
+            self._note_result(error_code="request_deadline")
+            return id, None
+        if worker.returncode:
+            self._note_result(error_code="worker_error")
+            return id, None
+        try:
+            result = json.loads(stdout)
+            response = self.format_response(result["data"], is_embedding) if result["data"] is not None else None
+            self._note_result(attempts=result["attempts"], error_code=result["error_code"] or (None if response is not None else "empty_response"))
+            return id, response
+        except (ValueError, KeyError, TypeError):
+            self._note_result(error_code="invalid_response_json")
+            return id, None
+
+    def _run_recorded_task(self, args):
+        self._result_state.current = {"index": args["id"], "attempts": 0, "error_code": "request_error"}
+        started = time.monotonic()
+        try:
+            _, response = self._api_chat_id_retry(**args)
+        except Exception:
+            response = None
+        if isinstance(response, str) and not response.strip():
+            response = None
+            self._note_result(error_code="empty_response")
+        event = dict(self._result_state.current)
+        event.update(status="success" if response is not None else "failed",
+                     elapsed_seconds=time.monotonic() - started)
+        return response, event
+
+    def _run_recorded_threadpool(self, task_args_list):
+        responses = [None] * len(task_args_list)
+        events = [None] * len(task_args_list)
+        with ThreadPoolExecutor(max_workers=self.max_workers) as executor:
+            futures = [executor.submit(self._run_recorded_task, task) for task in task_args_list]
+            for future in as_completed(futures):
+                response, event = future.result()
+                responses[event["index"]] = response
+                events[event["index"]] = event
+        self.last_results = events
+        return responses
     
     def _run_threadpool(self, task_args_list: list[dict], desc: str) -> list:
         """
@@ -234,6 +321,8 @@ class APILLMServing_request(LLMServingABC):
         e.g. {"id": 0, "payload": [...], "model": "...", "is_embedding": False, "json_schema": None}
         返回值按 id 回填到 responses
         """
+        if self.record_results:
+            return self._run_recorded_threadpool(task_args_list)
         responses = [None] * len(task_args_list)
 
         with ThreadPoolExecutor(max_workers=self.max_workers) as executor:

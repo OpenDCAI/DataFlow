@@ -125,7 +125,13 @@ class KBCTextCleaner(OperatorABC):
                 "[Image: 示例图 example.jpg]\n\n"
                 "链接文本\n\n"
                 "<code>代码片段</code>\n\n"
-                "[结构保持，语义保留，敏感信息脱敏处理（如手机号、保密标记等）]"
+                "[结构保持，语义保留，敏感信息脱敏处理（如手机号、保密标记等）]\n"
+                "\n输入参数：\n"
+                "- input_key：待清洗文本的字段名，默认为'raw_chunk'\n"
+                "- output_key：写入清洗后文本的输出字段名，默认为'cleaned_chunk'；该字段在输入中已存在时报错\n"
+                "输出参数：\n"
+                "- 不过滤任何行；每行新增output_key字段，值为LLM清洗后的文本字符串（已去除<cleaned_start>/<cleaned_end>等标记和泄漏的处理步骤），该字段保留在输出中\n"
+                "- 返回包含output_key的列表"
             )
         elif lang == "en":
             return (
@@ -150,7 +156,13 @@ class KBCTextCleaner(OperatorABC):
                 "[Image: Diagram example.jpg]\n\n"
                 "Link text\n\n"
                 "<code>Code block</code>\n\n"
-                "[Structure retained, semantics preserved, sensitive info masked (e.g., phone numbers, confidential tags)]"
+                "[Structure retained, semantics preserved, sensitive info masked (e.g., phone numbers, confidential tags)]\n"
+                "\nInput Parameters:\n"
+                "- input_key: Field holding the text to clean, default is 'raw_chunk'\n"
+                "- output_key: Name of the output field that receives the cleaned text, default is 'cleaned_chunk'; raises an error if it already exists in the input\n"
+                "Output Parameters:\n"
+                "- No rows are filtered; each row gets a new output_key field holding the LLM-cleaned text string (with <cleaned_start>/<cleaned_end> markers and leaked processing steps removed), which is kept in the output\n"
+                "- List containing output_key"
             )
         else:
             return "Knowledge cleaning operator for RAG content standardization. Set lang='zh' or 'en' for examples."

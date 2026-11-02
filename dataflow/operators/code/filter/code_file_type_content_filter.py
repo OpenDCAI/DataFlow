@@ -144,11 +144,11 @@ class CodeFileTypeContentFilter(OperatorABC):
             filetype = row.get("filetype", "").lower()
             filename = row.get("filename", "")
 
-            if filetype in self.SIZE_CHECK_TYPES:
-                return not self._is_large_file(row)
-            elif filetype == "html":
+            if filetype in self.SIZE_CHECK_TYPES and self._is_large_file(row):
+                return False
+            if filetype == "html":
                 return self._is_html_valid(row)
-            elif filetype == "text":
+            if filetype == "text":
                 return self._is_text_filename_valid(filename)
             return True
 

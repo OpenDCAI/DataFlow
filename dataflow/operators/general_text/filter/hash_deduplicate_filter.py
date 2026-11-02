@@ -1,3 +1,5 @@
+import json
+
 from tqdm import tqdm
 from hashlib import md5, sha256
 from xxhash import xxh3_128
@@ -77,7 +79,9 @@ class HashDeduplicateFilter(OperatorABC):
         labels = [0] * len(dataframe)
         for idx, sample in tqdm(enumerate(dataframe.to_dict(orient='records')), desc=f"Implementing {self.__class__.__name__}", total=len(dataframe)):
             if input_keys is not None and len(input_keys) > 1:
-                text = '\n'.join([f"{k}:\n{sample[k]}" for k in input_keys])
+                # JSON preserves field boundaries even when values contain delimiters.
+                # Multi-field values are compared by their string representation.
+                text = json.dumps([str(sample[k]) for k in input_keys], ensure_ascii=False)
             else:
                 text = sample[self.input_key if input_keys is None else input_keys[0]]
             hash_value = self._compute_hash(text)

@@ -49,9 +49,13 @@ class ReasoningQuestionGenerator(OperatorABC):
                 "- num_prompts：生成问题的数量，整数，范围1-5（含），默认1\n"
                 "- llm_serving：LLM服务实例，用于生成问题\n"
                 "- prompt_template：提示模板对象，用于构建生成提示词\n"
+                "- input_key：输入问题字段名（run参数），必填，无默认值\n"
+                "- output_synth_or_input_flag：写入问题来源标记的字段名，默认为'Synth_or_Input'\n"
                 "输出参数：\n"
-                "- 原始输入列（由input_key指定）：新增生成的问题\n"
-                "- Synth_or_Input：标识问题来源，'input'表示原始问题，'synth'表示生成的新问题"
+                "- 生成的问题作为新行追加到原始行之后，写在input_key字段中；新行的其他字段为空\n"
+                "- output_synth_or_input_flag：标识问题来源，'input'表示原始问题，'synth'表示生成的新问题\n"
+                "- 删除input_key为空或空字符串的行；若输入中已存在'Synth_or_Input'字段则报错\n"
+                "- 返回[input_key, output_synth_or_input_flag]"
             )
         elif lang == "en":
             return (
@@ -60,9 +64,13 @@ class ReasoningQuestionGenerator(OperatorABC):
                 "- num_prompts: Number of questions to generate per input, integer between 1-5 (inclusive), default 1\n"
                 "- llm_serving: LLM serving instance for question generation\n"
                 "- prompt_template: Prompt template object for constructing generation prompts\n"
+                "- input_key: Input question field name (run parameter), required, no default\n"
+                "- output_synth_or_input_flag: Name of the field that receives the question-source flag, default 'Synth_or_Input'\n"
                 "Output Parameters:\n"
-                "- Original input column (specified by input_key): Contains newly generated questions\n"
-                "- Synth_or_Input: Indicates question source, 'input' for original questions, 'synth' for generated questions"
+                "- Generated questions are appended as new rows after the original rows, in the input_key field; other fields of the new rows are empty\n"
+                "- output_synth_or_input_flag: Indicates question source, 'input' for original questions, 'synth' for generated questions\n"
+                "- Rows whose input_key is missing or an empty string are dropped; raises an error if a 'Synth_or_Input' field already exists in the input\n"
+                "- Returns [input_key, output_synth_or_input_flag]"
             )
         elif lang == "en":
             return (

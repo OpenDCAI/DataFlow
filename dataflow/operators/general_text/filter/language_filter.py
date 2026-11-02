@@ -36,19 +36,25 @@ class LanguageFilter(OperatorABC):
                 "输入参数：\n"
                 "- allowed_languages：允许的语言标签列表\n"
                 "- model_cache_dir：模型缓存目录路径\n"
+                "- input_key：输入文本字段名（必填）\n"
+                "- output_key：写入语言判定标签的输出字段名，默认为'language_label'\n"
                 "输出参数：\n"
-                "- 过滤后的DataFrame，仅保留语言在允许列表中的文本\n"
-                "- 返回包含语言标签字段名的列表"
+                "- 过滤后的DataFrame，仅保留语言在允许列表中的文本（FastText前5个预测标签中任一在allowed_languages中即通过）；"
+                "每行新增output_key字段，值为整数标签（1=通过，0=未通过；由于只保留通过的行，输出中该值均为1），不是语言代码，该字段保留在输出中\n"
+                "- 返回包含output_key的列表"
             )
         else:
             return (
                 "Filter data using FastText language identification model. Downloads and loads pre-trained FastText language identification model to check if text language is in allowed list.\n"
                 "Input Parameters:\n"
                 "- allowed_languages: List of allowed language labels\n"
-                "- model_cache_dir: Model cache directory path\n\n"
+                "- model_cache_dir: Model cache directory path\n"
+                "- input_key: Input text field name (required)\n"
+                "- output_key: Name of the output field that receives the language pass label, default is 'language_label'\n\n"
                 "Output Parameters:\n"
-                "- Filtered DataFrame containing only texts with language in allowed list\n"
-                "- List containing language label field name"
+                "- Filtered DataFrame containing only texts with language in allowed list (a row passes if any of FastText's top-5 predicted labels is in allowed_languages); "
+                "each row gets a new output_key field holding an integer label (1 = pass, 0 = fail; since only passing rows are kept, it is 1 in the output), not a language code, which is kept in the output\n"
+                "- List containing output_key"
             )
 
     def eval(self, dataframe, input_key):

@@ -153,14 +153,15 @@ class DatabaseManager:
         """
         Compare multiple pairs of queries across different databases in parallel.
         """
-        unique_db_ids = set(db_id for db_id, _, _ in query_triples)
-        for db_id in unique_db_ids:
-            if not self.database_exists(db_id):
-                error_msg = f"Database '{db_id}' not found"
-                return [self._create_error_result(error_msg) for _ in query_triples]
-        
+        comparisons = [None] * len(query_triples)
         all_queries = []
+        positions = []
         for idx, (db_id, gold_sql, pred_sql) in enumerate(query_triples):
+            # A missing database only invalidates its own comparisons.
+            if not self.database_exists(db_id):
+                comparisons[idx] = self._create_error_result(f"Database '{db_id}' not found")
+                continue
+            positions.append(idx)
             all_queries.extend([
                 (db_id, gold_sql),
                 (db_id, pred_sql)
@@ -170,11 +171,10 @@ class DatabaseManager:
         all_results = self.batch_execute_queries(all_queries)
         
         # Group results by comparison pairs
-        comparisons = []
-        for i in range(len(query_triples)):
+        for i, idx in enumerate(positions):
             result1 = all_results[2*i]
             result2 = all_results[2*i + 1]
-            comparisons.append(self.compare_results(result1, result2))
+            comparisons[idx] = self.compare_results(result1, result2)
 
         return comparisons
 

@@ -42,14 +42,28 @@ class AgenticRAGDepthQAGenerator(OperatorABC):
                 "该算子以已有问答生成更深度的问题。\n\n"
                 "输入参数：\n"
                 "- input_key: 输入字段名（默认值：\"question\"）\n"
-                "- output_key: 输出字段名（默认值：\"depth_question\"）\n"
+                "- output_key: 输出字段名前缀（默认值：\"depth_question\"）；实际写入的是带轮次后缀的字段，不写入output_key本身\n"
+                "- 输入还需包含refined_answer字段（用于校验LLM答案）\n"
+                "输出参数：\n"
+                "- 若输入无identifier字段，新增identifier：LLM生成的内容标识符原始文本\n"
+                "- 每一轮i（1..n_rounds）新增：new_identifier_i（扩展后的上位标识符）、relation_i（新旧标识符间的关系）、{output_key}_i（生成的更深层问题）\n"
+                "- 每轮过滤：反向生成或超集校验失败的行被删除；LLM可直接答对（llm_score >= 1）的行被删除\n"
+                "- 临时字段llm_answer与llm_score在每轮结束时被删除，不出现在输出中\n"
+                "- 返回列表：所有new_identifier_i、relation_i、{output_key}_i字段名\n"
             )
         elif lang == "en":
             return (
-                "This operator is used to generate deeper questions based on existing QA pairs."
+                "This operator is used to generate deeper questions based on existing QA pairs.\n"
                 "Input Parameters:\n"
                 "- input_key: Field name for the input (default: \"question\")\n"
-                "- output_key: Field name for the output (default: \"depth_question\")\n"
+                "- output_key: Prefix of the output field names (default: \"depth_question\"); round-suffixed fields are written, not output_key itself\n"
+                "- The input must also contain a refined_answer field (used to verify the LLM answer)\n"
+                "Output Parameters:\n"
+                "- If the input has no identifier field, adds identifier: raw LLM output text of the content identifier\n"
+                "- For each round i (1..n_rounds) adds: new_identifier_i (the expanded superset identifier), relation_i (relation between the new and previous identifier), {output_key}_i (the generated deeper question)\n"
+                "- Rows are filtered each round: rows whose backward generation or superset check fails are dropped, and rows the LLM already answers correctly (llm_score >= 1) are dropped\n"
+                "- The temporary fields llm_answer and llm_score are dropped at the end of each round and do not appear in the output\n"
+                "- Returns a list of all new_identifier_i, relation_i and {output_key}_i field names\n"
             )
         else:
             return "DepthQAGenerator generate deeper questions based on existing QA pairs."

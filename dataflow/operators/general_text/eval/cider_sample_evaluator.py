@@ -38,7 +38,7 @@ class CiderSampleEvaluator(OperatorABC):
                 "输入参数：\n"
                 "- n：最大n-gram长度，默认为4\n"
                 "- sigma：高斯惩罚参数，默认为6.0\n"
-                "- df_mode：文档频率模式，默认为'coco-val-df'\n"
+                "- df_mode：文档频率模式，默认为'coco-val-df'；使用'corpus'时根据本次eval输入中的全部参考文本计算，得分与当前批次有关\n"
                 "- idf_path：IDF文件路径，默认为预训练COCO数据集IDF\n"
                 "- input_key：生成文本字段名\n"
                 "- reference_key：参考文本字段名\n"
@@ -52,7 +52,7 @@ class CiderSampleEvaluator(OperatorABC):
                 "Input Parameters:\n"
                 "- n: Maximum n-gram length, default 4\n"
                 "- sigma: Gaussian penalty parameter, default 6.0\n"
-                "- df_mode: Document frequency mode, default 'coco-val-df'\n"
+                "- df_mode: Document frequency mode, default 'coco-val-df'; 'corpus' estimates IDF from all references in the current eval batch, so scores depend on that batch\n"
                 "- idf_path: Path to IDF file, default pre-trained COCO dataset IDF\n"
                 "- input_key: Field name for generated text\n"
                 "- reference_key: Field name for reference text\n"
@@ -79,7 +79,15 @@ class CiderSampleEvaluator(OperatorABC):
         eval_data = dataframe[input_key]
         ref_data = dataframe[reference_key]
         self.logger.info(f"Evaluating {self.score_name}...")
-        scores = [self._score_func(eval_text, ref_text) for eval_text, ref_text in tqdm(zip(eval_data, ref_data), desc="CiderScorer Evaluating...")]
+        if self.df_mode == "corpus" and len(dataframe) > 0:
+            # Estimate IDF from all reference documents before scoring any row.
+            cider_scorer = Cider(n=self.n, sigma=self.sigma)
+            for eval_text, ref_text in tqdm(zip(eval_data, ref_data), desc="CiderScorer Evaluating..."):
+                cider_scorer += (eval_text, [ref_text])
+            _, scores = cider_scorer.compute_score(df_mode="corpus")
+            scores = scores.tolist()
+        else:
+            scores = [self._score_func(eval_text, ref_text) for eval_text, ref_text in tqdm(zip(eval_data, ref_data), desc="CiderScorer Evaluating...")]
         self.logger.info("Evaluation complete!")
         return scores
     

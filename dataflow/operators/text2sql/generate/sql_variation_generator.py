@@ -39,14 +39,28 @@ class SQLVariationGenerator(OperatorABC):
                 "对于每个条目，基于已有的SQL，指导模型生成SQL的变种，即在原有SQL的基础上，进行数据替换、函数变换、难度变换等操作，生成更加丰富的SQL。\n\n"
                 "输入参数：\n"
                 "- input_sql_key: SQL列名\n"
-                "- input_db_id_key: 数据库ID列名\n\n"
+                "- input_db_id_key: 数据库ID列名\n"
+                "- output_sql_variation_type_key: 写入变种类型的列名，默认为'sql_variation_type'\n\n"
+                "输出参数：\n"
+                "- 每条输入SQL生成num_variations个变种，仅保留能从回复中解析出```sql代码块的变种，每个变种一行\n"
+                "- 输出仅包含变种行，原始行不保留；input_sql_key为变种SQL，input_db_id_key为对应数据库ID，其余原有列均为空\n"
+                "- output_sql_variation_type_key: 变种类型名称，默认模板下为\"Data Value Transformations\"、\"Query Structure Modifications\"、\"Business Logic Changes\"、\"Complexity Enhancements\"、\"Advanced SQL Features\"、\"Performance and Optimization\"之一\n"
+                "- 若未生成任何有效变种，则原样写回输入数据（不新增该列）\n"
+                "- 返回[input_sql_key, input_db_id_key, output_sql_variation_type_key]\n"
             )
         elif lang == "en":
             return (
                 "This operator generates variations of SQL based on existing SQLs, including data replacement, function transformation, and difficulty transformation, to generate more diverse SQLs.\n\n"
                 "Input parameters:\n"
                 "- input_sql_key: The name of the SQL column\n"
-                "- input_db_id_key: The name of the database ID column\n\n"
+                "- input_db_id_key: The name of the database ID column\n"
+                "- output_sql_variation_type_key: The name of the column that receives the variation type, default 'sql_variation_type'\n\n"
+                "Output parameters:\n"
+                "- num_variations variations are generated per input SQL; only variations whose reply contains a ```sql code block are kept, one row each\n"
+                "- The output contains only the variation rows; the original rows are not kept. input_sql_key holds the variant SQL, input_db_id_key the database ID, and all other existing columns are empty\n"
+                "- output_sql_variation_type_key: the variation type name; with the default template one of \"Data Value Transformations\", \"Query Structure Modifications\", \"Business Logic Changes\", \"Complexity Enhancements\", \"Advanced SQL Features\", \"Performance and Optimization\"\n"
+                "- If no valid variation is produced, the input data is written back unchanged (without this column)\n"
+                "- Returns [input_sql_key, input_db_id_key, output_sql_variation_type_key]\n"
             )
         else:
             return "SQL variation generator for Text2SQL tasks."

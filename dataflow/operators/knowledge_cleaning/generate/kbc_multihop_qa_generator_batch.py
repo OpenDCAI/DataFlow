@@ -85,9 +85,17 @@ class KBCMultiHopQAGeneratorBatch(OperatorABC):
                 "  \"metadata\": {\n"
                 "    \"source\": <数据来源>,\n"
                 "    \"timestamp\": <时间戳字符串>,\n"
-                "    \"complexity\": <整数：问题复杂度标记>\n"
+                "    \"complexity\": <浮点数：0-1之间的问题复杂度，无QA对时为0>\n"
                 "  }\n"
-                "}"
+                "}",
+                "\n注意：上述结构中\"text\"字段在当前代码中未生成；source固定为\"default_source\"，timestamp为空字符串。\n"
+                "输入参数：\n"
+                "- input_key：存放分块文件路径的字段名，默认为'chunk_path'；文件须为.json或.jsonl，且每条记录含'cleaned_chunk'字段（如KBCTextCleanerBatch的输出），其他格式的文件被跳过\n"
+                "- output_key：输出字段名，默认为'enhanced_chunk_path'；该字段在输入中已存在时报错\n"
+                "输出参数：\n"
+                "- 不改变行数；对每个文件中的每条记录新增\"qa_pairs\"键，其值为上述结构（{\"qa_pairs\": [...], \"metadata\": {...}}），并按原格式原地覆盖写回该文件\n"
+                "- 每行新增output_key字段，值与input_key中的文件路径相同，该字段保留在输出中；QA对本身不写入DataFrame\n"
+                "- 返回包含output_key的列表"
             )
         else:
             return (
@@ -115,9 +123,17 @@ class KBCMultiHopQAGeneratorBatch(OperatorABC):
                 "  \"metadata\": {\n"
                 "    \"source\": <source string>,\n"
                 "    \"timestamp\": <timestamp string>,\n"
-                "    \"complexity\": <integer: reasoning complexity>\n"
+                "    \"complexity\": <float: reasoning complexity between 0 and 1, 0 when there are no QA pairs>\n"
                 "  }\n"
-                "}"
+                "}",
+                "\nNote: the \"text\" field above is not produced by the current code; source is always \"default_source\" and timestamp is an empty string.\n"
+                "Input Parameters:\n"
+                "- input_key: Field holding the chunk file path, default is 'chunk_path'; the file must be .json or .jsonl and each record must have a 'cleaned_chunk' field (e.g. the output of KBCTextCleanerBatch); files in other formats are skipped\n"
+                "- output_key: Name of the output field, default is 'enhanced_chunk_path'; raises an error if it already exists in the input\n"
+                "Output Parameters:\n"
+                "- Row count is unchanged; every record in each file gets a new \"qa_pairs\" key whose value is the structure above ({\"qa_pairs\": [...], \"metadata\": {...}}), and the file is overwritten in place in its original format\n"
+                "- Each row gets a new output_key field holding the same file path as input_key, which is kept in the output; the QA pairs themselves are not written to the DataFrame\n"
+                "- List containing output_key"
             )
 
     def process_text(

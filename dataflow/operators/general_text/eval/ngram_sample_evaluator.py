@@ -35,8 +35,12 @@ class NgramSampleEvaluator(OperatorABC):
                 "初始化参数：\n"
                 "- ngrams: n-gram长度，默认为5\n"
                 "- language: 处理语言；'zh' 使用字粒度切分，'en' 使用空格分词，'auto' 根据每条文本是否包含汉字自动选择，默认为 'en'\n"
+                "运行参数：\n"
+                "- input_key: 输入文本字段名（必填）\n"
+                "- output_key: 写入得分的输出字段名，默认为'NgramScore'\n"
                 "输出参数：\n"
-                "- NgramScore: n-gram重复比例得分（0到1之间，得分越高表示重复比例越低）"
+                "- output_key（默认NgramScore）: 每行新增该字段，值为n-gram重复比例得分（0到1之间的浮点数，得分越高表示重复比例越低；空文本或token数少于ngrams时为0.0），该字段保留在输出中；不过滤任何行\n"
+                "- run()不返回字段名列表（返回None）"
             )
         else:
             return (
@@ -45,8 +49,12 @@ class NgramSampleEvaluator(OperatorABC):
                 "Initialization Parameters:\n"
                 "- ngrams: Length of n-grams, default is 5.\n"
                 "- language: Processing language. 'zh' uses character-level splitting, 'en' uses whitespace splitting, and 'auto' selects per sample based on the presence of Han characters. Default is 'en'.\n\n"
+                "Run Parameters:\n"
+                "- input_key: Input text field name (required).\n"
+                "- output_key: Name of the output field that receives the score, default is 'NgramScore'.\n\n"
                 "Output Parameters:\n"
-                "- NgramScore: N-gram repetition ratio score (0-1, higher score means less repetition/higher originality)."
+                "- output_key (default NgramScore): New field added to every row, holding the n-gram repetition ratio score (float 0-1, higher score means less repetition/higher originality; 0.0 for empty text or fewer tokens than ngrams). The field is kept in the output; no rows are filtered.\n"
+                "- run() returns None, not a list of field names."
             )
     
     def _score_func(self, sample):

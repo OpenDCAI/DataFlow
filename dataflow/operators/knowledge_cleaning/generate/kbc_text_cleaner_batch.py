@@ -41,7 +41,14 @@ class KBCTextCleanerBatch(OperatorABC):
                 "2. 标准化引号/破折号等特殊字符\n"
                 "3. 处理超链接同时保留文本\n"
                 "4. 保持原始段落结构和代码缩进\n"
-                "5. 确保事实性内容零修改"
+                "5. 确保事实性内容零修改\n"
+                "输入参数：\n"
+                "- input_key：存放分块文件路径的字段名，默认为'chunk_path'；文件须为.json或.jsonl，且每条记录含'raw_chunk'字段（如KBCChunkGeneratorBatch的输出）\n"
+                "- output_key：输出字段名，默认为'cleaned_chunk_path'；该字段在输入中已存在时报错\n"
+                "输出参数：\n"
+                "- 不改变行数；对每个非空路径，清洗其中的每个raw_chunk，并以JSON数组[{\"raw_chunk\": 原文, \"cleaned_chunk\": 清洗后文本}, ...]原地覆盖写回该文件（.jsonl文件同样写成JSON数组）\n"
+                "- 每行新增output_key字段，值与input_key中的文件路径相同，该字段保留在输出中；清洗后的文本本身不写入DataFrame\n"
+                "- 返回包含output_key的列表"
             )
         elif lang == "en":
             return (
@@ -50,7 +57,14 @@ class KBCTextCleanerBatch(OperatorABC):
                 "2. Normalizing special characters (quotes/dashes)\n"
                 "3. Processing hyperlinks with text preservation\n"
                 "4. Maintaining original paragraph structure and code indentation\n"
-                "5. Guaranteeing zero modification of factual content"
+                "5. Guaranteeing zero modification of factual content\n"
+                "Input Parameters:\n"
+                "- input_key: Field holding the chunk file path, default is 'chunk_path'; the file must be .json or .jsonl and each record must have a 'raw_chunk' field (e.g. the output of KBCChunkGeneratorBatch)\n"
+                "- output_key: Name of the output field, default is 'cleaned_chunk_path'; raises an error if it already exists in the input\n"
+                "Output Parameters:\n"
+                "- Row count is unchanged; for each non-empty path, every raw_chunk in the file is cleaned and the file is overwritten in place with the JSON array [{\"raw_chunk\": original, \"cleaned_chunk\": cleaned text}, ...] (a .jsonl file is also written as a JSON array)\n"
+                "- Each row gets a new output_key field holding the same file path as input_key, which is kept in the output; the cleaned text itself is not written to the DataFrame\n"
+                "- List containing output_key"
             )
         else:
             return "Knowledge cleaning operator for RAG content standardization"

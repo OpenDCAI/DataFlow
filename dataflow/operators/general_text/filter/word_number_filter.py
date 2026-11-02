@@ -21,39 +21,51 @@ class WordNumberFilter(OperatorABC):
                 "该算子用于过滤单词数量不在指定范围内的文本，通过空格分割计算单词数量。\n"
                 "输入参数：\n"
                 "- input_key：输入文本字段名，默认为'text'\n"
-                "- min_words：最小单词数量阈值，默认为5\n"
-                "- max_words：最大单词数量阈值，默认为100\n"
+                "- min_words：最小单词数量阈值（包含），默认为20\n"
+                "- max_words：最大单词数量阈值（不包含），默认为100000；保留 min_words <= 单词数 < max_words 的行\n"
+                "- output_key：写入单词数量的输出字段名，默认为'word_number_filter_label'\n"
                 "输出参数：\n"
-                "- 过滤后的DataFrame，仅保留单词数量在指定范围内的文本行\n"
-                "- 返回包含输入字段名的列表，用于后续算子引用"
+                "- 过滤后的DataFrame，仅保留单词数量在指定范围内的文本行；"
+                "每行新增output_key字段，值为该行的整数单词数，该字段保留在输出中\n"
+                "- 返回包含output_key的列表，用于后续算子引用"
             )
         elif lang == "en":
             return (
                 "This operator filters text with word count outside the specified range, using space splitting for word counting.\n"
                 "Input Parameters:\n"
                 "- input_key: Input text field name, default is 'text'\n"
-                "- min_words: Minimum word count threshold, default is 5\n"
-                "- max_words: Maximum word count threshold, default is 100\n"
+                "- min_words: Minimum word count (inclusive), default is 20\n"
+                "- max_words: Maximum word count (exclusive), default is 100000; rows with min_words <= count < max_words are kept\n"
+                "- output_key: Name of the output field that receives the word count, default is 'word_number_filter_label'\n"
                 "Output Parameters:\n"
-                "- Filtered DataFrame containing only rows with word count within specified range\n"
-                "- List containing input field name for subsequent operator reference"
+                "- Filtered DataFrame containing only rows with word count within specified range; "
+                "each row gets a new output_key field holding its integer word count, which is kept in the output\n"
+                "- List containing output_key for subsequent operator reference"
             )
         else:
             return "WordNumberFilter filters text based on word count range using space splitting."
         
+    @staticmethod
+    def _count_words(text) -> int:
+        """Count whitespace-separated words in a single cell.
+
+        Cells that are not strings (``None``, ``NaN``, ``pd.NA``, numbers, ...)
+        are counted as zero words. A missing cell is common after an upstream
+        generator or a left join, and it must not abort the whole run.
+        """
+        if not isinstance(text, str):
+            return 0
+        return len(text.split())
+
     def run(self, storage: DataFlowStorage, input_key: str, output_key: str='word_number_filter_label'):
         self.input_key = input_key
         self.output_key = output_key
         dataframe = storage.read("dataframe")
         self.logger.info(f"Running {self.__class__.__name__} with input_key = {self.input_key} and output_key = {self.output_key}...")
-        word_counts = []
-        for text in tqdm(dataframe[self.input_key], desc=f"Implementing {self.__class__.__name__}"):
-            if text:
-                normalized_words = tuple(text.split())
-                num_normalized_words = len(normalized_words)
-                word_counts.append(num_normalized_words)
-            else:
-                word_counts.append(0)
+        word_counts = [
+            self._count_words(text)
+            for text in tqdm(dataframe[self.input_key], desc=f"Implementing {self.__class__.__name__}")
+        ]
         word_counts = np.array(word_counts)
         metric_filter = (self.min_words <= word_counts) & (word_counts < self.max_words)
         dataframe[self.output_key] = word_counts
