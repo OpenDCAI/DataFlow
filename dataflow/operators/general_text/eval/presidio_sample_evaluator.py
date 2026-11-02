@@ -39,20 +39,24 @@ class PresidioSampleEvaluator(OperatorABC):
                 "使用Microsoft Presidio模型识别文本中的个人身份信息(PII)，返回检测到的PII实体数量。支持多种实体类型如姓名、邮箱、电话号码等，" 
                 "基于dslim/bert-base-NER模型实现。适用于评估文本的隐私安全风险。\n" 
                 "输入参数：\n" 
-                "- text: 待检测的文本字符串\n" 
-                "- lang: 语言类型，默认为'en'\n" 
-                "输出参数：\n" 
-                "- int: 检测到的PII实体数量"
+                "- lang: 语言类型，默认为'en'\n"
+                "- input_key: 输入文本字段名（必填）\n"
+                "- output_key: 写入PII数量的输出字段名，默认为'PresidioScore'\n"
+                "输出参数：\n"
+                "- int: 检测到的PII实体数量；每行新增output_key字段，值为该整数，该字段保留在输出中；不过滤任何行\n"
+                "- run()不返回字段名列表（返回None）"
             )
         else:
             return (
                 "Detect personally identifiable information (PII) in text using the Microsoft Presidio model and return the count of detected PII entities. " 
                 "Supports various entity types such as names, emails, phone numbers, etc., implemented based on the dslim/bert-base-NER model. Suitable for assessing text privacy and security risks.\n" 
                 "Input parameters:\n" 
-                "- text: Text string to be detected\n" 
-                "- lang: Language type, default 'en'\n" 
-                "Output parameters:\n" 
-                "- int: Count of detected PII entities"
+                "- lang: Language type, default 'en'\n"
+                "- input_key: Input text field name (required)\n"
+                "- output_key: Name of the output field that receives the PII count, default 'PresidioScore'\n"
+                "Output parameters:\n"
+                "- int: Count of detected PII entities; each row gets a new output_key field holding this integer, which is kept in the output; no rows are filtered\n"
+                "- run() returns None, not a list of field names"
             )
 
     def eval(self, dataframe, input_key):

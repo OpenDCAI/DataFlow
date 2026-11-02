@@ -38,9 +38,14 @@ class SuperfilteringSampleEvaluator(OperatorABC):
                 "输入参数：\n" 
                 "- instruction: 指令文本\n" 
                 "- input_text: 输入文本（可选）\n" 
-                "- output: 响应文本\n" 
-                "输出参数：\n" 
-                "- float: 困惑度比值，越高表示指令跟随难度越大"
+                "- output: 响应文本\n"
+                "- input_instruction_key：run()读取的指令字段名，默认为'instruction'\n"
+                "- input_input_key：run()读取的输入文本字段名，默认为None（不使用输入文本）\n"
+                "- input_output_key：run()读取的响应字段名，默认为'output'\n"
+                "- output_key：写入得分的输出字段名，默认为'SuperfilteringScore'\n"
+                "输出参数：\n"
+                "- float: 困惑度比值，越高表示指令跟随难度越大；响应为空或结果为NaN时为None，独立困惑度为0时为0\n"
+                "- 不过滤任何行；每行新增output_key字段，值为该行的浮点得分（可能为None），该字段保留在输出中；run()无返回值(None)"
             )
         else:
             return (
@@ -49,9 +54,14 @@ class SuperfilteringSampleEvaluator(OperatorABC):
                 "Input parameters:\n" 
                 "- instruction: Instruction text\n" 
                 "- input_text: Input text (optional)\n" 
-                "- output: Response text\n" 
-                "Output parameters:\n" 
-                "- float: Perplexity ratio, higher values indicate greater instruction following difficulty"
+                "- output: Response text\n"
+                "- input_instruction_key: Name of the instruction field read by run(), default is 'instruction'\n"
+                "- input_input_key: Name of the input text field read by run(), default is None (no input text used)\n"
+                "- input_output_key: Name of the response field read by run(), default is 'output'\n"
+                "- output_key: Name of the output field that receives the score, default is 'SuperfilteringScore'\n"
+                "Output parameters:\n"
+                "- float: Perplexity ratio, higher values indicate greater instruction following difficulty; None when the response is empty or the result is NaN, 0 when the standalone perplexity is 0\n"
+                "- No rows are filtered; each row gets a new output_key field holding its float score (may be None), which is kept in the output; run() returns None"
             )
 
     def inference(self, instruction, input_text, output):

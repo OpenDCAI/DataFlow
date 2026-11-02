@@ -45,8 +45,17 @@ class Text2QASampleEvaluator(OperatorABC):
                 "- output_answer_alignment_key: Field name containing the answer alignment grade\n"
                 "- output_answer_alignment_feedback_key: Field name containing the answer alignment feedback\n"
                 "- output_answer_verifiability_key: Field name containing the answer verifiability grade\n"
+                "- output_answer_verifiability_feedback_key: Field name containing the answer verifiability feedback\n"
                 "- output_downstream_value_key: Field name containing the downstream value grade\n"
                 "- output_downstream_value_feedback_key: Field name containing the downstream value feedback\n"
+                "默认值：input_question_key='generated_question'，input_answer_key='generated_answer'，"
+                "各评分字段为question_quality_grades / answer_alignment_grades / answer_verifiability_grades / downstream_value_grades，"
+                "各反馈字段为question_quality_feedbacks / answer_alignment_feedbacks / answer_verifiability_feedbacks / downstream_value_feedbacks\n"
+                "输出参数：\n"
+                "- 4个评分字段：从LLM回复中“**Grading**: N”解析出的浮点分数，无法解析时为0\n"
+                "- 4个反馈字段：“**Feedback**:”之后的文本，无法解析时为空字符串\n"
+                "- 8个输出字段均写入存储；不过滤任何行；若任一输出字段已存在于输入中则报错\n"
+                "- 返回上述8个输出字段名的列表\n"
             )
         elif lang == "en":
             return (
@@ -59,8 +68,17 @@ class Text2QASampleEvaluator(OperatorABC):
                 "- output_answer_alignment_key: Field name containing the answer alignment grade\n"
                 "- output_answer_alignment_feedback_key: Field name containing the answer alignment feedback\n"
                 "- output_answer_verifiability_key: Field name containing the answer verifiability grade\n"
+                "- output_answer_verifiability_feedback_key: Field name containing the answer verifiability feedback\n"
                 "- output_downstream_value_key: Field name containing the downstream value grade\n"
                 "- output_downstream_value_feedback_key: Field name containing the downstream value feedback\n"
+                "Defaults: input_question_key='generated_question', input_answer_key='generated_answer'; "
+                "grade fields are question_quality_grades / answer_alignment_grades / answer_verifiability_grades / downstream_value_grades; "
+                "feedback fields are question_quality_feedbacks / answer_alignment_feedbacks / answer_verifiability_feedbacks / downstream_value_feedbacks\n"
+                "Output Parameters:\n"
+                "- The 4 grade fields: float score parsed from '**Grading**: N' in the LLM reply, 0 if it cannot be parsed\n"
+                "- The 4 feedback fields: text after '**Feedback**:', empty string if it cannot be parsed\n"
+                "- All 8 output fields are written to storage; no rows are filtered; raises an error if any output field already exists in the input\n"
+                "- Returns a list of the 8 output field names above\n"
             )
         else:
             return "QAScorer scores QA pairs for given document fragments."

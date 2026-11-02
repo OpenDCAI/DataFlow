@@ -14,7 +14,8 @@ class LiteLLMServing(LLMServingABC):
     
     This implementation avoids global state pollution by passing configuration parameters
     directly to each litellm.completion() call, ensuring thread safety and proper isolation
-    between different instances. Configuration parameters are immutable after initialization.
+    between different instances. Configuration is instance-local, and explicit updates through
+    switch_model() are supported without changing configuration on other instances.
     
     Doc: https://docs.litellm.ai/docs/providers
     """
@@ -68,8 +69,8 @@ class LiteLLMServing(LLMServingABC):
             **kwargs: Additional parameters passed to litellm.completion()
             
         Note:
-            All configuration parameters are immutable after initialization.
-            If you need different settings, create a new instance.
+            Configuration belongs to this serving instance and is not shared globally.
+            Use switch_model() for explicit model/API changes; separate instances remain isolated.
         """
         
         # Import litellm at initialization time to support lazy importing
