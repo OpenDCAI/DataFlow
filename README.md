@@ -32,7 +32,7 @@
 
 [![Discord Online](https://img.shields.io/discord/1479323317096939551?logo=discord&label=discord&color=%235966F0)](https://discord.gg/e4mKEaFptu)
 [![wechat](https://img.shields.io/badge/wechat-brightgreen?logo=wechat&logoColor=white)](https://github.com/user-attachments/assets/3c2e5d4d-d1ea-4d8c-9146-ff14e657e857)
-
+[![中关村学院 GitHub 组织](https://img.shields.io/badge/Linked%20to-bjzgcai%20Org-blue?logo=github)](https://github.com/bjzgcai)
 
 
 <a href="https://trendshift.io/repositories/16045" target="_blank"><img src="https://trendshift.io/api/badge/repositories/16045" alt="OpenDCAI%2FDataFlow | Trendshift" style="width: 250px; height: 55px;" width="250" height="55"/></a>
