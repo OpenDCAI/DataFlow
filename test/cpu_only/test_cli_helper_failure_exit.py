@@ -45,7 +45,7 @@ def _install_helper(monkeypatch, module_name: str, helper_name: str, behavior: s
         def helper(cache_path="./"):
             return outcome()
     elif helper_name == "cli_text2model_train":
-        def helper(input_keys=None, lf_yaml="./.cache/train_config.yaml", input_dir="./"):
+        def helper(input_keys=None, lf_yaml="./.cache/train_config.yaml", input_dir="./", cache_path="./"):
             return outcome()
     else:
         raise AssertionError(helper_name)

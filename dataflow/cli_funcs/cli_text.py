@@ -350,7 +350,12 @@ def cli_text2model_init(cache_path: str = "./") -> bool:
         return False
 
 
-def cli_text2model_train(input_keys: str = None, lf_yaml: str = "./.cache/train_config.yaml", input_dir: str = "./") -> bool:
+def cli_text2model_train(
+    input_keys: str = None,
+    lf_yaml: str = None,
+    input_dir: str = "./",
+    cache_path: str = "./",
+) -> bool:
     """
     Start Text2Model training using complete pipeline
     """
@@ -359,7 +364,12 @@ def cli_text2model_train(input_keys: str = None, lf_yaml: str = "./.cache/train_
         print(f"Processing fields: {input_keys}")
 
     current_dir = Path(os.getcwd())
-    config_path_obj = Path(lf_yaml)
+
+    cache_path_obj = Path(cache_path)
+    if not cache_path_obj.is_absolute():
+        cache_path_obj = current_dir / cache_path_obj
+
+    config_path_obj = Path(lf_yaml) if lf_yaml else cache_path_obj / ".cache" / "train_config.yaml"
     if not config_path_obj.is_absolute():
         config_path_obj = current_dir / config_path_obj
 
@@ -371,7 +381,6 @@ def cli_text2model_train(input_keys: str = None, lf_yaml: str = "./.cache/train_
         print("Run 'dataflow text2model init' first")
         return False
 
-    cache_path_obj = current_dir
     input_path = Path(input_dir)
     if not input_path.is_absolute():
         input_path = current_dir / input_path
@@ -406,7 +415,7 @@ def cli_text2model_train(input_keys: str = None, lf_yaml: str = "./.cache/train_
         # Step 2: Text2QA Pipeline
         print(f"{Fore.CYAN}Step 2: Text2QA generation...{Style.RESET_ALL}")
 
-        script2_path = cache_path_obj / "text_to_qa_pipeline.py"
+        script2_path = current_dir / "text_to_qa_pipeline.py"
         args2 = ["--cache", str(cache_path_obj)]
         if not run_script_with_args(script2_path, "Text2QA generation", args2, cwd=str(current_dir)):
             print(f"{Fore.RED}❌ Step 2: Text2QA generation failed{Style.RESET_ALL}")

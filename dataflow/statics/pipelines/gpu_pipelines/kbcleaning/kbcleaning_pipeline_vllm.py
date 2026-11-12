@@ -1,3 +1,6 @@
+import argparse
+from pathlib import Path
+
 from dataflow.operators.knowledge_cleaning import (
     KBCChunkGenerator,
     FileOrURLToMarkdownConverterFlash,
@@ -9,19 +12,34 @@ from dataflow.operators.core_text import Text2MultiHopQAGenerator
 from dataflow.utils.storage import FileStorage
 from dataflow.serving import LocalModelLLMServing_vllm
 
+
 class KBCleaning_PDFvllm_GPUPipeline():
-    def __init__(self):
+    def __init__(self, cache_base=None):
+        if cache_base is None:
+            first_entry_file_name = "../../example_data/KBCleaningPipeline/kbc_test.jsonl"
+            storage_cache_path = "./.cache/gpu"
+            mineru_intermediate_dir = "../example_data/KBCleaningPipeline/flash/"
+            qa_output_file = "./.cache/data/qa.json"
+        else:
+            cache_path = Path(cache_base).expanduser()
+            if not cache_path.is_absolute():
+                cache_path = Path.cwd() / cache_path
+            cache_path = cache_path.resolve()
+            first_entry_file_name = str(cache_path / ".cache" / "pdf_list.jsonl")
+            storage_cache_path = str(cache_path / ".cache" / "gpu")
+            mineru_intermediate_dir = str(cache_path / ".cache" / "gpu" / "pdf2model_kbc" / "flash")
+            qa_output_file = str(cache_path / ".cache" / "data" / "qa.json")
 
         self.storage = FileStorage(
-            first_entry_file_name="../../example_data/KBCleaningPipeline/kbc_test.jsonl",
-            cache_path="./.cache/gpu",
+            first_entry_file_name=first_entry_file_name,
+            cache_path=storage_cache_path,
             file_name_prefix="knowledge_cleaning_step_vllm_engine",
             cache_type="json",
         )
 
         # Faster backend by Flash-MinerU
         self.knowledge_cleaning_step1 = FileOrURLToMarkdownConverterFlash(
-            intermediate_dir="../example_data/KBCleaningPipeline/flash/",
+            intermediate_dir=mineru_intermediate_dir,
             mineru_model_path="<your Model Path>/MinerU2.5-2509-1.2B",  # !!! place your local model path here !!!
             # https://huggingface.co/opendatalab/MinerU2.5-2509-1.2B.
             batch_size=4, # batchsize per vllm worker
@@ -37,7 +55,7 @@ class KBCleaning_PDFvllm_GPUPipeline():
         )
 
         self.extract_format_qa_step5 = QAExtractor(
-            output_json_file="./.cache/data/qa.json",
+            output_json_file=qa_output_file,
         )
 
     def forward(self):
@@ -91,6 +109,15 @@ class KBCleaning_PDFvllm_GPUPipeline():
             output_answer_key="output"            
         )
 
-if __name__ == "__main__":
-    model = KBCleaning_PDFvllm_GPUPipeline()
+
+def main():
+    parser = argparse.ArgumentParser(description="PDF2Model KBC Step-2 pipeline")
+    parser.add_argument("--cache", default=None, help="PDF2Model cache base. Omit for legacy standalone example paths.")
+    args = parser.parse_args()
+
+    model = KBCleaning_PDFvllm_GPUPipeline(cache_base=args.cache)
     model.forward()
+
+
+if __name__ == "__main__":
+    main()

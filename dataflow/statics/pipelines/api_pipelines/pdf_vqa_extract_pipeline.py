@@ -1,3 +1,6 @@
+import argparse
+from pathlib import Path
+
 from dataflow.operators.knowledge_cleaning import FileOrURLToMarkdownConverterFlash, FileOrURLToMarkdownConverterAPI
 
 from dataflow.serving import APILLMServing_request
@@ -11,11 +14,31 @@ from dataflow.prompts.pdf2vqa import QAExtractPrompt
 from pypdf import PdfWriter
     
 class PDF_VQA_extract_optimized_pipeline(PipelineABC):
-    def __init__(self):
+    def __init__(self, cache_base=None):
         super().__init__()
+
+        if cache_base is None:
+            first_entry_file_name = "./example_data/PDF2VQAPipeline/vqa_extract_test.jsonl"
+            storage_cache_path = "./cache"
+            vqa_output_dir = "./cache"
+            mineru_intermediate_dir = "../example_data/PDF2VQAPipeline/flash/"
+            parser_intermediate_dir = "intermediate"
+            qa_output_file = "./.cache/data/qa.json"
+        else:
+            cache_path = Path(cache_base).expanduser()
+            if not cache_path.is_absolute():
+                cache_path = Path.cwd() / cache_path
+            cache_path = cache_path.resolve()
+            first_entry_file_name = str(cache_path / ".cache" / "pdf_list.jsonl")
+            storage_cache_path = str(cache_path / ".cache" / "gpu")
+            vqa_output_dir = str(cache_path / ".cache" / "gpu" / "pdf2model_vqa")
+            mineru_intermediate_dir = str(cache_path / ".cache" / "gpu" / "pdf2model_vqa" / "flash")
+            parser_intermediate_dir = str(cache_path / ".cache" / "gpu" / "pdf2model_vqa" / "intermediate")
+            qa_output_file = str(cache_path / ".cache" / "data" / "qa.json")
+
         self.storage = FileStorage(
-            first_entry_file_name="./example_data/PDF2VQAPipeline/vqa_extract_test.jsonl",
-            cache_path="./cache",
+            first_entry_file_name=first_entry_file_name,
+            cache_path=storage_cache_path,
             file_name_prefix="vqa",
             cache_type="jsonl",
         )
@@ -29,13 +52,13 @@ class PDF_VQA_extract_optimized_pipeline(PipelineABC):
         
         self.vqa_extract_prompt = QAExtractPrompt()
         
-        self.pdf_merger = PDF_Merger(output_dir="./cache")
+        self.pdf_merger = PDF_Merger(output_dir=vqa_output_dir)
         
         # self.mineru_executor = FileOrURLToMarkdownConverterAPI(intermediate_dir = "intermediate")
 
         # Faster backend by Flash-MinerU
         self.mineru_executor = FileOrURLToMarkdownConverterFlash(
-            intermediate_dir="../example_data/PDF2VQAPipeline/flash/",
+            intermediate_dir=mineru_intermediate_dir,
             mineru_model_path="<your Model Path>/MinerU2.5-2509-1.2B",  # !!! place your local model path here !!!
             # https://huggingface.co/opendatalab/MinerU2.5-2509-1.2B.
             batch_size=4, # batchsize per vllm worker
@@ -50,10 +73,10 @@ class PDF_VQA_extract_optimized_pipeline(PipelineABC):
             system_prompt = self.vqa_extract_prompt.build_prompt(),
             max_chunk_len=128000,
         )
-        self.llm_output_parser = LLMOutputParser(output_dir="./cache", intermediate_dir="intermediate")
-        self.qa_merger = QA_Merger(output_dir="./cache", strict_title_match=False)
+        self.llm_output_parser = LLMOutputParser(output_dir=vqa_output_dir, intermediate_dir=parser_intermediate_dir)
+        self.qa_merger = QA_Merger(output_dir=vqa_output_dir, strict_title_match=False)
 
-        self.vqa_format_converter = VQAFormatter(output_json_file="./.cache/data/qa.json",)
+        self.vqa_format_converter = VQAFormatter(output_json_file=qa_output_file,)
 
     def forward(self):
         self.pdf_merger.run(
@@ -100,9 +123,15 @@ class PDF_VQA_extract_optimized_pipeline(PipelineABC):
         )
 
 
+def main():
+    parser = argparse.ArgumentParser(description="PDF2Model VQA Step-2 pipeline")
+    parser.add_argument("--cache", default=None, help="PDF2Model cache base. Omit for legacy standalone example paths.")
+    args = parser.parse_args()
 
-if __name__ == "__main__":
-    # jsonl中每一行包含input_pdf_path, name (math1, math2, physics1, chemistry1, ...)
-    pipeline = PDF_VQA_extract_optimized_pipeline()
+    pipeline = PDF_VQA_extract_optimized_pipeline(cache_base=args.cache)
     pipeline.compile()
     pipeline.forward()
+
+
+if __name__ == "__main__":
+    main()
