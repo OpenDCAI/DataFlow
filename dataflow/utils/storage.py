@@ -1156,7 +1156,10 @@ class StreamBatchedFileStorage(BatchedFileStorage):
             elif ext == "parquet":
                 # Parquet 格式在 Footer 存有 Schema，读取开销几乎为零
                 import pyarrow.parquet as pq
-                return pq.ParquetFile(file_path).schema.names
+                with pq.ParquetFile(file_path) as parquet_file:
+                    return parquet_file.schema_arrow.names
+            elif ext in ("json", "pickle"):
+                return self._load_local_file(file_path, ext).columns.tolist()
                 
         except Exception as e:
             self.logger.warning(f"Failed to read header from {file_path} directly: {e}. Falling back to read().")
@@ -1182,28 +1185,41 @@ class StreamBatchedFileStorage(BatchedFileStorage):
             raise ValueError(f"Failed to load {file_type} file: {str(e)}")
 
     def get_record_count(self) -> int:
-        """显式获取记录总数，支持缓存以提高性能"""
+        """Count logical records, caching only while the current input is unchanged."""
         if self.operator_step == 0 and self.first_entry_file_name.lower().endswith(".jsonl") and self.jsonl_read_policy is not None:
             return self.jsonl_read_policy.inspect(self.first_entry_file_name)["accepted"]
-        if hasattr(self, "_cached_record_count"):
-            return self._cached_record_count
 
         file_path = self._get_cache_file_path(self.operator_step)
-        local_cache = self.cache_type if self.operator_step != 0 else file_path.split(".")[-1]
+        local_cache = self.cache_type if self.operator_step != 0 else file_path.split(".")[-1].lower()
+        stat = os.stat(file_path)
+        identity = (
+            self.operator_step, os.path.realpath(file_path), local_cache,
+            stat.st_dev, stat.st_ino, stat.st_size, stat.st_mtime_ns,
+        )
+        if getattr(self, "_record_count_identity", None) == identity:
+            return self._cached_record_count
 
         if local_cache == "parquet":
             import pyarrow.parquet as pq
-            count = pq.ParquetFile(file_path).metadata.num_rows
-        elif local_cache in ["jsonl", "csv"]:
-            count = 0
-            with open(file_path, 'rb') as f:
-                for _ in f: count += 1
-            if local_cache == "csv": count -= 1 # 扣除表头
+            with pq.ParquetFile(file_path) as parquet_file:
+                count = parquet_file.metadata.num_rows
+        elif local_cache in ("jsonl", "csv"):
+            try:
+                reader = (
+                    pd.read_csv(file_path, chunksize=10000)
+                    if local_cache == "csv"
+                    else pd.read_json(file_path, lines=True, chunksize=10000)
+                )
+                with reader:
+                    count = sum(len(chunk) for chunk in reader)
+            except pd.errors.EmptyDataError:
+                count = 0
         else:
             df = self._load_local_file(file_path, local_cache)
             count = len(df)
 
         self._cached_record_count = count
+        self._record_count_identity = identity
         return count
 
     def read(self, output_type: Literal["dataframe", "dict"]="dataframe") -> Any:
@@ -1227,17 +1243,34 @@ class StreamBatchedFileStorage(BatchedFileStorage):
     
     def iter_chunks(self) -> Generator[pd.DataFrame, None, None]:
         """
-        专门供 Pipeline 调用：产生原始的 DataFrame 流。
+        Yield DataFrame batches, materializing fallback formats before slicing.
+
+        JSONL and CSV use chunked readers. JSON, Parquet and Pickle retain the
+        inherited full-file loader, but still expose batches of at most batch_size.
         """
+        if (
+            not isinstance(self.batch_size, int)
+            or isinstance(self.batch_size, bool)
+            or self.batch_size < 1
+        ):
+            raise ValueError("batch_size must be a positive integer")
         file_path = self._get_cache_file_path(self.operator_step)
-        local_cache = self.cache_type if self.operator_step != 0 else file_path.split(".")[-1]
+        local_cache = self.cache_type if self.operator_step != 0 else file_path.split(".")[-1].lower()
         
-        # 这里的 _load_local_file 必须确保在 batch_size 不为 None 时返回迭代器
         reader = self._load_local_file(file_path, local_cache, self.batch_size)
         
-        # 确保 reader 是可迭代的
-        if hasattr(reader, "__iter__") or isinstance(reader, pd.io.json._json.JsonReader):
-            for chunk in reader:
-                yield chunk
-        else:
-            yield reader # 如果不支持流式，就产出整个 DF
+        if isinstance(reader, pd.DataFrame):
+            locations = reader.attrs.get("dataflow_source_locations")
+            for start in range(0, len(reader), self.batch_size):
+                frame = reader.iloc[start:start + self.batch_size].reset_index(drop=True)
+                if locations is not None:
+                    frame.attrs["dataflow_source_locations"] = locations[start:start + self.batch_size]
+                yield frame
+            return
+
+        try:
+            yield from reader
+        finally:
+            close = getattr(reader, "close", None)
+            if close is not None:
+                close()
