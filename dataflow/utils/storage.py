@@ -1148,25 +1148,28 @@ class StreamBatchedFileStorage(BatchedFileStorage):
             
             elif ext == "jsonl":
                 with open(file_path, 'r', encoding='utf-8') as f:
-                    line = f.readline()
-                    if line:
-                        return list(json.loads(line).keys())
+                    for line in f:
+                        if line.strip():
+                            return list(json.loads(line).keys())
                 return []
 
             elif ext == "parquet":
-                # Parquet 格式在 Footer 存有 Schema，读取开销几乎为零
+                # Restore pandas columns, excluding stored indexes, without reading rows.
                 import pyarrow.parquet as pq
                 with pq.ParquetFile(file_path) as parquet_file:
-                    return parquet_file.schema_arrow.names
+                    return parquet_file.schema_arrow.empty_table().to_pandas().columns.tolist()
             elif ext in ("json", "pickle"):
                 return self._load_local_file(file_path, ext).columns.tolist()
                 
+        except pd.errors.EmptyDataError:
+            return []
         except Exception as e:
-            self.logger.warning(f"Failed to read header from {file_path} directly: {e}. Falling back to read().")
+            self.logger.warning(f"Failed to read column metadata from {file_path}: {e}. Returning no columns.")
         return []
 
     def _load_local_file(self, file_path: str, file_type: str,batchsize: int=None) -> pd.DataFrame:
         """Load data from local file based on file type."""
+        file_type = file_type.lower()
         if file_type == "jsonl" and self.operator_step == 0 and self.jsonl_read_policy is not None:
             if batchsize is not None:
                 return self.jsonl_read_policy.iter_chunks(file_path, batchsize)
@@ -1181,6 +1184,8 @@ class StreamBatchedFileStorage(BatchedFileStorage):
             elif file_type == "csv":
                 return pd.read_csv(file_path, chunksize=batchsize)
             return super()._load_local_file(file_path, file_type)
+        except pd.errors.EmptyDataError:
+            return pd.DataFrame()
         except Exception as e:
             raise ValueError(f"Failed to load {file_type} file: {str(e)}")
 
@@ -1269,7 +1274,9 @@ class StreamBatchedFileStorage(BatchedFileStorage):
             return
 
         try:
-            yield from reader
+            for chunk in reader:
+                if len(chunk):
+                    yield chunk
         finally:
             close = getattr(reader, "close", None)
             if close is not None:
