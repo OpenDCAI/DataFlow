@@ -16,6 +16,7 @@ class ChunkedPromptedGenerator(OperatorABC):
     - 若输入超过max_chunk_len，采用递归二分法切分；
     - 从指定输入文件路径读取内容，生成结果保存至指定输出文件路径；
     - 生成结果是以separator拼接的字符串。
+    - 生成失败或响应批次无效时抛出异常，不覆盖既有输出文件或发布成功缓存。
     """
 
     def __init__(
@@ -43,6 +44,7 @@ class ChunkedPromptedGenerator(OperatorABC):
                 "采用递归二分方式进行chunk切分，确保每段不超过max_chunk_len tokens。"
                 "从给定的输入文件路径读取内容，生成结果保存至指定输出文件路径。"
                 "多个生成结果以separator拼接成最终输出字符串。"
+                "生成失败或响应批次无效时抛出异常，不覆盖既有输出文件。"
                 "输入参数：\n"
                 "- llm_serving：LLM服务对象，需实现LLMServingABC接口\n"
                 "- system_prompt：系统提示词，定义模型行为，默认为'You are a helpful agent.'\n"
@@ -59,6 +61,7 @@ class ChunkedPromptedGenerator(OperatorABC):
                 "Splits long text inputs into chunks using recursive bisection to ensure each chunk does not exceed max_chunk_len tokens."
                 "Reads content from specified input file paths and saves generated results to designated output file paths."
                 "Multiple generated results are joined as a string using the specified separator."
+                " Serving failures and invalid response batches raise before output files are modified."
                 "Input Parameters:\n"
                 "- llm_serving: LLM serving object implementing LLMServingABC interface\n"
                 "- system_prompt: System prompt to define model behavior, default is 'You are a helpful agent.'\n"
@@ -95,8 +98,6 @@ class ChunkedPromptedGenerator(OperatorABC):
         dataframe = storage.read("dataframe")
         self.logger.info(f"Loaded DataFrame with {len(dataframe)} rows.")
 
-        all_generated_results = []
-
         all_llm_inputs = []
         row_chunk_map = []  # 记录每个row对应的chunk数量
 
@@ -116,7 +117,9 @@ class ChunkedPromptedGenerator(OperatorABC):
         self.logger.info(f"Total {len(all_llm_inputs)} chunks to generate")
 
         try:
-            if self.json_schema:
+            if not all_llm_inputs:
+                all_responses = []
+            elif self.json_schema:
                 all_responses = self.llm_serving.generate_from_input(
                     all_llm_inputs, json_schema=self.json_schema
                 )
@@ -124,24 +127,32 @@ class ChunkedPromptedGenerator(OperatorABC):
                 all_responses = self.llm_serving.generate_from_input(all_llm_inputs)
         except Exception as e:
             self.logger.error(f"Global generation failed: {e}")
-            all_generated_results = [[] for _ in range(len(dataframe))]
-        else:
-            # === 按row重新划分responses ===
-            all_generated_results = []
-            idx = 0
-            for num_chunks in row_chunk_map:
-                if num_chunks == 0:
-                    all_generated_results.append([])
-                else:
-                    all_generated_results.append(all_responses[idx:idx + num_chunks])
-                    idx += num_chunks
+            raise
 
-        for (i, row), gen_results in zip(dataframe.iterrows(), all_generated_results):
+        if not isinstance(all_responses, (list, tuple)):
+            raise TypeError("generate_from_input must return a list or tuple of strings")
+        if len(all_responses) != len(all_llm_inputs):
+            raise RuntimeError(
+                f"Response count mismatch: expected {len(all_llm_inputs)}, got {len(all_responses)}"
+            )
+        if not all(isinstance(response, str) for response in all_responses):
+            raise TypeError("Every generated response must be a string")
+
+        # Validate the entire batch before opening any destination file.
+        all_generated_results = []
+        idx = 0
+        for num_chunks in row_chunk_map:
+            all_generated_results.append(all_responses[idx:idx + num_chunks])
+            idx += num_chunks
+
+        output_paths = []
+        for (_, row), gen_results in zip(dataframe.iterrows(), all_generated_results):
             source_path = Path(row[input_path_key])
             output_path = str(source_path.with_name(f'{source_path.stem}_llm_output.txt'))
             with open(output_path, 'w', encoding='utf-8') as f:
                 f.write(self.separator.join(gen_results))
-            dataframe.at[i, output_path_key] = output_path
+            output_paths.append(output_path)
+        dataframe[output_path_key] = output_paths
         
         output_file = storage.write(dataframe)
         self.logger.info(f"Generation complete. Output saved to {output_file}")
