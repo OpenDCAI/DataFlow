@@ -66,7 +66,7 @@ class Registry():
         self._name = name
         self._obj_map = {}
         self._base_folder = Path(__file__).resolve().parents[1]
-        self._sub_modules = list(os.listdir(self._base_folder / name))
+        self._sub_modules = sorted(os.listdir(self._base_folder / name))
         if "__init__.py" in self._sub_modules:
             self._sub_modules.remove("__init__.py")
         if "__pycache__" in self._sub_modules:
@@ -241,8 +241,11 @@ class Registry():
             if callable(import_all):
                 import_all()
             elif hasattr(loader, "__path__"):
-                for module_info in pkgutil.walk_packages(
-                    loader.__path__, prefix=f"{loader.__name__}."
+                # Import in a stable order so duplicate names resolve the same
+                # way on every platform; import errors propagate (fail fast).
+                for module_info in sorted(
+                    pkgutil.walk_packages(loader.__path__, prefix=f"{loader.__name__}."),
+                    key=lambda info: info.name,
                 ):
                     importlib.import_module(module_info.name)
 
