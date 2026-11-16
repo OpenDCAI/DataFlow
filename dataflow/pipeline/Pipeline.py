@@ -21,6 +21,7 @@ class PipelineABC(ABC):
         # list of dict, contains `OPRuntime` class and parameters for `operator.run()`
         self.op_runtimes:list[OPRuntime] = [] 
         self.compiled = False
+        self._compile_failed = False
         # accumulated keys in each operators, index 0 refers to the keys before the first operator
         self.accumulated_keys = []  # list of lists, each sublist contains keys before the operator
         
@@ -41,91 +42,19 @@ class PipelineABC(ABC):
         """
         pass
     
-    @staticmethod
-    def _snapshot_compilation_storage_steps(attributes):
-        """Capture storage cursors reachable through common pipeline-owned holders.
-
-        Storage may live in a dict/list or a lightweight configuration object
-        rather than a top-level pipeline attribute. Traverse these references
-        without copying or mutating them. Avoid walking into heavy external
-        libraries, serving/model internals, or entire operator object graphs.
-        """
-        storage_steps = {}
-        visited = set()
-        pending = [(value, 0) for value in attributes.values()]
-        excluded_modules = (
-            "logging", "loguru", "pandas", "numpy", "torch", "transformers",
-            "datasets", "ray",
-        )
-
-        while pending:
-            value, depth = pending.pop()
-            identity = id(value)
-            if identity in visited:
-                continue
-            visited.add(identity)
-
-            if isinstance(value, DataFlowStorage):
-                if hasattr(value, "operator_step"):
-                    storage_steps[identity] = (value, value.operator_step)
-                continue
-
-            # Bound traversal so arbitrary user data or cyclic configuration
-            # graphs cannot turn compilation into a full object-graph scan.
-            if depth >= 6:
-                continue
-            if isinstance(value, dict):
-                children = value.values()
-            elif isinstance(value, (list, tuple, set, frozenset)):
-                children = value
-            elif isinstance(value, (OperatorABC, LLM_SERVING_CLASSES)):
-                # A configured operator may hold storage, but its serving/model
-                # references must not be recursively inspected.
-                children = (
-                    child for child in vars(value).values()
-                    if isinstance(child, DataFlowStorage)
-                )
-            elif (
-                hasattr(value, "__dict__")
-                and not isinstance(value, type)
-                and not type(value).__module__.startswith(excluded_modules)
-            ):
-                children = vars(value).values()
-            else:
-                continue
-
-            pending.extend((child, depth + 1) for child in children)
-
-        return storage_steps
-
     def compile(self):
-        """Compile once, restoring the uncompiled pipeline on failure.
-
-        A successful compilation is stable: subsequent calls do not invoke the
-        already-compiled forward method or register another set of nodes.
-        Failures leave the original forward method and operators available for
-        a corrected retry on the same instance.
-        """
+        """Compile the pipeline once; mark it unusable if compilation fails."""
         if self.compiled:
             return
-
-        # Keep the original attribute bindings, including the subclass's
-        # forward method (which may have been attached to this instance).
-        previous_attributes = vars(self).copy()
-        storage_steps = self._snapshot_compilation_storage_steps(previous_attributes)
-
-        # Each attempt has its own graph construction state.
-        self.op_runtimes = []
-        self.op_nodes_list = []
-        self.accumulated_keys = []
-        self.llm_serving_list = []
-        self.llm_serving_counter = Counter()
+        if getattr(self, "_compile_failed", False):
+            raise RuntimeError(
+                "Pipeline compilation previously failed; create a new pipeline instance instead of recompiling."
+            )
 
         try:
-            for name, value in previous_attributes.items():
-                if isinstance(value, OperatorABC):
-                    setattr(self, name, AutoOP(value, name, self))
-
+            for k, v in vars(self).items():
+                if isinstance(v, OperatorABC):
+                    setattr(self, k, AutoOP(v, k, self))
             # AutoOP.run records calls instead of executing operators.
             self.forward()
             self.logger.info(
@@ -134,12 +63,8 @@ class PipelineABC(ABC):
             )
             self._build_operator_nodes_graph()
         except BaseException:
-            # Restore bindings and remove graph fields created by the failed
-            # attempt. Do not deep-copy operators, services or storage.
-            vars(self).clear()
-            vars(self).update(previous_attributes)
-            for storage, step in storage_steps.values():
-                storage.operator_step = step
+            self._compile_failed = True
+            self.compiled = False
             raise
 
         self.forward = self._compiled_forward

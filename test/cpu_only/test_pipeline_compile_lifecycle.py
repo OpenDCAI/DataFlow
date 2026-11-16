@@ -1,7 +1,5 @@
 """CPU-only regression tests for PipelineABC compilation lifecycle (P11.01/P11.02)."""
 
-from collections import Counter
-
 import pandas as pd
 import pytest
 
@@ -90,9 +88,8 @@ def _make_pipeline(base, failure=None):
         ("storage", TypeError),
     ],
 )
-def test_failed_compile_rolls_back_and_retry_succeeds(base, failure, exception):
+def test_failed_compile_marks_pipeline_unusable(base, failure, exception):
     pipeline = _make_pipeline(base, failure=failure)
-    first, second = pipeline.first, pipeline.second
     original_forward = pipeline.forward.__func__
 
     with pytest.raises(exception):
@@ -100,34 +97,26 @@ def test_failed_compile_rolls_back_and_retry_succeeds(base, failure, exception):
 
     assert pipeline.compiled is False
     assert pipeline.forward.__func__ is original_forward
-    assert pipeline.first is first
-    assert pipeline.second is second
-    assert pipeline.storage.operator_step == 0
-    assert pipeline.op_runtimes == []
-    assert pipeline.op_nodes_list == []
-    assert pipeline.accumulated_keys == []
-    assert pipeline.llm_serving_list == []
-    assert pipeline.llm_serving_counter == Counter()
-    assert not hasattr(pipeline, "final_keys")
-    assert not hasattr(pipeline, "input_dataset_node")
-    assert not hasattr(pipeline, "output_dataset_node")
-    assert not hasattr(pipeline, "last_modified_index_of_keys")
-    assert first.run_calls == second.run_calls == 0
 
     pipeline.failure = None
-    pipeline.compile()
-    assert pipeline.compiled is True
-    assert len(pipeline.op_runtimes) == 2
-    assert len(pipeline.op_nodes_list) == 4
-    assert pipeline.storage.operator_step == 2
-    assert pipeline.op_runtimes[0].kwargs["storage"] is pipeline.storage
+    with pytest.raises(RuntimeError, match="create a new pipeline instance"):
+        pipeline.compile()
+    assert pipeline.compiled is False
+
+    fresh = _make_pipeline(base, failure=None)
+    fresh.compile()
+    assert fresh.compiled is True
+    assert len(fresh.op_runtimes) == 2
+    assert len(fresh.op_nodes_list) == 4
+    assert fresh.storage.operator_step == 2
+    assert fresh.op_runtimes[0].kwargs["storage"] is fresh.storage
 
     if base is PipelineABC:
-        pipeline.forward()
+        fresh.forward()
     else:
-        pipeline.forward(resume_from_last=False)
-    assert pipeline.storage.dataframe["result"].tolist() == [3, 4, 5]
-    assert (first.run_calls, second.run_calls) == (1, 1)
+        fresh.forward(resume_from_last=False)
+    assert fresh.storage.dataframe["result"].tolist() == [3, 4, 5]
+    assert (fresh.first._operator.run_calls, fresh.second._operator.run_calls) == (1, 1)
 
 
 @pytest.mark.cpu
@@ -171,68 +160,33 @@ def test_repeated_compile_does_not_reregister_or_execute(base):
     assert pipeline.second._operator.run_calls == 1
 
 
-class _StorageHolder:
-    """A common user-owned wrapper not directly stored as pipeline.storage."""
-
-    def __init__(self, storage):
-        self.storage = storage
-
-
 @pytest.mark.cpu
 @pytest.mark.parametrize("base", [PipelineABC, BatchedPipelineABC, StreamBatchedPipelineABC])
-@pytest.mark.parametrize("failure_stage", ["forward", "after_graph"])
-def test_indirect_storage_recovers_after_failed_compile(base, failure_stage):
-    class NestedStoragePipeline(base):
+def test_after_graph_compile_failure_is_one_shot(base):
+    class AfterGraphFailPipeline(base):
         def __init__(self):
             super().__init__()
-            self.settings = {"nested": [_StorageHolder(_MemoryStorage())]}
+            self.storage = _MemoryStorage()
             self.operator = _Increment()
-            self.failure_stage = failure_stage
 
         def forward(self):
             self.operator.run(
-                storage=self.settings["nested"][0].storage.step(),
+                storage=self.storage.step(),
                 input_key="value",
                 output_key="result",
             )
-            if self.failure_stage == "forward":
-                raise RuntimeError("failure after nested storage advancement")
 
         def _build_operator_nodes_graph(self):
             super()._build_operator_nodes_graph()
-            if self.failure_stage == "after_graph":
-                raise RuntimeError("failure after complete graph construction")
+            raise RuntimeError("failure after complete graph construction")
 
-    pipeline = NestedStoragePipeline()
-    storage = pipeline.settings["nested"][0].storage
-    original_operator = pipeline.operator
+    pipeline = AfterGraphFailPipeline()
     original_forward = pipeline.forward.__func__
 
-    with pytest.raises(RuntimeError):
+    with pytest.raises(RuntimeError, match="failure after complete graph construction"):
         pipeline.compile()
 
-    assert storage.operator_step == 0
     assert pipeline.compiled is False
     assert pipeline.forward.__func__ is original_forward
-    assert pipeline.operator is original_operator
-    assert pipeline.op_runtimes == []
-    assert pipeline.op_nodes_list == []
-    assert pipeline.accumulated_keys == []
-    assert not hasattr(pipeline, "input_dataset_node")
-    assert not hasattr(pipeline, "output_dataset_node")
-    assert not hasattr(pipeline, "final_keys")
-    assert original_operator.run_calls == 0
-
-    pipeline.failure_stage = None
-    pipeline.compile()
-    pipeline.compile()  # Repeated compilation must still be a no-op.
-    assert storage.operator_step == 1
-    assert len(pipeline.op_runtimes) == 1
-    assert pipeline.op_runtimes[0].kwargs["storage"] is storage
-    assert len(pipeline.op_nodes_list) == 3
-    if base is PipelineABC:
-        pipeline.forward()
-    else:
-        pipeline.forward(resume_from_last=False)
-    assert storage.dataframe["result"].tolist() == [2, 3, 4]
-    assert original_operator.run_calls == 1
+    with pytest.raises(RuntimeError, match="create a new pipeline instance"):
+        pipeline.compile()
