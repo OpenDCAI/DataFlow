@@ -41,7 +41,10 @@ def get_text_embedding(texts, tokenizer, model, device):
     inputs = tokenizer(texts, return_tensors='pt', padding=True, truncation=True).to(device)
     with torch.no_grad():
         outputs = model(**inputs)
-    return outputs.last_hidden_state.mean(dim=1).cpu().numpy()  # Use mean pooling for sentence embeddings
+    # Padding tokens must not contribute to sentence embeddings.
+    mask = inputs['attention_mask'].unsqueeze(-1)
+    embeddings = (outputs.last_hidden_state * mask).sum(dim=1) / mask.sum(dim=1).clamp(min=1)
+    return embeddings.cpu().numpy()
 
 
 def compute_cos_sim_matrix(embeddings):
