@@ -1,6 +1,5 @@
 import numpy as np
 import pandas as pd
-import random
 import torch
 from torch import Tensor
 from typing import List, Optional
@@ -48,10 +47,10 @@ class KCenterGreedy:
             cluster_centers (List[int]): indices of cluster centers
         """
 
-        if cluster_centers:
-            centers = self.features[cluster_centers]
-
-            distance = F.pairwise_distance(self.features, centers, p=2).reshape(-1, 1)
+        for center in cluster_centers:
+            distance = F.pairwise_distance(
+                self.features, self.features[center], p=2, eps=0
+            ).reshape(-1, 1)
 
             if self.min_distances.shape[0] == 0:
                 self.min_distances = distance
@@ -81,34 +80,29 @@ class KCenterGreedy:
             selected_idxs: index of samples already selected. Defaults to an empty set.
 
         Returns:
-          indices of samples selected to minimize distance to cluster centers
+          Up to coreset_size distinct new indices, excluding selected_idxs.
         """
 
-        if selected_idxs is None:
-            selected_idxs = []
+        selected_idxs = list(dict.fromkeys(selected_idxs or []))
+        self.reset_distances()
+        n_samples = min(self.coreset_size, self.n_observations - len(selected_idxs))
+        if n_samples <= 0:
+            return []
 
-        if self.embedding.ndim == 2:
-            # self.model.fit(self.embedding)
-            # self.features = self.model.transform(self.embedding)
-            
-            self.features = self.embedding
-            self.reset_distances()
-        else:
-            self.features = self.embedding.reshape(self.embedding.shape[0], -1)
+        self.features = self.embedding.reshape(self.n_observations, -1)
+        if selected_idxs:
             self.update_distances(cluster_centers=selected_idxs)
+            self.min_distances[selected_idxs] = -float("inf")
+        else:
+            idx = int(torch.randint(high=self.n_observations, size=(1,)).item())
+            self.update_distances(cluster_centers=[idx])
 
         selected_coreset_idxs: List[int] = []
-        idx = int(torch.randint(high=self.n_observations, size=(1,)).item())
-        cnt = 0
-        for _ in range(self.coreset_size):
-            cnt += 1
-            if(cnt % 1000 == 0):
-                print(cnt)
-            self.update_distances(cluster_centers=[idx])
+        for step in range(n_samples):
             idx = self.get_new_idx()
-            if idx in selected_idxs:
-                raise ValueError("New indices should not be in selected indices.")
-            self.min_distances[idx] = 0
+            if step + 1 < n_samples:
+                self.update_distances(cluster_centers=[idx])
+            self.min_distances[idx] = -float("inf")
             selected_coreset_idxs.append(idx)
 
         return selected_coreset_idxs
@@ -139,6 +133,12 @@ class KCenterGreedy:
 @OPERATOR_REGISTRY.register()
 class KCenterGreedyFilter(OperatorABC):
     def __init__(self, num_samples: int, embedding_serving : LLMServingABC = None):
+        if (
+            isinstance(num_samples, bool)
+            or not isinstance(num_samples, int)
+            or num_samples < 0
+        ):
+            raise ValueError("num_samples must be a non-negative integer")
         self.num_samples = num_samples
         self.embedding_serving = embedding_serving
         self.logger = get_logger()
@@ -151,7 +151,7 @@ class KCenterGreedyFilter(OperatorABC):
                 "输入参数:\n"
                 "- input_key: 包含文档内容的字段名（默认 'content'）。\n"
                 "- embedding_serving: 嵌入模型服务实例，用于将文本转换为向量。\n"
-                "- num_samples: 最终需要保留的文档片段数量。\n\n"
+                "- num_samples: 最终需要保留的文档片段数量（非负整数，最多为输入行数）。\n\n"
                 "输出:\n"
                 "- 过滤后的数据集，仅包含被选中的代表性文档片段。"
             )
@@ -162,7 +162,7 @@ class KCenterGreedyFilter(OperatorABC):
                 "Input Parameters:\n"
                 "- input_key: Field name containing the document content (default: 'content').\n"
                 "- embedding_serving: Instance of embedding serving for text-to-vector conversion.\n"
-                "- num_samples: The target number of document fragments to select.\n\n"
+                "- num_samples: Non-negative target count, capped at the input row count.\n\n"
                 "Output:\n"
                 "- A filtered dataset containing only the selected representative document fragments."
             )
@@ -198,13 +198,21 @@ class KCenterGreedyFilter(OperatorABC):
         self._validate_dataframe(dataframe)
 
         texts = dataframe[self.input_key].tolist()
+        n_samples = min(self.num_samples, len(texts))
+        if n_samples == 0:
+            output_file = storage.write(dataframe.iloc[:0])
+            self.logger.info(f"Results saved to {output_file}")
+            return [self.input_key]
+
         indexes =  np.zeros(len(dataframe)).astype(int)
         
 
         embeddings_list = self.embedding_serving.generate_embedding_from_input(texts)
         embeddings = torch.tensor(embeddings_list)
 
-        sampler = KCenterGreedy(embedding=embeddings, sampling_ratio= self.num_samples / len(texts))
+        sampler = KCenterGreedy(embedding=embeddings, sampling_ratio=n_samples / len(texts))
+        # Preserve the integer budget instead of rounding through a ratio.
+        sampler.coreset_size = n_samples
         chooss_indexes = sampler.select_coreset_idxs()
 
 
