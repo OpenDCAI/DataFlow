@@ -21,6 +21,7 @@ class PipelineABC(ABC):
         # list of dict, contains `OPRuntime` class and parameters for `operator.run()`
         self.op_runtimes:list[OPRuntime] = [] 
         self.compiled = False
+        self._compile_failed = False
         # accumulated keys in each operators, index 0 refers to the keys before the first operator
         self.accumulated_keys = []  # list of lists, each sublist contains keys before the operator
         
@@ -42,22 +43,33 @@ class PipelineABC(ABC):
         pass
     
     def compile(self):
-        self.compiled = True # flag the pipeline as compiled
-        for k, v in vars(self).items():
-            if isinstance(v, OperatorABC):
-                setattr(self, k, AutoOP(v, k, self)) 
-        self.forward()
-        # after call forward, call back function in AutoOP will add the OPRuntime object to self.op_runtimes
-        
+        """Compile the pipeline once; mark it unusable if compilation fails."""
+        if self.compiled:
+            return
+        if getattr(self, "_compile_failed", False):
+            raise RuntimeError(
+                "Pipeline compilation previously failed; create a new pipeline instance instead of recompiling."
+            )
+
+        try:
+            for k, v in vars(self).items():
+                if isinstance(v, OperatorABC):
+                    setattr(self, k, AutoOP(v, k, self))
+            # AutoOP.run records calls instead of executing operators.
+            self.forward()
+            self.logger.info(
+                f"Compiling pipeline and validating key integrity "
+                f"across {len(self.op_runtimes)} operator runtimes."
+            )
+            self._build_operator_nodes_graph()
+        except BaseException:
+            self._compile_failed = True
+            self.compiled = False
+            raise
+
         self.forward = self._compiled_forward
-        self.logger.info(
-            f"Compiling pipeline and validating key integrity "
-            f"across {len(self.op_runtimes)} operator runtimes."
-        )
-        self._build_operator_nodes_graph()
-        # self._draw_graph_for_operators()
-        # self._build_serving_resources_map()
-        
+        self.compiled = True
+
     def _build_operator_nodes_graph(self):
         """
         Build a graph of operator nodes, each node contains the operator object and its storage.
@@ -69,7 +81,7 @@ class PipelineABC(ABC):
                 if isinstance(v, LLM_SERVING_CLASSES):
                     llm_serving_obj = v
             # get storage object from the function dict
-            storage_obj = op_runtime.kwargs.pop("storage", None)
+            storage_obj = op_runtime.kwargs.get("storage")
             
             assert isinstance(storage_obj, DataFlowStorage), f"Storage must be a DataFlowStorage object, but got {type(storage_obj)} in {op_runtime}'s `run` function with key `storage`."
             
@@ -79,7 +91,7 @@ class PipelineABC(ABC):
                 op_name=op_runtime.op_name,
                 storage=storage_obj,
                 llm_serving=llm_serving_obj,
-                **op_runtime.kwargs
+                **{key: value for key, value in op_runtime.kwargs.items() if key != "storage"}
             )
             
             # append to lists, if None, just keep it
