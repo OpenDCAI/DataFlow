@@ -41,7 +41,7 @@ class Text2QAPipeline:
         )
 
         self.extract_format_qa = QAExtractor(
-            output_json_file="./.cache/data/qa.json",
+            output_json_file=str(cache_path / ".cache" / "data" / "qa.json"),
         )
 
     def forward(self):
