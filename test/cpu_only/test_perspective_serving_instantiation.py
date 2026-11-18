@@ -55,3 +55,17 @@ def test_perspective_serving_is_concrete_against_real_llm_serving_contract(monke
 def test_builtin_filter_constructs_perspective_serving_directly():
     source = FILTER.read_text(encoding="utf-8")
     assert "PerspectiveAPIServing(max_workers=10)" in source
+
+
+@pytest.mark.cpu
+def test_perspective_custom_discovery_and_endpoint(monkeypatch):
+    namespace = _load_serving(monkeypatch)
+    calls = []
+    monkeypatch.setattr(namespace["discovery"], "build", lambda *a, **kw: calls.append(kw) or object())
+    cls = namespace["PerspectiveAPIServing"]
+    cls()
+    assert calls[-1]["client_options"] is None
+    assert calls[-1]["discoveryServiceUrl"] == "https://commentanalyzer.googleapis.com/$discovery/rest?version=v1alpha1"
+    cls(api_endpoint="https://moderation.example/v1alpha1/", discovery_service_url="https://moderation.example/discovery.json")
+    assert calls[-1]["client_options"] == {"api_endpoint": "https://moderation.example/v1alpha1/"}
+    assert calls[-1]["discoveryServiceUrl"] == "https://moderation.example/discovery.json"

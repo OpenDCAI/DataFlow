@@ -622,3 +622,12 @@ The DataFlow paper has been accepted for publication in the **Proceedings of the
     on Xiaohongshu: <strong>26133106768</strong>
   </sub>
 </div>
+
+### Alternative Perspective endpoints
+
+The Perspective adapter accepts optional `api_endpoint` (the full API base URL,
+including `/v1alpha1/`) and `discovery_service_url` (a compatible discovery JSON
+URL). Omit both to retain Google defaults. To remove the Google dependency,
+configure both URLs. Only use trusted endpoints: requests include your API key
+and text. A different model requires fresh threshold calibration; its scores
+must not be compared as though they were Google Perspective scores.
