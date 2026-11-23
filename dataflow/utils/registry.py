@@ -271,7 +271,11 @@ class LazyLoader(types.ModuleType):
         self._import_structure = import_structure
         self._loaded_classes = {}
         self._base_folder = Path(__file__).resolve().parents[2]
-        self.__path__ = [path]
+        # Use an absolute __path__: child processes (e.g. multiprocessing
+        # workers spawned by operators) import modules by name and may run with
+        # a different cwd, so a relative path would fail to resolve.
+        _path = Path(path)
+        self.__path__ = [str(_path if _path.is_absolute() else (self._base_folder / _path))]
         self.__all__ = list(import_structure.keys())
         
     def _import_all(self):
@@ -302,6 +306,17 @@ class LazyLoader(types.ModuleType):
         mod_name = '.'.join((*prefix_parts, *rel_parts))
         logger = get_logger()
         # 动态加载模块
+
+        # Reuse an already-imported module when it provides the requested class.
+        # Re-executing the same file creates a *new* module object and new class
+        # objects while earlier instances still reference the old ones, which
+        # breaks pickling with "it's not the same object as ..." (e.g. when the
+        # sandbox evaluator spawns a multiprocessing worker).
+        module = sys.modules.get(mod_name)
+        if module is not None and hasattr(module, class_name):
+            module_file = getattr(module, "__file__", None)
+            if module_file is None or os.path.realpath(module_file) == os.path.realpath(abs_file_path):
+                return getattr(module, class_name)
 
         try:
             parts = mod_name.split(".")
