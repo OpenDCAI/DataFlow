@@ -1,0 +1,20 @@
+# FinanceQAPipeline 默认配置
+# 用法示例：
+#   dataflow pipeline --config dataflow_finance_qa/pipeline/finance_qa_pipeline.yaml
+pipeline:
+  name: FinanceQAPipeline
+  llm_serving:
+    type: APILLMServing_request       # 或 LocalModelLLMServing（vLLM）
+    api_url: "https://api.openai.com/v1/chat/completions"
+    api_key_env: DF_API_KEY           # 从环境变量读取，禁止硬编码
+  params:
+    max_pages: null                   # 每个 PDF 最大解析页数，null 不限
+
+storage:
+  type: FileStorage
+  first_entry_file_name: "./input.jsonl"   # [{"pdf_path": "/abs/path/to/report.pdf"}, ...]
+  cache_path: "./cache"
+  file_name_prefix: "finance_qa_step"
+
+output:
+  columns: ["question", "answer", "answer_refined"]
