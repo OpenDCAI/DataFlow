@@ -1,0 +1,26 @@
+# FinanceText2SQLPipeline 配置
+# link → generate → filter → repair
+llm_serving: APILLMServing_request
+dialect: sqlite
+
+operators:
+  - name: FinanceSchemaLinker
+    params:
+      input_question: question
+      input_schema: schema
+      output_schema_context: schema_context
+  - name: FinanceSQLGenerator
+    params:
+      input_question: question
+      input_schema_context: schema_context
+      output_sql: sql
+  - name: FinanceSQLSyntaxFilter
+    params:
+      input_sql: sql
+      output_sql_error: sql_error
+  - name: FinanceSQLRepairRefiner
+    params:
+      input_sql: sql
+      input_sql_error: sql_error
+      input_schema_context: schema_context
+      output_sql_repaired: sql_repaired
