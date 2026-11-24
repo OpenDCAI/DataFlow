@@ -10,6 +10,12 @@ class RemoveEmoticonsRefiner(OperatorABC):
     def __init__(self):
         self.logger = get_logger()
         self.emoticons = EMOTICONS_EMO.keys()
+        alternatives = []
+        for emoticon in sorted(self.emoticons, key=len, reverse=True):
+            prefix = r'(?<!\w)' if re.match(r'\w', emoticon[0]) else ''
+            suffix = r'(?!\w)' if re.match(r'\w', emoticon[-1]) else ''
+            alternatives.append(prefix + re.escape(emoticon) + suffix)
+        self.emoticon_pattern = re.compile('|'.join(alternatives))
         self.logger.info(f"Initializing {self.__class__.__name__}...")
     
     @staticmethod
@@ -50,11 +56,7 @@ class RemoveEmoticonsRefiner(OperatorABC):
         for item in tqdm(dataframe[self.input_key], desc=f"Implementing {self.__class__.__name__}"):
             modified = False
             original_text = item
-            no_emoticon_text = original_text
-
-            for emoticon in self.emoticons:
-                if emoticon in no_emoticon_text:
-                    no_emoticon_text = no_emoticon_text.replace(emoticon, '')
+            no_emoticon_text = self.emoticon_pattern.sub('', original_text)
 
             if original_text != no_emoticon_text:
                 item = no_emoticon_text
