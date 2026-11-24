@@ -1,0 +1,31 @@
+# FinanceEvalPipeline 配置
+# qa → sql → hallucination → report
+llm_serving: APILLMServing_request  # 仅幻觉检测需要；确定性算子可为空
+use_ast: false  # true 时使用 sqlglot AST 比较（需安装 sqlglot）
+
+operators:
+  - name: FinanceQASampleEvaluator
+    params:
+      input_answer: answer
+      input_gold_answer: gold_answer
+      output_qa_score: qa_score
+      output_qa_correct: qa_correct
+  - name: FinanceSQLSampleEvaluator
+    params:
+      input_sql: sql
+      input_gold_sql: gold_sql
+      output_sql_score: sql_score
+      output_sql_correct: sql_correct
+  - name: FinanceHallucinationSampleEvaluator
+    params:
+      input_text: text
+      input_question: question
+      input_answer: answer
+      output_hallucination_flag: hallucination
+      output_hallucination_reason: hallucination_reason
+  - name: EvalReportGenerator
+    params:
+      input_qa_correct: qa_correct
+      input_sql_correct: sql_correct
+      input_hallucination_flag: hallucination
+      output_summary: eval_summary
