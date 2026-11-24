@@ -1,0 +1,24 @@
+# FinanceCompliancePipeline 配置
+# mask → filter → evaluate → disclaimer
+llm_serving: APILLMServing_request
+
+operators:
+  - name: FinancialSensitiveInfoMasker
+    params:
+      input_text: text
+      output_masked_text: text_masked
+      output_mask_summary: mask_summary
+  - name: ComplianceRuleFilter
+    params:
+      input_text: text_masked
+      output_violation_reason: violation_reason
+  - name: ComplianceRiskSampleEvaluator
+    params:
+      input_text: text_masked
+      output_risk_level: risk_level
+      output_risk_reason: risk_reason
+  - name: DisclaimerInjector
+    params:
+      input_text: text_masked
+      input_doc_type: doc_type
+      output_text_with_disclaimer: text_with_disclaimer

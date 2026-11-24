@@ -1,0 +1,30 @@
+{"id": "comp-001", "doc_type": "research", "expected_compliant": true, "expected_risk": "low", "contains_sensitive": false, "text": "甲公司2025年三季报显示营业收入同比增长12%，符合市场一致预期。"}
+{"id": "comp-002", "doc_type": "research", "expected_compliant": false, "expected_risk": "high", "contains_sensitive": false, "text": "该股下月保证翻倍，稳赚不赔，请立即重仓买入。"}
+{"id": "comp-003", "doc_type": "marketing", "expected_compliant": false, "expected_risk": "high", "contains_sensitive": false, "text": "购买本理财产品保本保息，年化收益20%写进合同。"}
+{"id": "comp-004", "doc_type": "research", "expected_compliant": true, "expected_risk": "low", "contains_sensitive": true, "text": "分析师张三（邮箱 zhangsan@example.com）维持买入评级。"}
+{"id": "comp-005", "doc_type": "announcement", "expected_compliant": true, "expected_risk": "low", "contains_sensitive": false, "text": "公司拟于下月召开年度股东大会，审议利润分配方案。"}
+{"id": "comp-006", "doc_type": "marketing", "expected_compliant": false, "expected_risk": "high", "contains_sensitive": false, "text": "史上最强策略，稳赢大盘10倍，错过再等十年。"}
+{"id": "comp-007", "doc_type": "research", "expected_compliant": true, "expected_risk": "medium", "contains_sensitive": true, "text": "请将尽调材料发送至手机 13812345678，联系人李四。"}
+{"id": "comp-008", "doc_type": "research", "expected_compliant": true, "expected_risk": "low", "contains_sensitive": false, "text": "2025年全年营收指引区间为120至130亿元，存在不确定性。"}
+{"id": "comp-009", "doc_type": "marketing", "expected_compliant": false, "expected_risk": "high", "contains_sensitive": false, "text": "私消息我，带你操作短线，三天回本。"}
+{"id": "comp-010", "doc_type": "announcement", "expected_compliant": true, "expected_risk": "low", "contains_sensitive": false, "text": "本次减持计划不超过总股本的1%，符合监管规定。"}
+{"id": "comp-011", "doc_type": "research", "expected_compliant": false, "expected_risk": "high", "contains_sensitive": false, "text": "该票必涨，闭眼买，腰斩算我输。"}
+{"id": "comp-012", "doc_type": "research", "expected_compliant": true, "expected_risk": "medium", "contains_sensitive": true, "text": "开户请携带身份证号 110101199001011234 至营业部办理。"}
+{"id": "comp-013", "doc_type": "marketing", "expected_compliant": true, "expected_risk": "low", "contains_sensitive": false, "text": "新客专享理财体验金活动，详情以产品说明书为准。"}
+{"id": "comp-014", "doc_type": "research", "expected_compliant": true, "expected_risk": "low", "contains_sensitive": false, "text": "丙公司毛利率连续三年高于行业均值，盈利质量较好。"}
+{"id": "comp-015", "doc_type": "marketing", "expected_compliant": false, "expected_risk": "high", "contains_sensitive": false, "text": "跟单半年资金翻三倍，已有5000名学员验证。"}
+{"id": "comp-016", "doc_type": "announcement", "expected_compliant": true, "expected_risk": "low", "contains_sensitive": false, "text": "公司回应媒体关注：经营情况正常，无应披露未披露事项。"}
+{"id": "comp-017", "doc_type": "research", "expected_compliant": true, "expected_risk": "medium", "contains_sensitive": false, "text": "若业绩不及预期，估值存在明显回调压力，建议谨慎。"}
+{"id": "comp-018", "doc_type": "marketing", "expected_compliant": true, "expected_risk": "low", "contains_sensitive": false, "text": "定投计划演示数据为模拟测算，不预示真实收益。"}
+{"id": "comp-019", "doc_type": "research", "expected_compliant": false, "expected_risk": "high", "contains_sensitive": false, "text": "主力即将拉升，最后上车机会，满仓干。"}
+{"id": "comp-020", "doc_type": "announcement", "expected_compliant": true, "expected_risk": "medium", "contains_sensitive": false, "text": "公司预计本年度出现亏损，具体金额以后续公告为准。"}
+{"id": "comp-021", "doc_type": "research", "expected_compliant": true, "expected_risk": "low", "contains_sensitive": false, "text": "银行业2025年不良贷款率整体下行，资产质量改善。"}
+{"id": "comp-022", "doc_type": "marketing", "expected_compliant": false, "expected_risk": "high", "contains_sensitive": false, "text": "内部消息票，涨停板出货前带大家埋伏。"}
+{"id": "comp-023", "doc_type": "research", "expected_compliant": true, "expected_risk": "low", "contains_sensitive": true, "text": "调研纪要已同步至邮箱 fundteam@example.com。"}
+{"id": "comp-024", "doc_type": "announcement", "expected_compliant": true, "expected_risk": "low", "contains_sensitive": false, "text": "公司完成工商变更登记，注册资本增至5亿元。"}
+{"id": "comp-025", "doc_type": "marketing", "expected_compliant": true, "expected_risk": "medium", "contains_sensitive": false, "text": "近三年组合年化收益15%，未来表现存在波动风险。"}
+{"id": "comp-026", "doc_type": "research", "expected_compliant": false, "expected_risk": "high", "contains_sensitive": false, "text": "这个位置闭眼梭哈，跌破发行价我把报告吃了。"}
+{"id": "comp-027", "doc_type": "research", "expected_compliant": true, "expected_risk": "low", "contains_sensitive": false, "text": "关注公司海外业务毛利率修复节奏及订单能见度。"}
+{"id": "comp-028", "doc_type": "marketing", "expected_compliant": true, "expected_risk": "low", "contains_sensitive": true, "text": "客服热线 95588，券码发放至您的银行卡预留手机。"}
+{"id": "comp-029", "doc_type": "announcement", "expected_compliant": true, "expected_risk": "medium", "contains_sensitive": false, "text": "公司收到监管问询函，将按要求在规定期限内回复。"}
+{"id": "comp-030", "doc_type": "research", "expected_compliant": false, "expected_risk": "high", "contains_sensitive": false, "text": "只要跟着买，退休金翻十倍不是梦。"}
