@@ -3,6 +3,7 @@ import importlib.util
 import sys
 import types
 import os
+import pkgutil
 from dataflow.logger import get_logger
 from pathlib import Path
 
@@ -65,7 +66,7 @@ class Registry():
         self._name = name
         self._obj_map = {}
         self._base_folder = Path(__file__).resolve().parents[1]
-        self._sub_modules = list(os.listdir(self._base_folder / name))
+        self._sub_modules = sorted(os.listdir(self._base_folder / name))
         if "__init__.py" in self._sub_modules:
             self._sub_modules.remove("__init__.py")
         if "__pycache__" in self._sub_modules:
@@ -229,10 +230,24 @@ class Registry():
         return capture.get()
 
     def _get_all(self):
-        if None in self.loader_map.values():
-            self._init_loaders()
-        for loader in self.loader_map.values():
-            loader._import_all()
+        for module_name, loader in self.loader_map.items():
+            if loader is None:
+                import_name = Path(module_name).stem if module_name.endswith(".py") else module_name
+                module_path = f"dataflow.{self._name}.{import_name}"
+                loader = importlib.import_module(module_path)
+                self.loader_map[module_name] = loader
+
+            import_all = getattr(loader, "_import_all", None)
+            if callable(import_all):
+                import_all()
+            elif hasattr(loader, "__path__"):
+                # Import in a stable order so duplicate names resolve the same
+                # way on every platform; import errors propagate (fail fast).
+                for module_info in sorted(
+                    pkgutil.walk_packages(loader.__path__, prefix=f"{loader.__name__}."),
+                    key=lambda info: info.name,
+                ):
+                    importlib.import_module(module_info.name)
 
     def get_obj_map(self):
         """
