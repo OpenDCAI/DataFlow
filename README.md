@@ -175,6 +175,26 @@ This section highlights open-source projects, research works, and applications b
   - A DataFlow extension for organizing robot-collected step labels and time ranges, planning cleaning intervals, and exporting validated LeRobot v2.1 datasets from supported sources.
   - **Maintainer:** [Pyromind Dynamics](https://pyromind.ai/)
 
+- **[dataflow-finance-qa](https://github.com/DingNova/dataflow-finance-qa)** [![GitHub Stars](https://img.shields.io/github/stars/DingNova/dataflow-finance-qa?style=social)](https://github.com/DingNova/dataflow-finance-qa)
+  - `Finance` · `QA Generation` · `Hallucination Filtering` · `Data Cleaning`
+  - A DataFlow extension that turns financial PDFs (annual reports, research notes) into source-grounded QA datasets, with LLM hallucination filtering and numeric-consistency refinement.
+  - **Maintainer:** [DingNova](https://github.com/DingNova)
+
+- **[dataflow-finance-text2sql](https://github.com/DingNova/dataflow-finance-text2sql)** [![GitHub Stars](https://img.shields.io/github/stars/DingNova/dataflow-finance-text2sql?style=social)](https://github.com/DingNova/dataflow-finance-text2sql)
+  - `Finance` · `Text2SQL` · `Data Cleaning` · `Evaluation`
+  - A DataFlow extension for financial Text2SQL with schema linking, syntax validation, and error-driven SQL repair.
+  - **Maintainer:** [DingNova](https://github.com/DingNova)
+
+- **[dataflow-finance-compliance](https://github.com/DingNova/dataflow-finance-compliance)** [![GitHub Stars](https://img.shields.io/github/stars/DingNova/dataflow-finance-compliance?style=social)](https://github.com/DingNova/dataflow-finance-compliance)
+  - `Finance` · `Compliance` · `PII Masking` · `Data Cleaning`
+  - A DataFlow extension for financial text compliance governance: PII masking, rule-based compliance filtering, risk evaluation, and disclaimer injection.
+  - **Maintainer:** [DingNova](https://github.com/DingNova)
+
+- **[dataflow-finance-eval](https://github.com/DingNova/dataflow-finance-eval)** [![GitHub Stars](https://img.shields.io/github/stars/DingNova/dataflow-finance-eval?style=social)](https://github.com/DingNova/dataflow-finance-eval)
+  - `Finance` · `Evaluation` · `Hallucination Detection`
+  - A DataFlow extension for deterministic evaluation of financial QA accuracy, SQL accuracy, and hallucination rate, with aggregated reporting.
+  - **Maintainer:** [DingNova](https://github.com/DingNova)
+
 Have a project built with DataFlow? We welcome community contributions via Pull Requests. See the [DataFlow Ecosystem Guide](https://opendcai.github.io/DataFlow-Doc/en/guide/df_ecosystem/) for guidance on creating a DataFlow extension.
 
 ## 🔧 6. How do operators work？
