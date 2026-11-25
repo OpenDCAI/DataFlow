@@ -67,7 +67,7 @@ class TextNormalizationRefiner(OperatorABC):
                     except ValueError:
                         pass
 
-            refined_text = re.sub(r'\$\s?(\d+)', r'\1 USD', refined_text)
+            refined_text = re.sub(r'\$\s?(\d+(?:,\d{3})*(?:\.\d+)?)', r'\1 USD', refined_text)
 
             if original_text != refined_text:
                 item = refined_text
