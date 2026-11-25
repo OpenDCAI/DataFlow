@@ -2,6 +2,7 @@ from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     # generate
+    from .generate.chinese_visual_cot_generator import ChineseVisualCoTGenerator
     from .generate.prompted_vqa_generator import PromptedVQAGenerator
 else:
     import sys
