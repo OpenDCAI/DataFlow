@@ -6,7 +6,9 @@ from dataflow.core import LLMServingABC
 
 class PerspectiveAPIServing(LLMServingABC):
     """Service adapter for Google Perspective API."""
-    def __init__(self, max_workers: int = 10):
+    def __init__(
+        self, max_workers: int = 10, api_endpoint=None, discovery_service_url=None
+    ):
         self.api_key = os.environ.get("GOOGLE_API_KEY")
         if self.api_key is None:
             raise ValueError("Lack of Google API_KEY")
@@ -15,7 +17,8 @@ class PerspectiveAPIServing(LLMServingABC):
             "commentanalyzer",
             "v1alpha1",
             developerKey=self.api_key,
-            discoveryServiceUrl="https://commentanalyzer.googleapis.com/$discovery/rest?version=v1alpha1",
+            discoveryServiceUrl=discovery_service_url or "https://commentanalyzer.googleapis.com/$discovery/rest?version=v1alpha1",
+            client_options={"api_endpoint": api_endpoint} if api_endpoint else None,
             static_discovery=False,
         )
 
